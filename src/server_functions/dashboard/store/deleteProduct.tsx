@@ -5,7 +5,6 @@ import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import {
 	products,
-	productTeaCategories,
 	productVariations,
 	type schema,
 	variationAttributes,
@@ -56,11 +55,6 @@ export const deleteProduct = createServerFn({ method: "POST" })
 					.delete(productVariations)
 					.where(eq(productVariations.productId, productId));
 			}
-
-			// Delete tea category associations
-			await db
-				.delete(productTeaCategories)
-				.where(eq(productTeaCategories.productId, productId));
 
 			// Finally delete the product
 			await db.delete(products).where(eq(products.id, productId));

@@ -5,9 +5,7 @@ import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import type * as schema from "~/schema";
 import {
-	blogPosts,
 	products,
-	productTeaCategories,
 	productVariations,
 	variationAttributes,
 } from "~/schema";
@@ -83,32 +81,6 @@ export const updateProduct = createServerFn({ method: "POST" })
 						shippingFrom: productData.shippingFrom || null,
 					})
 					.where(eq(products.id, productId)),
-
-				// Update blog post references if slug changed
-				...(slugChanged
-					? [
-							db
-								.update(blogPosts)
-								.set({ productSlug: newSlug })
-								.where(eq(blogPosts.productSlug, oldSlug)),
-						]
-					: []),
-
-				// Handle tea categories
-				(async () => {
-					await db
-						.delete(productTeaCategories)
-						.where(eq(productTeaCategories.productId, productId));
-
-					if (productData.teaCategories?.length) {
-						await db.insert(productTeaCategories).values(
-							productData.teaCategories.map((slug) => ({
-								productId: productId,
-								teaCategorySlug: slug,
-							})),
-						);
-					}
-				})(),
 
 				// Handle variations
 				(async () => {

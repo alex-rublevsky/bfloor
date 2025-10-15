@@ -7,8 +7,6 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import {
-	blogPostQueryOptions,
-	blogPostsQueryOptions,
 	dashboardOrdersQueryOptions,
 	productQueryOptions,
 	storeDataQueryOptions,
@@ -33,21 +31,6 @@ export function usePrefetch() {
 		queryClient.prefetchQuery(storeDataQueryOptions());
 	};
 
-	/**
-	 * Prefetch all blog posts
-	 * Use on homepage blog link hover
-	 */
-	const prefetchBlog = () => {
-		queryClient.prefetchQuery(blogPostsQueryOptions());
-	};
-
-	/**
-	 * Prefetch a single blog post by slug
-	 * Use on blog card hover
-	 */
-	const prefetchBlogPost = (slug: string) => {
-		queryClient.prefetchQuery(blogPostQueryOptions(slug));
-	};
 
 	/**
 	 * Prefetch dashboard orders
@@ -60,8 +43,6 @@ export function usePrefetch() {
 	return {
 		prefetchProduct,
 		prefetchStore,
-		prefetchBlog,
-		prefetchBlogPost,
 		prefetchDashboardOrders,
 	};
 }

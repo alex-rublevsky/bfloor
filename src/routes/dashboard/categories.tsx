@@ -5,7 +5,6 @@ import { useCallback, useId, useState } from "react";
 import { toast } from "sonner";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
-import { DescriptionField } from "~/components/ui/dashboard/DescriptionField";
 import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { CategoriesPageSkeleton } from "~/components/ui/dashboard/skeletons/CategoriesPageSkeleton";
@@ -15,21 +14,11 @@ import { Input } from "~/components/ui/shared/Input";
 import { Switch } from "~/components/ui/shared/Switch";
 import { useDashboardForm } from "~/hooks/useDashboardForm";
 import { generateSlug, useSlugGeneration } from "~/hooks/useSlugGeneration";
-import { storeDataQueryOptions } from "~/lib/queryOptions";
 import { createProductCategory } from "~/server_functions/dashboard/categories/createProductCategory";
 import { deleteProductCategory } from "~/server_functions/dashboard/categories/deleteProductCategory";
 import { getAllProductCategories } from "~/server_functions/dashboard/categories/getAllProductCategories";
 import { updateProductCategory } from "~/server_functions/dashboard/categories/updateProductCategory";
-import { createTeaCategory } from "~/server_functions/dashboard/tea_categories/createTeaCategory";
-import { deleteTeaCategoryBySlug } from "~/server_functions/dashboard/tea_categories/deleteTeaCategoryBySlug";
-import { getAllTeaCategories } from "~/server_functions/dashboard/tea_categories/getAllTeaCategories";
-import { updateTeaCategoryBySlug } from "~/server_functions/dashboard/tea_categories/updateTeaCategoryBySlug";
-import type {
-	Category,
-	CategoryFormData,
-	TeaCategory,
-	TeaCategoryFormData,
-} from "~/types";
+import type { Category, CategoryFormData } from "~/types";
 
 // Query options factories for reuse
 const productCategoriesQueryOptions = () => ({
@@ -38,11 +27,7 @@ const productCategoriesQueryOptions = () => ({
 	staleTime: 1000 * 60 * 5, // Cache for 5 minutes
 });
 
-const teaCategoriesQueryOptions = () => ({
-	queryKey: ["dashboard-tea-categories"],
-	queryFn: () => getAllTeaCategories(),
-	staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-});
+// Tea categories removed for this project
 
 export const Route = createFileRoute("/dashboard/categories")({
 	component: RouteComponent,
@@ -51,10 +36,7 @@ export const Route = createFileRoute("/dashboard/categories")({
 	// Loader prefetches data before component renders
 	loader: async ({ context: { queryClient } }) => {
 		// Ensure data is loaded before component renders
-		await Promise.all([
-			queryClient.ensureQueryData(productCategoriesQueryOptions()),
-			queryClient.ensureQueryData(teaCategoriesQueryOptions()),
-		]);
+        await queryClient.ensureQueryData(productCategoriesQueryOptions());
 	},
 });
 
@@ -67,14 +49,11 @@ function RouteComponent() {
 	const { data: categoriesData } = useSuspenseQuery(
 		productCategoriesQueryOptions(),
 	);
-	const { data: teaCategoriesData } = useSuspenseQuery(
-		teaCategoriesQueryOptions(),
-	);
+    // Placeholder text-only block kept later for layout; no tea data
 
 	// Category type state (to distinguish between product category and tea category operations)
-	const [categoryType, setCategoryType] = useState<"product" | "tea">(
-		"product",
-	);
+    // Only product categories are supported
+    const [categoryType, setCategoryType] = useState<"product">("product");
 
 	// Use our dashboard form hooks - one for each category type
 	const productCategoryForm = useDashboardForm<CategoryFormData>(
@@ -87,62 +66,34 @@ function RouteComponent() {
 		{ listenToActionButton: true },
 	);
 
-	const teaCategoryForm = useDashboardForm<TeaCategoryFormData>({
-		name: "",
-		slug: "",
-		description: "",
-		blogSlug: "",
-		isActive: true,
-	});
+    // Tea category form removed
 
 	// Get the active form based on category type
-	const activeForm =
-		categoryType === "product" ? productCategoryForm : teaCategoryForm;
+    const activeForm = productCategoryForm;
 
 	const [isCreateAutoSlug, setIsCreateAutoSlug] = useState(true);
 	const [isEditAutoSlug, setIsEditAutoSlug] = useState(false);
 	const [editingCategoryId, setEditingCategoryId] = useState<number | null>(
 		null,
 	);
-	const [editingTeaCategorySlug, setEditingTeaCategorySlug] = useState<
-		string | null
-	>(null);
-	const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
-		null,
-	);
-	const [deletingTeaCategorySlug, setDeletingTeaCategorySlug] = useState<
-		string | null
-	>(null);
+    // Tea tracking state removed
+const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
+    null,
+);
 
 	// Stable callbacks for slug generation
 	const handleCreateSlugChange = useCallback(
-		(slug: string) => {
-			if (categoryType === "product") {
-				productCategoryForm.createForm.updateField("slug", slug);
-			} else {
-				teaCategoryForm.createForm.updateField("slug", slug);
-			}
-		},
-		[
-			categoryType,
-			productCategoryForm.createForm.updateField,
-			teaCategoryForm.createForm.updateField,
-		],
+        (slug: string) => {
+            productCategoryForm.createForm.updateField("slug", slug);
+        },
+        [productCategoryForm.createForm.updateField],
 	);
 
 	const handleEditSlugChange = useCallback(
-		(slug: string) => {
-			if (categoryType === "product") {
-				productCategoryForm.editForm.updateField("slug", slug);
-			} else {
-				teaCategoryForm.editForm.updateField("slug", slug);
-			}
-		},
-		[
-			categoryType,
-			productCategoryForm.editForm.updateField,
-			teaCategoryForm.editForm.updateField,
-		],
+        (slug: string) => {
+            productCategoryForm.editForm.updateField("slug", slug);
+        },
+        [productCategoryForm.editForm.updateField],
 	);
 
 	// Auto-slug generation hooks
@@ -163,34 +114,14 @@ function RouteComponent() {
 		activeForm.crud.startSubmitting();
 
 		try {
-			if (categoryType === "product") {
-				await createProductCategory({
-					data: productCategoryForm.createForm.formData as CategoryFormData,
-				});
-			} else {
-				await createTeaCategory({
-					data: teaCategoryForm.createForm.formData as TeaCategoryFormData,
-				});
-			}
+            await createProductCategory({
+                data: productCategoryForm.createForm.formData as CategoryFormData,
+            });
 
-			toast.success(
-				`${categoryType === "product" ? "Category" : "Tea category"} added successfully!`,
-			);
+            toast.success("Category added successfully!");
 
 			// Refresh the relevant query
-			queryClient.invalidateQueries({
-				queryKey:
-					categoryType === "product"
-						? ["dashboard-categories"]
-						: ["dashboard-tea-categories"],
-			});
-
-			// For tea categories, also remove store data cache completely - forces fresh fetch on all clients
-			if (categoryType === "tea") {
-				queryClient.removeQueries({
-					queryKey: storeDataQueryOptions().queryKey,
-				});
-			}
+            queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });
 
 			closeCreateDrawer();
 		} catch (err) {
@@ -205,15 +136,13 @@ function RouteComponent() {
 	const closeCreateDrawer = () => {
 		activeForm.crud.closeCreateDrawer();
 		productCategoryForm.createForm.resetForm();
-		teaCategoryForm.createForm.resetForm();
+        // No tea form
 		setIsCreateAutoSlug(true);
 	};
 
 	// Handler for editing product categories
 	const handleEditCategory = (category: Category) => {
-		setCategoryType("product");
-		setEditingCategoryId(category.id);
-		setEditingTeaCategorySlug(null);
+        setEditingCategoryId(category.id);
 
 		// Determine if slug is custom (doesn't match auto-generated)
 		const isCustomSlug = category.slug !== generateSlug(category.name);
@@ -229,68 +158,27 @@ function RouteComponent() {
 	};
 
 	// Handler for editing tea categories
-	const handleEditTeaCategory = (teaCategory: TeaCategory) => {
-		setCategoryType("tea");
-		setEditingTeaCategorySlug(teaCategory.slug);
-		setEditingCategoryId(null);
-
-		// Determine if slug is custom (doesn't match auto-generated)
-		const isCustomSlug = teaCategory.slug !== generateSlug(teaCategory.name);
-
-		teaCategoryForm.editForm.setFormData({
-			name: teaCategory.name,
-			slug: teaCategory.slug,
-			description: teaCategory.description || "",
-			blogSlug: teaCategory.blogSlug || "",
-			isActive: teaCategory.isActive,
-		});
-		setIsEditAutoSlug(!isCustomSlug);
-		teaCategoryForm.crud.openEditDrawer();
-	};
+    // Tea edit removed
 
 	// Handler for updating categories
 	const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		if (categoryType === "product" && !editingCategoryId) return;
-		if (categoryType === "tea" && !editingTeaCategorySlug) return;
+        if (!editingCategoryId) return;
 
 		activeForm.crud.startSubmitting();
 
 		try {
-			if (categoryType === "product" && editingCategoryId) {
-				await updateProductCategory({
-					data: {
-						id: editingCategoryId,
-						data: productCategoryForm.editForm.formData as CategoryFormData,
-					},
-				});
-			} else if (categoryType === "tea" && editingTeaCategorySlug) {
-				await updateTeaCategoryBySlug({
-					data: {
-						slug: editingTeaCategorySlug,
-						data: teaCategoryForm.editForm.formData as TeaCategoryFormData,
-					},
-				});
-			}
+            await updateProductCategory({
+                data: {
+                    id: editingCategoryId,
+                    data: productCategoryForm.editForm.formData as CategoryFormData,
+                },
+            });
 
-			toast.success(
-				`${categoryType === "product" ? "Category" : "Tea category"} updated successfully!`,
-			);
+            toast.success("Category updated successfully!");
 
 			// Refresh the relevant query
-			queryClient.invalidateQueries({
-				queryKey:
-					categoryType === "product"
-						? ["dashboard-categories"]
-						: ["dashboard-tea-categories"],
-			});
-
-			// For tea categories, also remove store data cache completely - forces fresh fetch on all clients
-			if (categoryType === "tea") {
-				queryClient.removeQueries({
-					queryKey: storeDataQueryOptions().queryKey,
-				});
-			}
+            queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });
 
 			closeEditModal();
 		} catch (err) {
@@ -304,66 +192,35 @@ function RouteComponent() {
 
 	const closeEditModal = () => {
 		activeForm.crud.closeEditDrawer();
-		setEditingCategoryId(null);
-		setEditingTeaCategorySlug(null);
-		productCategoryForm.editForm.resetForm();
-		teaCategoryForm.editForm.resetForm();
+        setEditingCategoryId(null);
+        productCategoryForm.editForm.resetForm();
 		setIsEditAutoSlug(false);
 	};
 
 	// Handler for deleting product categories
 	const handleDeleteCategoryClick = (category: Category) => {
-		setCategoryType("product");
-		setDeletingCategoryId(category.id);
-		setDeletingTeaCategorySlug(null);
+        setDeletingCategoryId(category.id);
 		productCategoryForm.crud.openDeleteDialog();
 	};
 
 	// Handler for deleting tea categories
-	const handleDeleteTeaCategoryClick = (teaCategory: TeaCategory) => {
-		setCategoryType("tea");
-		setDeletingTeaCategorySlug(teaCategory.slug);
-		setDeletingCategoryId(null);
-		teaCategoryForm.crud.openDeleteDialog();
-	};
+    // Tea delete removed
 
 	const handleDeleteConfirm = async () => {
-		if (categoryType === "product" && !deletingCategoryId) return;
-		if (categoryType === "tea" && !deletingTeaCategorySlug) return;
+        if (!deletingCategoryId) return;
 
 		activeForm.crud.startDeleting();
 
 		try {
-			if (categoryType === "product" && deletingCategoryId) {
-				await deleteProductCategory({ data: { id: deletingCategoryId } });
-			} else if (categoryType === "tea" && deletingTeaCategorySlug) {
-				await deleteTeaCategoryBySlug({
-					data: { slug: deletingTeaCategorySlug },
-				});
-			}
+            await deleteProductCategory({ data: { id: deletingCategoryId } });
 
-			toast.success(
-				`${categoryType === "product" ? "Category" : "Tea category"} deleted successfully!`,
-			);
+            toast.success("Category deleted successfully!");
 
 			// Refresh the relevant query
-			queryClient.invalidateQueries({
-				queryKey:
-					categoryType === "product"
-						? ["dashboard-categories"]
-						: ["dashboard-tea-categories"],
-			});
-
-			// For tea categories, also remove store data cache completely - forces fresh fetch on all clients
-			if (categoryType === "tea") {
-				queryClient.removeQueries({
-					queryKey: storeDataQueryOptions().queryKey,
-				});
-			}
+            queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });
 
 			activeForm.crud.closeDeleteDialog();
-			setDeletingCategoryId(null);
-			setDeletingTeaCategorySlug(null);
+            setDeletingCategoryId(null);
 		} catch (err) {
 			const errorMsg = err instanceof Error ? err.message : "An error occurred";
 			activeForm.crud.setError(errorMsg);
@@ -376,7 +233,7 @@ function RouteComponent() {
 	const handleDeleteCancel = () => {
 		activeForm.crud.closeDeleteDialog();
 		setDeletingCategoryId(null);
-		setDeletingTeaCategorySlug(null);
+    // no-op
 	};
 
 	return (
@@ -463,90 +320,25 @@ function RouteComponent() {
 					</div>
 				</div>
 
-				{/* Tea Categories Section */}
-				<div className="space-y-4">
-					<div className="flex items-center justify-between">
-						<h3 className="text-lg font-medium">Tea Categories</h3>
-						<Button
-							onClick={() => {
-								setCategoryType("tea");
-								teaCategoryForm.crud.openCreateDrawer();
-							}}
-							size="sm"
-						>
-							<Plus className="h-4 w-4 mr-1" />
-							Add Tea Category
-						</Button>
-					</div>
-
-					<div>
-						{!teaCategoriesData || teaCategoriesData.length === 0 ? (
-							<div className="text-center py-8 text-muted-foreground">
-								No tea categories found
-							</div>
-						) : (
-							<div className="overflow-x-auto">
-								<table className="min-w-full">
-									<tbody className="divide-y divide-border">
-										{teaCategoriesData?.map((teaCategory) => (
-											<tr key={teaCategory.slug} className="hover:bg-muted/30">
-												<td className="px-1 py-4">
-													<div>
-														<div className="font-medium">
-															{teaCategory.name}
-														</div>
-														<div className="text-sm text-muted-foreground">
-															{teaCategory.slug}
-														</div>
-													</div>
-												</td>
-												<td className="px-1 py-4">
-													<Badge
-														variant={
-															teaCategory.isActive ? "default" : "secondary"
-														}
-													>
-														{teaCategory.isActive ? "Active" : "Inactive"}
-													</Badge>
-												</td>
-												<td className="px-1 py-4 text-right">
-													<div className="flex space-x-2 justify-end">
-														<Button
-															size="sm"
-															variant="outline"
-															onClick={() => handleEditTeaCategory(teaCategory)}
-														>
-															Edit
-														</Button>
-														<Button
-															variant="destructive"
-															size="sm"
-															onClick={() =>
-																handleDeleteTeaCategoryClick(teaCategory)
-															}
-														>
-															Delete
-														</Button>
-													</div>
-												</td>
-											</tr>
-										))}
-									</tbody>
-								</table>
-							</div>
-						)}
-					</div>
-				</div>
+                {/* Tea Categories placeholder: structural component kept only */}
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-medium">Tea Categories (placeholder)</h3>
+                    </div>
+                    <div className="text-sm text-muted-foreground py-8">
+                        Structural placeholder retained for future use. No tea logic.
+                    </div>
+                </div>
 			</div>
 
 			{/* Create Category Drawer */}
-			<DashboardFormDrawer
+            <DashboardFormDrawer
 				isOpen={activeForm.crud.showCreateDrawer}
 				onOpenChange={activeForm.crud.setShowCreateDrawer}
-				title={`Add New ${categoryType === "product" ? "Product Category" : "Tea Category"}`}
+                title={`Add New Product Category`}
 				formId={createFormId}
 				isSubmitting={activeForm.crud.isSubmitting}
-				submitButtonText={`Create ${categoryType === "product" ? "Category" : "Tea Category"}`}
+                submitButtonText={`Create Category`}
 				submittingText="Creating..."
 				onCancel={closeCreateDrawer}
 				error={
@@ -559,11 +351,11 @@ function RouteComponent() {
 				<form onSubmit={handleSubmit} id={createFormId} className="contents">
 					<DrawerSection
 						maxWidth
-						title={`${categoryType === "product" ? "Category" : "Tea Category"} Details`}
+                        title={`Category Details`}
 					>
 						<div className="space-y-4">
 							<Input
-								label={`${categoryType === "product" ? "Category" : "Tea Category"} Name`}
+                                label={`Category Name`}
 								type="text"
 								name="name"
 								value={activeForm.createForm.formData.name}
@@ -577,36 +369,11 @@ function RouteComponent() {
 								isAutoSlug={isCreateAutoSlug}
 								onSlugChange={(slug) => {
 									setIsCreateAutoSlug(false);
-									if (categoryType === "product") {
-										productCategoryForm.createForm.updateField("slug", slug);
-									} else {
-										teaCategoryForm.createForm.updateField("slug", slug);
-									}
+                                    productCategoryForm.createForm.updateField("slug", slug);
 								}}
 								onAutoSlugChange={setIsCreateAutoSlug}
 								idPrefix="create"
 							/>
-
-							{categoryType === "tea" && (
-								<DescriptionField
-									label="Description"
-									name="description"
-									value={(activeForm.createForm.formData as TeaCategoryFormData).description || ""}
-									onChange={activeForm.createForm.handleChange}
-									placeholder="Enter a description for this tea category..."
-								/>
-							)}
-
-							{categoryType === "tea" && (
-								<Input
-									label="Blog Slug"
-									type="text"
-									name="blogSlug"
-									value={(activeForm.createForm.formData as TeaCategoryFormData).blogSlug || ""}
-									onChange={activeForm.createForm.handleChange}
-									placeholder="e.g., shu-puer-the-foundation-trilogy-part-iii"
-								/>
-							)}
 
 							{categoryType === "product" && (
 								<Input
@@ -636,13 +403,13 @@ function RouteComponent() {
 			</DashboardFormDrawer>
 
 			{/* Edit Category Drawer */}
-			<DashboardFormDrawer
+            <DashboardFormDrawer
 				isOpen={activeForm.crud.showEditDrawer}
 				onOpenChange={activeForm.crud.setShowEditDrawer}
-				title={`Edit ${categoryType === "product" ? "Product Category" : "Tea Category"}`}
+                title={`Edit Product Category`}
 				formId={editFormId}
 				isSubmitting={activeForm.crud.isSubmitting}
-				submitButtonText={`Update ${categoryType === "product" ? "Category" : "Tea Category"}`}
+                submitButtonText={`Update Category`}
 				submittingText="Updating..."
 				onCancel={closeEditModal}
 				error={
@@ -655,11 +422,11 @@ function RouteComponent() {
 				<form onSubmit={handleUpdate} id={editFormId} className="contents">
 					<DrawerSection
 						maxWidth
-						title={`${categoryType === "product" ? "Category" : "Tea Category"} Details`}
+                        title={`Category Details`}
 					>
 						<div className="space-y-4">
 							<Input
-								label={`${categoryType === "product" ? "Category" : "Tea Category"} Name`}
+                                label={`Category Name`}
 								type="text"
 								name="name"
 								value={activeForm.editForm.formData.name}
@@ -673,36 +440,11 @@ function RouteComponent() {
 								isAutoSlug={isEditAutoSlug}
 								onSlugChange={(slug) => {
 									setIsEditAutoSlug(false);
-									if (categoryType === "product") {
-										productCategoryForm.editForm.updateField("slug", slug);
-									} else {
-										teaCategoryForm.editForm.updateField("slug", slug);
-									}
+                                    productCategoryForm.editForm.updateField("slug", slug);
 								}}
 								onAutoSlugChange={setIsEditAutoSlug}
 								idPrefix="edit"
 							/>
-
-							{categoryType === "tea" && (
-								<DescriptionField
-									label="Description"
-									name="description"
-									value={(activeForm.editForm.formData as TeaCategoryFormData).description || ""}
-									onChange={activeForm.editForm.handleChange}
-									placeholder="Enter a description for this tea category..."
-								/>
-							)}
-
-							{categoryType === "tea" && (
-								<Input
-									label="Blog Slug"
-									type="text"
-									name="blogSlug"
-									value={(activeForm.editForm.formData as TeaCategoryFormData).blogSlug || ""}
-									onChange={activeForm.editForm.handleChange}
-									placeholder="e.g., shu-puer-the-foundation-trilogy-part-iii"
-								/>
-							)}
 
 							{categoryType === "product" && (
 								<Input

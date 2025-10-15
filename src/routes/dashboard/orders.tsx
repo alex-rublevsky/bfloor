@@ -16,22 +16,6 @@ import {
 } from "~/server_functions/dashboard/orders/deleteOrder";
 import { updateOrderStatus } from "~/server_functions/dashboard/orders/updateOrderStatus";
 
-export interface OrderAddress {
-	id: number;
-	orderId: number;
-	firstName: string;
-	lastName: string;
-	email: string;
-	phone: string;
-	streetAddress: string;
-	city: string;
-	state: string | null;
-	country: string;
-	zipCode: string;
-	addressType: string;
-	createdAt: Date;
-}
-
 export interface OrderItem {
 	id: number;
 	orderId: number;
@@ -65,7 +49,6 @@ export interface Order {
 	notes: string | null;
 	createdAt: Date;
 	completedAt: Date | null;
-	addresses: OrderAddress[];
 	items: OrderItem[];
 }
 
@@ -272,17 +255,10 @@ function OrderList() {
 				if (!searchTerm) return true;
 
 				const searchLower = searchTerm.toLowerCase();
-				const shippingAddress = order.addresses?.find(
-					(addr: OrderAddress) =>
-						addr.addressType === "shipping" || addr.addressType === "both",
-				);
 
 				return (
 					order.id.toString().includes(searchLower) ||
 					order.status.toLowerCase().includes(searchLower) ||
-					shippingAddress?.firstName.toLowerCase().includes(searchLower) ||
-					shippingAddress?.lastName.toLowerCase().includes(searchLower) ||
-					shippingAddress?.email.toLowerCase().includes(searchLower) ||
 					order.items?.some((item: OrderItem) =>
 						item.product.name.toLowerCase().includes(searchLower),
 					)

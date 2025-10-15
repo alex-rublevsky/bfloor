@@ -110,69 +110,7 @@ export const orderItems = sqliteTable("order_items", {
 	createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
 });
 
-export const addresses = sqliteTable("addresses", {
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	orderId: integer("orderId")
-		.references(() => orders.id, { onDelete: "cascade" })
-		.notNull(),
-	addressType: text("addressType").notNull(), // Can be 'shipping', 'billing', or 'both'
-	firstName: text("firstName").notNull(),
-	lastName: text("lastName").notNull(),
-	email: text("email").notNull(),
-	phone: text("phone").notNull(),
-	streetAddress: text("streetAddress").notNull(),
-	city: text("city").notNull(),
-	state: text("state"),
-	zipCode: text("zipCode").notNull(),
-	country: text("country").notNull(),
-	createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
-});
 
-// Blog Related Tables
-export const teaCategories = sqliteTable("tea_categories", {
-	slug: text("slug").primaryKey(),
-	name: text("name").notNull(),
-	description: text("description"),
-	blogSlug: text("blog_slug").references(() => blogPosts.slug, {
-		onDelete: "set null",
-	}),
-	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
-});
-
-// New join table for products and tea categories
-export const productTeaCategories = sqliteTable("product_tea_categories", {
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	productId: integer("product_id")
-		.references(() => products.id, { onDelete: "cascade" })
-		.notNull(),
-	teaCategorySlug: text("tea_category_slug")
-		.references(() => teaCategories.slug, { onDelete: "cascade" })
-		.notNull(),
-});
-
-// New join table for blog posts and tea categories
-export const blogTeaCategories = sqliteTable("blog_tea_categories", {
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	blogPostId: integer("blog_post_id")
-		.references(() => blogPosts.id, { onDelete: "cascade" })
-		.notNull(),
-	teaCategorySlug: text("tea_category_slug")
-		.references(() => teaCategories.slug, { onDelete: "cascade" })
-		.notNull(),
-});
-
-export const blogPosts = sqliteTable("blog_posts", {
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	productSlug: text("product_slug").references(() => products.slug, {
-		onDelete: "set null",
-	}),
-	title: text("title"),
-	slug: text("slug").notNull().unique(),
-	body: text("body").notNull(),
-	images: text("images"),
-	isVisible: integer("is_visible", { mode: "boolean" }).notNull().default(true),
-	publishedAt: integer("published_at", { mode: "timestamp" }).notNull(),
-});
 
 // Inquiries
 // export const inquiries = sqliteTable('inquiries', {
@@ -255,10 +193,4 @@ export const schema = {
 	// Order tables
 	orders,
 	orderItems,
-	addresses,
-	// Blog tables
-	teaCategories,
-	productTeaCategories,
-	blogTeaCategories,
-	blogPosts,
 };

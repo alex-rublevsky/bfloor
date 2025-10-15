@@ -7,15 +7,12 @@ import { storeDataQueryOptions } from "~/lib/queryOptions";
 export const Route = createFileRoute("/store")({
 	component: StoreLayout,
 	pendingComponent: StorePageSkeleton,
-	// Prefetch store data before component renders
 	loader: async ({ context: { queryClient } }) => {
 		await queryClient.ensureQueryData(storeDataQueryOptions());
 	},
 });
 
 function StoreLayout() {
-	// Data is guaranteed to be loaded by the loader
-	// CartProvider no longer needs products - they're managed by TanStack Query
 	return (
 		<CartProvider>
 			<Outlet />

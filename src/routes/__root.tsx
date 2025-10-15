@@ -14,13 +14,14 @@ import {
 import type * as React from "react";
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import { NotFound } from "~/components/NotFound";
-import { PostHogWrapper } from "~/components/PostHogWrapper";
+
 import CustomCursor from "~/components/ui/shared/custom_cursor/CustomCursor";
 import { CursorContextProvider } from "~/components/ui/shared/custom_cursor/CustomCursorContext";
 import { NavBar } from "~/components/ui/shared/NavBar";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { seo } from "~/utils/seo";
 import appCss from "../styles/app.css?url";
+import { Footer } from "~/components/ui/shared/Footer";
 
 // Create QueryClient with optimized defaults
 const queryClient = new QueryClient({
@@ -58,8 +59,8 @@ export const Route = createRootRoute({
 				content: "width=device-width, initial-scale=1",
 			},
 			...seo({
-				title: "Rublevsky Studio",
-				description: `Web Development, Graphic Design, Tea Reviews`,
+				title: "BeautyFloor",
+				description: `Напольные покрытия во Владивостоке`,
 			}),
 		],
 		links: [
@@ -110,7 +111,7 @@ function RootComponent() {
 	const isMobile = useIsMobile();
 
 	return (
-		<PostHogWrapper>
+		
 			<QueryClientProvider client={queryClient}>
 				<CursorContextProvider>
 					{!isMobile && <CustomCursor />}
@@ -119,7 +120,7 @@ function RootComponent() {
 					</RootDocument>
 				</CursorContextProvider>
 			</QueryClientProvider>
-		</PostHogWrapper>
+	
 	);
 }
 
@@ -136,8 +137,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body className="">
+			
 				<NavBar />
 				{children}
+				<Footer />
 				{/* <TanStackRouterDevtools position="bottom-right" /> */}
 				<Scripts />
 			</body>

@@ -11,7 +11,6 @@ interface AdminProductCardProps {
 	onEdit: (product: ProductWithVariations) => void;
 	onDelete: (product: ProductWithVariations) => void;
 	formatPrice: (price: number) => string;
-	getTeaCategoryNames: (slugs: string[] | undefined) => string;
 }
 
 export function AdminProductCard({
@@ -176,21 +175,9 @@ export function AdminProductCard({
 												${displayPrice.toFixed(2)} CAD
 											</h5>
 										)}
-									</div>
-									{/* Tea Category Badges - Desktop/Tablet */}
-									<div className="hidden md:flex flex-col gap-1 items-end justify-center">
-										{product.teaCategories?.map((category) => (
-											<Badge key={category.slug} teaCategory={category} />
-										))}
-									</div>
-								</div>
-								{/* Tea Category Badges - Mobile */}
-								<div className="md:hidden mt-2 flex flex-wrap gap-2">
-									{product.teaCategories?.map((category) => (
-										<Badge key={category.slug} teaCategory={category} />
-									))}
-								</div>
-							</div>
+						</div>
+						</div>
+						</div>
 
 							{/* Product Name */}
 							<p className="mb-3">{product.name}</p>

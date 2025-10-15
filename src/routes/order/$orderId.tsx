@@ -74,13 +74,6 @@ function OrderPage() {
 		);
 	}
 
-	const shippingAddress = order.addresses?.find(
-		(addr) => addr.addressType === "shipping" || addr.addressType === "both",
-	);
-	const billingAddress =
-		order.addresses?.find((addr) => addr.addressType === "billing") ||
-		shippingAddress;
-
 	const isNewOrder = search.new === true;
 
 	return (
@@ -241,46 +234,6 @@ function OrderPage() {
 						</div>
 					</div>
 				</NeumorphismCard>
-
-				{/* Shipping Address Section */}
-				{shippingAddress && (
-					<div className="border-t pt-6">
-						<h2 className="font-semibold text-lg mb-4">Shipping Address</h2>
-						<div className="text-sm text-muted-foreground">
-							<p className="font-medium text-foreground">
-								{shippingAddress.firstName} {shippingAddress.lastName}
-							</p>
-							<p>{shippingAddress.streetAddress}</p>
-							<p>
-								{shippingAddress.city}, {shippingAddress.state}{" "}
-								{shippingAddress.zipCode}
-							</p>
-							<p>{shippingAddress.country}</p>
-							<p className="mt-2">{shippingAddress.email}</p>
-							{shippingAddress.phone && <p>{shippingAddress.phone}</p>}
-						</div>
-					</div>
-				)}
-
-				{/* Billing Address Section */}
-				{billingAddress && billingAddress !== shippingAddress && (
-					<div className="border-t pt-6">
-						<h2 className="font-semibold text-lg mb-4">Billing Address</h2>
-						<div className="text-sm text-muted-foreground">
-							<p className="font-medium text-foreground">
-								{billingAddress.firstName} {billingAddress.lastName}
-							</p>
-							<p>{billingAddress.streetAddress}</p>
-							<p>
-								{billingAddress.city}, {billingAddress.state}{" "}
-								{billingAddress.zipCode}
-							</p>
-							<p>{billingAddress.country}</p>
-							<p className="mt-2">{billingAddress.email}</p>
-							{billingAddress.phone && <p>{billingAddress.phone}</p>}
-						</div>
-					</div>
-				)}
 
 				{/* Actions Section */}
 				<div className="flex justify-center gap-4">

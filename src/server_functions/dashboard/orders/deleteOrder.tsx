@@ -4,7 +4,7 @@ import { eq, inArray } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import type * as schema from "~/schema";
-import { addresses, orderItems, orders } from "~/schema";
+import { orderItems, orders } from "~/schema";
 
 export const deleteOrder = createServerFn({ method: "POST" })
 	.inputValidator((data: { id: number }) => data)
@@ -33,9 +33,6 @@ export const deleteOrder = createServerFn({ method: "POST" })
 			// Delete related data first (foreign key constraints)
 			// Delete order items
 			await db.delete(orderItems).where(eq(orderItems.orderId, orderId));
-
-			// Delete addresses
-			await db.delete(addresses).where(eq(addresses.orderId, orderId));
 
 			// Finally delete the order
 			await db.delete(orders).where(eq(orders.id, orderId));
@@ -83,9 +80,6 @@ export const deleteOrders = createServerFn({ method: "POST" })
 			// Delete related data first (foreign key constraints)
 			// Delete order items
 			await db.delete(orderItems).where(inArray(orderItems.orderId, orderIds));
-
-			// Delete addresses
-			await db.delete(addresses).where(inArray(addresses.orderId, orderIds));
 
 			// Finally delete the orders
 			await db.delete(orders).where(inArray(orders.id, orderIds));

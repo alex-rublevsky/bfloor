@@ -3,7 +3,7 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
-import { addresses, orderItems, orders, products, type schema } from "~/schema";
+import { orderItems, orders, products, type schema } from "~/schema";
 
 export const getOrderBySlug = createServerFn({ method: "GET" })
 	.inputValidator((data: { orderId: string }) => data)
@@ -19,7 +19,7 @@ export const getOrderBySlug = createServerFn({ method: "GET" })
 			}
 
 			// Fetch order with all related data
-			const [orderResult, itemsResult, addressesResult] = await Promise.all([
+			const [orderResult, itemsResult] = await Promise.all([
 				// Get the order
 				db
 					.select()
@@ -55,12 +55,6 @@ export const getOrderBySlug = createServerFn({ method: "GET" })
 					.from(orderItems)
 					.leftJoin(products, eq(orderItems.productId, products.id))
 					.where(eq(orderItems.orderId, orderIdNum)),
-
-				// Get addresses
-				db
-					.select()
-					.from(addresses)
-					.where(eq(addresses.orderId, orderIdNum)),
 			]);
 
 			if (!orderResult[0]) {
@@ -86,7 +80,6 @@ export const getOrderBySlug = createServerFn({ method: "GET" })
 			const orderWithRelations = {
 				...order,
 				items,
-				addresses: addressesResult,
 			};
 
 			return orderWithRelations;

@@ -4,22 +4,6 @@ import { Checkbox } from "~/components/ui/shared/Checkbox";
 import { Image } from "~/components/ui/shared/Image";
 import { Switch } from "~/components/ui/shared/Switch";
 
-interface OrderAddress {
-	id: number;
-	orderId: number;
-	firstName: string;
-	lastName: string;
-	email: string;
-	phone: string;
-	streetAddress: string;
-	city: string;
-	state: string | null;
-	country: string;
-	zipCode: string;
-	addressType: string;
-	createdAt: Date;
-}
-
 interface OrderItem {
 	id: number;
 	orderId: number;
@@ -53,7 +37,6 @@ interface Order {
 	notes: string | null;
 	createdAt: Date;
 	completedAt: Date | null;
-	addresses: OrderAddress[];
 	items: OrderItem[];
 }
 
@@ -76,10 +59,6 @@ export function OrderCard({
 	isSelected = false,
 	onSelectionChange,
 }: OrderCardProps) {
-	const shippingAddress = order.addresses?.find(
-		(addr) => addr.addressType === "shipping" || addr.addressType === "both",
-	);
-
 	const totalItems =
 		order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
@@ -170,21 +149,6 @@ export function OrderCard({
 							</p>
 						</div>
 					))}
-				</div>
-			)}
-
-			{/* Customer Info */}
-			{shippingAddress && (
-				<div className="space-y-1">
-					<p className="text-xs font-medium">
-						{shippingAddress.firstName} {shippingAddress.lastName}
-					</p>
-					<p className="text-xs text-muted-foreground truncate">
-						{shippingAddress.email}
-					</p>
-					<p className="text-xs text-muted-foreground">
-						{shippingAddress.city}, {shippingAddress.country}
-					</p>
 				</div>
 			)}
 

@@ -213,8 +213,7 @@ export function NavBar({
 	const router = useRouter();
 	const routerState = useRouterState();
 	const pathname = router.state.location.pathname;
-	const { prefetchBlog, prefetchStore, prefetchDashboardOrders } =
-		usePrefetch();
+	const { prefetchStore, prefetchDashboardOrders } = usePrefetch();
 
 	// Keep NavBar silent in production; no-op logs
 
@@ -350,14 +349,9 @@ export function NavBar({
 				<>
 					{/* Show SmartBackButton for blog pages - Desktop layout */}
 					{showBlogBackButton && (
-						<button
-							type="button"
-							className="hidden md:flex items-center gap-3 pointer-events-auto z-50 bg-transparent border-0 p-0"
-							onMouseEnter={prefetchBlog}
-							onClick={() => {}}
-						>
+						<div className="hidden md:flex items-center gap-3 pointer-events-auto z-50">
 							<SmartBackButton label="Back to blog" fallbackPath="/blog" />
-						</button>
+						</div>
 					)}
 
 					{/* Show SmartBackButton for blog pages - Mobile layout */}

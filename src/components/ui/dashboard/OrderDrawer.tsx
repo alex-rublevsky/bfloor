@@ -10,22 +10,6 @@ import {
 } from "~/components/ui/shared/Drawer";
 import { Image } from "~/components/ui/shared/Image";
 
-interface OrderAddress {
-	id: number;
-	orderId: number;
-	firstName: string;
-	lastName: string;
-	email: string;
-	phone: string;
-	streetAddress: string;
-	city: string;
-	state: string | null;
-	country: string;
-	zipCode: string;
-	addressType: string;
-	createdAt: Date;
-}
-
 interface OrderItem {
 	id: number;
 	orderId: number;
@@ -59,7 +43,6 @@ interface Order {
 	notes: string | null;
 	createdAt: Date;
 	completedAt: Date | null;
-	addresses: OrderAddress[];
 	items: OrderItem[];
 }
 
@@ -71,13 +54,6 @@ interface OrderDrawerProps {
 
 export function OrderDrawer({ order, isOpen, onClose }: OrderDrawerProps) {
 	if (!order) return null;
-
-	const shippingAddress = order.addresses?.find(
-		(addr) => addr.addressType === "shipping" || addr.addressType === "both",
-	);
-	const billingAddress = order.addresses?.find(
-		(addr) => addr.addressType === "billing",
-	);
 
 	return (
 		<Drawer open={isOpen} onOpenChange={onClose}>
@@ -151,44 +127,6 @@ export function OrderDrawer({ order, isOpen, onClose }: OrderDrawerProps) {
 								)}
 							</div>
 						</DrawerSection>
-
-						{/* Shipping Address */}
-						{shippingAddress && (
-							<DrawerSection title="Shipping Address">
-								<div className="space-y-2">
-									<p className="text-sm">
-										{shippingAddress.firstName} {shippingAddress.lastName}
-									</p>
-									<p className="text-sm">{shippingAddress.streetAddress}</p>
-									<p className="text-sm">
-										{shippingAddress.city}, {shippingAddress.state}{" "}
-										{shippingAddress.zipCode}
-									</p>
-									<p className="text-sm">{shippingAddress.country}</p>
-									<p className="text-sm">{shippingAddress.email}</p>
-									<p className="text-sm">{shippingAddress.phone}</p>
-								</div>
-							</DrawerSection>
-						)}
-
-						{/* Billing Address */}
-						{billingAddress && (
-							<DrawerSection title="Billing Address">
-								<div className="space-y-2">
-									<p className="text-sm">
-										{billingAddress.firstName} {billingAddress.lastName}
-									</p>
-									<p className="text-sm">{billingAddress.streetAddress}</p>
-									<p className="text-sm">
-										{billingAddress.city}, {billingAddress.state}{" "}
-										{billingAddress.zipCode}
-									</p>
-									<p className="text-sm">{billingAddress.country}</p>
-									<p className="text-sm">{billingAddress.email}</p>
-									<p className="text-sm">{billingAddress.phone}</p>
-								</div>
-							</DrawerSection>
-						)}
 
 						{/* Order Items */}
 						{order.items && order.items.length > 0 && (

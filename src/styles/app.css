@@ -13,7 +13,8 @@
 html,
 body {
 	font-family: "Overused Grotesk", ui-sans-serif, system-ui, sans-serif;
-	letter-spacing: 3%; /* Slightly increased character spacing */
+	letter-spacing: 3%;
+	/* Slightly increased character spacing */
 }
 
 @theme {
@@ -66,6 +67,7 @@ body {
   color utility to any element that depends on these defaults.
 */
 @layer base {
+
 	*,
 	::after,
 	::before,
@@ -97,6 +99,7 @@ body {
 	}
 
 	@media (prefers-color-scheme: dark) {
+
 		html,
 		body {
 			background-color: rgb(3 7 18);
@@ -108,14 +111,15 @@ body {
 		outline: none;
 	}
 }
+
 :root {
-	--background: 95.85% 0.0037 286.33;
-	--foreground: 0.1305 0.0226 188.93;
+	--background: 0.9672 0.0043 17.23;
+	--foreground: 0.2217 0.0084 264.39;
 	--card: 0 0% 100%;
 	--card-foreground: 0 0% 3.9%;
 	--popover: 0 0% 100%;
 	--popover-foreground: 0 0% 3.9%;
-	--primary: 0.147 0.004 49.25;
+	--primary: 0.4005 0.1373 25.99;
 	--primary-foreground: 95.85% 0.0037 286.33;
 	--secondary: 59.85% 0.0037 286.33;
 	--secondary-foreground: 60.85% 0.0037 286.33;
@@ -168,6 +172,7 @@ body {
 	--tea-gu-shu-outline: #b48f57;
 	--tea-gu-shu-text: #33230a;
 }
+
 .dark {
 	--background: 0 0% 3.9%;
 	--foreground: 0 0% 98%;
@@ -207,6 +212,7 @@ body {
 	* {
 		border-color: oklch(var(--border));
 	}
+
 	body {
 		background-color: oklch(var(--background));
 		color: oklch(var(--foreground));
@@ -296,21 +302,25 @@ body {
 html {
 	font-size: calc(0.5668103448275863rem + 0.5172413793103448vw);
 }
+
 @media screen and (max-width: 2500px) {
 	html {
 		font-size: calc(0.5668103448275863rem + 0.5172413793103448vw);
 	}
 }
+
 @media screen and (max-width: 1920px) {
 	html {
 		font-size: calc(0.6875rem + 0.41666666666666674vw);
 	}
 }
+
 @media screen and (max-width: 1440px) {
 	html {
 		font-size: calc(0.9688475546305931rem + 0.10405827263267431vw);
 	}
 }
+
 @media screen and (max-width: 479px) {
 	html {
 		font-size: 1rem;
@@ -377,15 +387,19 @@ p {
 	h1 {
 		font-size: 2.9rem;
 	}
+
 	h2 {
 		font-size: 2.5rem;
 	}
+
 	h3 {
 		font-size: 2rem;
 	}
+
 	h4 {
 		font-size: 1.6rem;
 	}
+
 	h5 {
 		font-size: 1.2rem;
 	}
@@ -417,6 +431,7 @@ p {
 	margin-top: 0;
 	margin-bottom: 0.3rem;
 }
+
 .prose p {
 	margin-top: 0;
 	margin-bottom: 1rem;
@@ -447,37 +462,7 @@ p {
 	}
 }
 
-/* Accordion animations */
-@keyframes accordion-down {
-	from {
-		height: 0;
-	}
-	to {
-		height: var(--radix-accordion-content-height);
-	}
-}
 
-@keyframes accordion-up {
-	from {
-		height: var(--radix-accordion-content-height);
-	}
-	to {
-		height: 0;
-	}
-}
-
-:root {
-	--animate-accordion-down: accordion-down 0.2s ease-out;
-	--animate-accordion-up: accordion-up 0.2s ease-out;
-}
-
-.animate-accordion-down {
-	animation: var(--animate-accordion-down);
-}
-
-.animate-accordion-up {
-	animation: var(--animate-accordion-up);
-}
 
 .no-scrollbar {
 	scrollbar-width: none;
@@ -504,6 +489,7 @@ p {
 		transform: translateY(60px);
 		opacity: 0;
 	}
+
 	to {
 		transform: translateY(0);
 		opacity: 1;
@@ -515,6 +501,7 @@ p {
 		opacity: 0;
 		transform: scale(0.8);
 	}
+
 	to {
 		opacity: 1;
 		transform: scale(1);
@@ -530,20 +517,6 @@ p {
 	animation: none;
 }
 
-/* Custom breakpoint for blog gallery - keep mobile layout until 1450px */
-@media (min-width: 1024px) and (max-width: 1449px) {
-	.blog-gallery-mobile-at-lg .gallery-stack.flex {
-		flex-direction: column;
-	}
-
-	.blog-gallery-mobile-at-lg .gallery-stack.flex > div:first-child {
-		order: 2;
-	}
-
-	.blog-gallery-mobile-at-lg .gallery-stack.flex > div:last-child {
-		order: 1;
-	}
-}
 
 /* Hide number input spinners */
 input[type="number"]::-webkit-outer-spin-button,
@@ -555,148 +528,4 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
 	-moz-appearance: textfield;
 	appearance: textfield;
-}
-
-/* Tea category badge styles - outline with hover fill */
-.ripe-pu-er {
-	background-color: transparent;
-	border-color: var(--tea-shu-puer-outline);
-	color: var(--tea-shu-puer-text);
-}
-
-.ripe-pu-er:hover {
-	background-color: var(--tea-shu-puer-outline);
-	color: var(--tea-shu-puer-text);
-}
-
-.raw-pu-er {
-	background-color: transparent;
-	border-color: var(--tea-raw-puer-outline);
-	color: var(--tea-raw-puer-text);
-}
-
-.raw-pu-er:hover {
-	background-color: var(--tea-raw-puer-outline);
-	color: var(--tea-raw-puer-text);
-}
-
-.purple {
-	background-color: transparent;
-	border-color: var(--tea-purple-outline);
-	color: var(--tea-purple-text);
-}
-
-.purple:hover {
-	background-color: var(--tea-purple-outline);
-	color: var(--tea-purple-text);
-}
-
-.gong-ting {
-	background-color: transparent;
-	border-color: var(--tea-gong-ting-outline);
-	color: var(--tea-gong-ting-text);
-}
-
-.gong-ting:hover {
-	background-color: var(--tea-gong-ting-outline);
-	color: var(--tea-gong-ting-text-hover);
-}
-
-.white {
-	background-color: transparent;
-	border-color: var(--tea-white-outline);
-	color: var(--tea-white-text);
-}
-
-.white:hover {
-	background-color: var(--tea-white-outline);
-	color: var(--tea-white-text);
-}
-
-.rattan-trees {
-	background-color: transparent;
-	border-color: var(--tea-rattan-trees-outline);
-	color: var(--tea-rattan-trees-text);
-}
-
-.rattan-trees:hover {
-	background-color: var(--tea-rattan-trees-outline);
-	color: var(--tea-rattan-trees-text);
-}
-
-.ancient-trees {
-	background-color: transparent;
-	border-color: var(--tea-ancient-trees-outline);
-	color: var(--tea-ancient-trees-text);
-}
-
-.ancient-trees:hover {
-	background-color: var(--tea-ancient-trees-outline);
-	color: var(--tea-ancient-trees-text);
-}
-
-.oolong {
-	background-color: transparent;
-	border-color: var(--tea-oolong-outline);
-	color: var(--tea-oolong-text);
-}
-
-.oolong:hover {
-	background-color: var(--tea-oolong-outline);
-	color: var(--tea-oolong-text);
-}
-
-.red-tea {
-	background-color: transparent;
-	border-color: var(--tea-red-tea-outline);
-	color: var(--tea-red-tea-text);
-}
-
-.red-tea:hover {
-	background-color: var(--tea-red-tea-outline);
-	color: var(--tea-red-tea-text);
-}
-
-.small-baskets {
-	background-color: transparent;
-	border: 1px solid #8b89ff;
-	color: #0b0b30;
-}
-
-.small-baskets:hover {
-	background-color: #8b89ff;
-	color: #0b0b30;
-}
-
-.gu-shu {
-	background-color: transparent;
-	border-color: var(--tea-gu-shu-outline);
-	color: var(--tea-gu-shu-text);
-}
-
-.gu-shu:hover {
-	background-color: var(--tea-gu-shu-outline);
-	color: var(--tea-gu-shu-text);
-}
-
-.gaba {
-	background-color: transparent;
-	border: 1px solid #ffe45b;
-	color: #37300e;
-}
-
-.gaba:hover {
-	background-color: #ffe45b;
-	color: #37300e;
-}
-
-.green {
-	background-color: transparent;
-	border: 1px solid #8ef936;
-	color: #20390c;
-}
-
-.green:hover {
-	background-color: #8ef936;
-	color: #20390c;
 }

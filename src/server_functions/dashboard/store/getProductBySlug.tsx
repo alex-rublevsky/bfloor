@@ -6,7 +6,6 @@ import { DB } from "~/db";
 import type * as schema from "~/schema";
 import {
 	products,
-	productTeaCategories,
 	productVariations,
 	variationAttributes,
 } from "~/schema";
@@ -24,34 +23,27 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 			}
 
 			// Fetch product with all its data
-			const [productResult, variationsResult, teaCategoriesResult] =
-				await Promise.all([
-					db.select().from(products).where(eq(products.id, productId)).limit(1),
-					db
-						.select({
-							id: productVariations.id,
-							sku: productVariations.sku,
-							price: productVariations.price,
-							stock: productVariations.stock,
-							sort: productVariations.sort,
-							discount: productVariations.discount,
-							shippingFrom: productVariations.shippingFrom,
-							attributeId: variationAttributes.attributeId,
-							attributeValue: variationAttributes.value,
-						})
-						.from(productVariations)
-						.leftJoin(
-							variationAttributes,
-							eq(variationAttributes.productVariationId, productVariations.id),
-						)
-						.where(eq(productVariations.productId, productId)),
-					db
-						.select({
-							teaCategorySlug: productTeaCategories.teaCategorySlug,
-						})
-						.from(productTeaCategories)
-						.where(eq(productTeaCategories.productId, productId)),
-				]);
+			const [productResult, variationsResult] = await Promise.all([
+				db.select().from(products).where(eq(products.id, productId)).limit(1),
+				db
+					.select({
+						id: productVariations.id,
+						sku: productVariations.sku,
+						price: productVariations.price,
+						stock: productVariations.stock,
+						sort: productVariations.sort,
+						discount: productVariations.discount,
+						shippingFrom: productVariations.shippingFrom,
+						attributeId: variationAttributes.attributeId,
+						attributeValue: variationAttributes.value,
+					})
+					.from(productVariations)
+					.leftJoin(
+						variationAttributes,
+						eq(variationAttributes.productVariationId, productVariations.id),
+					)
+					.where(eq(productVariations.productId, productId)),
+			]);
 
 			if (!productResult[0]) {
 				setResponseStatus(404);
@@ -85,14 +77,10 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 			}
 
 			const variations = Array.from(variationsMap.values());
-			const teaCategories = teaCategoriesResult.map(
-				(tc: { teaCategorySlug: string }) => tc.teaCategorySlug,
-			);
 
 			const productWithDetails = {
 				...product,
 				variations,
-				teaCategories,
 			};
 
 			return productWithDetails;

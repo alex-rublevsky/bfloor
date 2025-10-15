@@ -13,7 +13,6 @@ import { ProductSettingsFields } from "~/components/ui/dashboard/ProductSettings
 import ProductVariationForm from "~/components/ui/dashboard/ProductVariationForm";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
-import { TeaCategoriesSelector } from "~/components/ui/dashboard/TeaCategoriesSelector";
 import { ProductStatsCompact } from "~/components/ui/shared/productNumberAndWeightDisplay";
 import { Input } from "~/components/ui/shared/Input";
 import { SearchInput } from "~/components/ui/shared/SearchInput";
@@ -148,7 +147,6 @@ function RouteComponent() {
 		price: "0",
 		categorySlug: "",
 		brandSlug: "",
-		teaCategories: [],
 		stock: "0",
 		isActive: true,
 		isFeatured: false,
@@ -304,19 +302,7 @@ function RouteComponent() {
 		}).format(numericPrice);
 	};
 
-	const getTeaCategoryNames = (slugs: string[] | undefined): string => {
-		if (!slugs || !productsData || slugs.length === 0) return "N/A";
-		return slugs
-			.map(
-				(slug) =>
-					productsData.teaCategories.find((category) => category.slug === slug)
-						?.name,
-			)
-			.filter(Boolean)
-			.join(", ");
-	};
-
-	const { groupedProducts, categories, teaCategories, brands } = productsData;
+	const { groupedProducts, categories, brands } = productsData;
 
 	// Filter grouped products based on search
 	// Products are already sorted by availability on the server side
@@ -349,33 +335,18 @@ function RouteComponent() {
 			setIsAutoSlug(false);
 		}
 
-		// Handle tea categories checkbox
-		if (name.startsWith("teaCategory-")) {
-			const teaCategorySlug = name.replace("teaCategory-", "");
-			const updatedTeaCategories = checked
-				? [...(formData.teaCategories || []), teaCategorySlug]
-				: (formData.teaCategories || []).filter(
-						(slug) => slug !== teaCategorySlug,
-					);
-
+		// Handle regular form fields
+		if (name === "discount") {
+			// Handle discount field specifically - allow empty string to be converted to null
 			updatedFormData = {
 				...updatedFormData,
-				teaCategories: updatedTeaCategories,
+				discount: value === "" ? null : parseInt(value, 10) || null,
 			};
 		} else {
-			// Handle regular form fields
-			if (name === "discount") {
-				// Handle discount field specifically - allow empty string to be converted to null
-				updatedFormData = {
-					...updatedFormData,
-					discount: value === "" ? null : parseInt(value, 10) || null,
-				};
-			} else {
-				updatedFormData = {
-					...updatedFormData,
-					[name]: type === "checkbox" ? checked : value,
-				};
-			}
+			updatedFormData = {
+				...updatedFormData,
+				[name]: type === "checkbox" ? checked : value,
+			};
 		}
 
 		// Handle variations creation
@@ -410,33 +381,18 @@ function RouteComponent() {
 			setIsEditAutoSlug(false);
 		}
 
-		// Handle tea categories checkbox
-		if (name.startsWith("teaCategory-")) {
-			const teaCategorySlug = name.replace("teaCategory-", "");
-			const updatedTeaCategories = checked
-				? [...(editFormData.teaCategories || []), teaCategorySlug]
-				: (editFormData.teaCategories || []).filter(
-						(slug) => slug !== teaCategorySlug,
-					);
-
+		// Handle regular form fields
+		if (name === "discount") {
+			// Handle discount field specifically - allow empty string to be converted to null
 			updatedFormData = {
 				...updatedFormData,
-				teaCategories: updatedTeaCategories,
+				discount: value === "" ? null : parseInt(value, 10) || null,
 			};
 		} else {
-			// Handle regular form fields
-			if (name === "discount") {
-				// Handle discount field specifically - allow empty string to be converted to null
-				updatedFormData = {
-					...updatedFormData,
-					discount: value === "" ? null : parseInt(value, 10) || null,
-				};
-			} else {
-				updatedFormData = {
-					...updatedFormData,
-					[name]: type === "checkbox" ? checked : value,
-				};
-			}
+			updatedFormData = {
+				...updatedFormData,
+				[name]: type === "checkbox" ? checked : value,
+			};
 		}
 
 		// Handle variations creation
@@ -494,7 +450,6 @@ function RouteComponent() {
 			const submissionData = {
 				...formData,
 				variations: formattedVariations,
-				teaCategories: formData.teaCategories || undefined,
 			};
 
 			await createProduct({ data: submissionData });
@@ -660,7 +615,6 @@ function RouteComponent() {
 				price: productWithDetails.price.toString(),
 				categorySlug: productWithDetails.categorySlug || "",
 				brandSlug: productWithDetails.brandSlug || "",
-				teaCategories: productWithDetails.teaCategories || [],
 				stock: productWithDetails.stock.toString(),
 				isActive: productWithDetails.isActive,
 				isFeatured: productWithDetails.isFeatured,
@@ -689,7 +643,6 @@ function RouteComponent() {
 				price: product.price.toString(),
 				categorySlug: product.categorySlug || "",
 				brandSlug: product.brandSlug || "",
-				teaCategories: product.teaCategories || [],
 				stock: product.stock.toString(),
 				isActive: product.isActive,
 				isFeatured: product.isFeatured,
@@ -764,7 +717,6 @@ function RouteComponent() {
 											onEdit={handleEdit}
 											onDelete={handleDeleteClick}
 											formatPrice={formatPrice}
-											getTeaCategoryNames={getTeaCategoryNames}
 										/>
 									))}
 								</div>
@@ -1010,23 +962,6 @@ function RouteComponent() {
 							</div>
 						</div>
 
-						{/* Tea Categories Block */}
-						<TeaCategoriesSelector
-							teaCategories={teaCategories}
-							selectedCategories={editFormData.teaCategories || []}
-							onCategoryChange={(categorySlug, checked) => {
-								const newCategories = checked
-									? [...(editFormData.teaCategories || []), categorySlug]
-									: (editFormData.teaCategories || []).filter(
-											(slug) => slug !== categorySlug,
-										);
-								setEditFormData({
-									...editFormData,
-									teaCategories: newCategories,
-								});
-							}}
-							idPrefix="edit"
-						/>
 					</DrawerSection>
 
 					{/* Variations Block */}
@@ -1275,23 +1210,6 @@ function RouteComponent() {
 							</div>
 						</div>
 
-						{/* Tea Categories Block */}
-						<TeaCategoriesSelector
-							teaCategories={teaCategories}
-							selectedCategories={formData.teaCategories || []}
-							onCategoryChange={(categorySlug, checked) => {
-								const newCategories = checked
-									? [...(formData.teaCategories || []), categorySlug]
-									: (formData.teaCategories || []).filter(
-											(slug) => slug !== categorySlug,
-										);
-								setFormData({
-									...formData,
-									teaCategories: newCategories,
-								});
-							}}
-							idPrefix="add"
-						/>
 					</DrawerSection>
 
 					{/* Variations Block */}

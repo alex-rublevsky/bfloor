@@ -13,8 +13,6 @@
 
 import { queryOptions } from "@tanstack/react-query";
 import { notFound } from "@tanstack/react-router";
-import { getAllBlogPosts } from "~/server_functions/blog/getAllBlogPosts";
-import { getBlogPostBySlug } from "~/server_functions/blog/getBlogPostBySlug";
 import { getAllOrders } from "~/server_functions/dashboard/orders/getAllOrders";
 import { getStoreData } from "~/server_functions/store/getAllProducts";
 import { getProductBySlug } from "~/server_functions/store/getProductBySlug";
@@ -66,54 +64,6 @@ export const productQueryOptions = (productId: string) =>
 		refetchOnMount: false,
 	});
 
-/**
- * Blog posts list query options
- * Used for: /blog route and prefetching blog index
- *
- * Cache Strategy: Maximum caching with persist plugin
- * - Blog posts cached for 24 hours
- * - Persists across page refreshes
- */
-export const blogPostsQueryOptions = () =>
-	queryOptions({
-		queryKey: ["blog"],
-		queryFn: async () => getAllBlogPosts(),
-		staleTime: 1000 * 60 * 60 * 24, // 24 hours - data considered fresh
-		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory/persist
-		retry: 3,
-		refetchOnWindowFocus: false,
-		refetchOnMount: false,
-		refetchOnReconnect: false,
-	});
-
-/**
- * Blog post by slug query options
- * Used for: /blog/$slug route and prefetching individual blog posts
- *
- * Cache Strategy: Long-lived caching with persist plugin
- * - Individual blog posts cached for 24 hours
- * - Persists across page refreshes
- */
-export const blogPostQueryOptions = (slug: string) =>
-	queryOptions({
-		queryKey: ["blog-post", slug],
-		queryFn: async () => {
-			try {
-				const data = await getBlogPostBySlug({ data: slug });
-				return data;
-			} catch (error) {
-				if (error instanceof Error && error.message === "Blog post not found") {
-					throw notFound();
-				}
-				throw new Error("Failed to fetch blog post");
-			}
-		},
-		retry: false, // Don't retry on error - fail fast for 404s
-		staleTime: 1000 * 60 * 60 * 24, // 24 hours - data considered fresh
-		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory/persist
-		refetchOnWindowFocus: false,
-		refetchOnMount: false,
-	});
 
 /**
  * Dashboard orders query options

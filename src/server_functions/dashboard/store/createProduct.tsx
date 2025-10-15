@@ -4,7 +4,6 @@ import { eq } from "drizzle-orm";
 import { DB } from "~/db";
 import {
 	products,
-	productTeaCategories,
 	productVariations,
 	variationAttributes,
 } from "~/schema";
@@ -62,16 +61,6 @@ export const createProduct = createServerFn({ method: "POST" })
 				.returning();
 
 			const newProduct = insertedProducts[0];
-
-			// Handle tea categories
-			if (productData.teaCategories?.length) {
-				await db.insert(productTeaCategories).values(
-					productData.teaCategories.map((slug) => ({
-						productId: newProduct.id,
-						teaCategorySlug: slug,
-					})),
-				);
-			}
 
 			// Handle variations
 			if (productData.hasVariations && productData.variations?.length) {

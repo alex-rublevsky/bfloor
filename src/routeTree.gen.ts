@@ -15,12 +15,8 @@ import { Route as StoreRouteRouteImport } from './routes/store/route'
 import { Route as ProductRouteRouteImport } from './routes/product/route'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as WebIndexRouteImport } from './routes/web/index'
 import { Route as StoreIndexRouteImport } from './routes/store/index'
-import { Route as PhotosIndexRouteImport } from './routes/photos/index'
-import { Route as DesignIndexRouteImport } from './routes/design/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
-import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as StoreCheckoutRouteImport } from './routes/store/checkout'
 import { Route as StoreProductIdRouteImport } from './routes/store/$productId'
 import { Route as OrderOrderIdRouteImport } from './routes/order/$orderId'
@@ -28,9 +24,7 @@ import { Route as DashboardProductsRouteImport } from './routes/dashboard/produc
 import { Route as DashboardOrdersRouteImport } from './routes/dashboard/orders'
 import { Route as DashboardCategoriesRouteImport } from './routes/dashboard/categories'
 import { Route as DashboardBrandsRouteImport } from './routes/dashboard/brands'
-import { Route as DashboardBlogRouteImport } from './routes/dashboard/blog'
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard/analytics'
-import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as ApiAuthSplatRouteImport } from './routes/api.auth.$'
 
 const RedirectRoute = RedirectRouteImport.update({
@@ -63,35 +57,15 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WebIndexRoute = WebIndexRouteImport.update({
-  id: '/web/',
-  path: '/web/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const StoreIndexRoute = StoreIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => StoreRouteRoute,
 } as any)
-const PhotosIndexRoute = PhotosIndexRouteImport.update({
-  id: '/photos/',
-  path: '/photos/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DesignIndexRoute = DesignIndexRouteImport.update({
-  id: '/design/',
-  path: '/design/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardRouteRoute,
-} as any)
-const BlogIndexRoute = BlogIndexRouteImport.update({
-  id: '/blog/',
-  path: '/blog/',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const StoreCheckoutRoute = StoreCheckoutRouteImport.update({
   id: '/checkout',
@@ -128,20 +102,10 @@ const DashboardBrandsRoute = DashboardBrandsRouteImport.update({
   path: '/brands',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
-const DashboardBlogRoute = DashboardBlogRouteImport.update({
-  id: '/blog',
-  path: '/blog',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
 const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
   getParentRoute: () => DashboardRouteRoute,
-} as any)
-const BlogSlugRoute = BlogSlugRouteImport.update({
-  id: '/blog/$slug',
-  path: '/blog/$slug',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -156,9 +120,7 @@ export interface FileRoutesByFullPath {
   '/store': typeof StoreRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/redirect': typeof RedirectRoute
-  '/blog/$slug': typeof BlogSlugRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
-  '/dashboard/blog': typeof DashboardBlogRoute
   '/dashboard/brands': typeof DashboardBrandsRoute
   '/dashboard/categories': typeof DashboardCategoriesRoute
   '/dashboard/orders': typeof DashboardOrdersRoute
@@ -166,12 +128,8 @@ export interface FileRoutesByFullPath {
   '/order/$orderId': typeof OrderOrderIdRoute
   '/store/$productId': typeof StoreProductIdRoute
   '/store/checkout': typeof StoreCheckoutRoute
-  '/blog': typeof BlogIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
-  '/design': typeof DesignIndexRoute
-  '/photos': typeof PhotosIndexRoute
   '/store/': typeof StoreIndexRoute
-  '/web': typeof WebIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
@@ -179,9 +137,7 @@ export interface FileRoutesByTo {
   '/product': typeof ProductRouteRoute
   '/login': typeof LoginRoute
   '/redirect': typeof RedirectRoute
-  '/blog/$slug': typeof BlogSlugRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
-  '/dashboard/blog': typeof DashboardBlogRoute
   '/dashboard/brands': typeof DashboardBrandsRoute
   '/dashboard/categories': typeof DashboardCategoriesRoute
   '/dashboard/orders': typeof DashboardOrdersRoute
@@ -189,12 +145,8 @@ export interface FileRoutesByTo {
   '/order/$orderId': typeof OrderOrderIdRoute
   '/store/$productId': typeof StoreProductIdRoute
   '/store/checkout': typeof StoreCheckoutRoute
-  '/blog': typeof BlogIndexRoute
   '/dashboard': typeof DashboardIndexRoute
-  '/design': typeof DesignIndexRoute
-  '/photos': typeof PhotosIndexRoute
   '/store': typeof StoreIndexRoute
-  '/web': typeof WebIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
@@ -205,9 +157,7 @@ export interface FileRoutesById {
   '/store': typeof StoreRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/redirect': typeof RedirectRoute
-  '/blog/$slug': typeof BlogSlugRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
-  '/dashboard/blog': typeof DashboardBlogRoute
   '/dashboard/brands': typeof DashboardBrandsRoute
   '/dashboard/categories': typeof DashboardCategoriesRoute
   '/dashboard/orders': typeof DashboardOrdersRoute
@@ -215,12 +165,8 @@ export interface FileRoutesById {
   '/order/$orderId': typeof OrderOrderIdRoute
   '/store/$productId': typeof StoreProductIdRoute
   '/store/checkout': typeof StoreCheckoutRoute
-  '/blog/': typeof BlogIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
-  '/design/': typeof DesignIndexRoute
-  '/photos/': typeof PhotosIndexRoute
   '/store/': typeof StoreIndexRoute
-  '/web/': typeof WebIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
@@ -232,9 +178,7 @@ export interface FileRouteTypes {
     | '/store'
     | '/login'
     | '/redirect'
-    | '/blog/$slug'
     | '/dashboard/analytics'
-    | '/dashboard/blog'
     | '/dashboard/brands'
     | '/dashboard/categories'
     | '/dashboard/orders'
@@ -242,12 +186,8 @@ export interface FileRouteTypes {
     | '/order/$orderId'
     | '/store/$productId'
     | '/store/checkout'
-    | '/blog'
     | '/dashboard/'
-    | '/design'
-    | '/photos'
     | '/store/'
-    | '/web'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -255,9 +195,7 @@ export interface FileRouteTypes {
     | '/product'
     | '/login'
     | '/redirect'
-    | '/blog/$slug'
     | '/dashboard/analytics'
-    | '/dashboard/blog'
     | '/dashboard/brands'
     | '/dashboard/categories'
     | '/dashboard/orders'
@@ -265,12 +203,8 @@ export interface FileRouteTypes {
     | '/order/$orderId'
     | '/store/$productId'
     | '/store/checkout'
-    | '/blog'
     | '/dashboard'
-    | '/design'
-    | '/photos'
     | '/store'
-    | '/web'
     | '/api/auth/$'
   id:
     | '__root__'
@@ -280,9 +214,7 @@ export interface FileRouteTypes {
     | '/store'
     | '/login'
     | '/redirect'
-    | '/blog/$slug'
     | '/dashboard/analytics'
-    | '/dashboard/blog'
     | '/dashboard/brands'
     | '/dashboard/categories'
     | '/dashboard/orders'
@@ -290,12 +222,8 @@ export interface FileRouteTypes {
     | '/order/$orderId'
     | '/store/$productId'
     | '/store/checkout'
-    | '/blog/'
     | '/dashboard/'
-    | '/design/'
-    | '/photos/'
     | '/store/'
-    | '/web/'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
@@ -306,12 +234,7 @@ export interface RootRouteChildren {
   StoreRouteRoute: typeof StoreRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   RedirectRoute: typeof RedirectRoute
-  BlogSlugRoute: typeof BlogSlugRoute
   OrderOrderIdRoute: typeof OrderOrderIdRoute
-  BlogIndexRoute: typeof BlogIndexRoute
-  DesignIndexRoute: typeof DesignIndexRoute
-  PhotosIndexRoute: typeof PhotosIndexRoute
-  WebIndexRoute: typeof WebIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -359,13 +282,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/web/': {
-      id: '/web/'
-      path: '/web'
-      fullPath: '/web'
-      preLoaderRoute: typeof WebIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/store/': {
       id: '/store/'
       path: '/'
@@ -373,33 +289,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreIndexRouteImport
       parentRoute: typeof StoreRouteRoute
     }
-    '/photos/': {
-      id: '/photos/'
-      path: '/photos'
-      fullPath: '/photos'
-      preLoaderRoute: typeof PhotosIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/design/': {
-      id: '/design/'
-      path: '/design'
-      fullPath: '/design'
-      preLoaderRoute: typeof DesignIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/dashboard/': {
       id: '/dashboard/'
       path: '/'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
-    }
-    '/blog/': {
-      id: '/blog/'
-      path: '/blog'
-      fullPath: '/blog'
-      preLoaderRoute: typeof BlogIndexRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/store/checkout': {
       id: '/store/checkout'
@@ -450,26 +345,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBrandsRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
-    '/dashboard/blog': {
-      id: '/dashboard/blog'
-      path: '/blog'
-      fullPath: '/dashboard/blog'
-      preLoaderRoute: typeof DashboardBlogRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
     '/dashboard/analytics': {
       id: '/dashboard/analytics'
       path: '/analytics'
       fullPath: '/dashboard/analytics'
       preLoaderRoute: typeof DashboardAnalyticsRouteImport
       parentRoute: typeof DashboardRouteRoute
-    }
-    '/blog/$slug': {
-      id: '/blog/$slug'
-      path: '/blog/$slug'
-      fullPath: '/blog/$slug'
-      preLoaderRoute: typeof BlogSlugRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -483,7 +364,6 @@ declare module '@tanstack/react-router' {
 
 interface DashboardRouteRouteChildren {
   DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
-  DashboardBlogRoute: typeof DashboardBlogRoute
   DashboardBrandsRoute: typeof DashboardBrandsRoute
   DashboardCategoriesRoute: typeof DashboardCategoriesRoute
   DashboardOrdersRoute: typeof DashboardOrdersRoute
@@ -493,7 +373,6 @@ interface DashboardRouteRouteChildren {
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardAnalyticsRoute: DashboardAnalyticsRoute,
-  DashboardBlogRoute: DashboardBlogRoute,
   DashboardBrandsRoute: DashboardBrandsRoute,
   DashboardCategoriesRoute: DashboardCategoriesRoute,
   DashboardOrdersRoute: DashboardOrdersRoute,
@@ -528,23 +407,9 @@ const rootRouteChildren: RootRouteChildren = {
   StoreRouteRoute: StoreRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   RedirectRoute: RedirectRoute,
-  BlogSlugRoute: BlogSlugRoute,
   OrderOrderIdRoute: OrderOrderIdRoute,
-  BlogIndexRoute: BlogIndexRoute,
-  DesignIndexRoute: DesignIndexRoute,
-  PhotosIndexRoute: PhotosIndexRoute,
-  WebIndexRoute: WebIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

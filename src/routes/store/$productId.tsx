@@ -16,8 +16,15 @@ import {
 	rehypePlugins,
 } from "~/components/ui/shared/MarkdownComponents";
 import { QuantitySelector } from "~/components/ui/shared/QuantitySelector";
-import { TeaCategoryLearnMore } from "~/components/ui/shared/TeaCategoryLearnMore";
 import { ProductPageSkeleton } from "~/components/ui/store/skeletons/ProductPageSkeleton";
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
+} from "~/components/ui/dashboard/breadcrumb";
 import { getCountryName } from "~/constants/countries";
 import { useVariationSelection } from "~/hooks/useVariationSelection";
 import { useCart } from "~/lib/cartContext";
@@ -33,6 +40,33 @@ import type {
 } from "~/types";
 import { seo } from "~/utils/seo";
 import { getAvailableQuantityForVariation } from "~/utils/validateStock";
+
+// Sample product data for the laminate flooring page
+const sampleProductData = {
+	id: "1747865",
+	name: "Дуб Студийный светло-серый натурал",
+	brand: "PARADOR",
+	model: "TrendTime3 (ёлочка)",
+	articleNumber: "1747865",
+	origin: "Германия",
+	price: 3980,
+	currency: "p",
+	images: [
+		"laminate-main.jpg",
+		"laminate-room.jpg", 
+		"laminate-closeup1.jpg",
+		"laminate-closeup2.jpg",
+		"laminate-pattern.jpg"
+	],
+	description: "Премиальный ламинат из коллекции TrendTime3 с натуральным рисунком дуба в светло-серых тонах. Укладка ёлочкой создает элегантный и современный интерьер.",
+	packSize: "1уп",
+	packArea: "1.595м²",
+	samplesAvailable: "Образцы доступны на 100-летия",
+	accessoriesNote: "Не забудьте про аксессуары",
+	accessoriesDescription: "Мы подскажем, как правильно подобрать подложку, плинтус и другие важные аксессуары. Свяжитесь с нами любым удобным способом, мы поможем!",
+	installationTitle: "Нужна укладка?",
+	installationDescription: "Профессионально укладываем ламинат под ключ от демонтажа старого покрытия до финишной уборки!"
+};
 
 // Simple search params - no Zod needed for basic optional strings
 const validateSearch = (search: Record<string, unknown>) => {
@@ -437,193 +471,180 @@ function ProductPage() {
 
 	const attributeNames = getUniqueAttributeNames();
 
+	// Calculate total price for display
+	const totalPrice = currentPrice * quantity;
+
 	return (
-		<main className="min-h-screen flex flex-col lg:h-screen lg:overflow-hidden">
-			<div className="grow flex items-start justify-center">
-				<div className="w-full h-full flex flex-col lg:flex-row gap-0 lg:gap-10 items-start">
-					{/* Image gallery with view transitions */}
-					<div className="w-full lg:w-3/5 xl:w-2/3 flex flex-col lg:flex-row gap-2 lg:h-full self-start">
-						<ImageGallery
-							images={
-								syncedProduct?.images
-									? syncedProduct.images
-											.split(",")
-											.map((img: string) => img.trim())
-									: []
-							}
-							alt={syncedProduct?.name || "Product"}
-							className="lg:pl-4 lg:pt-4 lg:pb-4"
-							productSlug={syncedProduct?.slug || productId}
-						/>
-					</div>
+		<main className="min-h-screen bg-[#fafafa]">
+			<div className="max-w-7xl mx-auto px-4 py-8">
+				{/* Breadcrumb Navigation */}
+				<div className="mb-8">
+					<Breadcrumb>
+						<BreadcrumbList>
+							<BreadcrumbItem>
+								<BreadcrumbLink asChild>
+									<Link to="/" className="text-gray-400 hover:text-gray-600">
+										Главная
+									</Link>
+								</BreadcrumbLink>
+							</BreadcrumbItem>
+							<BreadcrumbSeparator />
+							<BreadcrumbItem>
+								<BreadcrumbLink asChild>
+									<Link to="/store" className="text-gray-400 hover:text-gray-600">
+										Ламинат
+									</Link>
+								</BreadcrumbLink>
+							</BreadcrumbItem>
+							<BreadcrumbSeparator />
+							<BreadcrumbItem>
+								<BreadcrumbPage className="text-gray-400">
+									{sampleProductData.name}
+								</BreadcrumbPage>
+							</BreadcrumbItem>
+						</BreadcrumbList>
+					</Breadcrumb>
+				</div>
 
-					{/* Product information */}
-					<div className="w-full lg:w-2/5 xl:w-1/3 px-4 lg:px-0 lg:h-[100dvh] lg:overflow-y-auto pt-4 pb-20 lg:pr-4 scrollbar-none product-info-enter">
-						<div className="space-y-6 w-full ">
-							<h3>{syncedProduct.name}</h3>
-
-							{/* Price */}
-							<div className="flex gap-4 items-center">
-								{currentDiscount ? (
-									<div className="flex items-center gap-2">
-										<Badge variant="green">{currentDiscount}% OFF</Badge>
-										<div className="flex items-baseline gap-2">
-											<h4>
-												$
-												{(currentPrice * (1 - currentDiscount / 100)).toFixed(
-													2,
-												)}{" "}
-												CAD
-											</h4>
-											<span className="line-through text-muted-foreground">
-												${currentPrice.toFixed(2)}
-											</span>
-										</div>
-									</div>
-								) : (
-									<h4>${currentPrice.toFixed(2)} CAD</h4>
-								)}
-
-								{/* Stock information - moved here and updated styling */}
-								{!syncedProduct.unlimitedStock && (
-									<div>
-										{effectiveStock > 0 ? (
-											<Badge variant="outline">
-												<span className="text-muted-foreground">
-													In stock:{" "}
-												</span>
-												<span>{effectiveStock}</span>
-											</Badge>
-										) : null}
-									</div>
-								)}
-							</div>
-
-							{/* Variation selection */}
-							{syncedProduct.hasVariations && attributeNames.length > 0 && (
-								<div className="flex flex-wrap gap-4">
-									{attributeNames.map((attributeId) => (
-										<FilterGroup
-											key={attributeId}
-											title={getAttributeDisplayName(attributeId)}
-											options={getUniqueAttributeValues(attributeId)}
-											selectedOptions={selectedAttributes[attributeId] || null}
-											onOptionChange={(value) => {
-												if (value) {
-													selectVariation(attributeId, value);
-												}
-											}}
-											showAllOption={false}
-											variant="default"
-											getOptionAvailability={(value) =>
-												isAttributeValueAvailable(attributeId, value)
-											}
-											titleClassName=""
-											className=""
-										/>
+				<div className="flex flex-col lg:flex-row gap-8">
+					{/* Left Section - Image Gallery (60% width) */}
+					<div className="w-full lg:w-3/5">
+						<div className="flex gap-4">
+							{/* Thumbnail Gallery */}
+							<div className="w-24 flex-shrink-0">
+								<div className="flex flex-col gap-2">
+									{sampleProductData.images.map((image, index) => (
+										<button
+											type="button"
+											key={image}
+											className={`w-24 h-24 rounded-sm overflow-hidden border-2 transition-colors ${
+												index === 0 
+													? "border-red-600" 
+													: "border-transparent hover:border-gray-300"
+											}`}
+										>
+											<img
+												src={`/placeholder-${image}`}
+												alt={`${sampleProductData.name} ${index + 1}`}
+												className="w-full h-full object-cover"
+											/>
+										</button>
 									))}
 								</div>
-							)}
-
-							{/* Quantity selector and Add to cart */}
-							<div className="flex flex-wrap items-center gap-4">
-								<QuantitySelector
-									quantity={quantity}
-									onIncrement={incrementQuantity}
-									onDecrement={decrementQuantity}
-									minQuantity={1}
-									maxQuantity={
-										syncedProduct.unlimitedStock ? undefined : effectiveStock
-									}
-									disabled={!canAddToCart}
-									size="default"
-								/>
-								<Button
-									onClick={handleAddToCart}
-									size="lg"
-									disabled={!canAddToCart}
-									cursorType={canAddToCart ? "add" : "default"}
-								>
-									{canAddToCart ? "Add to Cart" : "Out of Stock"}
-								</Button>
 							</div>
 
-							{/* Metadata */}
-							<div className="flex flex-wrap gap-6 text-sm">
-								{(syncedProduct as ProductWithDetails).category && (
-									<div className="flex flex-col">
-										<span className="text-muted-foreground">Category</span>
-										<Link
-											to="/store"
-											search={{
-												category: (syncedProduct as ProductWithDetails).category
-													?.slug,
-											}}
-											className="text-primary hover:underline"
+							{/* Main Image */}
+							<div className="flex-1">
+								<div className="aspect-square bg-white rounded-lg overflow-hidden">
+									<img
+										src="/placeholder-laminate-main.jpg"
+										alt={sampleProductData.name}
+										className="w-full h-full object-contain"
+									/>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					{/* Right Section - Product Info (40% width) */}
+					<div className="w-full lg:w-2/5">
+						<div className="space-y-6">
+							{/* Product Title */}
+							<div>
+								<h1 className="text-3xl font-bold text-gray-800 mb-2">
+									{sampleProductData.name}
+								</h1>
+								<div className="flex items-center gap-4 text-gray-600">
+									<span className="text-lg font-medium">{sampleProductData.brand}</span>
+									<span className="text-sm text-gray-500">{sampleProductData.model}</span>
+								</div>
+								<div className="flex items-center gap-4 mt-2 text-sm text-gray-400">
+									<span>Артикул: {sampleProductData.articleNumber}</span>
+									<div className="flex items-center gap-1">
+										<span>🏭</span>
+										<span>{sampleProductData.origin}</span>
+									</div>
+								</div>
+							</div>
+
+							{/* Price and Quantity */}
+							<div className="flex items-center gap-4">
+								{/* Price Box */}
+								<div className="bg-[#f5f5f5] px-4 py-3 rounded-lg">
+									<div className="text-sm text-gray-500 mb-1">Цена за м²</div>
+									<div className="text-2xl font-bold text-gray-800">
+										{sampleProductData.price.toLocaleString()} {sampleProductData.currency}
+									</div>
+								</div>
+
+								{/* Quantity Selector */}
+								<div className="bg-[#f5f5f5] px-4 py-3 rounded-lg">
+									<div className="flex items-center gap-3">
+									<button
+										type="button"
+											onClick={decrementQuantity}
+											className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200 rounded"
 										>
-											{(syncedProduct as ProductWithDetails).category?.name}
-										</Link>
+											-
+										</button>
+										<div className="text-center">
+											<div className="font-medium text-gray-800">{quantity}{sampleProductData.packSize}</div>
+											<div className="text-xs text-gray-500">{(quantity * parseFloat(sampleProductData.packArea)).toFixed(3)}м²</div>
+										</div>
+									<button
+										type="button"
+											onClick={incrementQuantity}
+											className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200 rounded"
+										>
+											+
+										</button>
 									</div>
-								)}
-								{currentShippingFrom && (
-									<div className="flex flex-col">
-										<span className="text-muted-foreground">Ships from</span>
-										<span className="text-foreground">
-											{getCountryName(currentShippingFrom)}
-										</span>
-									</div>
-								)}
-								{/* Tea category learn more links */}
-								<TeaCategoryLearnMore
-									teaCategories={
-										(syncedProduct as ProductWithDetails).teaCategories
-									}
-								/>
+								</div>
 							</div>
 
-							{/* Blog post link */}
-							{(() => {
-								const blogPost = (syncedProduct as ProductWithDetails).blogPost;
-								const blogSlug = blogPost?.slug;
-								if (!blogSlug) return null;
+							{/* Add to Cart Button */}
+							<Button
+								onClick={handleAddToCart}
+								className="w-full bg-[#8B4513] hover:bg-[#A0522D] text-white py-4 px-6 rounded-lg flex items-center justify-between"
+								size="lg"
+							>
+								<span className="text-xl font-bold">
+									{totalPrice.toLocaleString()} {sampleProductData.currency}
+								</span>
+								<span className="text-lg">В корзину</span>
+							</Button>
 
-								return (
-									<div className="pt-4">
-										<div className="mb-2">
-											{blogPost?.title ? (
-												<>
-													<span className="text-muted-foreground">
-														From blog post:
-													</span>{" "}
-													<Link
-														to="/blog/$slug"
-														params={{ slug: blogSlug }}
-														className="blurLink"
-													>
-														{blogPost.title}
-													</Link>
-												</>
-											) : (
-												<Link
-													to="/blog/$slug"
-													params={{ slug: blogSlug }}
-													className="blurLink"
-												>
-													From blog post
-												</Link>
-											)}
-										</div>
-									</div>
-								);
-							})()}
+							{/* Samples Info */}
+							<div className="text-sm text-gray-500">
+								{sampleProductData.samplesAvailable}
+							</div>
 
-							{/* Product description */}
+							{/* Accessories Section */}
+							<div className="space-y-3">
+								<div className="flex items-center gap-2">
+									<span className="text-red-600 font-bold">[!]</span>
+									<span className="font-bold text-gray-800">{sampleProductData.accessoriesNote}</span>
+								</div>
+								<p className="text-gray-700 text-sm leading-relaxed">
+									{sampleProductData.accessoriesDescription}
+								</p>
+							</div>
+
+							{/* Installation Section */}
+							<div className="space-y-3">
+								<h3 className="font-bold text-gray-800">{sampleProductData.installationTitle}</h3>
+								<p className="text-gray-700 text-sm leading-relaxed">
+									{sampleProductData.installationDescription}
+								</p>
+							</div>
+
+							{/* Product Description */}
 							<div className="prose max-w-none">
 								<ReactMarkdown
 									components={markdownComponents}
 									rehypePlugins={rehypePlugins}
 								>
-									{syncedProduct.description || ""}
+									{sampleProductData.description}
 								</ReactMarkdown>
 							</div>
 						</div>

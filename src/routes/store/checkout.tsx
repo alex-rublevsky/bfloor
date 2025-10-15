@@ -2,9 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import React, { useCallback, useEffect, useId, useState } from "react";
 import { toast } from "sonner";
-import { AddressFields } from "~/components/ui/shared/AddressFields";
 import { Button } from "~/components/ui/shared/Button";
-import { Checkbox } from "~/components/ui/shared/Checkbox";
 import { Image } from "~/components/ui/shared/Image";
 import { Link } from "~/components/ui/shared/Link";
 import NeumorphismCard from "~/components/ui/shared/NeumorphismCard";
@@ -18,21 +16,7 @@ import { createOrder } from "~/server_functions/dashboard/orders/orderCreation";
 import { sendOrderEmails } from "~/server_functions/sendOrderEmails";
 import type { ProductWithVariations } from "~/types";
 
-interface Address {
-	firstName: string;
-	lastName: string;
-	email: string;
-	phone: string;
-	streetAddress: string;
-	city: string;
-	state: string;
-	country: string;
-	zipCode: string;
-}
-
 interface CustomerInfo {
-	shippingAddress: Address;
-	billingAddress?: Address;
 	notes?: string;
 	shippingMethod?: string;
 }
@@ -51,21 +35,7 @@ function CheckoutScreen() {
 	const queryClient = useQueryClient();
 	const formRef = React.useRef<HTMLFormElement>(null);
 	const notesId = useId();
-	const billingId = useId();
-	const [useSeparateBilling, setUseSeparateBilling] = useState(false);
-	const [showFormError, setShowFormError] = useState(false);
 	const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
-		shippingAddress: {
-			firstName: "",
-			lastName: "",
-			email: "",
-			phone: "",
-			streetAddress: "",
-			city: "",
-			state: "",
-			country: "",
-			zipCode: "",
-		},
 		notes: "",
 		shippingMethod: "standard",
 	});
@@ -173,49 +143,12 @@ function CheckoutScreen() {
 
 	const isLoading = orderMutation.isPending;
 
-	// Note: Removed product validation as it's handled by the enriched cart
-
-	// Check if required fields are filled
-	const isFormValid = useCallback(() => {
-		const requiredFields = [
-			"firstName",
-			"lastName",
-			"email",
-			"phone",
-			"streetAddress",
-			"city",
-			"country",
-			"zipCode",
-		];
-
-		return requiredFields.every((field) =>
-			customerInfo.shippingAddress[field as keyof Address]?.trim(),
-		);
-	}, [customerInfo.shippingAddress]);
-
-	// Reset form error state when fields are filled
-	useEffect(() => {
-		if (showFormError && isFormValid()) {
-			setShowFormError(false);
-		}
-	}, [isFormValid, showFormError]);
-
-	// Handle button click with proper validation feedback
+	// Handle button click
 	const handleButtonClick = () => {
-		if (!isFormValid()) {
-			setShowFormError(true);
-			// Reset error state after 3 seconds
-			setTimeout(() => setShowFormError(false), 3000);
-
-			// Use the existing form submit logic for validation and field focus
-			const formElement = formRef.current;
-			if (formElement) {
-				formElement.requestSubmit();
-			}
-		} else if (cart.items.length === 0) {
+		if (cart.items.length === 0) {
 			toast.error("Your cart is empty");
 		} else {
-			// If all validation passes, submit the form
+			// Submit the form
 			const formElement = formRef.current;
 			if (formElement) {
 				formElement.requestSubmit();
@@ -238,14 +171,13 @@ function CheckoutScreen() {
 				loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
 			return randomMessage;
 		}
-		if (showFormError) return "Please fill up the form";
 		if (cart.items.length === 0) return "Cart is empty";
 		return "Place Order";
 	};
 
 	// Get dynamic button variant based on state
 	const getButtonVariant = () => {
-		if (showFormError || cart.items.length === 0) return "destructive";
+		if (cart.items.length === 0) return "destructive";
 		return "default";
 	};
 
@@ -255,19 +187,6 @@ function CheckoutScreen() {
 	//       router.push("/store");
 	//     }
 	//   }, [cart.items.length, router, isCartLoaded, isOrderComplete]);
-
-	const handleAddressChange =
-		(addressType: "shipping" | "billing") => (name: string, value: string) => {
-			setCustomerInfo((prev) => ({
-				...prev,
-				[addressType === "shipping" ? "shippingAddress" : "billingAddress"]: {
-					...(addressType === "shipping"
-						? prev.shippingAddress
-						: prev.billingAddress || prev.shippingAddress),
-					[name]: value,
-				},
-			}));
-		};
 
 	const handleInputChange = (
 		e: React.ChangeEvent<
@@ -284,57 +203,7 @@ function CheckoutScreen() {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		// Combined field definitions with display names
-		const requiredFields = {
-			firstName: "First Name",
-			lastName: "Last Name",
-			email: "Email",
-			phone: "Phone Number",
-			streetAddress: "Street Address",
-			city: "City",
-			country: "Country",
-			zipCode: "ZIP/Postal Code",
-		} as const;
-
-		const missingFields = Object.entries(requiredFields).filter(
-			([field]) => !customerInfo.shippingAddress[field as keyof Address],
-		);
-
-		if (missingFields.length > 0) {
-			// Trigger button error state
-			setShowFormError(true);
-
-			// Get the friendly names directly from the missingFields entries
-			const missingFieldNames = missingFields.map(
-				([, displayName]) => displayName,
-			);
-
-			toast.error(
-				`Please fill in all required fields: ${missingFieldNames.join(", ")}`,
-			);
-
-			// Focus the first missing field using the form ref
-			if (formRef.current) {
-				const firstMissingFieldId = missingFields[0][0];
-				const firstMissingField = formRef.current.querySelector(
-					`input[name="${firstMissingFieldId}"]`,
-				) as HTMLInputElement;
-
-				if (firstMissingField) {
-					firstMissingField.focus();
-					firstMissingField.scrollIntoView({
-						behavior: "smooth",
-						block: "center",
-					});
-				}
-			}
-
-			// Reset error state after 3 seconds
-			setTimeout(() => setShowFormError(false), 3000);
-			return;
-		}
-
-		// If form is valid but cart is empty
+		// If cart is empty
 		if (cart.items.length === 0) {
 			toast.error("Your cart is empty");
 			return;
@@ -385,45 +254,6 @@ function CheckoutScreen() {
 							</p>
 
 							<div className="mb-8">
-								<h2 className="!text-lg font-bold mb-4">Shipping Address</h2>
-								<AddressFields
-									values={customerInfo.shippingAddress}
-									onChange={handleAddressChange("shipping")}
-								/>
-								<div className="mb-6">
-									<div className="flex items-center space-x-2">
-										<Checkbox
-											checked={useSeparateBilling}
-											onCheckedChange={(checked: boolean) => {
-												setUseSeparateBilling(checked);
-												if (checked && !customerInfo.billingAddress) {
-													setCustomerInfo((prev) => ({
-														...prev,
-														billingAddress: { ...prev.shippingAddress },
-													}));
-												}
-											}}
-											className="form-checkbox"
-											id={billingId}
-										/>
-										<label htmlFor={billingId} className="cursor-pointer">
-											Use different billing address
-										</label>
-									</div>
-								</div>
-								{useSeparateBilling && (
-									<div className="">
-										<h3 className="mb-4">Billing Address</h3>
-										<AddressFields
-											values={
-												customerInfo.billingAddress ||
-												customerInfo.shippingAddress
-											}
-											onChange={handleAddressChange("billing")}
-											required={useSeparateBilling}
-										/>
-									</div>
-								)}
 								<div className="mt-12">
 									<h3 className=" mb-4">Additional Information</h3>
 									<div className="mb-6">

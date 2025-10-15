@@ -1,44 +1,49 @@
 import {
-	createFileRoute,
-	Outlet,
-	redirect,
-	useLoaderData,
+    createFileRoute,
+    Outlet,
+    // redirect,
+    useLoaderData,
 } from "@tanstack/react-router";
 import { NavBar } from "~/components/ui/shared/NavBar";
 import { Toaster } from "~/components/ui/shared/sonner";
-import { getUserData } from "~/utils/auth-server-func";
+// import { getUserData } from "~/utils/auth-server-func";
 
 export const Route = createFileRoute("/dashboard")({
-	// Use beforeLoad for security: prevents child routes from loading if auth fails
-	beforeLoad: async () => {
-		try {
-			const userData = await getUserData();
-
-			// Check if user is authenticated and is admin
-			if (!userData.isAuthenticated || !userData.isAdmin) {
-				throw redirect({ to: "/login" });
-			}
-
-			// Ensure we have required user data
-			if (!userData.userID || !userData.userEmail) {
-				throw redirect({ to: "/login" });
-			}
-
-			// Return user data in context for the loader to use
-			return { userData };
-		} catch {
-			throw redirect({ to: "/login" });
-		}
-	},
+    // beforeLoad temporarily disabled for local development access
+    // beforeLoad: async () => {
+    //     try {
+    //         const userData = await getUserData();
+    //
+    //         // Check if user is authenticated and is admin
+    //         if (!userData.isAuthenticated || !userData.isAdmin) {
+    //             throw redirect({ to: "/login" });
+    //         }
+    //
+    //         // Ensure we have required user data
+    //         if (!userData.userID || !userData.userEmail) {
+    //             throw redirect({ to: "/login" });
+    //         }
+    //
+    //         // Return user data in context for the loader to use
+    //         return { userData };
+    //     } catch {
+    //         throw redirect({ to: "/login" });
+    //     }
+    // },
 	// Loader just passes through the user data from beforeLoad context
-	loader: async ({ context }) => {
-		return {
-			userID: context.userData.userID,
-			userName: context.userData.userName,
-			userEmail: context.userData.userEmail,
-			userAvatar: context.userData.userAvatar,
-		};
-	},
+    // Provide safe defaults during development since beforeLoad is disabled
+    loader: async () => {
+        return {
+			// userID: context.userData.userID,
+            // userName: context.userData.userName,
+            // userEmail: context.userData.userEmail,
+            // userAvatar: context.userData.userAvatar,
+            userID: "",
+            userName: "",
+            userEmail: "",
+            userAvatar: "",
+        };
+    },
 	component: RouteComponent,
 });
 

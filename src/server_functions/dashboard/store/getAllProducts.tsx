@@ -8,9 +8,7 @@ import {
 	brands,
 	categories,
 	products,
-	productTeaCategories,
 	productVariations,
-	teaCategories,
 	variationAttributes,
 } from "~/schema";
 import type {
@@ -23,8 +21,6 @@ type JoinedQueryResult = {
 	products: typeof products.$inferSelect;
 	product_variations: typeof productVariations.$inferSelect | null;
 	variation_attributes: typeof variationAttributes.$inferSelect | null;
-	product_tea_categories: typeof productTeaCategories.$inferSelect | null;
-	tea_categories: typeof teaCategories.$inferSelect | null;
 };
 
 export const getAllProducts = createServerFn({ method: "GET" })
@@ -35,7 +31,6 @@ export const getAllProducts = createServerFn({ method: "GET" })
 
 			// Fetch all base data
 			const categoriesResult = await db.select().from(categories).all();
-			const teaCategoriesResult = await db.select().from(teaCategories).all();
 			const brandsResult = await db.select().from(brands).all();
 
 			// Fetch products with variations in a single complex query
@@ -50,36 +45,23 @@ export const getAllProducts = createServerFn({ method: "GET" })
 					variationAttributes,
 					eq(variationAttributes.productVariationId, productVariations.id),
 				)
-				.leftJoin(
-					productTeaCategories,
-					eq(productTeaCategories.productId, products.id),
-				)
-				.leftJoin(
-					teaCategories,
-					eq(teaCategories.slug, productTeaCategories.teaCategorySlug),
-				)
 				.all();
 
-			if (!rows || rows.length === 0) {
-				setResponseStatus(404);
-				throw new Error("No products found");
-			}
+            // Allow empty state: don't error when there are no products yet
 
 			// Group products and build variations
 			const productMap = new Map<number, ProductWithVariations>();
 			const variationMap = new Map<number, ProductVariationWithAttributes>();
 
-			for (const row of rows) {
+            for (const row of (rows || [])) {
 				const product = row.products;
 				const variation = row.product_variations;
 				const attribute = row.variation_attributes;
-				const teaCategory = row.tea_categories;
 
 				// Initialize product if not exists
 				if (!productMap.has(product.id)) {
 					productMap.set(product.id, {
 						...product,
-						teaCategories: [],
 						variations: [],
 					});
 				}
@@ -87,20 +69,6 @@ export const getAllProducts = createServerFn({ method: "GET" })
 				const currentProduct = productMap.get(product.id);
 				if (!currentProduct) {
 					continue; // Skip if product not found in map
-				}
-
-				// Add tea category if exists and not already added
-				if (
-					teaCategory &&
-					!currentProduct.teaCategories?.some(tc => tc.slug === teaCategory.slug)
-				) {
-					currentProduct.teaCategories?.push({
-						slug: teaCategory.slug,
-						name: teaCategory.name,
-						description: teaCategory.description,
-						blogSlug: teaCategory.blogSlug,
-						isActive: teaCategory.isActive,
-					});
 				}
 
 				// Process variations if product has them
@@ -161,7 +129,7 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			}
 
 			// Convert to array
-			const productsArray = Array.from(productMap.values());
+            const productsArray = Array.from(productMap.values());
 
 			// Group products by category and inactive status
 			interface ProductGroup {
@@ -268,7 +236,7 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			}
 
 			// Add inactive group (also sorted)
-			if (inactive.length > 0) {
+            if (inactive.length > 0) {
 				groupedProducts.push({
 					title: "Inactive",
 					products: sortProductsByAvailability(inactive),
@@ -278,7 +246,6 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			return {
 				groupedProducts,
 				categories: categoriesResult,
-				teaCategories: teaCategoriesResult,
 				brands: brandsResult,
 			};
 		} catch (error) {

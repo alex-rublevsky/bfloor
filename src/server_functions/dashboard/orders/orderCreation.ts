@@ -3,7 +3,7 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import type * as schema from "~/schema";
-import { addresses, orderItems, orders } from "~/schema";
+import { orderItems, orders } from "~/schema";
 import type { ProductWithVariations } from "~/types";
 import { validateStock, validateVariation } from "~/utils/validateStock";
 
@@ -26,21 +26,7 @@ interface CartItem {
 	};
 }
 
-interface Address {
-	firstName: string;
-	lastName: string;
-	email: string;
-	phone: string;
-	streetAddress: string;
-	city: string;
-	state: string;
-	country: string;
-	zipCode: string;
-}
-
 interface CustomerInfo {
-	shippingAddress: Address;
-	billingAddress?: Address;
 	notes?: string;
 	shippingMethod?: string;
 }
@@ -58,15 +44,6 @@ export const createOrder = createServerFn({ method: "POST" })
 			const { customerInfo, cartItems, products } = data;
 
 			// Validate required fields
-			if (
-				!customerInfo?.shippingAddress?.email ||
-				!customerInfo?.shippingAddress?.firstName ||
-				!customerInfo?.shippingAddress?.lastName
-			) {
-				setResponseStatus(400);
-				throw new Error("Missing required customer information");
-			}
-
 			if (!cartItems || cartItems.length === 0) {
 				setResponseStatus(400);
 				throw new Error("Cart is empty");
@@ -75,13 +52,6 @@ export const createOrder = createServerFn({ method: "POST" })
 			if (!products || products.length === 0) {
 				setResponseStatus(400);
 				throw new Error("Product data is required");
-			}
-
-			// Validate email format
-			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-			if (!emailRegex.test(customerInfo.shippingAddress.email)) {
-				setResponseStatus(400);
-				throw new Error("Invalid email format");
 			}
 
 			// Create the order using the existing createOrder function
@@ -225,23 +195,6 @@ async function createOrderInternal(
 			completedAt: null,
 		})
 		.returning();
-
-	// Create addresses
-	await db.insert(addresses).values({
-		orderId: order.id,
-		addressType: customerInfo.billingAddress ? "shipping" : "both",
-		...customerInfo.shippingAddress,
-		createdAt: now,
-	});
-
-	if (customerInfo.billingAddress) {
-		await db.insert(addresses).values({
-			orderId: order.id,
-			addressType: "billing",
-			...customerInfo.billingAddress,
-			createdAt: now,
-		});
-	}
 
 	// Create order items
 	await db.insert(orderItems).values(

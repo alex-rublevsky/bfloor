@@ -26,7 +26,6 @@ function StorePage() {
 			<StoreFeed
 				products={storeData.products}
 				categories={storeData.categories}
-				teaCategories={storeData.teaCategories}
 			/>
 		</main>
 	);

@@ -5,43 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1746819420106,
-      "tag": "0000_careless_red_ghost",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1748836178267,
-      "tag": "0001_swift_black_widow",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1756185977979,
-      "tag": "0002_smart_spencer_smythe",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1760461819196,
-      "tag": "0003_elite_lily_hollister",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1760464311814,
-      "tag": "0004_woozy_mordo",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1760480233035,
-      "tag": "0005_curved_puppet_master",
+      "when": 1760534935501,
+      "tag": "0000_flat_elektra",
       "breakpoints": true
     }
   ]

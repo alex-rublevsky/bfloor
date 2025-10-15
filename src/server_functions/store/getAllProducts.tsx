@@ -7,9 +7,7 @@ import type * as schema from "~/schema";
 import {
 	categories,
 	products,
-	productTeaCategories,
 	productVariations,
-	teaCategories,
 	variationAttributes,
 } from "~/schema";
 import type { Product, ProductVariation } from "~/types";
@@ -28,24 +26,17 @@ export const getStoreData = createServerFn({ method: "GET" }).handler(
 		try {
 			const db: DrizzleD1Database<typeof schema> = DB();
 
-			const [categoriesResult, teaCategoriesResult, productsResult] =
-				await Promise.all([
-					db.select().from(categories),
-					db.select().from(teaCategories),
-					db.select().from(products).where(eq(products.isActive, true)),
-				]);
+			const [categoriesResult, productsResult] = await Promise.all([
+				db.select().from(categories),
+				db.select().from(products).where(eq(products.isActive, true)),
+			]);
 
-			if (!productsResult.length) {
-				setResponseStatus(404);
-				throw new Error("No products found");
-			}
+            // Allow empty state for initial setup
 
-			const [variationsResult, teaCategoryLinksResult, attributesResult] =
-				await Promise.all([
-					db.select().from(productVariations),
-					db.select().from(productTeaCategories),
-					db.select().from(variationAttributes),
-				]);
+			const [variationsResult, attributesResult] = await Promise.all([
+				db.select().from(productVariations),
+				db.select().from(variationAttributes),
+			]);
 
 			const activeProductIds = new Set(
 				productsResult.map((p: Product) => p.id),
@@ -53,10 +44,6 @@ export const getStoreData = createServerFn({ method: "GET" }).handler(
 			const filteredVariations = variationsResult.filter(
 				(v: ProductVariation) =>
 					v.productId && activeProductIds.has(v.productId),
-			);
-			const filteredTeaCategoryLinks = teaCategoryLinksResult.filter(
-				(link: { productId: number; teaCategorySlug: string }) =>
-					activeProductIds.has(link.productId),
 			);
 
 			const activeVariationIds = new Set(
@@ -66,16 +53,6 @@ export const getStoreData = createServerFn({ method: "GET" }).handler(
 				(attr) =>
 					attr.productVariationId &&
 					activeVariationIds.has(attr.productVariationId),
-			);
-
-			const teaCategoryMap = new Map<number, string[]>();
-			filteredTeaCategoryLinks.forEach(
-				(link: { productId: number; teaCategorySlug: string }) => {
-					if (!teaCategoryMap.has(link.productId)) {
-						teaCategoryMap.set(link.productId, []);
-					}
-					teaCategoryMap.get(link.productId)?.push(link.teaCategorySlug);
-				},
 			);
 
 			const variationsByProduct = new Map<number, ProductVariation[]>();
@@ -108,10 +85,6 @@ export const getStoreData = createServerFn({ method: "GET" }).handler(
 
 			const productsArray = productsResult.map((product: Product) => {
 				const variations = variationsByProduct.get(product.id) || [];
-				const teaCategorySlugs = teaCategoryMap.get(product.id) || [];
-				const teaCategories = teaCategorySlugs.map(slug => 
-					teaCategoriesResult.find(tc => tc.slug === slug)
-				);
 
 				const variationsWithAttributes = variations
 					.map((variation) => ({
@@ -123,14 +96,12 @@ export const getStoreData = createServerFn({ method: "GET" }).handler(
 				return {
 					...product,
 					variations: variationsWithAttributes,
-					teaCategories,
 				};
 			});
 
 			return {
 				products: productsArray,
 				categories: categoriesResult,
-				teaCategories: teaCategoriesResult,
 			};
 		} catch (error) {
 			console.error("Error fetching store data:", error);

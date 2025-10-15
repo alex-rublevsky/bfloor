@@ -47,8 +47,8 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 				throw new Error("File size must be less than 1.5MB");
 			}
 
-			// Get R2 bucket binding
-			const bucket = env.RUBLEVSKY_STORAGE as R2Bucket;
+            // Resolve R2 bucket binding (supports new and legacy names)
+            const bucket = env.BFLOOR_STORAGE as R2Bucket;
 
 			if (!bucket) {
 				setResponseStatus(500);

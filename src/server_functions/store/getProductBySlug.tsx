@@ -3,13 +3,10 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
 import { DB } from "~/db";
 import {
-	blogPosts,
 	brands,
 	categories,
 	products,
-	productTeaCategories,
 	productVariations,
-	teaCategories,
 	variationAttributes,
 } from "~/schema";
 import type { ProductWithDetails } from "~/types";
@@ -19,7 +16,6 @@ type QueryResult = {
 	products: typeof products.$inferSelect;
 	categories: typeof categories.$inferSelect | null;
 	brands: typeof brands.$inferSelect | null;
-	blog_posts: typeof blogPosts.$inferSelect | null;
 	product_variations: typeof productVariations.$inferSelect | null;
 	variation_attributes: typeof variationAttributes.$inferSelect | null;
 };
@@ -35,7 +31,6 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 			.where(eq(products.slug, productId))
 			.leftJoin(categories, eq(products.categorySlug, categories.slug))
 			.leftJoin(brands, eq(products.brandSlug, brands.slug))
-			.leftJoin(blogPosts, eq(blogPosts.productSlug, products.slug))
 			.leftJoin(productVariations, eq(productVariations.productId, products.id))
 			.leftJoin(
 				variationAttributes,
@@ -50,24 +45,6 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 
 		const firstRow = result[0];
 		const baseProduct = firstRow.products;
-
-		const teaCategoriesResult = baseProduct?.id
-			? await db
-					.select({
-						slug: teaCategories.slug,
-						name: teaCategories.name,
-						description: teaCategories.description,
-						blogSlug: teaCategories.blogSlug,
-						isActive: teaCategories.isActive,
-					})
-					.from(productTeaCategories)
-					.innerJoin(
-						teaCategories,
-						eq(productTeaCategories.teaCategorySlug, teaCategories.slug),
-					)
-					.where(eq(productTeaCategories.productId, baseProduct.id))
-					.all()
-			: [];
 
 		const variationsMap = new Map();
 
@@ -115,27 +92,7 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 						slug: firstRow.brands.slug,
 					}
 				: null,
-			blogPost: firstRow.blog_posts
-				? {
-						id: firstRow.blog_posts.id,
-						title: firstRow.blog_posts.title || "",
-						slug: firstRow.blog_posts.slug,
-						body: firstRow.blog_posts.body || "",
-						blogUrl: `/blog/${firstRow.blog_posts.slug}`,
-					}
-				: null,
-			description: firstRow.blog_posts?.body || baseProduct.description,
 			variations: Array.from(variationsMap.values()),
-			teaCategories: teaCategoriesResult.map((tc) => {
-				const mapped = {
-					slug: tc.slug,
-					name: tc.name,
-					description: tc.description,
-					blogSlug: tc.blogSlug,
-					isActive: tc.isActive ?? true,
-				};
-				return mapped;
-			}),
 		};
 
 		return productWithDetails;

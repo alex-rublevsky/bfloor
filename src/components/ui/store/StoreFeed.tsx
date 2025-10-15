@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCart } from "~/lib/cartContext";
-import type { Category, ProductWithVariations, TeaCategory } from "~/types";
+import type { Category, ProductWithVariations } from "~/types";
 import { isProductAvailable } from "~/utils/validateStock";
 import ProductFilters from "./ProductFilters";
 import ProductList from "./ProductList";
@@ -8,7 +8,6 @@ import ProductList from "./ProductList";
 interface StoreFeedProps {
 	products: ProductWithVariations[];
 	categories?: Category[];
-	teaCategories?: TeaCategory[];
 	priceRange?: {
 		min: number;
 		max: number;
@@ -35,13 +34,9 @@ const getProductPriceRange = (product: ProductWithVariations) => {
 export default function StoreFeed({
 	products = [],
 	categories = [],
-	teaCategories = [],
 	priceRange,
 }: StoreFeedProps) {
 	const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-	const [selectedTeaCategory, setSelectedTeaCategory] = useState<string | null>(
-		null,
-	);
 	const [sortBy, setSortBy] = useState<string>("relevant");
 
 	const { cart } = useCart();
@@ -104,28 +99,6 @@ export default function StoreFeed({
 		}));
 	}, [categories, productsWithPriceRanges]);
 
-	// Filter tea categories based on available products and add counts
-	const filteredTeaCategoriesWithCounts = useMemo(() => {
-		const usedCategories = new Set<string>();
-		const counts = new Map<string, number>();
-
-		// Count tea categories and track which ones are used
-		productsWithPriceRanges.forEach((product) => {
-			product.teaCategories?.forEach((cat) => {
-				usedCategories.add(cat.slug);
-				counts.set(cat.slug, (counts.get(cat.slug) || 0) + 1);
-			});
-		});
-
-		// Filter and add counts
-		return teaCategories
-			.filter((category) => usedCategories.has(category.slug))
-			.map((category) => ({
-				...category,
-				count: counts.get(category.slug) || 0,
-			}));
-	}, [productsWithPriceRanges, teaCategories]);
-
 	// Apply filters and sorting using pre-calculated price ranges
 	const filteredAndSortedProducts = useMemo(() => {
 		let filtered = [...productsWithPriceRanges];
@@ -134,13 +107,6 @@ export default function StoreFeed({
 		if (selectedCategory) {
 			filtered = filtered.filter(
 				(product) => product.categorySlug === selectedCategory,
-			);
-		}
-
-		// Apply tea category filter
-		if (selectedCategory === "tea" && selectedTeaCategory) {
-			filtered = filtered.filter((product) =>
-				product.teaCategories?.some(tc => tc.slug === selectedTeaCategory),
 			);
 		}
 
@@ -182,7 +148,7 @@ export default function StoreFeed({
 					return bDate - aDate;
 				}
 			} else {
-				// Default: Custom category order - Tea first, then existing order for others
+				// TODO: update, or even put this logic in the server fn?
 				const categoryOrder = {
 					tea: 1,
 					apparel: 2,
@@ -209,7 +175,6 @@ export default function StoreFeed({
 	}, [
 		productsWithPriceRanges,
 		selectedCategory,
-		selectedTeaCategory,
 		localPriceRange,
 		sortBy,
 		cart.items,
@@ -218,22 +183,18 @@ export default function StoreFeed({
 	return (
 		<section className="no-padding space-y-8">
 			<ProductFilters
-					categories={categoriesWithCounts}
-					teaCategories={filteredTeaCategoriesWithCounts}
-					selectedCategory={selectedCategory}
-					selectedTeaCategory={selectedTeaCategory}
-					onCategoryChange={setSelectedCategory}
-					onTeaCategoryChange={setSelectedTeaCategory}
-					priceRange={effectivePriceRange}
-					currentPriceRange={localPriceRange}
-					onPriceRangeChange={setLocalPriceRange}
-					sortBy={sortBy}
-					onSortChange={setSortBy}
-				/>
+				categories={categoriesWithCounts}
+				selectedCategory={selectedCategory}
+				onCategoryChange={setSelectedCategory}
+				priceRange={effectivePriceRange}
+				currentPriceRange={localPriceRange}
+				onPriceRangeChange={setLocalPriceRange}
+				sortBy={sortBy}
+				onSortChange={setSortBy}
+			/>
 			<div className="px-0">
 				<ProductList
 					data={filteredAndSortedProducts}
-					teaCategories={teaCategories}
 				/>
 			</div>
 		</section>

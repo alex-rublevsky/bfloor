@@ -5,7 +5,6 @@ import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import type * as schema from "~/schema";
 import {
-	addresses,
 	orderItems,
 	orders,
 	products,
@@ -27,44 +26,35 @@ export const getAllOrders = createServerFn({ method: "GET" }).handler(
 			// Fetch all related data for all orders in parallel
 			const ordersWithRelations = await Promise.all(
 				ordersResult.map(async (order) => {
-					const [itemsResult, addressesResult] = await Promise.all([
-						// Get order items with product data
-						db
-							.select({
-								// Order item fields
-								id: orderItems.id,
-								orderId: orderItems.orderId,
-								productId: orderItems.productId,
-								productVariationId: orderItems.productVariationId,
-								quantity: orderItems.quantity,
-								unitAmount: orderItems.unitAmount,
-								discountPercentage: orderItems.discountPercentage,
-								finalAmount: orderItems.finalAmount,
-								attributes: orderItems.attributes,
-								createdAt: orderItems.createdAt,
+					const itemsResult = await db
+						.select({
+							// Order item fields
+							id: orderItems.id,
+							orderId: orderItems.orderId,
+							productId: orderItems.productId,
+							productVariationId: orderItems.productVariationId,
+							quantity: orderItems.quantity,
+							unitAmount: orderItems.unitAmount,
+							discountPercentage: orderItems.discountPercentage,
+							finalAmount: orderItems.finalAmount,
+							attributes: orderItems.attributes,
+							createdAt: orderItems.createdAt,
 
-								// Product fields
-								productName: products.name,
-								productImages: products.images,
+							// Product fields
+							productName: products.name,
+							productImages: products.images,
 
-								// Variation fields
-								variationId: productVariations.id,
-								variationSku: productVariations.sku,
-							})
-							.from(orderItems)
-							.leftJoin(products, eq(orderItems.productId, products.id))
-							.leftJoin(
-								productVariations,
-								eq(orderItems.productVariationId, productVariations.id),
-							)
-							.where(eq(orderItems.orderId, order.id)),
-
-						// Get addresses
-						db
-							.select()
-							.from(addresses)
-							.where(eq(addresses.orderId, order.id)),
-					]);
+							// Variation fields
+							variationId: productVariations.id,
+							variationSku: productVariations.sku,
+						})
+						.from(orderItems)
+						.leftJoin(products, eq(orderItems.productId, products.id))
+						.leftJoin(
+							productVariations,
+							eq(orderItems.productVariationId, productVariations.id),
+						)
+						.where(eq(orderItems.orderId, order.id));
 
 					// Transform items to match expected structure
 					const items = itemsResult.map((item) => ({
@@ -91,7 +81,6 @@ export const getAllOrders = createServerFn({ method: "GET" }).handler(
 					return {
 						...order,
 						items,
-						addresses: addressesResult,
 					};
 				}),
 			);

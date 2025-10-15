@@ -10,28 +10,19 @@ import type {
 	CartItem,
 	Product,
 	ProductVariation,
-	TeaCategory,
 	VariationAttribute,
 } from "~/types";
 import {
 	getAvailableQuantityForVariation,
 	isProductAvailable,
 } from "~/utils/validateStock";
-import { Badge } from "../shared/Badge";
 import { useCursorHover } from "../shared/custom_cursor/CustomCursorContext";
 import { FilterGroup } from "../shared/FilterGroup";
 import styles from "./productCard.module.css";
 
 // Extended product interface with variations
-interface ProductWithVariations extends Omit<Product, 'teaCategories'> {
+interface ProductWithVariations extends Product {
 	variations?: ProductVariationWithAttributes[];
-	teaCategories?: Array<{
-		slug: string;
-		name: string;
-		description?: string | null;
-		blogSlug?: string | null;
-		isActive: boolean;
-	}>;
 }
 
 interface ProductVariationWithAttributes extends ProductVariation {
@@ -125,7 +116,6 @@ function ProductCard({
 	product,
 }: {
 	product: ProductWithVariations;
-	teaCategories?: TeaCategory[];
 }) {
 	const [isAddingToCart, setIsAddingToCart] = useState(false);
 	const { addProductToCart, cart } = useCart();
@@ -392,7 +382,9 @@ function ProductCard({
 													<span className="text-sm line-through text-muted-foreground">
 														{currentPrice?.toFixed(2)}
 													</span>
-													<Badge variant="green">-{product.discount}%</Badge>
+													<span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+														-{product.discount}%
+													</span>
 												</div>
 											</>
 										) : (
@@ -410,19 +402,6 @@ function ProductCard({
 												</span>
 											</div>
 										)}
-									</div>
-									{/* Tea Category Badges - Desktop/Tablet */}
-									<div className="hidden md:flex flex-wrap items-center justify-end flex-1 min-w-0 gap-1">
-										{product.teaCategories?.map((category) => (
-											<Badge key={category.slug} teaCategory={category} />
-										))}
-									</div>
-								</div>
-								{/* Tea Category Badges - Mobile */}
-								<div className="md:hidden mt-2 flex flex-wrap gap-1">
-									{product.teaCategories?.map((category) => (
-										<Badge key={category.slug} teaCategory={category} />
-									))}
 								</div>
 
 								{isComingSoon && (
@@ -534,9 +513,10 @@ function ProductCard({
 								)}
 							</button>
 						</div>
-					</div>
 				</div>
 			</div>
+		</div>
+		</div>
 		</Link>
 	);
 }

@@ -2,14 +2,13 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatedGroup } from "~/components/motion_primitives/AnimatedGroup";
 import { useDeviceType } from "~/hooks/use-mobile";
-import type { ProductWithVariations, TeaCategory } from "~/types";
+import type { ProductWithVariations } from "~/types";
 import ProductCard from "./ProductCard";
 import { ProductCardSkeleton } from "./skeletons/ProductCardSkeleton";
 
 interface ProductListProps {
 	data: ProductWithVariations[];
 	isLoading?: boolean;
-	teaCategories?: TeaCategory[];
 }
 
 const STORE_ANIMATION_KEY = "store-products-animated";
@@ -17,7 +16,6 @@ const STORE_ANIMATION_KEY = "store-products-animated";
 function ProductList({
 	data,
 	isLoading = false,
-	teaCategories = [],
 }: ProductListProps) {
 	const [shouldAnimate, setShouldAnimate] = useState<boolean | null>(null); // null = loading state
 	const { isMobileOrTablet } = useDeviceType();
@@ -66,11 +64,10 @@ function ProductList({
 				staggerChildren={0.06}
 			>
 				{data.map((product) => (
-					<ProductCard
-						key={product.id}
-						product={product}
-						teaCategories={teaCategories}
-					/>
+						<ProductCard
+							key={product.id}
+							product={product}
+						/>
 				))}
 			</AnimatedGroup>
 		);
@@ -99,7 +96,7 @@ function ProductList({
 							exit={{ opacity: 0, y: -20 }}
 							transition={{ duration: 0.3 }}
 						>
-							<ProductCard product={product} teaCategories={teaCategories} />
+							<ProductCard product={product} />
 						</motion.div>
 					))}
 				</div>

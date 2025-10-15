@@ -12,10 +12,7 @@ export const getAllProductCategories = createServerFn({
 		const db: DrizzleD1Database<typeof schema> = DB();
 		const categoriesResult = await db.select().from(categories).all();
 
-		if (!categoriesResult || categoriesResult.length === 0) {
-			setResponseStatus(404);
-			throw new Error("No categories found");
-		}
+    // Allow empty state: return [] when no categories yet
 
 		return categoriesResult;
 	} catch (error) {

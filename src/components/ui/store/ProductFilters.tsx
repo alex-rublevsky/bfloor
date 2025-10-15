@@ -16,17 +16,14 @@ import {
 import { Slider } from "~/components/ui/shared/Slider";
 import { useDeviceType } from "~/hooks/use-mobile";
 import { useCart } from "~/lib/cartContext";
-import type { CategoryWithCount, TeaCategoryWithCount } from "~/types";
+import type { CategoryWithCount } from "~/types";
 import { FilterGroup } from "../shared/FilterGroup";
 import styles from "./ProductFilters.module.css";
 
 interface ProductFiltersProps {
 	categories: CategoryWithCount[];
-	teaCategories: TeaCategoryWithCount[];
 	selectedCategory: string | null;
-	selectedTeaCategory: string | null;
 	onCategoryChange: (category: string | null) => void;
-	onTeaCategoryChange: (category: string | null) => void;
 	priceRange: {
 		min: number;
 		max: number;
@@ -39,11 +36,8 @@ interface ProductFiltersProps {
 
 const ProductFilters = memo(function ProductFilters({
 	categories,
-	teaCategories,
 	selectedCategory,
-	selectedTeaCategory,
 	onCategoryChange,
-	onTeaCategoryChange,
 	priceRange,
 	currentPriceRange,
 	onPriceRangeChange,
@@ -64,16 +58,12 @@ const ProductFilters = memo(function ProductFilters({
 		[onPriceRangeChange],
 	);
 
-	const handleMainCategoryChange = useCallback(
-		(category: string | null) => {
-			onCategoryChange(category);
-			// Clear tea category when switching to non-tea category
-			if (category !== "tea") {
-				onTeaCategoryChange(null);
-			}
-		},
-		[onCategoryChange, onTeaCategoryChange],
-	);
+    const handleMainCategoryChange = useCallback(
+        (category: string | null) => {
+            onCategoryChange(category);
+        },
+        [onCategoryChange],
+    );
 
 	const [isHidden, setIsHidden] = useState(false);
 	const { scrollY } = useScroll();
@@ -163,25 +153,6 @@ const ProductFilters = memo(function ProductFilters({
 							</div>
 
 							{/* Tea Categories - Only show when Tea category is selected */}
-							<AnimatePresence mode="wait">
-								{selectedCategory === "tea" && (
-									<motion.div
-										initial={{ opacity: 0, y: -10 }}
-										animate={{ opacity: 1, y: 0 }}
-										exit={{ opacity: 0, y: -10 }}
-										transition={{ duration: 0.2 }}
-									>
-										<FilterGroup
-											title="Tea Types"
-											options={teaCategories}
-											selectedOptions={selectedTeaCategory}
-											onOptionChange={onTeaCategoryChange}
-											allOptionLabel="All Tea"
-										/>
-									</motion.div>
-								)}
-							</AnimatePresence>
-
 							{/* Price Range Filter - Full width */}
 							<Slider
 								className="pt-3 pb-5 lg:pt-0"
@@ -255,26 +226,6 @@ const ProductFilters = memo(function ProductFilters({
 								</div>
 							</AnimatedGroup>
 
-							{/* Tea Categories - Only show when Tea category is selected */}
-							<AnimatePresence mode="wait">
-								{selectedCategory === "tea" && (
-									<motion.div
-										initial={{ opacity: 0, y: -10 }}
-										animate={{ opacity: 1, y: 0 }}
-										exit={{ opacity: 0, y: -10 }}
-										transition={{ duration: 0.2 }}
-										className="self-start"
-									>
-										<FilterGroup
-											title="Tea Types"
-											options={teaCategories}
-											selectedOptions={selectedTeaCategory}
-											onOptionChange={onTeaCategoryChange}
-											allOptionLabel="All Tea"
-										/>
-									</motion.div>
-								)}
-							</AnimatePresence>
 						</div>
 					)}
 					<div className="mx-auto h-1.5 w-[5rem] rounded-full bg-secondary shrink-0" />

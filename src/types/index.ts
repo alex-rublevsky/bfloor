@@ -1,20 +1,15 @@
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import type {
-	addresses,
-	blogPosts,
 	brands,
 	categories,
 	orderItems,
 	orders,
 	products,
 	productVariations,
-	teaCategories,
 } from "~/schema";
 
 // Products
-export interface Product extends InferSelectModel<typeof products> {
-	teaCategories?: string[];
-}
+export interface Product extends InferSelectModel<typeof products> {}
 export type NewProduct = InferInsertModel<typeof products>;
 
 // Product variation with attributes
@@ -23,15 +18,8 @@ export interface ProductVariationWithAttributes extends ProductVariation {
 }
 
 // Extended product type with variations
-export interface ProductWithVariations extends Omit<Product, 'teaCategories'> {
+export interface ProductWithVariations extends Product {
 	variations?: ProductVariationWithAttributes[];
-	teaCategories?: Array<{
-		slug: string;
-		name: string;
-		description?: string | null;
-		blogSlug?: string | null;
-		isActive: boolean;
-	}>;
 }
 
 // Product group for dashboard
@@ -81,42 +69,6 @@ export type NewOrder = InferInsertModel<typeof orders>;
 export type OrderItem = InferSelectModel<typeof orderItems>;
 export type NewOrderItem = InferInsertModel<typeof orderItems>;
 
-// Addresses
-export type Address = InferSelectModel<typeof addresses>;
-export type NewAddress = InferInsertModel<typeof addresses>;
-
-// Tea Categories
-export type TeaCategory = InferSelectModel<typeof teaCategories>;
-export type NewTeaCategory = InferInsertModel<typeof teaCategories>;
-
-// Tea Categories with count (for filtering)
-export interface TeaCategoryWithCount extends TeaCategory {
-	count: number;
-}
-
-// Blog Posts
-export type BlogPost = Omit<
-	InferSelectModel<typeof blogPosts>,
-	"publishedAt"
-> & {
-	teaCategories?: string[];
-	publishedAt: number;
-	productName?: string | null;
-	productSlug?: string | null;
-};
-
-// Blog Post Preview (for index page)
-export type BlogPostPreview = {
-	id: number;
-	title: string | null;
-	slug: string;
-	excerpt: string | null; // Shortened body text
-	images: string | null; // All images for proper gallery rendering
-	publishedAt: number;
-	teaCategories?: string[];
-};
-
-export type NewBlogPost = InferInsertModel<typeof blogPosts>;
 
 // Form data types for frontend components
 export interface ProductFormData {
@@ -126,7 +78,6 @@ export interface ProductFormData {
 	price: string;
 	categorySlug: string;
 	brandSlug: string | null;
-	teaCategories?: string[];
 	stock: string;
 	isActive: boolean;
 	isFeatured: boolean;
@@ -168,24 +119,6 @@ export interface BrandFormData {
 	isActive: boolean;
 }
 
-export interface TeaCategoryFormData {
-	name: string;
-	slug: string;
-	description: string;
-	blogSlug: string;
-	isActive: boolean;
-}
-
-export interface BlogPostFormData {
-	title?: string;
-	slug: string;
-	body: string;
-	teaCategories?: string[];
-	productSlug?: string;
-	images?: string;
-	isVisible?: boolean;
-	publishedAt: number;
-}
 
 // API Response Types
 export interface ApiResponse<T> {
@@ -231,7 +164,7 @@ export interface CartItem {
 	addedAt: number; // Timestamp for sorting/debugging
 }
 
-export interface ProductWithDetails extends Omit<Product, 'teaCategories'> {
+export interface ProductWithDetails extends Product {
 	category?: {
 		name: string;
 		slug: string;
@@ -241,18 +174,4 @@ export interface ProductWithDetails extends Omit<Product, 'teaCategories'> {
 		slug: string;
 	} | null;
 	variations?: ProductVariationWithAttributes[];
-	blogPost?: {
-		id: number;
-		title: string;
-		slug: string;
-		body: string;
-		blogUrl: string;
-	} | null;
-	teaCategories?: Array<{
-		slug: string;
-		name: string;
-		description?: string | null;
-		blogSlug?: string | null;
-		isActive: boolean;
-	}>;
 }

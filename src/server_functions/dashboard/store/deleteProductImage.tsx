@@ -17,8 +17,7 @@ export const deleteProductImage = createServerFn({ method: "POST" })
 				throw new Error("No filename provided");
 			}
 
-			// Get R2 bucket binding
-			const bucket = env.RUBLEVSKY_STORAGE as R2Bucket;
+            const bucket = env.BFLOOR_STORAGE as R2Bucket;
 
 			if (!bucket) {
 				setResponseStatus(500);
