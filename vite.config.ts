@@ -23,7 +23,7 @@ export default defineConfig({
 					// Proxy server function calls to production (default)
 					// Set LOCAL_SERVER_FN=true to run server functions locally
 					"/_serverFn": {
-						target: "https://rublevsky.studio",
+						target: "https://bfloor.alexander-rublevskii.workers.dev",
 						changeOrigin: true,
 						secure: true,
 					},
