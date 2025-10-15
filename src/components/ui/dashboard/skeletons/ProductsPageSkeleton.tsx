@@ -79,7 +79,7 @@ function ProductCardSkeleton() {
 						<div className="flex flex-wrap items-center justify-between w-full gap-x-2">
 							<div className="flex flex-col items-baseline gap-1">
 								<h5 className="whitespace-nowrap relative">
-									<span className="invisible">$00.00 CAD</span>
+									<span className="invisible">00.00 р</span>
 									<Skeleton className="absolute inset-0 w-24" />
 								</h5>
 							</div>

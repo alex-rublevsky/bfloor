@@ -18,7 +18,7 @@ import type { Brand, BrandFormData } from "~/types";
 
 // Query options factory for reuse
 const brandsQueryOptions = () => ({
-	queryKey: ["dashboard-brands"],
+	queryKey: ["bfloorDashboardBrands"],
 	queryFn: () => getAllBrands(),
 	staleTime: 1000 * 60 * 5, // Cache for 5 minutes
 });
@@ -81,7 +81,7 @@ function RouteComponent() {
 
 			toast.success("Brand added successfully!");
 			closeCreateDrawer();
-			queryClient.invalidateQueries({ queryKey: ["dashboard-brands"] });
+			queryClient.invalidateQueries({ queryKey: ["bfloorDashboardBrands"] });
 		} catch (err) {
 			const errorMsg = err instanceof Error ? err.message : "An error occurred";
 			crud.setError(errorMsg);
@@ -126,7 +126,7 @@ function RouteComponent() {
 
 			toast.success("Brand updated successfully!");
 			closeEditModal();
-			queryClient.invalidateQueries({ queryKey: ["dashboard-brands"] });
+			queryClient.invalidateQueries({ queryKey: ["bfloorDashboardBrands"] });
 		} catch (err) {
 			const errorMsg = err instanceof Error ? err.message : "An error occurred";
 			crud.setError(errorMsg);
@@ -160,7 +160,7 @@ function RouteComponent() {
 			toast.success("Brand deleted successfully!");
 			crud.closeDeleteDialog();
 			setDeletingBrandId(null);
-			queryClient.invalidateQueries({ queryKey: ["dashboard-brands"] });
+			queryClient.invalidateQueries({ queryKey: ["bfloorDashboardBrands"] });
 		} catch (err) {
 			const errorMsg = err instanceof Error ? err.message : "An error occurred";
 			crud.setError(errorMsg);

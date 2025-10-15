@@ -22,7 +22,7 @@ import type { Category, CategoryFormData } from "~/types";
 
 // Query options factories for reuse
 const productCategoriesQueryOptions = () => ({
-	queryKey: ["dashboard-categories"],
+	queryKey: ["bfloorDashboardCategories"],
 	queryFn: () => getAllProductCategories(),
 	staleTime: 1000 * 60 * 5, // Cache for 5 minutes
 });
@@ -118,10 +118,10 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
                 data: productCategoryForm.createForm.formData as CategoryFormData,
             });
 
-            toast.success("Category added successfully!");
+            toast.success("Категория добавлена успешно!");
 
 			// Refresh the relevant query
-            queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });
+            queryClient.invalidateQueries({ queryKey: ["bfloorDashboardCategories"] });
 
 			closeCreateDrawer();
 		} catch (err) {
@@ -175,10 +175,10 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
                 },
             });
 
-            toast.success("Category updated successfully!");
+            toast.success("Категория обновлена успешно!");
 
 			// Refresh the relevant query
-            queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });
+            queryClient.invalidateQueries({ queryKey: ["bfloorDashboardCategories"] });
 
 			closeEditModal();
 		} catch (err) {
@@ -214,10 +214,10 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 		try {
             await deleteProductCategory({ data: { id: deletingCategoryId } });
 
-            toast.success("Category deleted successfully!");
+            toast.success("Категория удалена успешно!");
 
 			// Refresh the relevant query
-            queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });
+            queryClient.invalidateQueries({ queryKey: ["bfloorDashboardCategories"] });
 
 			activeForm.crud.closeDeleteDialog();
             setDeletingCategoryId(null);
@@ -478,7 +478,7 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 					isOpen={activeForm.crud.showDeleteDialog}
 					onClose={handleDeleteCancel}
 					onConfirm={handleDeleteConfirm}
-					title={`Delete ${categoryType === "product" ? "Category" : "Tea Category"}`}
+					title={`Удалить категорию,`}
 					description={`Are you sure you want to delete this ${categoryType === "product" ? "category" : "tea category"}? This action cannot be undone.`}
 					isDeleting={activeForm.crud.isDeleting}
 				/>

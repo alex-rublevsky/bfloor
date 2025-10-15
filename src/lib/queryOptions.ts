@@ -27,7 +27,7 @@ import { getProductBySlug } from "~/server_functions/store/getProductBySlug";
  */
 export const storeDataQueryOptions = () =>
 	queryOptions({
-		queryKey: ["storeData"],
+		queryKey: ["bfloorStoreData"],
 		queryFn: async () => getStoreData(),
 		staleTime: 1000 * 60 * 60 * 24, // 24 hours - data considered fresh (reduced from 24 hours)
 		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory/persist
@@ -46,7 +46,7 @@ export const storeDataQueryOptions = () =>
  */
 export const productQueryOptions = (productId: string) =>
 	queryOptions({
-		queryKey: ["product", productId],
+		queryKey: ["bfloorProduct", productId],
 		queryFn: async () => {
 			try {
 				return await getProductBySlug({ data: productId });
@@ -76,7 +76,7 @@ export const productQueryOptions = (productId: string) =>
  */
 export const dashboardOrdersQueryOptions = () =>
 	queryOptions({
-		queryKey: ["dashboard-orders"],
+		queryKey: ["bfloorDashboardOrders"],
 		queryFn: async () => getAllOrders(),
 		staleTime: 1000 * 60 * 5, // 5 minutes - orders are more dynamic
 		gcTime: 1000 * 60 * 30, // 30 minutes - keep in memory

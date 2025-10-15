@@ -104,7 +104,7 @@ function OrderList() {
 
 	const refetch = () => {
 		queryClient.invalidateQueries({
-			queryKey: ["dashboard-orders"],
+			queryKey: ["bfloorDashboardOrders"],
 		});
 	};
 

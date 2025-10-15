@@ -34,7 +34,7 @@ function OrderPage() {
 		data: order,
 		isError,
 	} = useQuery({
-		queryKey: ["order", orderId],
+		queryKey: ["bfloorOrder", orderId],
 		queryFn: async () => {
 			try {
 				return await getOrderBySlug({ data: { orderId } });

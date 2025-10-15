@@ -375,7 +375,7 @@ function ProductCard({
 														).toFixed(2)}
 													</span>
 													<span className="text-xs  font-light text-muted-foreground">
-														CAD
+														р
 													</span>
 												</div>
 												<div className="flex items-center gap-1">
@@ -398,7 +398,7 @@ function ProductCard({
 													{currentPrice?.toFixed(2)}
 												</span>
 												<span className="text-xs font-light text-muted-foreground">
-													CAD
+													р
 												</span>
 											</div>
 										)}

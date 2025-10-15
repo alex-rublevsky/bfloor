@@ -33,7 +33,7 @@ export function useProductStats() {
 		isPending,
 		error,
 	} = useSuspenseQuery({
-		queryKey: ["dashboard-products"],
+		queryKey: ["bfloorDashboardProducts"],
 		queryFn: () => getAllProducts(),
 		select: calculateProductStats, // Use the simplified calculation function
 		staleTime: 1000 * 60 * 5, // Cache for 5 minutes (same as products query)

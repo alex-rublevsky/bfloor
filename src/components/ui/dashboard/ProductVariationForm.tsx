@@ -149,7 +149,7 @@ function SortableVariationItem({
 					<Input
 						id={`price-${variation.id}`}
 						type="number"
-						label="Price"
+						label="Цена"
 						value={variation.price === 0 ? "" : variation.price}
 						onChange={(e) => {
 							const value = e.target.value;
@@ -186,7 +186,7 @@ function SortableVariationItem({
 					<Input
 						id={`stock-${variation.id}`}
 						type="number"
-						label="Stock"
+						label="Количество"
 						value={variation.stock === 0 ? "" : variation.stock}
 						onChange={(e) => {
 							const value = e.target.value;

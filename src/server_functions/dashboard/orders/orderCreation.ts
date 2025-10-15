@@ -186,7 +186,7 @@ async function createOrderInternal(
 			discountAmount: orderAmounts.discountAmount,
 			shippingAmount,
 			totalAmount,
-			currency: "CAD",
+			currency: "р",
 			paymentStatus: "pending",
 			paymentMethod: null,
 			shippingMethod: customerInfo.shippingMethod ?? null,

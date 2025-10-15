@@ -7,15 +7,11 @@ import {
 } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Badge } from "~/components/ui/shared/Badge";
 import { Button } from "~/components/ui/shared/Button";
-import { FilterGroup } from "~/components/ui/shared/FilterGroup";
-import ImageGallery from "~/components/ui/shared/ImageGallery";
 import {
 	markdownComponents,
 	rehypePlugins,
 } from "~/components/ui/shared/MarkdownComponents";
-import { QuantitySelector } from "~/components/ui/shared/QuantitySelector";
 import { ProductPageSkeleton } from "~/components/ui/store/skeletons/ProductPageSkeleton";
 import {
 	Breadcrumb,
@@ -28,10 +24,7 @@ import {
 import { getCountryName } from "~/constants/countries";
 import { useVariationSelection } from "~/hooks/useVariationSelection";
 import { useCart } from "~/lib/cartContext";
-import {
-	getAttributeDisplayName,
-	PRODUCT_ATTRIBUTES,
-} from "~/lib/productAttributes";
+import { PRODUCT_ATTRIBUTES } from "~/lib/productAttributes";
 import { productQueryOptions, storeDataQueryOptions } from "~/lib/queryOptions";
 import type {
 	ProductWithDetails,
@@ -41,32 +34,6 @@ import type {
 import { seo } from "~/utils/seo";
 import { getAvailableQuantityForVariation } from "~/utils/validateStock";
 
-// Sample product data for the laminate flooring page
-const sampleProductData = {
-	id: "1747865",
-	name: "Дуб Студийный светло-серый натурал",
-	brand: "PARADOR",
-	model: "TrendTime3 (ёлочка)",
-	articleNumber: "1747865",
-	origin: "Германия",
-	price: 3980,
-	currency: "p",
-	images: [
-		"laminate-main.jpg",
-		"laminate-room.jpg", 
-		"laminate-closeup1.jpg",
-		"laminate-closeup2.jpg",
-		"laminate-pattern.jpg"
-	],
-	description: "Премиальный ламинат из коллекции TrendTime3 с натуральным рисунком дуба в светло-серых тонах. Укладка ёлочкой создает элегантный и современный интерьер.",
-	packSize: "1уп",
-	packArea: "1.595м²",
-	samplesAvailable: "Образцы доступны на 100-летия",
-	accessoriesNote: "Не забудьте про аксессуары",
-	accessoriesDescription: "Мы подскажем, как правильно подобрать подложку, плинтус и другие важные аксессуары. Свяжитесь с нами любым удобным способом, мы поможем!",
-	installationTitle: "Нужна укладка?",
-	installationDescription: "Профессионально укладываем ламинат под ключ от демонтажа старого покрытия до финишной уборки!"
-};
 
 // Simple search params - no Zod needed for basic optional strings
 const validateSearch = (search: Record<string, unknown>) => {
@@ -289,8 +256,6 @@ function ProductPage() {
 	const {
 		selectedVariation,
 		selectedAttributes,
-		selectVariation,
-		isAttributeValueAvailable,
 	} = useVariationSelection({
 		product: syncedProduct as ProductWithVariations | null,
 		cartItems: cart.items,
@@ -354,25 +319,6 @@ function ProductPage() {
 		return syncedProduct?.discount || null;
 	}, [selectedVariation, variationForPricing, syncedProduct?.discount]);
 
-	// Calculate current shipping location based on variation/product hierarchy
-	const currentShippingFrom = useMemo(() => {
-		// Priority 1: Selected variation's shipping location
-		const relevantVariation = selectedVariation || variationForPricing;
-		if (
-			relevantVariation?.shippingFrom &&
-			relevantVariation.shippingFrom !== "" &&
-			relevantVariation.shippingFrom !== "NONE"
-		) {
-			return relevantVariation.shippingFrom;
-		}
-		// Priority 2: Product's shipping location
-		return syncedProduct?.shippingFrom &&
-			syncedProduct?.shippingFrom !== "" &&
-			syncedProduct?.shippingFrom !== "NONE"
-			? syncedProduct?.shippingFrom
-			: null;
-	}, [selectedVariation, variationForPricing, syncedProduct?.shippingFrom]);
-
 	// Calculate effective stock based on selected variation
 	const effectiveStock = useMemo(() => {
 		if (!syncedProduct) return 0;
@@ -409,29 +355,6 @@ function ProductPage() {
 		}
 	}, [quantity]);
 
-	const getUniqueAttributeValues = useCallback(
-		(attributeId: string): string[] => {
-			if (!syncedProduct?.variations) return [];
-
-			const sortedVariations = [...syncedProduct.variations].sort(
-				(a, b) => (b.sort ?? 0) - (a.sort ?? 0),
-			);
-
-			const values = new Set<string>();
-			sortedVariations.forEach((variation) => {
-				const attribute = variation.attributes.find(
-					(attr) => attr.attributeId === attributeId,
-				);
-				if (attribute) {
-					values.add(attribute.value);
-				}
-			});
-
-			return Array.from(values);
-		},
-		[syncedProduct?.variations],
-	);
-
 	// Handle add to cart
 	const handleAddToCart = useCallback(async () => {
 		if (!syncedProduct || !canAddToCart) return;
@@ -455,24 +378,19 @@ function ProductPage() {
 		addProductToCart,
 	]);
 
-	// Helper functions that don't need to be memoized
-	const getUniqueAttributeNames = (): string[] => {
-		if (!syncedProduct?.variations) return [];
-
-		const attributeNames = new Set<string>();
-		syncedProduct.variations.forEach((variation) => {
-			variation.attributes.forEach((attr) => {
-				attributeNames.add(attr.attributeId);
-			});
-		});
-
-		return Array.from(attributeNames);
-	};
-
-	const attributeNames = getUniqueAttributeNames();
 
 	// Calculate total price for display
 	const totalPrice = currentPrice * quantity;
+
+	// Parse images from JSON string
+	const productImages = useMemo(() => {
+		if (!syncedProduct?.images) return [];
+		try {
+			return JSON.parse(syncedProduct.images) as string[];
+		} catch {
+			return [];
+		}
+	}, [syncedProduct?.images]);
 
 	return (
 		<main className="min-h-screen bg-[#fafafa]">
@@ -499,7 +417,7 @@ function ProductPage() {
 							<BreadcrumbSeparator />
 							<BreadcrumbItem>
 								<BreadcrumbPage className="text-gray-400">
-									{sampleProductData.name}
+									{syncedProduct?.name}
 								</BreadcrumbPage>
 							</BreadcrumbItem>
 						</BreadcrumbList>
@@ -513,7 +431,7 @@ function ProductPage() {
 							{/* Thumbnail Gallery */}
 							<div className="w-24 flex-shrink-0">
 								<div className="flex flex-col gap-2">
-									{sampleProductData.images.map((image, index) => (
+									{productImages.map((image, index) => (
 										<button
 											type="button"
 											key={image}
@@ -524,8 +442,8 @@ function ProductPage() {
 											}`}
 										>
 											<img
-												src={`/placeholder-${image}`}
-												alt={`${sampleProductData.name} ${index + 1}`}
+												src={image}
+												alt={`${syncedProduct?.name || "Product"} ${index + 1}`}
 												className="w-full h-full object-cover"
 											/>
 										</button>
@@ -537,8 +455,8 @@ function ProductPage() {
 							<div className="flex-1">
 								<div className="aspect-square bg-white rounded-lg overflow-hidden">
 									<img
-										src="/placeholder-laminate-main.jpg"
-										alt={sampleProductData.name}
+										src={productImages[0] || "/placeholder-image.jpg"}
+										alt={syncedProduct?.name || "Product"}
 										className="w-full h-full object-contain"
 									/>
 								</div>
@@ -552,18 +470,20 @@ function ProductPage() {
 							{/* Product Title */}
 							<div>
 								<h1 className="text-3xl font-bold text-gray-800 mb-2">
-									{sampleProductData.name}
+									{syncedProduct?.name || "Product"}
 								</h1>
 								<div className="flex items-center gap-4 text-gray-600">
-									<span className="text-lg font-medium">{sampleProductData.brand}</span>
-									<span className="text-sm text-gray-500">{sampleProductData.model}</span>
+									{syncedProduct?.brand && (
+										<span className="text-lg font-medium">{syncedProduct.brand.name}</span>
+									)}
 								</div>
 								<div className="flex items-center gap-4 mt-2 text-sm text-gray-400">
-									<span>Артикул: {sampleProductData.articleNumber}</span>
-									<div className="flex items-center gap-1">
-										<span>🏭</span>
-										<span>{sampleProductData.origin}</span>
-									</div>
+									{syncedProduct?.shippingFrom && (
+										<div className="flex items-center gap-1">
+											<span>🏭</span>
+											<span>{getCountryName(syncedProduct.shippingFrom)}</span>
+										</div>
+									)}
 								</div>
 							</div>
 
@@ -573,28 +493,39 @@ function ProductPage() {
 								<div className="bg-[#f5f5f5] px-4 py-3 rounded-lg">
 									<div className="text-sm text-gray-500 mb-1">Цена за м²</div>
 									<div className="text-2xl font-bold text-gray-800">
-										{sampleProductData.price.toLocaleString()} {sampleProductData.currency}
+										{currentPrice.toLocaleString()} ₽
 									</div>
+									{currentDiscount && (
+										<div className="text-sm text-green-600 font-medium">
+											Скидка: {currentDiscount}%
+										</div>
+									)}
 								</div>
 
 								{/* Quantity Selector */}
 								<div className="bg-[#f5f5f5] px-4 py-3 rounded-lg">
 									<div className="flex items-center gap-3">
-									<button
-										type="button"
+										<button
+											type="button"
 											onClick={decrementQuantity}
-											className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200 rounded"
+											disabled={quantity <= 1}
+											className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
 										>
 											-
 										</button>
 										<div className="text-center">
-											<div className="font-medium text-gray-800">{quantity}{sampleProductData.packSize}</div>
-											<div className="text-xs text-gray-500">{(quantity * parseFloat(sampleProductData.packArea)).toFixed(3)}м²</div>
+											<div className="font-medium text-gray-800">{quantity} шт</div>
+											{syncedProduct?.weight && (
+												<div className="text-xs text-gray-500">
+													{syncedProduct.weight}
+												</div>
+											)}
 										</div>
-									<button
-										type="button"
+										<button
+											type="button"
 											onClick={incrementQuantity}
-											className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200 rounded"
+											disabled={!syncedProduct?.unlimitedStock && quantity >= effectiveStock}
+											className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
 										>
 											+
 										</button>
@@ -605,48 +536,36 @@ function ProductPage() {
 							{/* Add to Cart Button */}
 							<Button
 								onClick={handleAddToCart}
-								className="w-full bg-[#8B4513] hover:bg-[#A0522D] text-white py-4 px-6 rounded-lg flex items-center justify-between"
+								disabled={!canAddToCart}
+								className=""
 								size="lg"
 							>
 								<span className="text-xl font-bold">
-									{totalPrice.toLocaleString()} {sampleProductData.currency}
+									{totalPrice.toLocaleString()} ₽
 								</span>
-								<span className="text-lg">В корзину</span>
+								<span className="text-lg">
+									{!canAddToCart ? "Недоступно" : "В корзину"}
+								</span>
 							</Button>
 
-							{/* Samples Info */}
-							<div className="text-sm text-gray-500">
-								{sampleProductData.samplesAvailable}
-							</div>
-
-							{/* Accessories Section */}
-							<div className="space-y-3">
-								<div className="flex items-center gap-2">
-									<span className="text-red-600 font-bold">[!]</span>
-									<span className="font-bold text-gray-800">{sampleProductData.accessoriesNote}</span>
+							{/* Stock Info */}
+							{!syncedProduct?.unlimitedStock && (
+								<div className="text-sm text-gray-500">
+									В наличии: {effectiveStock} шт
 								</div>
-								<p className="text-gray-700 text-sm leading-relaxed">
-									{sampleProductData.accessoriesDescription}
-								</p>
-							</div>
-
-							{/* Installation Section */}
-							<div className="space-y-3">
-								<h3 className="font-bold text-gray-800">{sampleProductData.installationTitle}</h3>
-								<p className="text-gray-700 text-sm leading-relaxed">
-									{sampleProductData.installationDescription}
-								</p>
-							</div>
+							)}
 
 							{/* Product Description */}
-							<div className="prose max-w-none">
-								<ReactMarkdown
-									components={markdownComponents}
-									rehypePlugins={rehypePlugins}
-								>
-									{sampleProductData.description}
-								</ReactMarkdown>
-							</div>
+							{syncedProduct?.description && (
+								<div className="prose max-w-none">
+									<ReactMarkdown
+										components={markdownComponents}
+										rehypePlugins={rehypePlugins}
+									>
+										{syncedProduct.description}
+									</ReactMarkdown>
+								</div>
+							)}
 						</div>
 					</div>
 				</div>

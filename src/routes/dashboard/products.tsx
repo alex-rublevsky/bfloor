@@ -60,7 +60,7 @@ interface Variation {
 
 // Query options factory for reuse
 const productsQueryOptions = () => ({
-	queryKey: ["dashboard-products"],
+	queryKey: ["bfloorDashboardProducts"],
 	queryFn: () => getAllProducts(),
 	staleTime: 1000 * 60 * 5, // Cache for 5 minutes
 });
@@ -86,7 +86,7 @@ function RouteComponent() {
 	const refetch = () => {
 		// Invalidate dashboard products cache
 		queryClient.invalidateQueries({
-			queryKey: ["dashboard-products"],
+			queryKey: ["bfloorDashboardProducts"],
 		});
 
 		// Remove store data cache completely - forces fresh fetch on all clients
@@ -109,15 +109,15 @@ function RouteComponent() {
 		// If slug changed, remove both old and new product pages
 		if (oldSlug && newSlug && oldSlug !== newSlug) {
 			queryClient.removeQueries({
-				queryKey: ["product", oldSlug],
+				queryKey: ["bfloorProduct", oldSlug],
 			});
 			queryClient.removeQueries({
-				queryKey: ["product", newSlug],
+				queryKey: ["bfloorProduct", newSlug],
 			});
 		} else if (newSlug) {
 			// If only new slug available, remove that product page
 			queryClient.removeQueries({
-				queryKey: ["product", newSlug],
+				queryKey: ["bfloorProduct", newSlug],
 			});
 		}
 		// If no slug info, don't remove individual product pages
@@ -298,7 +298,7 @@ function RouteComponent() {
 		const numericPrice = typeof price === "string" ? parseFloat(price) : price;
 		return new Intl.NumberFormat("en-CA", {
 			style: "currency",
-			currency: "CAD",
+			currency: "р",
 		}).format(numericPrice);
 	};
 
@@ -753,7 +753,6 @@ function RouteComponent() {
 							<ImageUpload
 								currentImages={editFormData.images}
 								onImagesChange={handleEditImagesChange}
-								folder="products"
 								slug={editFormData.slug}
 							/>
 						</DrawerSection>
@@ -792,7 +791,7 @@ function RouteComponent() {
 					<DrawerSection variant="default" title="Basic Information">
 						<div className="grid grid-cols-1 gap-4">
 							<Input
-								label="Name"
+								label="Название"
 								type="text"
 								name="name"
 								value={editFormData.name}
@@ -825,7 +824,7 @@ function RouteComponent() {
 										id={editPriceId}
 										type="number"
 										name="price"
-										label="Price (CAD)"
+										label="Цена р"
 										value={editFormData.price}
 										onChange={handleEditChange}
 										step="0.01"
@@ -839,7 +838,7 @@ function RouteComponent() {
 										id={editStockId}
 										type="number"
 										name="stock"
-										label="Stock"
+										label="Количество"
 										value={editFormData.stock}
 										onChange={handleEditChange}
 										required
@@ -1001,7 +1000,6 @@ function RouteComponent() {
 							<ImageUpload
 								currentImages={formData.images}
 								onImagesChange={handleImagesChange}
-								folder="products"
 								slug={formData.slug}
 							/>
 						</DrawerSection>
@@ -1073,7 +1071,7 @@ function RouteComponent() {
 										id={addPriceId}
 										type="number"
 										name="price"
-										label="Price (CAD)"
+										label="Цена р"
 										value={formData.price}
 										onChange={handleChange}
 										required
@@ -1089,7 +1087,7 @@ function RouteComponent() {
 
 								{/* Column 2: Stock */}
 								<Input
-									label="Stock"
+									label="Количество"
 									type="number"
 									name="stock"
 									value={formData.stock}

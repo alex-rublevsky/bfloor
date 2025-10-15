@@ -156,12 +156,11 @@ export function AdminProductCard({
 										{product.discount ? (
 											<>
 												<h5 className="whitespace-nowrap">
-													$
 													{(
 														displayPrice *
 														(1 - product.discount / 100)
 													).toFixed(2)}{" "}
-													CAD
+													р
 												</h5>
 												<div className="flex items-center gap-1">
 													<h6 className="line-through text-muted-foreground">
@@ -172,7 +171,7 @@ export function AdminProductCard({
 											</>
 										) : (
 											<h5 className="whitespace-nowrap">
-												${displayPrice.toFixed(2)} CAD
+												{displayPrice.toFixed(2)} р
 											</h5>
 										)}
 						</div>
