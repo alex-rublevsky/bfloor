@@ -65,7 +65,7 @@ export function ProductFiltersSkeleton() {
 												<Skeleton className="absolute inset-0 rounded-full" />
 											</div>
 											<div className="px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full border border-border bg-background/80 relative">
-												<span className="text-transparent">Tea</span>
+												<span className="text-transparent">Category</span>
 												<Skeleton className="absolute inset-0 rounded-full" />
 											</div>
 											<div className="px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full border border-border bg-background/80 relative">
@@ -168,7 +168,7 @@ export function ProductFiltersSkeleton() {
 										<Skeleton className="absolute inset-0 rounded-full" />
 									</div>
 									<div className="px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full border border-border bg-background/80 relative">
-										<span className="text-transparent">Tea</span>
+										<span className="text-transparent">Category</span>
 										<Skeleton className="absolute inset-0 rounded-full" />
 									</div>
 									<div className="px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full border border-border bg-background/80 relative">

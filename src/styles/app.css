@@ -149,28 +149,6 @@ body {
 	--discount-badge: #bee42b;
 	--discount-badge-foreground: #3c480b;
 
-	/* Tea category colors - outline style */
-	--tea-shu-puer-outline: #ffa545;
-	--tea-shu-puer-text: #55310a;
-	--tea-raw-puer-outline: var(--discount-badge);
-	--tea-raw-puer-text: var(--discount-badge-foreground);
-	--tea-purple-outline: #b662ff;
-	--tea-purple-text: #2d1047;
-	--tea-gong-ting-outline: #852400;
-	--tea-gong-ting-text: #852400;
-	--tea-gong-ting-text-hover: #ffebe4;
-	--tea-white-outline: #d2d2d8;
-	--tea-white-text: #44444a;
-	--tea-rattan-trees-outline: #36eb93;
-	--tea-rattan-trees-text: #12452c;
-	--tea-ancient-trees-outline: #b3e2ff;
-	--tea-ancient-trees-text: #2b3840;
-	--tea-oolong-outline: #ffc3c3;
-	--tea-oolong-text: #662121;
-	--tea-red-tea-outline: #ff7060;
-	--tea-red-tea-text: #491510;
-	--tea-gu-shu-outline: #b48f57;
-	--tea-gu-shu-text: #33230a;
 }
 
 .dark {
@@ -234,7 +212,7 @@ body {
 		padding-right: 0;
 	}
 
-	@media (min-width: 640px) {
+	@media (width >= 640px) {
 		section {
 			padding-left: 1.5rem;
 			padding-right: 1.5rem;
@@ -254,7 +232,7 @@ body {
 	}
 
 	/* Only apply grayscale effect on desktop */
-	@media (min-width: 1024px) {
+	@media (width >= 1024px) {
 		.logo-hover {
 			filter: grayscale(100%);
 			opacity: 0.5;
@@ -303,25 +281,25 @@ html {
 	font-size: calc(0.5668103448275863rem + 0.5172413793103448vw);
 }
 
-@media screen and (max-width: 2500px) {
+@media screen and (width <= 2500px) {
 	html {
 		font-size: calc(0.5668103448275863rem + 0.5172413793103448vw);
 	}
 }
 
-@media screen and (max-width: 1920px) {
+@media screen and (width <= 1920px) {
 	html {
 		font-size: calc(0.6875rem + 0.41666666666666674vw);
 	}
 }
 
-@media screen and (max-width: 1440px) {
+@media screen and (width <= 1440px) {
 	html {
 		font-size: calc(0.9688475546305931rem + 0.10405827263267431vw);
 	}
 }
 
-@media screen and (max-width: 479px) {
+@media screen and (width <= 479px) {
 	html {
 		font-size: 1rem;
 	}
@@ -383,7 +361,7 @@ p {
 	font-size: 0.9rem;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
 	h1 {
 		font-size: 2.9rem;
 	}
@@ -441,7 +419,7 @@ p {
 	padding-top: 1rem;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
 	.prose h2 {
 		font-size: 2rem;
 		line-height: 1.2;
@@ -528,4 +506,8 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
 	-moz-appearance: textfield;
 	appearance: textfield;
+}
+
+::view-transition {
+	navigation:auto;
 }

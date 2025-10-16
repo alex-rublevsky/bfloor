@@ -455,7 +455,7 @@ function ProductPage() {
 							<div className="flex-1">
 								<div className="aspect-square bg-white rounded-lg overflow-hidden">
 									<img
-										src={productImages[0] || "/placeholder-image.jpg"}
+										src={productImages[0]}
 										alt={syncedProduct?.name || "Product"}
 										className="w-full h-full object-contain"
 									/>

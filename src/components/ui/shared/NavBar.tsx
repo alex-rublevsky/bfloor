@@ -1,9 +1,7 @@
 import {
-	IconArticle,
 	IconBadgeTm,
 	IconBox,
 	IconCategory,
-	IconChartBar,
 	IconDashboard,
 	IconPackage,
 } from "@tabler/icons-react";
@@ -46,13 +44,11 @@ interface NavBarProps {
 
 // Dashboard navigation items
 const dashboardNavItems: NavItem[] = [
-	{ name: "Dashboard", url: "/dashboard", icon: IconDashboard },
+	{ name: "Главная страница", url: "/dashboard", icon: IconDashboard },
 	{ name: "Products", url: "/dashboard/products", icon: IconBox },
-	{ name: "Blog", url: "/dashboard/blog", icon: IconArticle },
 	{ name: "Categories", url: "/dashboard/categories", icon: IconCategory },
 	{ name: "Brands", url: "/dashboard/brands", icon: IconBadgeTm },
 	{ name: "Orders", url: "/dashboard/orders", icon: IconPackage },
-	{ name: "Analytics", url: "/dashboard/analytics", icon: IconChartBar },
 ];
 
 const dashboardSecondaryItems: NavItem[] = [
@@ -168,9 +164,11 @@ const DropdownNavMenu = ({
 interface SmartBackButtonProps {
 	label: string;
 	fallbackPath: string;
+	onClick?: () => void;
+	onMouseEnter?: () => void;
 }
 
-const SmartBackButton = ({ label, fallbackPath }: SmartBackButtonProps) => {
+const SmartBackButton = ({ label, fallbackPath, onClick, onMouseEnter }: SmartBackButtonProps) => {
 	const navigate = useNavigate();
 	const router = useRouter();
 
@@ -192,16 +190,19 @@ const SmartBackButton = ({ label, fallbackPath }: SmartBackButtonProps) => {
 		}
 	};
 
+	const handleClick = onClick || handleBack;
+
 	return (
-		<div className="relative flex w-fit rounded-full border border-black bg-background hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-all duration-300 p-[0.3rem]">
-			<button
-				type="button"
-				onClick={handleBack}
-				className="relative z-10 block cursor-pointer px-3 py-1.5 text-xs text-primary-foreground mix-blend-difference md:px-4 md:py-2 md:text-sm"
-			>
+		<button 
+			type="button"
+			className="relative flex w-fit rounded-full border border-black bg-background hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-all duration-300 p-[0.3rem] cursor-pointer"
+			onClick={handleClick}
+			onMouseEnter={onMouseEnter}
+		>
+			<div className="relative z-10 block px-3 py-1.5 text-xs text-primary-foreground mix-blend-difference md:px-4 md:py-2 md:text-sm">
 				← {label}
-			</button>
-		</div>
+			</div>
+		</button>
 	);
 };
 
@@ -240,12 +241,6 @@ export function NavBar({
 		if (pathname === "/dashboard/products") {
 			return {
 				label: "Add Product",
-				onClick: onActionClick,
-			};
-		}
-		if (pathname === "/dashboard/blog") {
-			return {
-				label: "Add Post",
 				onClick: onActionClick,
 			};
 		}
@@ -363,14 +358,13 @@ export function NavBar({
 
 					{/* Show SmartBackButton for product pages - Desktop layout */}
 					{showStoreBackButton && (
-						<button
-							type="button"
-							className="hidden md:flex items-center gap-3 pointer-events-auto z-50 bg-transparent border-0 p-0"
-							onMouseEnter={prefetchStore}
-							onClick={() => {}}
-						>
-							<SmartBackButton label="Back to store" fallbackPath="/store" />
-						</button>
+						<div className="hidden md:flex items-center gap-3 pointer-events-auto z-50">
+							<SmartBackButton 
+								label="Back to store" 
+								fallbackPath="/store" 
+								onMouseEnter={prefetchStore}
+							/>
+						</div>
 					)}
 
 					{/* Show SmartBackButton for product pages - Mobile layout */}

@@ -11,12 +11,8 @@ export const getAllBrands = createServerFn({ method: "GET" }).handler(
 			const db: DrizzleD1Database<typeof schema> = DB();
 			const brandsResult = await db.select().from(brands).all();
 
-			if (!brandsResult || brandsResult.length === 0) {
-				setResponseStatus(404);
-				throw new Error("No brands found");
-			}
-
-			return brandsResult;
+			// Return empty array if no brands found instead of throwing error
+			return brandsResult || [];
 		} catch (error) {
 			console.error("Error fetching dashboard brands data:", error);
 			setResponseStatus(500);

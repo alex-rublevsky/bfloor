@@ -27,7 +27,6 @@ const productCategoriesQueryOptions = () => ({
 	staleTime: 1000 * 60 * 5, // Cache for 5 minutes
 });
 
-// Tea categories removed for this project
 
 export const Route = createFileRoute("/dashboard/categories")({
 	component: RouteComponent,
@@ -49,10 +48,7 @@ function RouteComponent() {
 	const { data: categoriesData } = useSuspenseQuery(
 		productCategoriesQueryOptions(),
 	);
-    // Placeholder text-only block kept later for layout; no tea data
-
-	// Category type state (to distinguish between product category and tea category operations)
-    // Only product categories are supported
+	// Category type state - only product categories are supported
     const [categoryType, setCategoryType] = useState<"product">("product");
 
 	// Use our dashboard form hooks - one for each category type
@@ -66,7 +62,6 @@ function RouteComponent() {
 		{ listenToActionButton: true },
 	);
 
-    // Tea category form removed
 
 	// Get the active form based on category type
     const activeForm = productCategoryForm;
@@ -76,7 +71,6 @@ function RouteComponent() {
 	const [editingCategoryId, setEditingCategoryId] = useState<number | null>(
 		null,
 	);
-    // Tea tracking state removed
 const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
     null,
 );
@@ -136,7 +130,6 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 	const closeCreateDrawer = () => {
 		activeForm.crud.closeCreateDrawer();
 		productCategoryForm.createForm.resetForm();
-        // No tea form
 		setIsCreateAutoSlug(true);
 	};
 
@@ -157,8 +150,7 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 		productCategoryForm.crud.openEditDrawer();
 	};
 
-	// Handler for editing tea categories
-    // Tea edit removed
+	// Handler for editing categories
 
 	// Handler for updating categories
 	const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -203,8 +195,7 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 		productCategoryForm.crud.openDeleteDialog();
 	};
 
-	// Handler for deleting tea categories
-    // Tea delete removed
+	// Handler for deleting categories
 
 	const handleDeleteConfirm = async () => {
         if (!deletingCategoryId) return;
@@ -320,13 +311,12 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 					</div>
 				</div>
 
-                {/* Tea Categories placeholder: structural component kept only */}
+                {/* Categories section */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-medium">Tea Categories (placeholder)</h3>
+                        <h3 className="text-lg font-medium">Categories</h3>
                     </div>
                     <div className="text-sm text-muted-foreground py-8">
-                        Structural placeholder retained for future use. No tea logic.
                     </div>
                 </div>
 			</div>
@@ -479,7 +469,7 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 					onClose={handleDeleteCancel}
 					onConfirm={handleDeleteConfirm}
 					title={`Удалить категорию,`}
-					description={`Are you sure you want to delete this ${categoryType === "product" ? "category" : "tea category"}? This action cannot be undone.`}
+					description={`Are you sure you want to delete this category? This action cannot be undone.`}
 					isDeleting={activeForm.crud.isDeleting}
 				/>
 			)}

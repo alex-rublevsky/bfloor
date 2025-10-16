@@ -152,7 +152,6 @@ const ProductFilters = memo(function ProductFilters({
 								</div>
 							</div>
 
-							{/* Tea Categories - Only show when Tea category is selected */}
 							{/* Price Range Filter - Full width */}
 							<Slider
 								className="pt-3 pb-5 lg:pt-0"

@@ -89,16 +89,16 @@ export function CategoriesPageSkeleton() {
 					</div>
 				</div>
 
-				{/* Tea Categories Section */}
+				{/* Categories Section */}
 				<div className="space-y-4">
 					<div className="flex items-center justify-between">
 						<h3 className="text-lg font-medium relative">
-							<span className="invisible">Tea Categories</span>
+							<span className="invisible">Categories</span>
 							<Skeleton className="absolute inset-0 w-32" />
 						</h3>
 						<div className="relative">
 							<button type="button" className="h-8 px-3 invisible" disabled>
-								<span>Add Tea Category</span>
+								<span>Add Category</span>
 							</button>
 							<Skeleton className="absolute inset-0 rounded" />
 						</div>
@@ -110,17 +110,17 @@ export function CategoriesPageSkeleton() {
 								<tbody className="divide-y divide-border">
 									{Array.from({ length: 4 }, (_, index) => (
 										<tr
-											key={`tea-category-skeleton-${Date.now()}-${index}`}
+											key={`category-skeleton-${Date.now()}-${index}`}
 											className="hover:bg-muted/30"
 										>
 											<td className="px-1 py-4">
 												<div>
 													<div className="font-medium relative">
-														<span className="invisible">Tea Category Name</span>
+														<span className="invisible">Category Name</span>
 														<Skeleton className="absolute inset-0 w-36" />
 													</div>
 													<div className="text-sm text-muted-foreground relative mt-1">
-														<span className="invisible">tea-category-slug</span>
+														<span className="invisible">category-slug</span>
 														<Skeleton className="absolute inset-0 w-28" />
 													</div>
 												</div>

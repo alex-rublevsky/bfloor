@@ -100,13 +100,7 @@ function ProductCardSkeleton() {
 							<Skeleton className="absolute inset-0 w-20" />
 						</div>
 
-						{/* Tea Categories */}
-						<div className="relative">
-							<span className="text-muted-foreground text-xs invisible">
-								Tea type
-							</span>
-							<Skeleton className="absolute inset-0 w-16" />
-						</div>
+						
 
 						{/* Stock */}
 						<div className="relative">

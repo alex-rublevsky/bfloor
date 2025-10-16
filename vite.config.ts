@@ -17,17 +17,15 @@ export default defineConfig({
 				"**/node_modules/**",
 			],
 		},
-		proxy: process.env.LOCAL_SERVER_FN
-			? undefined
-			: {
-					// Proxy server function calls to production (default)
-					// Set LOCAL_SERVER_FN=true to run server functions locally
-					"/_serverFn": {
-						target: "https://bfloor.alexander-rublevskii.workers.dev",
-						changeOrigin: true,
-						secure: true,
-					},
-				},
+		proxy: {
+			// Always proxy server function calls to production to ensure consistent database usage
+			// This ensures both development and production use the same remote database (bfloor-db)
+			"/_serverFn": {
+				target: "https://bfloor.alexander-rublevskii.workers.dev",
+				changeOrigin: true,
+				secure: true,
+			},
+		},
 	},
 	plugins: [
 		tsConfigPaths({

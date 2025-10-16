@@ -585,7 +585,7 @@ function RouteComponent() {
 		setIsEditMode(true);
 
 		try {
-			// Fetch complete product data including variations and tea categories
+			// Fetch complete product data including variations and categories
 			const productWithDetails = await getProductBySlug({
 				data: { id: product.id },
 			});
@@ -787,7 +787,7 @@ function RouteComponent() {
 						</DrawerSection>
 					</div>
 
-					{/* Right Column - Basic Info and Tea Categories */}
+					{/* Right Column - Basic Info and Categories */}
 					<DrawerSection variant="default" title="Basic Information">
 						<div className="grid grid-cols-1 gap-4">
 							<Input
@@ -1034,7 +1034,7 @@ function RouteComponent() {
 						</DrawerSection>
 					</div>
 
-					{/* Right Column - Basic Info and Tea Categories */}
+					{/* Right Column - Basic Info and Categories */}
 					<DrawerSection variant="default" title="Basic Information">
 						<div className="grid grid-cols-1 gap-4">
 							<Input

@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import StoreFeed from "~/components/ui/store/StoreFeed";
-import { storeDataQueryOptions } from "~/lib/queryOptions";
+import { storeDataQueryOptions } from "~/lib/queryOptions.ts";
 import { seo } from "~/utils/seo";
 
 export const Route = createFileRoute("/store/")({

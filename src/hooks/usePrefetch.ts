@@ -24,7 +24,7 @@ export function usePrefetch() {
 	};
 
 	/**
-	 * Prefetch store data (all products, categories, tea categories)
+	 * Prefetch store data (all products, categories)
 	 * Use on homepage store link hover
 	 */
 	const prefetchStore = () => {
