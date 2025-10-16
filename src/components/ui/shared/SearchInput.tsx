@@ -38,7 +38,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 						type="button"
 						onClick={handleClear}
 						className="text-muted-foreground hover:text-foreground transition-colors"
-						aria-label="Clear search"
+						aria-label="Очистить поиск"
 					>
 						<X className="h-4 w-4" style={{ color: "currentColor" }} />
 					</Button>

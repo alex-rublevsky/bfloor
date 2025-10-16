@@ -195,7 +195,7 @@ const ProductFilters = memo(function ProductFilters({
 									onValueChange={handlePriceRangeChange}
 									showTooltip
 									tooltipContent={(value) => `$${value}`}
-									label="Price Range"
+									label="Диапазон цен"
 									valueDisplay={
 										<output className="text-sm font-medium tabular-nums">
 											${currentPriceRange[0]} - ${currentPriceRange[1]}

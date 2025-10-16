@@ -477,7 +477,7 @@ function ProductCard({
 									fill="none"
 									viewBox="0 0 33 30"
 									className="cart-icon"
-									aria-label="Add to cart"
+									aria-label="Добавить в корзину"
 								>
 									<title>Add to cart</title>
 									<path

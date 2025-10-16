@@ -149,7 +149,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
 						(table.getIsSomePageRowsSelected() && "indeterminate")
 					}
 					onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-					aria-label="Select all"
+					aria-label="Выбрать всё"
 				/>
 			</div>
 		),
@@ -158,7 +158,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
 				<Checkbox
 					checked={row.getIsSelected()}
 					onCheckedChange={(value) => row.toggleSelected(!!value)}
-					aria-label="Select row"
+					aria-label="Выбрать строку"
 				/>
 			</div>
 		),

@@ -166,7 +166,7 @@ function SortableVariationItem({
 					<Input
 						id={`discount-${variation.id}`}
 						type="number"
-						label="Discount %"
+						label="Скидка %"
 						value={variation.discount || ""}
 						onChange={(e) => {
 							const value = e.target.value;

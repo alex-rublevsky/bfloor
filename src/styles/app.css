@@ -25,6 +25,7 @@ body {
 	--color-popover: hsl(var(--popover));
 	--color-popover-foreground: hsl(var(--popover-foreground));
 	--color-primary: oklch(var(--primary));
+	--color-primary-hover: color-mix(in oklch, oklch(var(--primary)) 80%, white 20%);
 	--color-primary-foreground: oklch(var(--primary-foreground));
 	--color-secondary: oklch(var(--secondary));
 	--color-secondary-foreground: oklch(var(--secondary-foreground));
@@ -246,7 +247,7 @@ body {
 	}
 
 	/* Hide the element that's causing the white gap in admin pan — no clue where it comes from */
-	section[aria-label="Notifications alt+T"] {
+	section[aria-label="Уведомления alt+T"] {
 		padding: 0;
 	}
 

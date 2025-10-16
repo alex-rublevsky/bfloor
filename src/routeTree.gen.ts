@@ -24,7 +24,6 @@ import { Route as DashboardProductsRouteImport } from './routes/dashboard/produc
 import { Route as DashboardOrdersRouteImport } from './routes/dashboard/orders'
 import { Route as DashboardCategoriesRouteImport } from './routes/dashboard/categories'
 import { Route as DashboardBrandsRouteImport } from './routes/dashboard/brands'
-import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard/analytics'
 import { Route as ApiAuthSplatRouteImport } from './routes/api.auth.$'
 
 const RedirectRoute = RedirectRouteImport.update({
@@ -102,11 +101,6 @@ const DashboardBrandsRoute = DashboardBrandsRouteImport.update({
   path: '/brands',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
-const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -120,7 +114,6 @@ export interface FileRoutesByFullPath {
   '/store': typeof StoreRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/redirect': typeof RedirectRoute
-  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/brands': typeof DashboardBrandsRoute
   '/dashboard/categories': typeof DashboardCategoriesRoute
   '/dashboard/orders': typeof DashboardOrdersRoute
@@ -137,7 +130,6 @@ export interface FileRoutesByTo {
   '/product': typeof ProductRouteRoute
   '/login': typeof LoginRoute
   '/redirect': typeof RedirectRoute
-  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/brands': typeof DashboardBrandsRoute
   '/dashboard/categories': typeof DashboardCategoriesRoute
   '/dashboard/orders': typeof DashboardOrdersRoute
@@ -157,7 +149,6 @@ export interface FileRoutesById {
   '/store': typeof StoreRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/redirect': typeof RedirectRoute
-  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/brands': typeof DashboardBrandsRoute
   '/dashboard/categories': typeof DashboardCategoriesRoute
   '/dashboard/orders': typeof DashboardOrdersRoute
@@ -178,7 +169,6 @@ export interface FileRouteTypes {
     | '/store'
     | '/login'
     | '/redirect'
-    | '/dashboard/analytics'
     | '/dashboard/brands'
     | '/dashboard/categories'
     | '/dashboard/orders'
@@ -195,7 +185,6 @@ export interface FileRouteTypes {
     | '/product'
     | '/login'
     | '/redirect'
-    | '/dashboard/analytics'
     | '/dashboard/brands'
     | '/dashboard/categories'
     | '/dashboard/orders'
@@ -214,7 +203,6 @@ export interface FileRouteTypes {
     | '/store'
     | '/login'
     | '/redirect'
-    | '/dashboard/analytics'
     | '/dashboard/brands'
     | '/dashboard/categories'
     | '/dashboard/orders'
@@ -345,13 +333,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBrandsRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
-    '/dashboard/analytics': {
-      id: '/dashboard/analytics'
-      path: '/analytics'
-      fullPath: '/dashboard/analytics'
-      preLoaderRoute: typeof DashboardAnalyticsRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -363,7 +344,6 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashboardRouteRouteChildren {
-  DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
   DashboardBrandsRoute: typeof DashboardBrandsRoute
   DashboardCategoriesRoute: typeof DashboardCategoriesRoute
   DashboardOrdersRoute: typeof DashboardOrdersRoute
@@ -372,7 +352,6 @@ interface DashboardRouteRouteChildren {
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
-  DashboardAnalyticsRoute: DashboardAnalyticsRoute,
   DashboardBrandsRoute: DashboardBrandsRoute,
   DashboardCategoriesRoute: DashboardCategoriesRoute,
   DashboardOrdersRoute: DashboardOrdersRoute,
@@ -413,12 +392,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

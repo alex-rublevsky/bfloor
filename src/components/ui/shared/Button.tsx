@@ -19,9 +19,9 @@ const buttonVariants = cva(
 		variants: {
 			variant: {
 				default:
-					"bg-primary text-primary-foreground border border-black hover:bg-transparent hover:text-foreground active:bg-transparent active:text-foreground",
+					"bg-primary text-primary-foreground hover:bg-primary-hover",
 				secondary:
-					"text-primary border border-black hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground",
+					"text-primary border border-black hover:bg-[oklch(from_theme(colors.primary)_calc(l_+_0.1)_c_h)] hover:text-primary-foreground active:bg-[oklch(from_theme(colors.primary)_calc(l_+_0.1)_c_h)] active:text-primary-foreground",
 				inverted:
 					"bg-white text-foreground border border-white hover:bg-transparent hover:text-primary-foreground active:bg-transparent active:text-primary-foreground",
 				destructive:

@@ -23,6 +23,7 @@ import {
 import { usePrefetch } from "~/hooks/usePrefetch";
 import { signOut } from "~/utils/auth-client";
 import { cn } from "~/utils/utils";
+import { Button } from "./Button";
 
 interface NavItem {
 	name: string;
@@ -218,10 +219,6 @@ export function NavBar({
 
 	// Keep NavBar silent in production; no-op logs
 
-	const showBlogBackButton =
-		routerState.location.pathname.startsWith("/blog/") &&
-		routerState.location.pathname !== "/blog";
-
 	const showStoreBackButton =
 		routerState.location.pathname.startsWith("/store/") &&
 		routerState.location.pathname !== "/store";
@@ -230,8 +227,7 @@ export function NavBar({
 		pathname === "/web" ||
 		pathname === "/photos" ||
 		pathname === "/design" ||
-		pathname === "/store" ||
-		pathname === "/blog";
+		pathname === "/store";
 
 	const isDashboard = routerState.location.pathname.startsWith("/dashboard");
 	const showOther = !isDashboard;
@@ -254,7 +250,7 @@ export function NavBar({
 		return (
 			<nav
 				className={cn(
-					"fixed bottom-0 left-0 right-0 z-[40] mb-3 px-3 pointer-events-none",
+					"fixed top-0 left-0 right-0 z-[40] px-3 py-3 pointer-events-none",
 					className,
 				)}
 			>
@@ -336,57 +332,38 @@ export function NavBar({
 	return (
 		<nav
 			className={cn(
-				"fixed bottom-0 left-0 right-0 z-[40] mb-3 flex justify-start items-center px-3 pointer-events-none",
+				"fixed top-0 left-0 right-0 z-[40] py-3 flex justify-between items-center px-3 pointer-events-none",
 				className,
 			)}
 		>
 			{showOther ? (
 				<>
-					{/* Show SmartBackButton for blog pages - Desktop layout */}
-					{showBlogBackButton && (
-						<div className="hidden md:flex items-center gap-3 pointer-events-auto z-50">
-							<SmartBackButton label="Back to blog" fallbackPath="/blog" />
-						</div>
-					)}
-
-					{/* Show SmartBackButton for blog pages - Mobile layout */}
-					{showBlogBackButton && (
-						<div className="md:hidden flex items-center gap-3 pointer-events-auto z-50">
-							<SmartBackButton label="Back to blog" fallbackPath="/blog" />
-						</div>
-					)}
-
-					{/* Show SmartBackButton for product pages - Desktop layout */}
-					{showStoreBackButton && (
-						<div className="hidden md:flex items-center gap-3 pointer-events-auto z-50">
+					{/* Left side: Back buttons */}
+					<div className="flex items-center gap-3 pointer-events-auto z-50">
+						{/* Show SmartBackButton for product pages */}
+						{showStoreBackButton && (
 							<SmartBackButton 
-								label="Back to store" 
+								label="Обратно в магазин" 
 								fallbackPath="/store" 
 								onMouseEnter={prefetchStore}
 							/>
-						</div>
-					)}
+						)}
 
-					{/* Show SmartBackButton for product pages - Mobile layout */}
-					{showStoreBackButton && (
-						<div className="md:hidden flex items-center gap-3 pointer-events-auto z-50">
-							<SmartBackButton label="Back to store" fallbackPath="/store" />
-						</div>
-					)}
+						{/* Show SmartBackButton for index pages */}
+						{showHomeBackButton && (
+							<SmartBackButton label="Главная" fallbackPath="/" />
+						)}
+					</div>
 
-					{/* Show SmartBackButton for index pages - Desktop layout */}
-					{showHomeBackButton && (
-						<div className="hidden md:flex items-center gap-3 pointer-events-auto z-50">
-							<SmartBackButton label="Home" fallbackPath="/" />
-						</div>
-					)}
-
-					{/* Show SmartBackButton for index pages - Mobile layout */}
-					{showHomeBackButton && (
-						<div className="md:hidden flex items-center gap-3 pointer-events-auto z-50">
-							<SmartBackButton label="Home" fallbackPath="/" />
-						</div>
-					)}
+					{/* Right side: Каталог button */}
+					<div className="pointer-events-auto z-50">
+						<Button
+							to="/store"
+							variant="default"
+						>
+							Каталог
+						</Button>
+					</div>
 				</>
 			) : null}
 		</nav>

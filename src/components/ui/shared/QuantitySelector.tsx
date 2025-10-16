@@ -93,7 +93,7 @@ export function QuantitySelector({
 				size={size}
 				styles={styles}
 				isIncrement={false}
-				ariaLabel="Decrease quantity"
+				ariaLabel="Уменьшить количество"
 			/>
 			<span className={styles.quantityText}>{quantity}</span>
 			<QuantitySelectorButton
@@ -102,7 +102,7 @@ export function QuantitySelector({
 				size={size}
 				styles={styles}
 				isIncrement={true}
-				ariaLabel="Increase quantity"
+				ariaLabel="Увеличить количество"
 			/>
 		</div>
 	);

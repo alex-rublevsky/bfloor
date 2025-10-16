@@ -56,6 +56,7 @@ interface CartContextType {
 	) => void;
 	clearCart: () => void;
 	itemCount: number;
+	isLoading: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -332,6 +333,7 @@ export function CartProvider({ children }: CartProviderProps) {
 				updateQuantity,
 				clearCart,
 				itemCount,
+				isLoading: !initialized,
 			}}
 		>
 			{children}

@@ -30,10 +30,10 @@ export function CartNav() {
 							className="w-5 h-5 md:w-6 md:h-6"
 							fill="none"
 							viewBox="0 0 33 30"
-							aria-label="Shopping cart"
+							aria-label="Корзина"
 							role="img"
 						>
-							<title>Shopping cart</title>
+							<title>Корзина</title>
 							<path
 								d="M1.94531 1.80127H7.27113L11.9244 18.602C12.2844 19.9016 13.4671 20.8013 14.8156 20.8013H25.6376C26.9423 20.8013 28.0974 19.958 28.495 18.7154L31.9453 7.9303H19.0041"
 								stroke="currentColor"

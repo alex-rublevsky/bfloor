@@ -915,7 +915,7 @@ function RouteComponent() {
 										id={editWeightId}
 										type="text"
 										name="weight"
-										label="Weight (in grams)"
+										label="Вес (в граммах)"
 										value={editFormData.weight}
 										onChange={handleEditChange}
 										placeholder="Enter weight in grams"
@@ -1038,7 +1038,7 @@ function RouteComponent() {
 					<DrawerSection variant="default" title="Basic Information">
 						<div className="grid grid-cols-1 gap-4">
 							<Input
-								label="Product Name"
+								label="Название товара"
 								type="text"
 								name="name"
 								value={formData.name}
@@ -1165,7 +1165,7 @@ function RouteComponent() {
 
 								{/* Column 1: Weight */}
 								<Input
-									label="Weight (in grams)"
+									label="Вес (в граммах)"
 									type="text"
 									name="weight"
 									value={formData.weight}

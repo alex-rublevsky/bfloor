@@ -191,7 +191,7 @@ export function ChartAreaInteractive() {
 					<Select value={timeRange} onValueChange={setTimeRange}>
 						<SelectTrigger
 							className="@[767px]/card:hidden flex w-40"
-							aria-label="Select a value"
+							aria-label="Выбрать значение"
 						>
 							<SelectValue placeholder="Last 3 months" />
 						</SelectTrigger>

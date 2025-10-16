@@ -105,7 +105,7 @@ export function SlugField({
 	return (
 		<div className="flex items-end gap-2">
 			<Input
-				label="Slug (Auto-generated)"
+				label="Идентификатор (автоматический)"
 				id={slugId}
 				type="text"
 				name="slug"

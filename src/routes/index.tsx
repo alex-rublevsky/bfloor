@@ -31,7 +31,7 @@ function App() {
 							BeautyFloor
 						</h1>
 						{/*<TestimonialsSection/>*/}
-						<nav aria-label="Main navigation" className="space-y-3 mt-6">
+						<nav aria-label="Основная навигация" className="space-y-3 mt-6">
 							<Button
 								to="/web"
 								centered
