@@ -14,6 +14,9 @@ import { Input } from "~/components/ui/shared/Input";
 import { Switch } from "~/components/ui/shared/Switch";
 import { useDashboardForm } from "~/hooks/useDashboardForm";
 import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
+import { createBrand } from "~/server_functions/dashboard/brands/createBrand";
+import { updateBrand } from "~/server_functions/dashboard/brands/updateBrand";
+import { deleteBrand } from "~/server_functions/dashboard/brands/deleteBrand";
 import type { Brand, BrandFormData } from "~/types";
 
 // Query options factory for reuse
@@ -71,13 +74,14 @@ function RouteComponent() {
 		crud.startSubmitting();
 
 		try {
-			// TODO: Implement API call to create brand
-			// await createBrand({
-			//   name: createForm.formData.name,
-			//   slug: createForm.formData.slug,
-			//   image: createForm.formData.logo || null,
-			//   isActive: createForm.formData.isActive,
-			// });
+			await createBrand({
+				data: {
+					name: createForm.formData.name,
+					slug: createForm.formData.slug,
+					logo: createForm.formData.logo || "",
+					isActive: createForm.formData.isActive,
+				},
+			});
 
 			toast.success("Brand added successfully!");
 			closeCreateDrawer();
@@ -116,13 +120,17 @@ function RouteComponent() {
 		crud.startSubmitting();
 
 		try {
-			// TODO: Implement API call to update brand
-			// await updateBrand(editingBrandId, {
-			//   name: editForm.formData.name,
-			//   slug: editForm.formData.slug,
-			//   image: editForm.formData.logo || null,
-			//   isActive: editForm.formData.isActive,
-			// });
+			await updateBrand({
+				data: {
+					id: editingBrandId,
+					data: {
+						name: editForm.formData.name,
+						slug: editForm.formData.slug,
+						logo: editForm.formData.logo || "",
+						isActive: editForm.formData.isActive,
+					},
+				},
+			});
 
 			toast.success("Brand updated successfully!");
 			closeEditModal();
@@ -154,8 +162,9 @@ function RouteComponent() {
 		crud.startDeleting();
 
 		try {
-			// TODO: Implement API call to delete brand
-			// await deleteBrand(deletingBrandId);
+			await deleteBrand({
+				data: { id: deletingBrandId },
+			});
 
 			toast.success("Brand deleted successfully!");
 			crud.closeDeleteDialog();
@@ -270,7 +279,7 @@ function RouteComponent() {
 			>
 				<form onSubmit={handleSubmit} id={createFormId} className="space-y-4">
 					<Input
-						label="Brand Name *"
+						label="Название бренда"
 						id={createNameId}
 						type="text"
 						name="name"
@@ -290,7 +299,7 @@ function RouteComponent() {
 					/>
 
 					<Input
-						label="Logo URL"
+						label="Ссылка на логотип"
 						id={createLogoId}
 						type="text"
 						name="logo"
@@ -327,7 +336,7 @@ function RouteComponent() {
 			>
 				<form onSubmit={handleUpdate} id={editFormId} className="space-y-4">
 					<Input
-						label="Brand Name *"
+						label="Название бренда"
 						id={editNameId}
 						type="text"
 						name="name"
@@ -347,7 +356,7 @@ function RouteComponent() {
 					/>
 
 					<Input
-						label="Logo URL"
+						label="Ссылка на логотип"
 						id={editLogoId}
 						type="text"
 						name="logo"
@@ -387,7 +396,7 @@ function RouteComponent() {
 				onClick={() => crud.openCreateDrawer()}
 				className="fixed bottom-3 right-3 z-50 "
 				size="lg"
-				aria-label="Add new brand"
+				aria-label="Добавить новый бренд"
 			>
 				<Plus size={24} /> Add New Brand
 			</Button>
