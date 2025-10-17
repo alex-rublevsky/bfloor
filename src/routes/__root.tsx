@@ -33,8 +33,8 @@ const queryClient = new QueryClient({
 	},
 });
 
-// Configure persistence - only runs on client side
-if (typeof window !== "undefined") {
+// Configure persistence - only runs on client side and only in production
+if (typeof window !== "undefined" && process.env.NODE_ENV === 'production') {
 	const persister = createSyncStoragePersister({
 		storage: window.localStorage,
 		key: "RUBLEVSKY_QUERY_CACHE",
@@ -43,8 +43,8 @@ if (typeof window !== "undefined") {
 	persistQueryClient({
 		queryClient,
 		persister,
-		maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days - persist for a week
-		buster: "v7",
+		maxAge: 1000 * 60 * 60 * 24 * 1, // 1 day - persist for a day
+		buster: "v10",
 	});
 }
 

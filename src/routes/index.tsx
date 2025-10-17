@@ -27,22 +27,9 @@ function App() {
 				<div className="w-full max-w-md space-y-6 text-center">
 					<section className="!p-0 !static">
 						<Banner/>
-						<h1 className="text-2xl!">
-							BeautyFloor
-						</h1>
+						
 						{/*<TestimonialsSection/>*/}
-						<nav aria-label="Основная навигация" className="space-y-3 mt-6">
-							<Button
-								to="/web"
-								centered
-								variant="secondary"
-								className="w-full max-w-lg"
-								description="I design and code web experiences — from blogs to ecommerce solutions"
-							>
-								Каталог
-							</Button>
-							
-						</nav>
+						
 					</section>
 				</div>
 			</main>

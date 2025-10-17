@@ -367,7 +367,7 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 
 							{categoryType === "product" && (
 								<Input
-									label="Image URL"
+									label="Ссылка на изображение"
 									type="text"
 									name="image"
 									value={
@@ -438,7 +438,7 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 
 							{categoryType === "product" && (
 								<Input
-									label="Image URL"
+									label="Ссылка на изображение"
 									type="text"
 									name="image"
 									value={

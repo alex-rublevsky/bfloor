@@ -139,7 +139,7 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			}
 
 			const groupedProducts: ProductGroup[] = [];
-			const categoryOrder = ["tea", "posters"]; // Customize order as needed
+			const categoryOrder = ["products", ""]; // TODO: what is this for? update
 
 			// Group active products by category
 			const categoriesBySlug = new Map(
