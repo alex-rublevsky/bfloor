@@ -1,7 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { CartNav } from "~/components/ui/store/CartNav";
 import { StorePageSkeleton } from "~/components/ui/store/skeletons/StorePageSkeleton";
-import { CartProvider } from "~/lib/cartContext";
 import { storeDataQueryOptions } from "~/lib/queryOptions";
 
 export const Route = createFileRoute("/store")({
@@ -14,9 +12,6 @@ export const Route = createFileRoute("/store")({
 
 function StoreLayout() {
 	return (
-		<CartProvider>
 			<Outlet />
-			<CartNav />
-		</CartProvider>
 	);
 }

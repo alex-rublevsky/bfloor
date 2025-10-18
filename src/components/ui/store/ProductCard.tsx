@@ -31,7 +31,13 @@ interface ProductVariationWithAttributes extends ProductVariation {
 
 // Memoize expensive calculations outside component
 const calculateImageArray = (images: string | null): string[] => {
-	return images?.split(",").map((img) => img.trim()) ?? [];
+	if (!images) return [];
+	try {
+		return JSON.parse(images) as string[];
+	} catch {
+		// Fallback to comma-separated parsing for backward compatibility
+		return images.split(",").map((img) => img.trim()).filter(Boolean);
+	}
 };
 
 const calculateUniqueAttributeValues = (

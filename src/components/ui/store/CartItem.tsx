@@ -7,8 +7,9 @@ import { Link } from "~/components/ui/shared/Link";
 import { QuantitySelector } from "~/components/ui/shared/QuantitySelector";
 import type { EnrichedCartItem } from "~/hooks/useEnrichedCart";
 import { useCart } from "~/lib/cartContext";
-import { getAttributeDisplayName } from "~/lib/productAttributes";
+import { getAttributeDisplayName, useProductAttributes } from "~/hooks/useProductAttributes";
 import { storeDataQueryOptions } from "~/lib/queryOptions";
+import { ASSETS_BASE_URL } from "~/constants/urls";
 
 interface CartItemProps {
 	item: EnrichedCartItem;
@@ -17,6 +18,7 @@ interface CartItemProps {
 
 export function CartItem({ item, enrichedItems }: CartItemProps) {
 	const { updateQuantity, removeFromCart, cart } = useCart();
+	const { data: attributes } = useProductAttributes();
 	const queryClient = useQueryClient();
 
 	// Calculate effective max quantity for weight-based products
@@ -108,7 +110,7 @@ export function CartItem({ item, enrichedItems }: CartItemProps) {
 				<div className="w-full bg-muted rounded-md overflow-hidden">
 					{item.image ? (
 						<Image
-							src={`/${item.image}`}
+							src={`${ASSETS_BASE_URL}/${item.image}`}
 							alt={item.productName}
 							width={80}
 							height={80}
@@ -140,7 +142,7 @@ export function CartItem({ item, enrichedItems }: CartItemProps) {
 					<div className="flex flex-wrap gap-x-6 gap-y-0 mt-1">
 						{Object.entries(item.attributes).map(([key, value]) => (
 							<span key={key} className="text-sm text-muted-foreground">
-								{getAttributeDisplayName(key)}: {value}
+								{getAttributeDisplayName(key, attributes || [])}: {value}
 							</span>
 						))}
 					</div>
