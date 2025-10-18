@@ -61,7 +61,6 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 					stock: row.product_variations.stock,
 					sort: row.product_variations.sort || 0,
 					discount: row.product_variations.discount,
-					shippingFrom: row.product_variations.shippingFrom,
 					createdAt: row.product_variations.createdAt,
 					attributes: [],
 				});

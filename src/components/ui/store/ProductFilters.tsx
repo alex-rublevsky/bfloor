@@ -122,7 +122,7 @@ const ProductFilters = memo(function ProductFilters({
 								{/* Categories section - takes most space with proper wrapping */}
 								<div className="flex-1 min-w-0 overflow-hidden">
 									<FilterGroup
-										title="Categories"
+										title="Категории"
 										options={categories}
 										selectedOptions={selectedCategory}
 										onOptionChange={handleMainCategoryChange}
@@ -180,7 +180,7 @@ const ProductFilters = memo(function ProductFilters({
 							>
 								{/* Main Categories */}
 								<FilterGroup
-									title="Categories"
+									title="Категории"
 									options={categories}
 									selectedOptions={selectedCategory}
 									onOptionChange={handleMainCategoryChange}

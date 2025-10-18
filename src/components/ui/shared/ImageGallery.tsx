@@ -1,6 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Image } from "~/components/ui/shared/Image";
+import { ASSETS_BASE_URL } from "~/constants/urls";
 
 const mainImageVariants = cva(
 	"max-w-full w-full lg:w-auto object-contain rounded-none lg:rounded-lg relative z-2",
@@ -205,7 +206,7 @@ export default function ImageGallery({
                   `}
 								/>
 								<Image
-									src={`/${image}`}
+									src={`${ASSETS_BASE_URL}/${image}`}
 									alt={`${alt} thumbnail ${index + 1}`}
 									className="object-cover w-full h-full"
 								/>
@@ -242,7 +243,7 @@ export default function ImageGallery({
 								<div className="relative w-full h-full flex items-center justify-center">
 									<div className="relative w-auto h-full flex items-center justify-center">
 										<Image
-											src={`/${image}`}
+											src={`${ASSETS_BASE_URL}/${image}`}
 											alt={`${alt} main image ${index + 1}`}
 											width={3000}
 											height={3000}

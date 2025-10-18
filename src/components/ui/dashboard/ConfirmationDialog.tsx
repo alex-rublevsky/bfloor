@@ -40,7 +40,7 @@ export default function DeleteConfirmationDialog({
 						onClick={onConfirm}
 						disabled={isDeleting}
 					>
-						{isDeleting ? "Deleting..." : "Delete"}
+						{isDeleting ? "Удаление..." : "Удалить"}
 					</Button>
 				</AlertDialogFooter>
 			</AlertDialogContent>

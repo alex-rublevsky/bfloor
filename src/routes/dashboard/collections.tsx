@@ -233,16 +233,6 @@ function RouteComponent() {
 
 	return (
 		<div className="space-y-6 px-6">
-			{/* Collections Stats */}
-			<div className="px-4">
-				<div className="flex items-center gap-3 text-sm text-muted-foreground">
-					<div className="flex items-center gap-1">
-						<span>
-							{collections ? `${collections.length} коллекций` : '0 коллекций'}
-						</span>
-					</div>
-				</div>
-			</div>
 
 			{/* Collections Grid */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

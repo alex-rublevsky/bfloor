@@ -71,7 +71,7 @@ export function generateSlug(text: string): string {
 		.replace(/[^\w\s-]/g, "")
 		.replace(/\s+/g, "-")
 		.replace(/-+/g, "-")
-		.trim();
+		.replace(/^-|-$/g, "");
 }
 
 /**

@@ -19,6 +19,7 @@ import CustomCursor from "~/components/ui/shared/custom_cursor/CustomCursor";
 import { CursorContextProvider } from "~/components/ui/shared/custom_cursor/CustomCursorContext";
 import { NavBar } from "~/components/ui/shared/NavBar";
 import { useIsMobile } from "~/hooks/use-mobile";
+import { CartProvider } from "~/lib/cartContext";
 import { seo } from "~/utils/seo";
 import appCss from "../styles/app.css?url";
 import { Footer } from "~/components/ui/shared/Footer";
@@ -113,12 +114,14 @@ function RootComponent() {
 	return (
 		
 			<QueryClientProvider client={queryClient}>
-				<CursorContextProvider>
-					{!isMobile && <CustomCursor />}
-					<RootDocument>
-						<Outlet />
-					</RootDocument>
-				</CursorContextProvider>
+				<CartProvider>
+					<CursorContextProvider>
+						{!isMobile && <CustomCursor />}
+						<RootDocument>
+							<Outlet />
+						</RootDocument>
+					</CursorContextProvider>
+				</CartProvider>
 			</QueryClientProvider>
 	
 	);
@@ -132,11 +135,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 		<html
 			lang="en"
 			className={`${pathname === "/" ? "scroll-smooth" : ""} bg-background overscroll-none`}
+			suppressHydrationWarning
 		>
 			<head>
 				<HeadContent />
 			</head>
-			<body className="">
+			<body className="" suppressHydrationWarning>
 			
 				<NavBar />
 				{children}

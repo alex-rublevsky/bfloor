@@ -1,7 +1,6 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
-import { useId, useState } from "react";
+import { useId, useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
@@ -13,6 +12,7 @@ import { Image } from "~/components/ui/shared/Image";
 import { Input } from "~/components/ui/shared/Input";
 import { Switch } from "~/components/ui/shared/Switch";
 import { useDashboardForm } from "~/hooks/useDashboardForm";
+import { useSlugGeneration } from "~/hooks/useSlugGeneration";
 import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
 import { createBrand } from "~/server_functions/dashboard/brands/createBrand";
 import { updateBrand } from "~/server_functions/dashboard/brands/updateBrand";
@@ -68,6 +68,39 @@ function RouteComponent() {
 	const [isEditAutoSlug, setIsEditAutoSlug] = useState(false);
 	const [editingBrandId, setEditingBrandId] = useState<number | null>(null);
 	const [deletingBrandId, setDeletingBrandId] = useState<number | null>(null);
+
+	// Stable callbacks for slug generation
+	const handleCreateSlugChange = useCallback(
+		(slug: string) => createForm.updateField("slug", slug),
+		[createForm.updateField],
+	);
+
+	const handleEditSlugChange = useCallback(
+		(slug: string) => editForm.updateField("slug", slug),
+		[editForm.updateField],
+	);
+
+	// Auto-slug generation hooks
+	useSlugGeneration(
+		createForm.formData.name,
+		isCreateAutoSlug,
+		handleCreateSlugChange,
+	);
+	useSlugGeneration(
+		editForm.formData.name,
+		isEditAutoSlug,
+		handleEditSlugChange,
+	);
+
+	// Listen for action button clicks from navbar
+	useEffect(() => {
+		const handleAction = () => {
+			crud.openCreateDrawer();
+		};
+
+		window.addEventListener("dashboardAction", handleAction);
+		return () => window.removeEventListener("dashboardAction", handleAction);
+	}, [crud.openCreateDrawer]);
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -268,7 +301,7 @@ function RouteComponent() {
 			<DashboardFormDrawer
 				isOpen={crud.showCreateDrawer}
 				onOpenChange={crud.setShowCreateDrawer}
-				title="Add New Brand"
+				title="Добавить новый бренд"
 				formId={createFormId}
 				isSubmitting={crud.isSubmitting}
 				submitButtonText="Create Brand"
@@ -325,7 +358,7 @@ function RouteComponent() {
 			<DashboardFormDrawer
 				isOpen={crud.showEditDrawer}
 				onOpenChange={crud.setShowEditDrawer}
-				title="Edit Brand"
+				title="Изменить бренд"
 				formId={editFormId}
 				isSubmitting={crud.isSubmitting}
 				submitButtonText="Update Brand"
@@ -385,21 +418,12 @@ function RouteComponent() {
 					isOpen={crud.showDeleteDialog}
 					onClose={handleDeleteCancel}
 					onConfirm={handleDeleteConfirm}
-					title="Delete Brand"
+					title="Удалить бренд"
 					description="Are you sure you want to delete this brand? This action cannot be undone."
 					isDeleting={crud.isDeleting}
 				/>
 			)}
 
-			{/* Floating Action Button */}
-			<Button
-				onClick={() => crud.openCreateDrawer()}
-				className="fixed bottom-3 right-3 z-50 "
-				size="lg"
-				aria-label="Добавить новый бренд"
-			>
-				<Plus size={24} /> Add New Brand
-			</Button>
 		</div>
 	);
 }

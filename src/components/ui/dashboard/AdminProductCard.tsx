@@ -1,6 +1,7 @@
 import { Edit, Trash2 } from "lucide-react";
 import { Badge } from "~/components/ui/shared/Badge";
 import { getCountryFlag } from "~/constants/countries";
+import { ASSETS_BASE_URL } from "~/constants/urls";
 import { cn } from "~/lib/utils";
 import type { ProductWithVariations } from "~/types";
 import { getStockDisplayText, isProductAvailable } from "~/utils/validateStock";
@@ -19,7 +20,15 @@ export function AdminProductCard({
 	onDelete,
 	formatPrice: _formatPrice,
 }: AdminProductCardProps) {
-	const imageArray = product.images?.split(",").map((img) => img.trim()) ?? [];
+	const imageArray = (() => {
+		if (!product.images) return [];
+		try {
+			return JSON.parse(product.images) as string[];
+		} catch {
+			// Fallback to comma-separated parsing for backward compatibility
+			return product.images.split(",").map((img) => img.trim()).filter(Boolean);
+		}
+	})();
 	const primaryImage = imageArray[0];
 	const hasAnyStock = isProductAvailable(product);
 	const stockDisplayText = getStockDisplayText(product);
@@ -41,11 +50,6 @@ export function AdminProductCard({
 	const getAllShippingLocations = () => {
 		const locations = new Set<string>();
 
-		// Add product-level shipping if available
-		if (product.shippingFrom) {
-			locations.add(product.shippingFrom);
-		}
-
 		// Add variation-level shipping if available
 		if (
 			product.hasVariations &&
@@ -53,9 +57,7 @@ export function AdminProductCard({
 			product.variations.length > 0
 		) {
 			product.variations.forEach((variation) => {
-				if (variation.shippingFrom) {
-					locations.add(variation.shippingFrom);
-				}
+				// No shipping locations to add anymore
 			});
 		}
 
@@ -80,7 +82,7 @@ export function AdminProductCard({
 									<div className="relative w-full h-full">
 										{/* Primary Image */}
 										<img
-											src={`https://assets.rublevsky.studio/${primaryImage}`}
+											src={`${ASSETS_BASE_URL}/${primaryImage}`}
 											alt={product.name}
 											loading="eager"
 											className="absolute inset-0 w-full h-full object-cover object-center"
@@ -92,7 +94,7 @@ export function AdminProductCard({
 										{/* Secondary Image (if exists) - Only on desktop devices with hover capability */}
 										{imageArray.length > 1 && (
 											<img
-												src={`https://assets.rublevsky.studio/${imageArray[1]}`}
+												src={`${ASSETS_BASE_URL}/${imageArray[1]}`}
 												alt={product.name}
 												loading="eager"
 												className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-500 ease-in-out opacity-0 group-hover:opacity-100 hidden md:block"

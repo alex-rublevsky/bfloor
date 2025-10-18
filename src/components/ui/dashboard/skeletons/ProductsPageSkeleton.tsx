@@ -5,10 +5,10 @@ export function ProductsPageSkeleton() {
 		<div className="space-y-6">
 			{/* Header with Search - exact match */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-4">
-				<p className="text-muted-foreground relative">
+				<div className="text-muted-foreground relative">
 					<span className="invisible">Loading products...</span>
 					<Skeleton className="absolute inset-0" />
-				</p>
+				</div>
 				<div className="w-full sm:w-64 relative">
 					<input
 						type="text"
@@ -32,8 +32,8 @@ export function ProductsPageSkeleton() {
 						</h2>
 					</div>
 					<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3 px-4">
-						{Array.from({ length: 12 }, (_, index) => (
-							<ProductCardSkeleton key={`skeleton-${Date.now()}-${index}`} />
+						{Array.from({ length: 12 }, () => (
+							<ProductCardSkeleton key={crypto.randomUUID()} />
 						))}
 					</div>
 				</div>
@@ -50,10 +50,8 @@ export function ProductsPageSkeleton() {
 						</h2>
 					</div>
 					<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3 px-4">
-						{Array.from({ length: 8 }, (_, index) => (
-							<ProductCardSkeleton
-								key={`skeleton-${Date.now()}-${index + 12}`}
-							/>
+						{Array.from({ length: 8 }, () => (
+							<ProductCardSkeleton key={crypto.randomUUID()} />
 						))}
 					</div>
 				</div>
@@ -86,11 +84,11 @@ function ProductCardSkeleton() {
 						</div>
 					</div>
 
-					{/* Product Name - using real p element for exact height */}
-					<p className="mb-3 relative">
+					{/* Product Name - using real div element for exact height */}
+					<div className="mb-3 relative">
 						<span className="invisible">Loading product name</span>
 						<Skeleton className="absolute inset-0" />
-					</p>
+					</div>
 
 					{/* Metadata - using real text elements with exact spacing */}
 					<div className="space-y-1 text-sm">

@@ -1,18 +1,24 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
-import { useCallback, useId, useState } from "react";
+import { useCallback, useId, useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
+import { CategoryTreeView } from "~/components/ui/dashboard/CategoryTreeView";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
 import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { CategoriesPageSkeleton } from "~/components/ui/dashboard/skeletons/CategoriesPageSkeleton";
-import { Badge } from "~/components/ui/shared/Badge";
-import { Button } from "~/components/ui/shared/Button";
 import { Input } from "~/components/ui/shared/Input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "~/components/ui/shared/Select";
 import { Switch } from "~/components/ui/shared/Switch";
 import { useDashboardForm } from "~/hooks/useDashboardForm";
+import { buildCategoryTree } from "~/lib/categoryTree";
 import { generateSlug, useSlugGeneration } from "~/hooks/useSlugGeneration";
 import { createProductCategory } from "~/server_functions/dashboard/categories/createProductCategory";
 import { deleteProductCategory } from "~/server_functions/dashboard/categories/deleteProductCategory";
@@ -43,11 +49,20 @@ function RouteComponent() {
 	const queryClient = useQueryClient();
 	const createFormId = useId();
 	const editFormId = useId();
+	const createParentCategoryId = useId();
+	const editParentCategoryId = useId();
 
 	// Use suspense queries - data is guaranteed to be loaded by the loader
 	const { data: categoriesData } = useSuspenseQuery(
 		productCategoriesQueryOptions(),
 	);
+	
+	// Build tree structure from flat categories
+	const categoryTree = useMemo(
+		() => buildCategoryTree(categoriesData || []),
+		[categoriesData],
+	);
+	
 	// Category type state - only product categories are supported
     const [categoryType, setCategoryType] = useState<"product">("product");
 
@@ -56,6 +71,7 @@ function RouteComponent() {
 		{
 			name: "",
 			slug: "",
+			parentSlug: null,
 			image: "",
 			isActive: true,
 		},
@@ -102,6 +118,17 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 		handleEditSlugChange,
 	);
 
+	// Listen for action button clicks from navbar
+	useEffect(() => {
+		const handleAction = () => {
+			setCategoryType("product");
+			productCategoryForm.crud.openCreateDrawer();
+		};
+
+		window.addEventListener("dashboardAction", handleAction);
+		return () => window.removeEventListener("dashboardAction", handleAction);
+	}, [productCategoryForm.crud.openCreateDrawer]);
+
 	// Submit handler for creating categories
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -143,6 +170,7 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 		productCategoryForm.editForm.setFormData({
 			name: category.name,
 			slug: category.slug,
+			parentSlug: category.parentSlug || null,
 			image: category.image || "",
 			isActive: category.isActive,
 		});
@@ -227,98 +255,18 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
     // no-op
 	};
 
+
 	return (
 		<div className="space-y-6 px-6">
-			{/* Header */}
-			<div className="flex justify-between items-center">
-				<div>
-					<h1 className="">Categories Management</h1>
+			{/* Product Categories Section */}
+			<div className="space-y-4">
+				<div className="border rounded-lg p-4 bg-card">
+					<CategoryTreeView
+						tree={categoryTree}
+						onEdit={handleEditCategory}
+						onDelete={handleDeleteCategoryClick}
+					/>
 				</div>
-			</div>
-
-			{/* Two-column layout for categories */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-				{/* Product Categories Section */}
-				<div className="space-y-4">
-					<div className="flex items-center justify-between">
-						<h3 className="text-lg font-medium">Product Categories</h3>
-						<Button
-							onClick={() => {
-								setCategoryType("product");
-								productCategoryForm.crud.openCreateDrawer();
-							}}
-							size="sm"
-						>
-							<Plus className="h-4 w-4 mr-1" />
-							Add Category
-						</Button>
-					</div>
-
-					<div>
-						{!categoriesData || categoriesData.length === 0 ? (
-							<div className="text-center py-8 text-muted-foreground">
-								No product categories found
-							</div>
-						) : (
-							<div className="overflow-x-auto">
-								<table className="min-w-full">
-									<tbody className="divide-y divide-border">
-										{categoriesData?.map((category) => (
-											<tr key={category.id} className="hover:bg-muted/30">
-												<td className="px-1 py-4">
-													<div>
-														<div className="font-medium">{category.name}</div>
-														<div className="text-sm text-muted-foreground">
-															{category.slug}
-														</div>
-													</div>
-												</td>
-												<td className="px-1 py-4">
-													<Badge
-														variant={
-															category.isActive ? "default" : "secondary"
-														}
-													>
-														{category.isActive ? "Active" : "Inactive"}
-													</Badge>
-												</td>
-												<td className="px-1 py-4 text-right">
-													<div className="flex space-x-2 justify-end">
-														<Button
-															size="sm"
-															variant="outline"
-															onClick={() => handleEditCategory(category)}
-														>
-															Edit
-														</Button>
-														<Button
-															variant="destructive"
-															size="sm"
-															onClick={() =>
-																handleDeleteCategoryClick(category)
-															}
-														>
-															Delete
-														</Button>
-													</div>
-												</td>
-											</tr>
-										))}
-									</tbody>
-								</table>
-							</div>
-						)}
-					</div>
-				</div>
-
-                {/* Categories section */}
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-medium">Categories</h3>
-                    </div>
-                    <div className="text-sm text-muted-foreground py-8">
-                    </div>
-                </div>
 			</div>
 
 			{/* Create Category Drawer */}
@@ -364,6 +312,36 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 								onAutoSlugChange={setIsCreateAutoSlug}
 								idPrefix="create"
 							/>
+
+							{/* Parent Category Selector */}
+							<div>
+								<label htmlFor={createParentCategoryId} className="block text-sm font-medium mb-1">
+									Parent Category (optional)
+								</label>
+								<Select
+									value={(activeForm.createForm.formData as CategoryFormData).parentSlug || "none"}
+									onValueChange={(value: string) => {
+										productCategoryForm.createForm.updateField(
+											"parentSlug",
+											value === "none" ? null : value
+										);
+									}}
+								>
+									<SelectTrigger id={createParentCategoryId}>
+										<SelectValue placeholder="None (top-level category)" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="none">None (top-level category)</SelectItem>
+										{categoriesData
+											.filter((cat) => cat.isActive)
+											.map((category) => (
+												<SelectItem key={category.slug} value={category.slug}>
+													{category.name}
+												</SelectItem>
+											))}
+									</SelectContent>
+								</Select>
+							</div>
 
 							{categoryType === "product" && (
 								<Input
@@ -435,6 +413,36 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 								onAutoSlugChange={setIsEditAutoSlug}
 								idPrefix="edit"
 							/>
+
+							{/* Parent Category Selector */}
+							<div>
+								<label htmlFor={editParentCategoryId} className="block text-sm font-medium mb-1">
+									Parent Category (optional)
+								</label>
+								<Select
+									value={(activeForm.editForm.formData as CategoryFormData).parentSlug || "none"}
+									onValueChange={(value: string) => {
+										productCategoryForm.editForm.updateField(
+											"parentSlug",
+											value === "none" ? null : value
+										);
+									}}
+								>
+									<SelectTrigger id={editParentCategoryId}>
+										<SelectValue placeholder="None (top-level category)" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="none">None (top-level category)</SelectItem>
+										{categoriesData
+											.filter((cat) => cat.isActive && cat.slug !== activeForm.editForm.formData.slug)
+											.map((category) => (
+												<SelectItem key={category.slug} value={category.slug}>
+													{category.name}
+												</SelectItem>
+											))}
+									</SelectContent>
+								</Select>
+							</div>
 
 							{categoryType === "product" && (
 								<Input
