@@ -17,12 +17,12 @@ import { NotFound } from "~/components/NotFound";
 
 import CustomCursor from "~/components/ui/shared/custom_cursor/CustomCursor";
 import { CursorContextProvider } from "~/components/ui/shared/custom_cursor/CustomCursorContext";
+import { Footer } from "~/components/ui/shared/Footer";
 import { NavBar } from "~/components/ui/shared/NavBar";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { CartProvider } from "~/lib/cartContext";
 import { seo } from "~/utils/seo";
 import appCss from "../styles/app.css?url";
-import { Footer } from "~/components/ui/shared/Footer";
 
 // Create QueryClient with optimized defaults
 const queryClient = new QueryClient({
@@ -35,7 +35,7 @@ const queryClient = new QueryClient({
 });
 
 // Configure persistence - only runs on client side and only in production
-if (typeof window !== "undefined" && process.env.NODE_ENV === 'production') {
+if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
 	const persister = createSyncStoragePersister({
 		storage: window.localStorage,
 		key: "RUBLEVSKY_QUERY_CACHE",
@@ -112,18 +112,16 @@ function RootComponent() {
 	const isMobile = useIsMobile();
 
 	return (
-		
-			<QueryClientProvider client={queryClient}>
-				<CartProvider>
-					<CursorContextProvider>
-						{!isMobile && <CustomCursor />}
-						<RootDocument>
-							<Outlet />
-						</RootDocument>
-					</CursorContextProvider>
-				</CartProvider>
-			</QueryClientProvider>
-	
+		<QueryClientProvider client={queryClient}>
+			<CartProvider>
+				<CursorContextProvider>
+					{!isMobile && <CustomCursor />}
+					<RootDocument>
+						<Outlet />
+					</RootDocument>
+				</CursorContextProvider>
+			</CartProvider>
+		</QueryClientProvider>
 	);
 }
 
@@ -141,7 +139,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body className="" suppressHydrationWarning>
-			
 				<NavBar />
 				{children}
 				<Footer />

@@ -31,14 +31,15 @@ export const createProductCategory = createServerFn({ method: "POST" })
 				throw new Error("A category with this slug already exists");
 			}
 
-			// Insert the category
 			const insertResult = await db
 				.insert(categories)
 				.values({
 					name: categoryData.name,
 					slug: categoryData.slug,
+					parentSlug: categoryData.parentSlug || null,
 					image: categoryData.image || null,
 					isActive: categoryData.isActive ?? true,
+					order: categoryData.order ?? 0,
 				})
 				.returning();
 

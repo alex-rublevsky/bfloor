@@ -1,9 +1,4 @@
-import {
-	AnimatePresence,
-	motion,
-	useMotionValueEvent,
-	useScroll,
-} from "motion/react";
+import { motion, useMotionValueEvent, useScroll } from "motion/react";
 import { memo, useCallback, useId, useRef, useState } from "react";
 import { AnimatedGroup } from "~/components/motion_primitives/AnimatedGroup";
 import {
@@ -58,12 +53,12 @@ const ProductFilters = memo(function ProductFilters({
 		[onPriceRangeChange],
 	);
 
-    const handleMainCategoryChange = useCallback(
-        (category: string | null) => {
-            onCategoryChange(category);
-        },
-        [onCategoryChange],
-    );
+	const handleMainCategoryChange = useCallback(
+		(category: string | null) => {
+			onCategoryChange(category);
+		},
+		[onCategoryChange],
+	);
 
 	const [isHidden, setIsHidden] = useState(false);
 	const { scrollY } = useScroll();
@@ -224,7 +219,6 @@ const ProductFilters = memo(function ProductFilters({
 									</Select>
 								</div>
 							</AnimatedGroup>
-
 						</div>
 					)}
 					<div className="mx-auto h-1.5 w-[5rem] rounded-full bg-secondary shrink-0" />

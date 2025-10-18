@@ -13,10 +13,7 @@ interface ProductListProps {
 
 const STORE_ANIMATION_KEY = "store-products-animated";
 
-function ProductList({
-	data,
-	isLoading = false,
-}: ProductListProps) {
+function ProductList({ data, isLoading = false }: ProductListProps) {
 	const [shouldAnimate, setShouldAnimate] = useState<boolean | null>(null); // null = loading state
 	const { isMobileOrTablet } = useDeviceType();
 
@@ -64,10 +61,7 @@ function ProductList({
 				staggerChildren={0.06}
 			>
 				{data.map((product) => (
-						<ProductCard
-							key={product.id}
-							product={product}
-						/>
+					<ProductCard key={product.id} product={product} />
 				))}
 			</AnimatedGroup>
 		);

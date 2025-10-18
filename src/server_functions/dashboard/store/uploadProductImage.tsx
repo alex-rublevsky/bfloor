@@ -13,6 +13,8 @@ interface UploadImageInput {
 	fileSize: number;
 	folder?: string;
 	slug?: string; // product slug for subdirectory organization
+	categorySlug?: string; // category slug for proper path structure
+	productName?: string; // product name for proper file naming
 }
 
 export const uploadProductImage = createServerFn({ method: "POST" })
@@ -26,6 +28,8 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 				fileSize,
 				folder = "products",
 				slug,
+				categorySlug,
+				productName,
 			} = data;
 
 			if (!fileData) {
@@ -47,8 +51,8 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 				throw new Error("File size must be less than 1.5MB");
 			}
 
-            // Resolve R2 bucket binding (supports new and legacy names)
-            const bucket = env.BFLOOR_STORAGE as R2Bucket;
+			// Resolve R2 bucket binding (supports new and legacy names)
+			const bucket = env.BFLOOR_STORAGE as R2Bucket;
 
 			if (!bucket) {
 				setResponseStatus(500);
@@ -72,8 +76,26 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 				sanitizedFileName.lastIndexOf("."),
 			);
 
-			// Create directory path with slug if provided
-			const directoryPath = slug ? `${folder}/${slug}` : folder;
+			// Create directory path with proper structure: products/category/productName
+			let directoryPath = folder;
+
+			if (
+				categorySlug &&
+				productName &&
+				categorySlug.trim() &&
+				productName.trim()
+			) {
+				const sanitizedCategorySlug = sanitizeFilename(categorySlug);
+				const sanitizedProductName = sanitizeFilename(productName);
+				directoryPath = `${folder}/${sanitizedCategorySlug}/${sanitizedProductName}`;
+			} else if (slug?.trim()) {
+				// Fallback to old structure for backward compatibility
+				directoryPath = `${folder}/${slug}`;
+			} else {
+				// Use timestamp-based folder for new products without proper data
+				const timestamp = Date.now();
+				directoryPath = `${folder}/temp-${timestamp}`;
+			}
 
 			// Check if file exists and find available name
 			let finalName = nameWithoutExt;

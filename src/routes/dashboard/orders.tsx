@@ -8,7 +8,7 @@ import { OrderCard } from "~/components/ui/dashboard/OrderCard";
 import { OrderDrawer } from "~/components/ui/dashboard/OrderDrawer";
 import { OrdersPageSkeleton } from "~/components/ui/dashboard/skeletons/OrdersPageSkeleton";
 import { Button } from "~/components/ui/shared/Button";
-import { SearchInput } from "~/components/ui/shared/SearchInput";
+import { useDashboardSearch } from "~/lib/dashboardSearchContext";
 import { dashboardOrdersQueryOptions } from "~/lib/queryOptions";
 import {
 	deleteOrder,
@@ -82,7 +82,7 @@ export const Route = createFileRoute("/dashboard/orders")({
 
 function OrderList() {
 	const queryClient = useQueryClient();
-	const [searchTerm, setSearchTerm] = useState("");
+	const { searchTerm } = useDashboardSearch();
 	const [isSelectionMode, setIsSelectionMode] = useState(false);
 	const [selectedOrders, setSelectedOrders] = useState<Set<number>>(new Set());
 	const [isDeleting, setIsDeleting] = useState(false);
@@ -269,80 +269,51 @@ function OrderList() {
 			(group: { title: string; orders: Order[] }) => group.orders.length > 0,
 		); // Only show groups with orders
 
-	const totalOrders = allOrders.length;
-	const displayedOrders = filteredGroupedOrders.reduce(
-		(sum: number, group: { title: string; orders: Order[] }) =>
-			sum + group.orders.length,
-		0,
-	);
-
 	return (
 		<div className="space-y-6">
-			{/* Header with count, search, and selection controls */}
-			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-4">
-				<div className="flex items-center gap-4">
-					<p className="text-muted-foreground">
-						{searchTerm
-							? `${displayedOrders} of ${totalOrders} orders`
-							: `${totalOrders} orders`}
-					</p>
-					{isSelectionMode && selectedOrders.size > 0 && (
-						<p className="text-sm text-primary">
-							{selectedOrders.size} selected
-						</p>
+			{/* Orders Stats */}
+			<div className="px-4">
+			</div>
+
+			{/* Selection Controls */}
+			<div className="flex items-center gap-2 px-4">
+				{isSelectionMode && selectedOrders.size > 0 && (
+					<Button
+						variant="destructive"
+						size="sm"
+						onClick={handleBulkDelete}
+						disabled={isDeleting}
+						className="flex items-center gap-1"
+					>
+						<Trash2 className="h-4 w-4" />
+						Delete ({selectedOrders.size})
+					</Button>
+				)}
+				<Button
+					variant={isSelectionMode ? "default" : "outline"}
+					size="sm"
+					onClick={toggleSelectionMode}
+					className="flex items-center gap-1"
+				>
+					{isSelectionMode ? (
+						<CheckSquare className="h-4 w-4" />
+					) : (
+						<Square className="h-4 w-4" />
 					)}
-				</div>
-
-				<div className="flex items-center gap-2">
-					{/* Search */}
-					<SearchInput
-						placeholder="Search orders..."
-						value={searchTerm}
-						onChange={setSearchTerm}
-						className="w-full sm:w-64"
-					/>
-
-					{/* Selection Controls */}
-					<div className="flex items-center gap-2">
-						{isSelectionMode && selectedOrders.size > 0 && (
-							<Button
-								variant="destructive"
-								size="sm"
-								onClick={handleBulkDelete}
-								disabled={isDeleting}
-								className="flex items-center gap-1"
-							>
-								<Trash2 className="h-4 w-4" />
-								Delete ({selectedOrders.size})
-							</Button>
-						)}
-						<Button
-							variant={isSelectionMode ? "default" : "outline"}
-							size="sm"
-							onClick={toggleSelectionMode}
-							className="flex items-center gap-1"
-						>
-							{isSelectionMode ? (
-								<CheckSquare className="h-4 w-4" />
-							) : (
-								<Square className="h-4 w-4" />
-							)}
-							Select
-						</Button>
-						{isSelectionMode && (
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={handleSelectAll}
-								className="flex items-center gap-1"
-							>
-								{selectedOrders.size === allOrders.length
-									? "Select None"
-									: "Select All"}
-							</Button>
-						)}
-					</div>
-				</div>
+					Select
+				</Button>
+				{isSelectionMode && (
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={handleSelectAll}
+						className="flex items-center gap-1"
+					>
+						{selectedOrders.size === allOrders.length
+							? "Select None"
+							: "Select All"}
+					</Button>
+				)}
 			</div>
 
 			{/* Orders Groups */}
@@ -402,7 +373,7 @@ function OrderList() {
 					isOpen={showSingleDeleteDialog}
 					onClose={handleSingleDeleteCancel}
 					onConfirm={handleSingleDeleteConfirm}
-					title="Delete Order"
+					title="Удалить заказ"
 					description={`Are you sure you want to delete order #${deletingOrderId}? This action cannot be undone.`}
 					isDeleting={isDeleting}
 				/>
@@ -414,7 +385,7 @@ function OrderList() {
 					isOpen={showBulkDeleteDialog}
 					onClose={handleBulkDeleteCancel}
 					onConfirm={handleBulkDeleteConfirm}
-					title="Delete Orders"
+					title="Удалить заказы"
 					description={`Are you sure you want to delete ${selectedOrders.size} selected order(s)? This action cannot be undone.`}
 					isDeleting={isDeleting}
 				/>

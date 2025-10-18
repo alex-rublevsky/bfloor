@@ -34,7 +34,9 @@ export const deleteBrand = createServerFn({ method: "POST" })
 
 			if (productsUsingBrand.length > 0) {
 				setResponseStatus(409);
-				throw new Error("Cannot delete brand: there are products using this brand");
+				throw new Error(
+					"Cannot delete brand: there are products using this brand",
+				);
 			}
 
 			// Delete the brand

@@ -3,7 +3,10 @@ import * as React from "react";
 
 import { cn } from "~/lib/utils";
 
-const TooltipProvider = ({ children, ...props }: React.ComponentProps<typeof TooltipPrimitive.Provider>) => (
+const TooltipProvider = ({
+	children,
+	...props
+}: React.ComponentProps<typeof TooltipPrimitive.Provider>) => (
 	<TooltipPrimitive.Provider delayDuration={0} {...props}>
 		{children}
 	</TooltipPrimitive.Provider>

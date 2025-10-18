@@ -10,7 +10,7 @@ const calculateProductStats = (productsData: {
 
 	// Single pass through all products
 	for (const category of productsData.groupedProducts) {
-		for (const product of category.products) {
+		for (const _product of category.products) {
 			totalProducts++;
 		}
 	}
@@ -45,4 +45,3 @@ export function useProductStats() {
 		error,
 	};
 }
-

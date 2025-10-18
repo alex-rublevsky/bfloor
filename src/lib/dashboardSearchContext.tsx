@@ -5,13 +5,17 @@ interface DashboardSearchContextType {
 	setSearchTerm: (term: string) => void;
 }
 
-const DashboardSearchContext = createContext<DashboardSearchContextType | undefined>(undefined);
+const DashboardSearchContext = createContext<
+	DashboardSearchContextType | undefined
+>(undefined);
 
 interface DashboardSearchProviderProps {
 	children: React.ReactNode;
 }
 
-export function DashboardSearchProvider({ children }: DashboardSearchProviderProps) {
+export function DashboardSearchProvider({
+	children,
+}: DashboardSearchProviderProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 
 	return (
@@ -29,7 +33,9 @@ export function DashboardSearchProvider({ children }: DashboardSearchProviderPro
 export function useDashboardSearch() {
 	const context = useContext(DashboardSearchContext);
 	if (context === undefined) {
-		throw new Error("useDashboardSearch must be used within a DashboardSearchProvider");
+		throw new Error(
+			"useDashboardSearch must be used within a DashboardSearchProvider",
+		);
 	}
 	return context;
 }

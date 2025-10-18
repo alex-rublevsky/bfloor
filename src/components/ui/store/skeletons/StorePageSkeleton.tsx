@@ -3,6 +3,12 @@
  * Loading state for the store index page
  */
 
+// Generate stable keys for skeleton items
+const SKELETON_KEYS = Array.from(
+	{ length: 12 },
+	(_, i) => `store-skeleton-card-${i}`,
+);
+
 export function StorePageSkeleton() {
 	return (
 		<section className="no-padding space-y-8">
@@ -19,8 +25,8 @@ export function StorePageSkeleton() {
 
 			{/* Products grid skeleton */}
 			<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3 mb-20">
-				{Array.from({ length: 12 }, (_, i) => (
-					<div key={`store-skeleton-card-${i}`} className="w-full">
+				{SKELETON_KEYS.map((key) => (
+					<div key={key} className="w-full">
 						{/* Image skeleton */}
 						<div className="aspect-square bg-muted animate-pulse rounded-t" />
 						{/* Content skeleton */}

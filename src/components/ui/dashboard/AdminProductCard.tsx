@@ -26,7 +26,10 @@ export function AdminProductCard({
 			return JSON.parse(product.images) as string[];
 		} catch {
 			// Fallback to comma-separated parsing for backward compatibility
-			return product.images.split(",").map((img) => img.trim()).filter(Boolean);
+			return product.images
+				.split(",")
+				.map((img) => img.trim())
+				.filter(Boolean);
 		}
 	})();
 	const primaryImage = imageArray[0];
@@ -56,7 +59,7 @@ export function AdminProductCard({
 			product.variations &&
 			product.variations.length > 0
 		) {
-			product.variations.forEach((variation) => {
+			product.variations.forEach((_variation) => {
 				// No shipping locations to add anymore
 			});
 		}
@@ -176,9 +179,9 @@ export function AdminProductCard({
 												{displayPrice.toFixed(2)} р
 											</h5>
 										)}
-						</div>
-						</div>
-						</div>
+									</div>
+								</div>
+							</div>
 
 							{/* Product Name */}
 							<p className="mb-3">{product.name}</p>

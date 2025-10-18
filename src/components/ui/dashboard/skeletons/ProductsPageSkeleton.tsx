@@ -98,8 +98,6 @@ function ProductCardSkeleton() {
 							<Skeleton className="absolute inset-0 w-20" />
 						</div>
 
-						
-
 						{/* Stock */}
 						<div className="relative">
 							<span className="text-xs text-muted-foreground invisible">

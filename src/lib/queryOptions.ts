@@ -64,7 +64,6 @@ export const productQueryOptions = (productId: string) =>
 		refetchOnMount: false,
 	});
 
-
 /**
  * Dashboard orders query options
  * Used for: /dashboard/orders route

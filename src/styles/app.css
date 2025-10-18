@@ -25,7 +25,11 @@ body {
 	--color-popover: hsl(var(--popover));
 	--color-popover-foreground: hsl(var(--popover-foreground));
 	--color-primary: oklch(var(--primary));
-	--color-primary-hover: color-mix(in oklch, oklch(var(--primary)) 80%, white 20%);
+	--color-primary-hover: color-mix(
+		in oklch,
+		oklch(var(--primary)) 80%,
+		white 20%
+	);
 	--color-primary-foreground: oklch(var(--primary-foreground));
 	--color-secondary: oklch(var(--secondary));
 	--color-secondary-foreground: oklch(var(--secondary-foreground));
@@ -68,7 +72,6 @@ body {
   color utility to any element that depends on these defaults.
 */
 @layer base {
-
 	*,
 	::after,
 	::before,
@@ -100,7 +103,6 @@ body {
 	}
 
 	@media (prefers-color-scheme: dark) {
-
 		html,
 		body {
 			background-color: rgb(3 7 18);
@@ -149,7 +151,6 @@ body {
 	--sidebar-ring: 217.2 91.2% 59.8%;
 	--discount-badge: #bee42b;
 	--discount-badge-foreground: #3c480b;
-
 }
 
 .dark {
@@ -441,8 +442,6 @@ p {
 	}
 }
 
-
-
 .no-scrollbar {
 	scrollbar-width: none;
 	-ms-overflow-style: none;
@@ -496,7 +495,6 @@ p {
 	animation: none;
 }
 
-
 /* Hide number input spinners */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
@@ -510,5 +508,5 @@ input[type="number"] {
 }
 
 ::view-transition {
-	navigation:auto;
+	navigation: auto;
 }

@@ -54,8 +54,10 @@ export const updateProductCategory = createServerFn({ method: "POST" })
 				.set({
 					name: categoryData.name,
 					slug: categoryData.slug,
+					parentSlug: categoryData.parentSlug || null,
 					image: categoryData.image || null,
 					isActive: categoryData.isActive ?? true,
+					order: categoryData.order ?? 0,
 				})
 				.where(eq(categories.id, id))
 				.returning();

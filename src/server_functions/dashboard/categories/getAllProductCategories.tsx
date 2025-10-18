@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
+import { asc } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import type * as schema from "~/schema";
@@ -10,9 +11,14 @@ export const getAllProductCategories = createServerFn({
 }).handler(async () => {
 	try {
 		const db: DrizzleD1Database<typeof schema> = DB();
-		const categoriesResult = await db.select().from(categories).all();
+		// Order by order field, then by name
+		const categoriesResult = await db
+			.select()
+			.from(categories)
+			.orderBy(asc(categories.order), asc(categories.name))
+			.all();
 
-    // Allow empty state: return [] when no categories yet
+		// Allow empty state: return [] when no categories yet
 
 		return categoriesResult;
 	} catch (error) {

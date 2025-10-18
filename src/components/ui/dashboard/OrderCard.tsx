@@ -3,6 +3,7 @@ import { Button } from "~/components/ui/shared/Button";
 import { Checkbox } from "~/components/ui/shared/Checkbox";
 import { Image } from "~/components/ui/shared/Image";
 import { Switch } from "~/components/ui/shared/Switch";
+import { ASSETS_BASE_URL } from "~/constants/urls";
 
 interface OrderItem {
 	id: number;
@@ -125,7 +126,7 @@ export function OrderCard({
 							<div className="relative w-12 h-12 shrink-0 bg-muted rounded overflow-hidden">
 								{item.product.images ? (
 									<Image
-										src={`/${item.product.images.split(",").map((img) => img.trim())[0]}`}
+										src={`${ASSETS_BASE_URL}/${item.product.images.split(",").map((img) => img.trim())[0]}`}
 										alt={item.product.name}
 										className="object-cover"
 										sizes="3rem"

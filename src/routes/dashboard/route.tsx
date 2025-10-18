@@ -1,53 +1,57 @@
 import {
-    createFileRoute,
-    Outlet,
-    // redirect,
-    useLoaderData,
+	createFileRoute,
+	Outlet,
+	// redirect,
+	useLoaderData,
 } from "@tanstack/react-router";
 import { NavBar } from "~/components/ui/shared/NavBar";
 import { Toaster } from "~/components/ui/shared/sonner";
+import {
+	DashboardSearchProvider,
+	useDashboardSearch,
+} from "~/lib/dashboardSearchContext";
 // import { getUserData } from "~/utils/auth-server-func";
 
 export const Route = createFileRoute("/dashboard")({
-    // beforeLoad temporarily disabled for local development access
-    // beforeLoad: async () => {
-    //     try {
-    //         const userData = await getUserData();
-    //
-    //         // Check if user is authenticated and is admin
-    //         if (!userData.isAuthenticated || !userData.isAdmin) {
-    //             throw redirect({ to: "/login" });
-    //         }
-    //
-    //         // Ensure we have required user data
-    //         if (!userData.userID || !userData.userEmail) {
-    //             throw redirect({ to: "/login" });
-    //         }
-    //
-    //         // Return user data in context for the loader to use
-    //         return { userData };
-    //     } catch {
-    //         throw redirect({ to: "/login" });
-    //     }
-    // },
+	// beforeLoad temporarily disabled for local development access
+	// beforeLoad: async () => {
+	//     try {
+	//         const userData = await getUserData();
+	//
+	//         // Check if user is authenticated and is admin
+	//         if (!userData.isAuthenticated || !userData.isAdmin) {
+	//             throw redirect({ to: "/login" });
+	//         }
+	//
+	//         // Ensure we have required user data
+	//         if (!userData.userID || !userData.userEmail) {
+	//             throw redirect({ to: "/login" });
+	//         }
+	//
+	//         // Return user data in context for the loader to use
+	//         return { userData };
+	//     } catch {
+	//         throw redirect({ to: "/login" });
+	//     }
+	// },
 	// Loader just passes through the user data from beforeLoad context
-    // Provide safe defaults during development since beforeLoad is disabled
-    loader: async () => {
-        return {
+	// Provide safe defaults during development since beforeLoad is disabled
+	loader: async () => {
+		return {
 			// userID: context.userData.userID,
-            // userName: context.userData.userName,
-            // userEmail: context.userData.userEmail,
-            // userAvatar: context.userData.userAvatar,
-            userID: "",
-            userName: "",
-            userEmail: "",
-            userAvatar: "",
-        };
-    },
+			// userName: context.userData.userName,
+			// userEmail: context.userData.userEmail,
+			// userAvatar: context.userData.userAvatar,
+			userID: "",
+			userName: "",
+			userEmail: "",
+			userAvatar: "",
+		};
+	},
 	component: RouteComponent,
 });
 
-function RouteComponent() {
+function DashboardLayout() {
 	const loaderData = useLoaderData({ from: "/dashboard" }) as
 		| {
 				userID: string;
@@ -57,19 +61,27 @@ function RouteComponent() {
 		  }
 		| undefined;
 
-	// Get the action handler from route context if it exists
-	const handleActionClick = () => {
-		// Dispatch a custom event that child routes can listen to
-		window.dispatchEvent(new CustomEvent("dashboardAction"));
-	};
+	const { searchTerm, setSearchTerm } = useDashboardSearch();
 
 	return (
 		<div className="min-h-screen bg-background">
-			<main className="py-8 pb-24">
+			<main className="pt-20 pb-8">
 				<Outlet />
 			</main>
-			<NavBar userData={loaderData} onActionClick={handleActionClick} />
+			<NavBar
+				userData={loaderData}
+				searchTerm={searchTerm}
+				onSearchChange={setSearchTerm}
+			/>
 			<Toaster />
 		</div>
+	);
+}
+
+function RouteComponent() {
+	return (
+		<DashboardSearchProvider>
+			<DashboardLayout />
+		</DashboardSearchProvider>
 	);
 }

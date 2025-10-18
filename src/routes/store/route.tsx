@@ -11,7 +11,5 @@ export const Route = createFileRoute("/store")({
 });
 
 function StoreLayout() {
-	return (
-			<Outlet />
-	);
+	return <Outlet />;
 }
