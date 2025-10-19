@@ -24,52 +24,11 @@ export function CartItem({ item, enrichedItems }: CartItemProps) {
 	const { data: attributes } = useProductAttributes();
 	const queryClient = useQueryClient();
 
-	// Calculate effective max quantity for weight-based products
+	// Calculate effective max quantity based on stock
 	const effectiveMaxQuantity = useMemo(() => {
 		if (item.unlimitedStock) return undefined;
-
-		// For weight-based products
-		if (item.weightInfo) {
-			const { totalWeight } = item.weightInfo;
-			const currentVariationWeight = parseInt(
-				item.attributes?.WEIGHT_G || "0",
-				10,
-			);
-
-			if (currentVariationWeight) {
-				// Calculate total weight used by all variations in cart EXCEPT current item
-				const weightUsedInCart = cart.items
-					.filter(
-						(cartItem) =>
-							cartItem.productId === item.productId &&
-							// Exclude current item from calculation
-							!(cartItem.variationId === item.variationId),
-					)
-					.reduce((total, cartItem) => {
-						// Get enriched cart item to access attributes
-						const enrichedCartItem = enrichedItems.find(
-							(enriched) =>
-								enriched.productId === cartItem.productId &&
-								enriched.variationId === cartItem.variationId,
-						);
-						const cartItemWeight = enrichedCartItem?.attributes?.WEIGHT_G;
-						if (cartItemWeight) {
-							return total + parseInt(cartItemWeight, 10) * cartItem.quantity;
-						}
-						return total;
-					}, 0);
-
-				// Calculate remaining weight (excluding current item's usage)
-				const remainingWeight = Math.max(0, totalWeight - weightUsedInCart);
-
-				// Calculate how many packages of current variation can be made
-				return Math.floor(remainingWeight / currentVariationWeight);
-			}
-		}
-
-		// For regular products, use the maxStock from the item
 		return item.maxStock;
-	}, [item, cart.items, enrichedItems]);
+	}, [item.unlimitedStock, item.maxStock]);
 
 	const handleIncrement = () => {
 		if (

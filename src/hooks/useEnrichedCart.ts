@@ -24,9 +24,6 @@ export interface EnrichedCartItem extends CartItem {
 	maxStock: number;
 	unlimitedStock: boolean;
 	discount?: number | null;
-	weightInfo?: {
-		totalWeight: number;
-	};
 }
 
 export function useEnrichedCart(cartItems: CartItem[]): EnrichedCartItem[] {
@@ -103,15 +100,6 @@ export function useEnrichedCart(cartItems: CartItem[]): EnrichedCartItem[] {
 					unlimitedStock:
 						product.unlimitedStock || product.categorySlug === "stickers",
 					discount: variation?.discount || product.discount,
-
-					// Weight info (if applicable)
-					...(product.weight
-						? {
-								weightInfo: {
-									totalWeight: parseInt(product.weight, 10),
-								},
-							}
-						: {}),
 				} as EnrichedCartItem;
 			})
 			.filter((item): item is EnrichedCartItem => item !== null);

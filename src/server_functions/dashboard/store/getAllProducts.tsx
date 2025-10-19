@@ -206,12 +206,6 @@ export const getAllProducts = createServerFn({ method: "GET" })
 					product.variations &&
 					product.variations.length > 0
 				) {
-					// For weight-based products, check if there's total weight available
-					if (product.weight) {
-						const totalWeight = parseInt(product.weight || "0", 10);
-						return totalWeight > 0;
-					}
-
 					// For regular variation products, check if ANY variation has stock > 0
 					return product.variations.some((variation) => variation.stock > 0);
 				}

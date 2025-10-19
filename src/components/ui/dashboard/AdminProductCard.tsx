@@ -200,14 +200,7 @@ export function AdminProductCard({
 									</span>
 								</div>
 
-								{/* Weight */}
-								{product.weight && (
-									<div>
-										<span className="text-muted-foreground text-xs">
-											Weight: {product.weight}g
-										</span>
-									</div>
-								)}
+								{/* Empty space for layout */}
 
 								{/* Shipping */}
 								{allShippingLocations.filter(

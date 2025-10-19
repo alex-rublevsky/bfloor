@@ -115,7 +115,6 @@ export interface ProductFormData {
 	isFeatured: boolean;
 	discount: number | null;
 	hasVariations: boolean;
-	weight: string;
 	images: string;
 	attributes?: ProductAttributeFormData[]; // Product-level attributes
 	variations: ProductVariationFormData[];

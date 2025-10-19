@@ -538,11 +538,7 @@ function ProductPage() {
 													м²
 												</div>
 											)}
-											{syncedProduct?.weight && (
-												<div className="text-xs text-gray-500">
-													{syncedProduct.weight}
-												</div>
-											)}
+											{/* Weight removed */}
 										</div>
 										<button
 											type="button"

@@ -29,7 +29,6 @@ export const products = sqliteTable("products", {
 	hasVariations: integer("has_variations", { mode: "boolean" })
 		.notNull()
 		.default(false),
-	weight: text("weight"),
 	stock: integer("stock").notNull().default(0),
 	unlimitedStock: integer("unlimited_stock", { mode: "boolean" })
 		.notNull()

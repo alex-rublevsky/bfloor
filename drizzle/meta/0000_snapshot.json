@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "f71fa6a0-ec3f-4288-8f4a-7a26ffa0396a",
+  "id": "8f493bb1-501e-415c-b429-cd687a535bfc",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -847,13 +847,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": false
-        },
-        "weight": {
-          "name": "weight",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         },
         "stock": {
           "name": "stock",

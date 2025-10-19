@@ -15,9 +15,6 @@ interface CartItem {
 	discount?: number | null;
 	image?: string;
 	attributes?: Record<string, string>;
-	weightInfo?: {
-		totalWeight: number;
-	};
 }
 
 interface Address {

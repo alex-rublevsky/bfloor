@@ -79,7 +79,6 @@ export const updateProduct = createServerFn({ method: "POST" })
 						isFeatured: productData.isFeatured,
 						discount: productData.discount || null,
 						hasVariations: productData.hasVariations,
-						weight: productData.weight || null,
 						images: imagesJson,
 						productAttributes: productData.attributes?.length
 							? JSON.stringify(productData.attributes)

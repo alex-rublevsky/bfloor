@@ -137,8 +137,6 @@ function RouteComponent() {
 	const editBrandId = useId();
 	const editCollectionId = useId();
 
-	const editWeightId = useId();
-
 	const addPriceId = useId();
 	const addCategoryId = useId();
 	const addBrandId = useId();
@@ -161,7 +159,6 @@ function RouteComponent() {
 		isFeatured: false,
 		discount: null,
 		hasVariations: false,
-		weight: "",
 		images: "",
 		attributes: [],
 		variations: [],
@@ -704,7 +701,6 @@ function RouteComponent() {
 				isFeatured: productWithDetails.isFeatured,
 				discount: productWithDetails.discount,
 				hasVariations: productWithDetails.hasVariations,
-				weight: productWithDetails.weight || "",
 				images: imagesString,
 				variations: [],
 			});
@@ -776,7 +772,6 @@ function RouteComponent() {
 				isFeatured: product.isFeatured,
 				discount: product.discount,
 				hasVariations: product.hasVariations,
-				weight: product.weight || "",
 				images: fallbackImagesString,
 				variations: [],
 			});
@@ -1050,20 +1045,8 @@ function RouteComponent() {
 								{/* Column 2: Empty for grid alignment */}
 								<div />
 
-								{/* Column 1: Weight */}
-								<div>
-									<Input
-										id={editWeightId}
-										type="text"
-										name="weight"
-										label="Вес (в граммах)"
-										value={editFormData.weight}
-										onChange={handleEditChange}
-										placeholder="Введите вес в граммах"
-									/>
-								</div>
-
-								{/* Column 2: Empty for grid alignment */}
+								{/* Empty cells for grid alignment */}
+								<div />
 								<div />
 							</div>
 						</div>
@@ -1345,17 +1328,8 @@ function RouteComponent() {
 								{/* Column 2: Empty for grid alignment */}
 								<div />
 
-								{/* Column 1: Weight */}
-								<Input
-									label="Вес (в граммах)"
-									type="text"
-									name="weight"
-									value={formData.weight}
-									onChange={handleChange}
-									placeholder="Enter weight in grams"
-								/>
-
-								{/* Column 2: Empty for grid alignment */}
+								{/* Empty cells for grid alignment */}
+								<div />
 								<div />
 							</div>
 						</div>

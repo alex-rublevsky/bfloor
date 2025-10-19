@@ -32,7 +32,7 @@ function getCartQuantity(
 }
 
 /**
- * Calculates available quantity for a variation, considering weight-based products
+ * Calculates available quantity for a variation based on stock
  */
 export function getAvailableQuantityForVariation(
 	product: ProductWithVariations,
@@ -48,43 +48,6 @@ export function getAvailableQuantityForVariation(
 	// Handle unlimited stock products
 	if (product.unlimitedStock) {
 		return Number.MAX_SAFE_INTEGER;
-	}
-
-	// Handle weight-based products with variations
-	if (product.weight && variationId) {
-		const variation = product.variations?.find((v) => v.id === variationId);
-		if (!variation) {
-			return 0;
-		}
-
-		const weightAttr = variation.attributes.find(
-			(attr) => attr.attributeId === "WEIGHT_G",
-		);
-		if (!weightAttr) {
-			return 0;
-		}
-
-		const totalWeight = parseInt(product.weight || "0", 10);
-		const variationWeight = parseInt(weightAttr.value, 10);
-
-		// Calculate total weight used by other variations, excluding the current item if specified
-		const otherVariationsWeight = cartItems
-			.filter((item) => {
-				const isOtherVariation =
-					item.productId === product.id &&
-					item.attributes?.WEIGHT_G &&
-					// If this is the item being validated and we should exclude it, skip it
-					!(excludeCurrentItem && item.variationId === variationId);
-
-				return isOtherVariation;
-			})
-			.reduce((total, item) => {
-				const weightG = item.attributes?.WEIGHT_G;
-				return total + (weightG ? parseInt(weightG, 10) * item.quantity : 0);
-			}, 0);
-
-		const availableWeight = totalWeight - otherVariationsWeight;
-		return Math.max(0, Math.floor(availableWeight / variationWeight));
 	}
 
 	// Handle regular variations or base products
@@ -106,7 +69,7 @@ export function getAvailableQuantityForVariation(
 }
 
 /**
- * Validates stock availability for both regular and weight-based products
+ * Validates stock availability for products
  */
 export function validateStock(
 	products: ProductWithVariations[],
