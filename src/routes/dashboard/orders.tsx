@@ -243,7 +243,10 @@ function OrderList() {
 	if (allOrders.length === 0) {
 		return (
 			<div className="h-full w-full flex justify-center items-center">
-				<p className="text-muted-foreground">No orders found</p>
+				<EmptyState
+					entityType="orders"
+					isSearchResult={!!searchTerm}
+				/>
 			</div>
 		);
 	}

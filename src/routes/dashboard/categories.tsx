@@ -9,6 +9,7 @@ import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
 import { ImageUpload } from "~/components/ui/dashboard/ImageUpload";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { CategoriesPageSkeleton } from "~/components/ui/dashboard/skeletons/CategoriesPageSkeleton";
+import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { Input } from "~/components/ui/shared/input";
 import {
 	Select,
@@ -263,19 +264,19 @@ function RouteComponent() {
 	return (
 		<div className="space-y-6 px-6">
 			{/* Product Categories Section */}
-			<div className="space-y-4">
-				<div className="border rounded-lg p-4 bg-card">
-					<CategoryTreeView
-						tree={categoryTree}
-						onEdit={handleEditCategory}
-						onDelete={handleDeleteCategoryClick}
-						onCreateCategory={() => {
-							setCategoryType("product");
-							productCategoryForm.crud.openCreateDrawer();
-						}}
-					/>
+			{categoryTree.length === 0 ? (
+				<EmptyState entityType="categories" />
+			) : (
+				<div className="space-y-4">
+					<div className="border rounded-lg p-4 bg-card">
+						<CategoryTreeView
+							tree={categoryTree}
+							onEdit={handleEditCategory}
+							onDelete={handleDeleteCategoryClick}
+						/>
+					</div>
 				</div>
-			</div>
+			)}
 
 			{/* Create Category Drawer */}
 			<DashboardFormDrawer

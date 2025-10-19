@@ -10,14 +10,12 @@ interface CategoryTreeViewProps {
 	tree: CategoryTreeNode[];
 	onEdit: (category: Category) => void;
 	onDelete: (category: Category) => void;
-	onCreateCategory?: () => void;
 }
 
 export function CategoryTreeView({
 	tree,
 	onEdit,
 	onDelete,
-	onCreateCategory,
 }: CategoryTreeViewProps) {
 	const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
@@ -59,13 +57,7 @@ export function CategoryTreeView({
 	return (
 		<div className="space-y-1">
 			{tree.length === 0 ? (
-				<EmptyState
-					entityType="categories"
-					actionButton={onCreateCategory ? {
-						text: "Добавить категорию",
-						onClick: onCreateCategory,
-					} : undefined}
-				/>
+				<EmptyState entityType="categories" />
 			) : (
 				tree.map((node) => renderTreeNode(node))
 			)}

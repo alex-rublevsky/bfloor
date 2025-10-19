@@ -29,9 +29,6 @@ interface ImageUploadProps {
 	slug?: string; // product slug for subdirectory organization
 	categorySlug?: string; // category slug for proper path structure
 	productName?: string; // product name for proper file naming
-	maxImages?: number; // maximum number of images allowed (default: unlimited)
-	label?: string; // custom label for the upload area
-	placeholder?: string; // placeholder text for URL input
 }
 
 interface SortableImageItemProps {
@@ -65,8 +62,10 @@ function SortableImageItem({ image, index, onRemove }: SortableImageItemProps) {
 			<div className="aspect-square relative">
 				<img
 					src={`${ASSETS_BASE_URL}/${image}`}
-					alt={`Upload ${index + 1}`}
+					alt={`Product ${index + 1}`}
 					className="w-full h-full object-cover"
+					onLoad={() => {
+					}}
 					onError={(e) => {
 						e.currentTarget.src =
 							"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23ddd' width='100' height='100'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-size='14'%3ENo Image%3C/text%3E%3C/svg%3E";
@@ -108,12 +107,9 @@ export function ImageUpload({
 	slug,
 	categorySlug,
 	productName,
-	maxImages,
-	label = "Images",
-	placeholder = "https://example.com/image.jpg",
 }: ImageUploadProps) {
 	// Target max uploaded size (~700KB)
-	const TARGET_MAX_BYTES = 450 * 1024;
+	const TARGET_MAX_BYTES = 700 * 1024;
 	const [isUploading, setIsUploading] = useState(false);
 	const [imageList, setImageList] = useState<string[]>([]);
 	const [showTextarea, setShowTextarea] = useState(false);
@@ -249,12 +245,6 @@ export function ImageUpload({
 
 	const validateAndUploadFile = useCallback(
 		async (file: File) => {
-			// Check max images limit
-			if (maxImages && imageList.length >= maxImages) {
-				toast.error(`Maximum ${maxImages} image${maxImages === 1 ? '' : 's'} allowed`);
-				return;
-			}
-
 			// Validate file type
 			const allowedTypes = [
 				"image/jpeg",
@@ -351,7 +341,6 @@ export function ImageUpload({
 			categorySlug,
 			productName,
 			compressToWebP,
-			maxImages,
 		],
 	);
 
@@ -397,7 +386,7 @@ export function ImageUpload({
 						} else {
 							toast.error("Could not extract image from clipboard");
 						}
-					} catch {
+					} catch (error) {
 						toast.error("Failed to paste image from clipboard");
 					} finally {
 						setIsPasting(false);
@@ -449,7 +438,7 @@ export function ImageUpload({
 						} else {
 							toast.error("Could not extract image from clipboard");
 						}
-					} catch {
+					} catch (error) {
 						toast.error("Failed to paste image from clipboard");
 					} finally {
 						setIsPasting(false);
@@ -550,7 +539,7 @@ export function ImageUpload({
 					className="block text-sm font-medium"
 					id={`${fileInputId}-label`}
 				>
-					{label} {imageList.length > 0 && `(${imageList.length})`}
+					Product Images {imageList.length > 0 && `(${imageList.length})`}
 				</label>
 				{imageList.length > 0 && (
 					<Button
@@ -568,15 +557,13 @@ export function ImageUpload({
 				<Textarea
 					value={currentImages}
 					onChange={handleTextareaChange}
-					placeholder={placeholder}
+					placeholder="image1.jpg, image2.jpg, image3.jpg"
 					className="h-32 resize-none font-mono text-xs"
 					rows={4}
 				/>
 			) : (
 				<section
-					className={`rounded-lg bg-muted/30 border border-border transition-colors image-upload-area ${
-						maxImages === 1 ? 'p-3' : 'p-4'
-					}`}
+					className="p-4 rounded-lg bg-muted/30 border border-border transition-colors image-upload-area"
 					onDragOver={handleDragOver}
 					onDragLeave={handleDragLeave}
 					onDrop={handleDrop}
@@ -592,11 +579,7 @@ export function ImageUpload({
 						onDragEnd={handleDragEnd}
 					>
 						<SortableContext items={imageList} strategy={rectSortingStrategy}>
-							<div className={`grid gap-3 ${
-								maxImages === 1 
-									? 'grid-cols-1 max-w-48' 
-									: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4'
-							}`}>
+							<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
 								{imageList.map((image, index) => {
 									return (
 										<SortableImageItem
@@ -609,13 +592,12 @@ export function ImageUpload({
 								})}
 
 								{/* Upload Button */}
-								{(!maxImages || imageList.length < maxImages) && (
-									<button
-										type="button"
-										onClick={handleUploadClick}
-										disabled={isUploading || isPasting}
-										className="aspect-square rounded-lg border-2 border-dashed border-border/50 bg-background hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed group"
-									>
+								<button
+									type="button"
+									onClick={handleUploadClick}
+									disabled={isUploading || isPasting}
+									className="aspect-square rounded-lg border-2 border-dashed border-border/50 bg-background hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed group"
+								>
 									{isUploading || isPasting ? (
 										<>
 											<span className="animate-spin text-2xl">⏳</span>
@@ -627,18 +609,17 @@ export function ImageUpload({
 										<>
 											<Upload className="w-6 h-6 group-hover:scale-110 transition-transform" />
 											<span className="text-xs text-center px-2">
-												{maxImages === 1 ? "Click to upload logo" : "Drag and drop, select a file, or paste (Ctrl+V)"}
+												Drag and drop, select a file, or paste (Ctrl+V)
 											</span>
 										</>
 									)}
 								</button>
-								)}
 							</div>
 						</SortableContext>
 					</DndContext>
 
 					<p className="text-xs text-muted-foreground mt-3 text-center">
-						JPEG, PNG, WebP • Max ~700KB • Paste images with Ctrl+V
+						JPEG, PNG, WebP • Max 700KB • Paste images with Ctrl+V
 					</p>
 				</section>
 			)}

@@ -792,10 +792,6 @@ function RouteComponent() {
 					<EmptyState
 						entityType="products"
 						isSearchResult={!!searchTerm}
-						actionButton={{
-							text: "Добавить товар",
-							onClick: () => setShowCreateForm(true),
-						}}
 					/>
 				) : (
 					<div className="px-4">

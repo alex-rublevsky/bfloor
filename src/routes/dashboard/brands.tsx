@@ -209,13 +209,7 @@ function RouteComponent() {
 		<div className="space-y-8">
 			<div>
 				{!data || data.length === 0 ? (
-					<EmptyState
-						entityType="brands"
-						actionButton={{
-							text: "Добавить бренд",
-							onClick: crud.openCreateDrawer,
-						}}
-					/>
+					<EmptyState entityType="brands" />
 				) : (
 					<div className="overflow-x-auto">
 						<table className="min-w-full divide-y divide-border">

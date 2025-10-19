@@ -192,13 +192,7 @@ function AttributesPage() {
 
 			{/* Attributes List */}
 			{!attributes || attributes.length === 0 ? (
-				<EmptyState
-					entityType="attributes"
-					actionButton={{
-						text: "Добавить атрибут",
-						onClick: () => setIsCreating(true),
-					}}
-				/>
+				<EmptyState entityType="attributes" />
 			) : (
 				<div className="grid gap-4">
 					{attributes.map((attribute) => (
