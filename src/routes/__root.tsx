@@ -128,6 +128,9 @@ function RootComponent() {
 function RootDocument({ children }: { children: React.ReactNode }) {
 	const router = useRouter();
 	const pathname = router.state.location.pathname;
+	
+	// Don't render NavBar on dashboard pages since dashboard has its own NavBar
+	const isDashboard = pathname.startsWith("/dashboard");
 
 	return (
 		<html
@@ -139,7 +142,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body className="" suppressHydrationWarning>
-				<NavBar />
+				{!isDashboard && <NavBar />}
 				{children}
 				<Footer />
 				{/* <TanStackRouterDevtools position="bottom-right" /> */}

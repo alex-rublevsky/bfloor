@@ -285,23 +285,16 @@ export function NavBar({
 			<>
 				<nav
 					className={cn(
-						"fixed top-0 left-0 right-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border",
+						"fixed top-0 left-0 right-0 z-[40]",
 						className,
 					)}
 				>
 				<div className="px-4 py-3">
-					{/* Desktop layout - Large screens and above */}
-					<div className="hidden lg:flex items-center justify-between gap-4">
-						{/* Logo - stays in place */}
+					{/* Desktop layout - Extra large screens and above */}
+					<div className="hidden xl:flex items-center justify-between gap-4">
+						{/* Pages navigation - left aligned */}
 						<div className="flex-shrink-0">
-							<Link to="/" className="hover:opacity-80 transition-opacity">
-								<Logo className="h-8 w-auto" />
-							</Link>
-						</div>
-
-						{/* Pages navigation - takes available space */}
-						<div className="flex-1 flex justify-center">
-							<div className="flex w-fit rounded-full border border-primary bg-background p-[0.3rem]">
+							<div className="flex rounded-full border border-primary bg-background p-[0.3rem]">
 								{dashboardNavItems.map((item) => (
 									<Link
 										key={item.url}
@@ -313,7 +306,7 @@ export function NavBar({
 											}
 										}}
 										className={cn(
-											"relative z-10 block cursor-pointer px-3 py-1.5 text-xs text-foreground rounded-full transition-colors hover:bg-primary/20",
+											"relative z-10 block cursor-pointer px-3 py-1.5 text-xs text-foreground rounded-full transition-colors hover:bg-primary/20 whitespace-nowrap flex-shrink-0",
 											pathname === item.url &&
 												"bg-primary text-primary-foreground mix-blend-normal hover:bg-primary",
 										)}
@@ -324,24 +317,24 @@ export function NavBar({
 							</div>
 						</div>
 
-						{/* Search + Action button + Menu - grouped together */}
+						{/* Search + Action button + Menu - grouped together with proper flex behavior */}
 						<div className="flex items-center gap-3 flex-shrink-0">
-							{/* Search */}
+							{/* Search - flexible width */}
 							{searchTerm !== undefined && onSearchChange && (
 								<SearchInput
 									placeholder={dynamicPlaceholder}
 									value={searchTerm}
 									onChange={onSearchChange}
-									className="w-64"
+									className="w-64 min-w-48 max-w-80"
 								/>
 							)}
 
-							{/* Action button */}
+							{/* Action button - flexible but with minimum width */}
 							{actionButton && (
 								<button
 									type="button"
 									onClick={actionButton.onClick}
-									className="relative flex w-fit rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground transition-all duration-300 p-[0.3rem] focus:outline-hidden focus:ring-1 focus:ring-ring whitespace-nowrap"
+									className="relative flex rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground transition-all duration-300 p-[0.3rem] focus:outline-hidden focus:ring-1 focus:ring-ring whitespace-nowrap min-w-fit"
 								>
 									<span className="relative z-10 flex items-center gap-1.5 cursor-pointer px-3 py-1.5 text-xs">
 										<Plus className="w-4 h-4" />
@@ -350,29 +343,88 @@ export function NavBar({
 								</button>
 							)}
 
-							{/* Menu dropdown */}
-							<DropdownNavMenu
-								items={dashboardSecondaryItems}
-								showUserInfo={true}
-								userData={userData}
-							/>
+							{/* Menu dropdown - fixed size */}
+							<div className="flex-shrink-0">
+								<DropdownNavMenu
+									items={dashboardSecondaryItems}
+									showUserInfo={true}
+									userData={userData}
+								/>
+							</div>
+						</div>
+					</div>
+
+					{/* Desktop layout - Large screens (compact) */}
+					<div className="hidden lg:flex xl:hidden items-center justify-between gap-2">
+						{/* Pages navigation - left aligned */}
+						<div className="flex-shrink-0">
+							<div className="flex rounded-full border border-primary bg-background p-[0.3rem]" data-layout="lg">
+								{dashboardNavItems.map((item) => (
+									<Link
+										key={item.url}
+										to={item.url}
+										onMouseEnter={() => {
+											// Prefetch orders data on hover
+											if (item.url === "/dashboard/orders") {
+												prefetchDashboardOrders();
+											}
+										}}
+										className={cn(
+											"relative z-10 block cursor-pointer px-2 py-1.5 text-xs text-foreground rounded-full transition-colors hover:bg-primary/20 whitespace-nowrap flex-shrink-0",
+											pathname === item.url &&
+												"bg-primary text-primary-foreground mix-blend-normal hover:bg-primary",
+										)}
+									>
+										{item.name}
+									</Link>
+								))}
+							</div>
+						</div>
+
+						{/* Search + Action button + Menu - compact */}
+						<div className="flex items-center gap-2 flex-shrink-0">
+							{/* Search - smaller */}
+							{searchTerm !== undefined && onSearchChange && (
+								<SearchInput
+									placeholder={dynamicPlaceholder}
+									value={searchTerm}
+									onChange={onSearchChange}
+									className="w-48 min-w-40"
+								/>
+							)}
+
+							{/* Action button - compact */}
+							{actionButton && (
+								<button
+									type="button"
+									onClick={actionButton.onClick}
+									className="relative flex rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground transition-all duration-300 p-[0.3rem] focus:outline-hidden focus:ring-1 focus:ring-ring whitespace-nowrap min-w-fit"
+								>
+									<span className="relative z-10 flex items-center gap-1 cursor-pointer px-2 py-1.5 text-xs">
+										<Plus className="w-3 h-3" />
+										<span className="hidden sm:inline">{actionButton.label}</span>
+									</span>
+								</button>
+							)}
+
+							{/* Menu dropdown - fixed size */}
+							<div className="flex-shrink-0">
+								<DropdownNavMenu
+									items={dashboardSecondaryItems}
+									showUserInfo={true}
+									userData={userData}
+								/>
+							</div>
 						</div>
 					</div>
 
 					{/* Tablet layout - Medium screens */}
-					<div className="hidden md:flex lg:hidden flex-col gap-3">
-						{/* First row: Logo + Pages */}
+					<div className="hidden md:flex lg:hidden xl:hidden flex-col gap-3">
+						{/* First row: Pages */}
 						<div className="flex items-center justify-between gap-4">
-							{/* Logo */}
+							{/* Pages navigation - left aligned */}
 							<div className="flex-shrink-0">
-								<Link to="/" className="hover:opacity-80 transition-opacity">
-									<Logo className="h-8 w-auto" />
-								</Link>
-							</div>
-
-							{/* Pages navigation */}
-							<div className="flex-1 flex justify-center">
-								<div className="flex w-fit rounded-full border border-primary bg-background p-[0.3rem]">
+								<div className="flex rounded-full border border-primary bg-background p-[0.3rem]" data-layout="md">
 									{dashboardNavItems.map((item) => (
 										<Link
 											key={item.url}
@@ -384,7 +436,7 @@ export function NavBar({
 												}
 											}}
 											className={cn(
-												"relative z-10 block cursor-pointer px-3 py-1.5 text-xs text-foreground rounded-full transition-colors hover:bg-primary/20",
+												"relative z-10 block cursor-pointer px-2 py-1.5 text-xs text-foreground rounded-full transition-colors hover:bg-primary/20 whitespace-nowrap flex-shrink-0",
 												pathname === item.url &&
 													"bg-primary text-primary-foreground mix-blend-normal hover:bg-primary",
 											)}
@@ -397,23 +449,23 @@ export function NavBar({
 						</div>
 
 						{/* Second row: Search + Action + Menu */}
-						<div className="flex items-center gap-3 w-full">
+						<div className="flex items-center gap-3 w-full min-w-0">
 							{/* Search - takes available space */}
 							{searchTerm !== undefined && onSearchChange && (
 								<SearchInput
 									placeholder={dynamicPlaceholder}
 									value={searchTerm}
 									onChange={onSearchChange}
-									className="flex-1"
+									className="flex-1 min-w-0"
 								/>
 							)}
 
-							{/* Action button */}
+							{/* Action button - flexible but with minimum width */}
 							{actionButton && (
 								<button
 									type="button"
 									onClick={actionButton.onClick}
-									className="relative flex w-fit rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground transition-all duration-300 p-[0.3rem] focus:outline-hidden focus:ring-1 focus:ring-ring whitespace-nowrap flex-shrink-0"
+									className="relative flex rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground transition-all duration-300 p-[0.3rem] focus:outline-hidden focus:ring-1 focus:ring-ring whitespace-nowrap min-w-fit flex-shrink-0"
 								>
 									<span className="relative z-10 flex items-center gap-1.5 cursor-pointer px-3 py-1.5 text-xs">
 										<Plus className="w-4 h-4" />
@@ -422,40 +474,35 @@ export function NavBar({
 								</button>
 							)}
 
-							{/* Menu dropdown */}
-							<DropdownNavMenu
-								items={dashboardSecondaryItems}
-								showUserInfo={true}
-								userData={userData}
-							/>
+							{/* Menu dropdown - fixed size */}
+							<div className="flex-shrink-0">
+								<DropdownNavMenu
+									items={dashboardSecondaryItems}
+									showUserInfo={true}
+									userData={userData}
+								/>
+							</div>
 						</div>
 					</div>
 
-					{/* Mobile layout - Small screens */}
-					<div className="md:hidden flex items-center gap-3 w-full">
+					{/* Mobile layout - Small screens - Always show on mobile */}
+					<div className="md:hidden w-full">
 						{/* Search - takes full available space */}
 						{searchTerm !== undefined && onSearchChange && (
 							<SearchInput
 								placeholder={dynamicPlaceholder}
 								value={searchTerm}
 								onChange={onSearchChange}
-								className="flex-1 min-w-0"
+								className="w-full"
 							/>
 						)}
-
-						{/* Menu button - fixed width on the right */}
-						<DropdownNavMenu
-							items={dashboardNavItems}
-							showUserInfo={true}
-							userData={userData}
-						/>
 					</div>
 
 				</div>
 			</nav>
 
 			{/* Bottom Navigation Bar - Mobile only */}
-			<BottomNavBar isDashboard={true} actionButton={actionButton} />
+			<BottomNavBar isDashboard={true} actionButton={actionButton} userData={userData} />
 		</>
 	);
 }

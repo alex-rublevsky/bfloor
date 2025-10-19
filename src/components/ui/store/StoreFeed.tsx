@@ -12,6 +12,7 @@ interface StoreFeedProps {
 		min: number;
 		max: number;
 	};
+	initialCategory?: string | null;
 }
 
 // Helper function to get product price range
@@ -35,8 +36,9 @@ export default function StoreFeed({
 	products = [],
 	categories = [],
 	priceRange,
+	initialCategory,
 }: StoreFeedProps) {
-	const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+	const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory || null);
 	const [sortBy, setSortBy] = useState<string>("relevant");
 
 	const { cart } = useCart();

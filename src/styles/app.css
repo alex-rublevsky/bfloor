@@ -451,6 +451,15 @@ p {
 	display: none;
 }
 
+.scrollbar-hide {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+	display: none;
+}
+
 /* View Transition Animations */
 .product-info-enter {
 	animation: slide-in-up 0.5s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;

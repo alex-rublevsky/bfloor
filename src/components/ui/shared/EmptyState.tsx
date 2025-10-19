@@ -13,8 +13,6 @@ interface EmptyStateProps {
 	};
 	/** Custom icon to display */
 	icon?: React.ReactNode;
-	/** Additional description text */
-	description?: string;
 }
 
 const entityTranslations: Record<string, { singular: string; plural: string; genitive: string }> = {
@@ -31,7 +29,6 @@ export function EmptyState({
 	isSearchResult = false,
 	actionButton,
 	icon,
-	description,
 }: EmptyStateProps) {
 	const entity = entityTranslations[entityType] || { singular: entityType, plural: entityType, genitive: entityType };
 	
@@ -45,10 +42,6 @@ export function EmptyState({
 		? `Не найдено ${entity.genitive}` 
 		: `Пока нет ${entity.genitive}`;
 
-	const subtitle = isSearchResult
-		? "Попробуйте изменить параметры поиска"
-		: description || `Начните с создания первого ${entity.singular}а`;
-
 	return (
 		<div className="flex flex-col items-center justify-center py-16 px-4 text-center">
 			{/* Icon */}
@@ -59,14 +52,9 @@ export function EmptyState({
 			</div>
 
 			{/* Title */}
-			<h3 className="text-xl font-semibold text-foreground mb-3">
+			<h3 className="text-xl font-semibold text-foreground mb-6">
 				{title}
 			</h3>
-
-			{/* Subtitle */}
-			<p className="text-muted-foreground mb-6 max-w-md">
-				{subtitle}
-			</p>
 
 			{/* Action Button */}
 			{actionButton && (
