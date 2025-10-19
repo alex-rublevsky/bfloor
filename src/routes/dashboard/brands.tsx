@@ -1,6 +1,6 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useId, useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
@@ -9,14 +9,14 @@ import { BrandsPageSkeleton } from "~/components/ui/dashboard/skeletons/BrandsPa
 import { Badge } from "~/components/ui/shared/Badge";
 import { Button } from "~/components/ui/shared/Button";
 import { Image } from "~/components/ui/shared/Image";
-import { Input } from "~/components/ui/shared/Input";
+import { Input } from "~/components/ui/shared/input";
 import { Switch } from "~/components/ui/shared/Switch";
 import { useDashboardForm } from "~/hooks/useDashboardForm";
 import { useSlugGeneration } from "~/hooks/useSlugGeneration";
-import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
 import { createBrand } from "~/server_functions/dashboard/brands/createBrand";
-import { updateBrand } from "~/server_functions/dashboard/brands/updateBrand";
 import { deleteBrand } from "~/server_functions/dashboard/brands/deleteBrand";
+import { updateBrand } from "~/server_functions/dashboard/brands/updateBrand";
+import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
 import type { Brand, BrandFormData } from "~/types";
 
 // Query options factory for reuse
@@ -41,14 +41,8 @@ function RouteComponent() {
 	const queryClient = useQueryClient();
 	const createFormId = useId();
 	const editFormId = useId();
-	const editNameId = useId();
-
-	const editLogoId = useId();
-	const editIsActiveId = useId();
-	const createNameId = useId();
-
-	const createLogoId = useId();
 	const createIsActiveId = useId();
+	const editIsActiveId = useId();
 
 	// Use suspense query - data is guaranteed to be loaded by the loader
 	const { data } = useSuspenseQuery(brandsQueryOptions());
@@ -117,7 +111,9 @@ function RouteComponent() {
 			});
 
 			toast.success("Brand added successfully!");
-			closeCreateDrawer();
+			crud.closeCreateDrawer();
+			createForm.resetForm();
+			setIsCreateAutoSlug(true);
 			queryClient.invalidateQueries({ queryKey: ["bfloorDashboardBrands"] });
 		} catch (err) {
 			const errorMsg = err instanceof Error ? err.message : "An error occurred";
@@ -126,12 +122,6 @@ function RouteComponent() {
 		} finally {
 			crud.stopSubmitting();
 		}
-	};
-
-	const closeCreateDrawer = () => {
-		crud.closeCreateDrawer();
-		createForm.resetForm();
-		setIsCreateAutoSlug(true);
 	};
 
 	const handleEdit = (brand: Brand) => {
@@ -166,7 +156,10 @@ function RouteComponent() {
 			});
 
 			toast.success("Brand updated successfully!");
-			closeEditModal();
+			crud.closeEditDrawer();
+			setEditingBrandId(null);
+			editForm.resetForm();
+			setIsEditAutoSlug(false);
 			queryClient.invalidateQueries({ queryKey: ["bfloorDashboardBrands"] });
 		} catch (err) {
 			const errorMsg = err instanceof Error ? err.message : "An error occurred";
@@ -175,13 +168,6 @@ function RouteComponent() {
 		} finally {
 			crud.stopSubmitting();
 		}
-	};
-
-	const closeEditModal = () => {
-		crud.closeEditDrawer();
-		setEditingBrandId(null);
-		editForm.resetForm();
-		setIsEditAutoSlug(false);
 	};
 
 	const handleDeleteClick = (brand: Brand) => {
@@ -282,7 +268,7 @@ function RouteComponent() {
 												Edit
 											</Button>
 											<Button
-												variant="invertedDestructive"
+												variant="destructive"
 												size="sm"
 												onClick={() => handleDeleteClick(brand)}
 											>
@@ -306,14 +292,17 @@ function RouteComponent() {
 				isSubmitting={crud.isSubmitting}
 				submitButtonText="Create Brand"
 				submittingText="Creating..."
-				onCancel={closeCreateDrawer}
+				onCancel={() => {
+					crud.closeCreateDrawer();
+					createForm.resetForm();
+					setIsCreateAutoSlug(true);
+				}}
 				error={crud.error && !crud.showEditDrawer ? crud.error : undefined}
 				layout="single-column"
 			>
 				<form onSubmit={handleSubmit} id={createFormId} className="space-y-4">
 					<Input
 						label="Название бренда"
-						id={createNameId}
 						type="text"
 						name="name"
 						value={createForm.formData.name}
@@ -333,7 +322,6 @@ function RouteComponent() {
 
 					<Input
 						label="Ссылка на логотип"
-						id={createLogoId}
 						type="text"
 						name="logo"
 						value={createForm.formData.logo}
@@ -348,9 +336,7 @@ function RouteComponent() {
 							checked={createForm.formData.isActive}
 							onChange={createForm.handleChange}
 						/>
-						<label htmlFor={createIsActiveId} className="ml-2 text-sm">
-							Active
-						</label>
+						<label htmlFor={createIsActiveId} className="ml-2 text-sm">Active</label>
 					</div>
 				</form>
 			</DashboardFormDrawer>
@@ -363,14 +349,18 @@ function RouteComponent() {
 				isSubmitting={crud.isSubmitting}
 				submitButtonText="Update Brand"
 				submittingText="Updating..."
-				onCancel={closeEditModal}
+				onCancel={() => {
+					crud.closeEditDrawer();
+					setEditingBrandId(null);
+					editForm.resetForm();
+					setIsEditAutoSlug(false);
+				}}
 				error={crud.error && crud.showEditDrawer ? crud.error : undefined}
 				layout="single-column"
 			>
 				<form onSubmit={handleUpdate} id={editFormId} className="space-y-4">
 					<Input
 						label="Название бренда"
-						id={editNameId}
 						type="text"
 						name="name"
 						value={editForm.formData.name}
@@ -390,7 +380,6 @@ function RouteComponent() {
 
 					<Input
 						label="Ссылка на логотип"
-						id={editLogoId}
 						type="text"
 						name="logo"
 						value={editForm.formData.logo}
@@ -405,9 +394,7 @@ function RouteComponent() {
 							checked={editForm.formData.isActive}
 							onChange={editForm.handleChange}
 						/>
-						<label htmlFor={editIsActiveId} className="ml-2 text-sm">
-							Active
-						</label>
+						<label htmlFor={editIsActiveId} className="ml-2 text-sm">Active</label>
 					</div>
 				</form>
 			</DashboardFormDrawer>
@@ -423,7 +410,6 @@ function RouteComponent() {
 					isDeleting={crud.isDeleting}
 				/>
 			)}
-
 		</div>
 	);
 }

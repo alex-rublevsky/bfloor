@@ -1,4 +1,4 @@
-import { Input } from "~/components/ui/shared/Input";
+import { Input } from "~/components/ui/shared/input";
 import { Switch } from "~/components/ui/shared/Switch";
 
 interface ProductSettingsFieldsProps {

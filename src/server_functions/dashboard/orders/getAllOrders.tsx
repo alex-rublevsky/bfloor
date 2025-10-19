@@ -4,12 +4,7 @@ import { eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import type * as schema from "~/schema";
-import {
-	orderItems,
-	orders,
-	products,
-	productVariations,
-} from "~/schema";
+import { orderItems, orders, products, productVariations } from "~/schema";
 
 export const getAllOrders = createServerFn({ method: "GET" }).handler(
 	async () => {

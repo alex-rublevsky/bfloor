@@ -5,11 +5,14 @@ import { Badge } from "~/components/ui/shared/Badge";
 import { Image } from "~/components/ui/shared/Image";
 import { Link } from "~/components/ui/shared/Link";
 import { QuantitySelector } from "~/components/ui/shared/QuantitySelector";
-import type { EnrichedCartItem } from "~/hooks/useEnrichedCart";
-import { useCart } from "~/lib/cartContext";
-import { getAttributeDisplayName, useProductAttributes } from "~/hooks/useProductAttributes";
-import { storeDataQueryOptions } from "~/lib/queryOptions";
 import { ASSETS_BASE_URL } from "~/constants/urls";
+import type { EnrichedCartItem } from "~/hooks/useEnrichedCart";
+import {
+	getAttributeDisplayName,
+	useProductAttributes,
+} from "~/hooks/useProductAttributes";
+import { useCart } from "~/lib/cartContext";
+import { storeDataQueryOptions } from "~/lib/queryOptions";
 
 interface CartItemProps {
 	item: EnrichedCartItem;

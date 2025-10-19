@@ -92,8 +92,8 @@ import {
 import { Badge } from "~/components/ui/shared/Badge";
 import { Button } from "~/components/ui/shared/Button";
 import { Checkbox } from "~/components/ui/shared/Checkbox";
-import { Input } from "~/components/ui/shared/Input";
-import { Label } from "~/components/ui/shared/Label";
+import { Input } from "~/components/ui/shared/input";
+import { Label } from "~/components/ui/shared/label";
 import {
 	Select,
 	SelectContent,

@@ -2,11 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
 import { DB } from "~/db";
-import {
-	products,
-	productVariations,
-	variationAttributes,
-} from "~/schema";
+import { products, productVariations, variationAttributes } from "~/schema";
 import type { ProductFormData } from "~/types";
 
 export const createProduct = createServerFn({ method: "POST" })
@@ -35,8 +31,16 @@ export const createProduct = createServerFn({ method: "POST" })
 				throw new Error("A product with this slug already exists");
 			}
 
-			// Process images
+			// Process images - convert comma-separated string to JSON array
 			const imageString = productData.images?.trim() || "";
+			const imagesArray = imageString
+				? imageString
+						.split(",")
+						.map((img) => img.trim())
+						.filter(Boolean)
+				: [];
+			const imagesJson =
+				imagesArray.length > 0 ? JSON.stringify(imagesArray) : "";
 
 			// Insert main product
 			const insertedProducts = await db
@@ -46,16 +50,22 @@ export const createProduct = createServerFn({ method: "POST" })
 					slug: productData.slug,
 					description: productData.description || null,
 					price: parseFloat(productData.price),
+					squareMetersPerPack: productData.squareMetersPerPack
+						? parseFloat(productData.squareMetersPerPack)
+						: null,
 					categorySlug: productData.categorySlug || null,
 					brandSlug: productData.brandSlug || null,
+					collectionSlug: productData.collectionSlug || null,
 					stock: parseInt(productData.stock, 10),
 					isActive: productData.isActive,
 					isFeatured: productData.isFeatured,
 					discount: productData.discount || null,
 					hasVariations: productData.hasVariations,
 					weight: productData.weight || null,
-					images: imageString,
-					shippingFrom: productData.shippingFrom || null,
+					images: imagesJson,
+					productAttributes: productData.attributes?.length
+						? JSON.stringify(productData.attributes)
+						: null,
 					createdAt: new Date(),
 				})
 				.returning();
@@ -75,7 +85,6 @@ export const createProduct = createServerFn({ method: "POST" })
 							stock: parseInt(v.stock.toString(), 10),
 							sort: v.sort || 0,
 							discount: v.discount ? parseInt(v.discount.toString(), 10) : null,
-							shippingFrom: v.shippingFrom || null,
 							createdAt: new Date(),
 						})),
 					)

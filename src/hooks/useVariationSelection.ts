@@ -1,8 +1,12 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
-import { PRODUCT_ATTRIBUTES } from "~/lib/productAttributes";
+import {
+	getAttributeNameFromSlug,
+	getAttributeSlug,
+} from "~/hooks/useProductAttributes";
 import type {
 	CartItem,
+	ProductAttribute,
 	ProductVariation,
 	ProductWithVariations,
 	VariationAttribute,
@@ -14,6 +18,7 @@ interface UseVariationSelectionProps {
 	cartItems: CartItem[];
 	search?: Record<string, string | undefined>; // If provided, uses URL state
 	onVariationChange?: () => void;
+	attributes?: ProductAttribute[]; // Database attributes for slug conversion
 }
 
 interface UseVariationSelectionReturn {
@@ -30,6 +35,7 @@ export function useVariationSelection({
 	cartItems,
 	search,
 	onVariationChange,
+	attributes = [],
 }: UseVariationSelectionProps): UseVariationSelectionReturn {
 	const navigate = useNavigate();
 	const useUrlState = search !== undefined;
@@ -43,28 +49,27 @@ export function useVariationSelection({
 	const urlSelectedAttributes = useMemo(() => {
 		if (!useUrlState || !search) return {};
 
-		const attributes: Record<string, string> = {};
+		const attributesMap: Record<string, string> = {};
 		Object.entries(search).forEach(([paramName, value]) => {
 			if (!value) return;
 
-			const attributeId = Object.keys(PRODUCT_ATTRIBUTES).find(
-				(id) => id.toLowerCase() === paramName,
-			);
+			// Convert slug back to attribute name
+			const attributeName = getAttributeNameFromSlug(paramName, attributes);
 
 			if (
-				attributeId &&
+				attributeName &&
 				product?.variations?.some((variation) =>
 					variation.attributes.some(
-						(attr: VariationAttribute) => attr.attributeId === attributeId,
+						(attr: VariationAttribute) => attr.attributeId === attributeName,
 					),
 				)
 			) {
-				attributes[attributeId] = value;
+				attributesMap[attributeName] = value;
 			}
 		});
 
-		return attributes;
-	}, [useUrlState, search, product?.variations]);
+		return attributesMap;
+	}, [useUrlState, search, product?.variations, attributes]);
 
 	// Get current selected attributes based on mode
 	const selectedAttributes = useUrlState
@@ -229,25 +234,18 @@ export function useVariationSelection({
 				});
 
 				if (useUrlState) {
-					// Update URL state - create params object from PRODUCT_ATTRIBUTES
-					const urlParams: Record<string, string | undefined> =
-						Object.fromEntries(
-							Object.keys(PRODUCT_ATTRIBUTES).map((id) => [
-								id.toLowerCase(),
-								undefined,
-							]),
-						);
+					// Update URL state - use slugs for URL parameters
+					const urlParams: Record<string, string | undefined> = {};
 
 					targetVariation.attributes.forEach((attr: VariationAttribute) => {
-						const paramName = attr.attributeId.toLowerCase();
-						urlParams[paramName] = attr.value;
+						const slug = getAttributeSlug(attr.attributeId, attributes);
+						urlParams[slug] = attr.value;
 					});
 
 					navigate({
-						search: urlParams as Record<
-							string,
-							string | number | boolean | string[] | undefined
-						>,
+						search: urlParams as unknown as Parameters<
+							typeof navigate
+						>[0]["search"],
 						replace: true,
 					});
 				} else {
@@ -264,6 +262,7 @@ export function useVariationSelection({
 			useUrlState,
 			navigate,
 			onVariationChange,
+			attributes,
 		],
 	);
 
@@ -272,41 +271,36 @@ export function useVariationSelection({
 		(attributeId: string) => {
 			if (!useUrlState) return;
 
-			const paramName = attributeId.toLowerCase();
+			const slug = getAttributeSlug(attributeId, attributes);
 			const newSearch = { ...search };
-			delete newSearch[paramName];
+			delete newSearch[slug];
 
 			navigate({
-				search: newSearch as Record<
-					string,
-					string | number | boolean | string[] | undefined
-				>,
+				search: newSearch as unknown as Parameters<
+					typeof navigate
+				>[0]["search"],
 				replace: true,
 			});
 			onVariationChange?.();
 		},
-		[useUrlState, search, navigate, onVariationChange],
+		[useUrlState, search, navigate, onVariationChange, attributes],
 	);
 
 	const clearAllVariations = useCallback(() => {
 		if (!useUrlState) return;
 
-		const newSearch = Object.fromEntries(
-			Object.keys(PRODUCT_ATTRIBUTES).map((id) => [
-				id.toLowerCase(),
-				undefined,
-			]),
-		);
+		// Clear all attribute parameters from URL
+		const newSearch = { ...search };
+		attributes.forEach((attr) => {
+			delete newSearch[attr.slug];
+		});
 
 		navigate({
-			search: newSearch as Record<
-				string,
-				string | number | boolean | string[] | undefined
-			>,
+			search: newSearch as unknown as Parameters<typeof navigate>[0]["search"],
 			replace: true,
 		});
 		onVariationChange?.();
-	}, [useUrlState, navigate, onVariationChange]);
+	}, [useUrlState, navigate, onVariationChange, search, attributes]);
 
 	return {
 		selectedVariation,

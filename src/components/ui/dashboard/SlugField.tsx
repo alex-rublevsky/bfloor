@@ -1,5 +1,5 @@
 import { Button } from "~/components/ui/shared/Button";
-import { Input } from "~/components/ui/shared/Input";
+import { Input } from "~/components/ui/shared/input";
 import { Switch } from "~/components/ui/shared/Switch";
 import { generateSlug, useIsCustomSlug } from "~/hooks/useSlugGeneration";
 import { cn } from "~/lib/utils";

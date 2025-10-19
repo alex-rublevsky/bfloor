@@ -7,6 +7,7 @@ import type * as schema from "~/schema";
 import {
 	brands,
 	categories,
+	collections,
 	products,
 	productVariations,
 	variationAttributes,
@@ -32,6 +33,7 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			// Fetch all base data
 			const categoriesResult = await db.select().from(categories).all();
 			const brandsResult = await db.select().from(brands).all();
+			const collectionsResult = await db.select().from(collections).all();
 
 			// Fetch products with variations in a single complex query
 			const rows: JoinedQueryResult[] = await db
@@ -47,21 +49,34 @@ export const getAllProducts = createServerFn({ method: "GET" })
 				)
 				.all();
 
-            // Allow empty state: don't error when there are no products yet
+			// Allow empty state: don't error when there are no products yet
 
 			// Group products and build variations
 			const productMap = new Map<number, ProductWithVariations>();
 			const variationMap = new Map<number, ProductVariationWithAttributes>();
 
-            for (const row of (rows || [])) {
+			for (const row of rows || []) {
 				const product = row.products;
 				const variation = row.product_variations;
 				const attribute = row.variation_attributes;
 
 				// Initialize product if not exists
 				if (!productMap.has(product.id)) {
+					// Process images - convert JSON array to comma-separated string
+					let imagesString = "";
+					if (product.images) {
+						try {
+							const imagesArray = JSON.parse(product.images) as string[];
+							imagesString = imagesArray.join(", ");
+						} catch {
+							// If it's already a comma-separated string, use it as-is
+							imagesString = product.images;
+						}
+					}
+
 					productMap.set(product.id, {
 						...product,
+						images: imagesString,
 						variations: [],
 					});
 				}
@@ -83,7 +98,6 @@ export const getAllProducts = createServerFn({ method: "GET" })
 							stock: variation.stock,
 							sort: variation.sort,
 							discount: variation.discount,
-							shippingFrom: variation.shippingFrom,
 							createdAt: variation.createdAt,
 							attributes: [],
 						});
@@ -129,7 +143,7 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			}
 
 			// Convert to array
-            const productsArray = Array.from(productMap.values());
+			const productsArray = Array.from(productMap.values());
 
 			// Group products by category and inactive status
 			interface ProductGroup {
@@ -236,20 +250,26 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			}
 
 			// Add inactive group (also sorted)
-            if (inactive.length > 0) {
+			if (inactive.length > 0) {
 				groupedProducts.push({
 					title: "Inactive",
 					products: sortProductsByAvailability(inactive),
 				});
 			}
 
-			return {
+			const result = {
 				groupedProducts,
 				categories: categoriesResult,
 				brands: brandsResult,
+				collections: collectionsResult,
 			};
+			return result;
 		} catch (error) {
 			console.error("Error fetching dashboard data:", error);
+			console.error(
+				"Error stack:",
+				error instanceof Error ? error.stack : "No stack trace",
+			);
 			setResponseStatus(500);
 			throw new Error("Failed to fetch dashboard data");
 		}

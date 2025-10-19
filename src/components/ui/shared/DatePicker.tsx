@@ -3,7 +3,7 @@ import { CalendarIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { Button } from "~/components/ui/shared/Button";
 import { Calendar } from "~/components/ui/shared/Calendar";
-import { Label } from "~/components/ui/shared/Label";
+import { Label } from "~/components/ui/shared/label";
 import {
 	Popover,
 	PopoverContent,

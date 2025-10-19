@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import React, { useCallback, useEffect, useId, useState } from "react";
+import React, { useId, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/shared/Button";
 import { Image } from "~/components/ui/shared/Image";
@@ -9,16 +9,32 @@ import NeumorphismCard from "~/components/ui/shared/NeumorphismCard";
 import { Textarea } from "~/components/ui/shared/TextArea";
 import type { EnrichedCartItem } from "~/hooks/useEnrichedCart";
 import { useEnrichedCart } from "~/hooks/useEnrichedCart";
+import {
+	getAttributeDisplayName,
+	useProductAttributes,
+} from "~/hooks/useProductAttributes";
 import { useCart } from "~/lib/cartContext";
-import { getAttributeDisplayName } from "~/lib/productAttributes";
 import { storeDataQueryOptions } from "~/lib/queryOptions";
 import { createOrder } from "~/server_functions/dashboard/orders/orderCreation";
 import { sendOrderEmails } from "~/server_functions/sendOrderEmails";
 import type { ProductWithVariations } from "~/types";
 
+interface Address {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	streetAddress: string;
+	city: string;
+	state: string;
+	country: string;
+	zipCode: string;
+}
+
 interface CustomerInfo {
 	notes?: string;
 	shippingMethod?: string;
+	shippingAddress?: Address;
 }
 
 export const Route = createFileRoute("/store/checkout")({
@@ -31,6 +47,7 @@ function CheckoutPage() {
 
 function CheckoutScreen() {
 	const { cart, clearCart } = useCart();
+	const { data: attributes } = useProductAttributes();
 	const enrichedItems = useEnrichedCart(cart.items);
 	const queryClient = useQueryClient();
 	const formRef = React.useRef<HTMLFormElement>(null);
@@ -364,7 +381,7 @@ function CheckoutScreen() {
 										<div className="shrink-0 relative w-16 h-16 bg-muted rounded overflow-hidden">
 											{item.image ? (
 												<Image
-													src={`/${item.image}`}
+													src={`https://assets.rublevsky.studio/${item.image}`}
 													alt={item.productName}
 													className="object-cover"
 												/>
@@ -389,7 +406,7 @@ function CheckoutScreen() {
 														{Object.entries(item.attributes)
 															.map(
 																([key, value]) =>
-																	`${getAttributeDisplayName(key)}: ${value}`,
+																	`${getAttributeDisplayName(key, attributes || [])}: ${value}`,
 															)
 															.join(", ")}
 													</p>

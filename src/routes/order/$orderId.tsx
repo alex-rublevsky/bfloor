@@ -5,7 +5,10 @@ import { Badge } from "~/components/ui/shared/Badge";
 import { Button } from "~/components/ui/shared/Button";
 import { Image } from "~/components/ui/shared/Image";
 import NeumorphismCard from "~/components/ui/shared/NeumorphismCard";
-import { getAttributeDisplayName } from "~/lib/productAttributes";
+import {
+	getAttributeDisplayName,
+	useProductAttributes,
+} from "~/hooks/useProductAttributes";
 import { getOrderBySlug } from "~/server_functions/dashboard/orders/getOrderBySlug";
 
 // Helper function to get first image from comma-separated string
@@ -28,6 +31,7 @@ export const Route = createFileRoute("/order/$orderId")({
 function OrderPage() {
 	const { orderId } = Route.useParams();
 	const search = Route.useSearch();
+	const { data: attributes } = useProductAttributes();
 
 	const {
 		isPending,
@@ -177,8 +181,11 @@ function OrderPage() {
 																	key={key}
 																	className="text-sm text-muted-foreground"
 																>
-																	{getAttributeDisplayName(key)}:{" "}
-																	{String(value)}
+																	{getAttributeDisplayName(
+																		key,
+																		attributes || [],
+																	)}
+																	: {String(value)}
 																</span>
 															),
 														)}

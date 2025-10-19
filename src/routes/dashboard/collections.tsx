@@ -1,6 +1,6 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useId, useState, useEffect } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
@@ -8,8 +8,7 @@ import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { Badge } from "~/components/ui/shared/Badge";
 import { Button } from "~/components/ui/shared/Button";
-import { Image } from "~/components/ui/shared/Image";
-import { Input } from "~/components/ui/shared/Input";
+import { Input } from "~/components/ui/shared/input";
 import {
 	Select,
 	SelectContent,
@@ -20,11 +19,11 @@ import {
 import { Switch } from "~/components/ui/shared/Switch";
 import { useDashboardForm } from "~/hooks/useDashboardForm";
 import { generateSlug, useSlugGeneration } from "~/hooks/useSlugGeneration";
-import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
 import { createCollection } from "~/server_functions/dashboard/collections/createCollection";
-import { updateCollection } from "~/server_functions/dashboard/collections/updateCollection";
 import { deleteCollection } from "~/server_functions/dashboard/collections/deleteCollection";
 import { getAllCollections } from "~/server_functions/dashboard/collections/getAllCollections";
+import { updateCollection } from "~/server_functions/dashboard/collections/updateCollection";
+import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
 import type { Collection, CollectionFormData } from "~/types";
 
 // Query options factories
@@ -65,8 +64,7 @@ function RouteComponent() {
 		{
 			name: "",
 			slug: "",
-			brandSlug: null,
-			image: "",
+			brandSlug: "",
 			isActive: true,
 		},
 		{ listenToActionButton: true },
@@ -153,8 +151,7 @@ function RouteComponent() {
 		editForm.setFormData({
 			name: collection.name,
 			slug: collection.slug,
-			brandSlug: collection.brandSlug || null,
-			image: collection.image || "",
+			brandSlug: collection.brandSlug || "",
 			isActive: collection.isActive,
 		});
 		setIsEditAutoSlug(!isCustomSlug);
@@ -233,7 +230,6 @@ function RouteComponent() {
 
 	return (
 		<div className="space-y-6 px-6">
-
 			{/* Collections Grid */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
 				{collections.map((collection) => {
@@ -243,39 +239,21 @@ function RouteComponent() {
 							key={collection.id}
 							className="border rounded-lg overflow-hidden bg-card hover:shadow-md transition-shadow"
 						>
-							{/* Collection Image */}
-							<div className="aspect-video bg-muted relative">
-								{collection.image ? (
-									<Image
-										src={collection.image}
-										alt={collection.name}
-										className="w-full h-full object-cover"
-									/>
-								) : (
-									<div className="w-full h-full flex items-center justify-center text-muted-foreground">
-										Нет изображения
-									</div>
-								)}
-								{!collection.isActive && (
-									<Badge
-										variant="secondary"
-										className="absolute top-2 right-2"
-									>
-										Неактивна
-									</Badge>
-								)}
-							</div>
-
 							{/* Collection Info */}
 							<div className="p-4 space-y-3">
-							<div>
-								<h3 className="font-medium truncate">{collection.name}</h3>
-								{brand && (
-									<p className="text-xs text-muted-foreground">
-										Бренд: {brand.name}
-									</p>
-								)}
-							</div>
+								<div>
+									<h3 className="font-medium truncate">{collection.name}</h3>
+									{brand && (
+										<p className="text-xs text-muted-foreground">
+											Бренд: {brand.name}
+										</p>
+									)}
+									{!collection.isActive && (
+										<Badge variant="secondary" className="mt-2">
+											Неактивна
+										</Badge>
+									)}
+								</div>
 
 								{/* Action Buttons */}
 								<div className="flex gap-2">
@@ -312,9 +290,7 @@ function RouteComponent() {
 				submitButtonText="Создать коллекцию"
 				submittingText="Создание..."
 				onCancel={closeCreateDrawer}
-				error={
-					crud.error && !crud.showEditDrawer ? crud.error : undefined
-				}
+				error={crud.error && !crud.showEditDrawer ? crud.error : undefined}
 				layout="single-column"
 			>
 				<form onSubmit={handleSubmit} id={createFormId} className="contents">
@@ -342,23 +318,23 @@ function RouteComponent() {
 							/>
 
 							<div>
-								<label htmlFor={createBrandId} className="block text-sm font-medium mb-1">
-									Бренд (необязательно)
+								<label
+									htmlFor={createBrandId}
+									className="block text-sm font-medium mb-1"
+								>
+									Бренд <span className="text-red-500">*</span>
 								</label>
 								<Select
-									value={createForm.formData.brandSlug || "none"}
+									value={createForm.formData.brandSlug}
 									onValueChange={(value: string) => {
-										createForm.updateField(
-											"brandSlug",
-											value === "none" ? null : value,
-										);
+										createForm.updateField("brandSlug", value);
 									}}
+									required
 								>
 									<SelectTrigger id={createBrandId}>
-										<SelectValue placeholder="Выберите бренд (необязательно)" />
+										<SelectValue placeholder="Выберите бренд" />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="none">Нет</SelectItem>
 										{brands.map((brand) => (
 											<SelectItem key={brand.slug} value={brand.slug}>
 												{brand.name}
@@ -368,14 +344,6 @@ function RouteComponent() {
 								</Select>
 							</div>
 
-							<Input
-								label="Ссылка на изображение"
-								type="text"
-								name="image"
-								value={createForm.formData.image}
-								onChange={createForm.handleChange}
-								placeholder="https://example.com/image.jpg"
-							/>
 
 							<div className="flex items-center gap-2">
 								<Switch
@@ -400,9 +368,7 @@ function RouteComponent() {
 				submitButtonText="Обновить коллекцию"
 				submittingText="Обновление..."
 				onCancel={closeEditDrawer}
-				error={
-					crud.error && crud.showEditDrawer ? crud.error : undefined
-				}
+				error={crud.error && crud.showEditDrawer ? crud.error : undefined}
 				layout="single-column"
 			>
 				<form onSubmit={handleUpdate} id={editFormId} className="contents">
@@ -430,23 +396,23 @@ function RouteComponent() {
 							/>
 
 							<div>
-								<label htmlFor={editBrandId} className="block text-sm font-medium mb-1">
-									Бренд (необязательно)
+								<label
+									htmlFor={editBrandId}
+									className="block text-sm font-medium mb-1"
+								>
+									Бренд <span className="text-red-500">*</span>
 								</label>
 								<Select
-									value={editForm.formData.brandSlug || "none"}
+									value={editForm.formData.brandSlug}
 									onValueChange={(value: string) => {
-										editForm.updateField(
-											"brandSlug",
-											value === "none" ? null : value,
-										);
+										editForm.updateField("brandSlug", value);
 									}}
+									required
 								>
 									<SelectTrigger id={editBrandId}>
-										<SelectValue placeholder="Выберите бренд (необязательно)" />
+										<SelectValue placeholder="Выберите бренд" />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="none">Нет</SelectItem>
 										{brands.map((brand) => (
 											<SelectItem key={brand.slug} value={brand.slug}>
 												{brand.name}
@@ -456,14 +422,6 @@ function RouteComponent() {
 								</Select>
 							</div>
 
-							<Input
-								label="Ссылка на изображение"
-								type="text"
-								name="image"
-								value={editForm.formData.image}
-								onChange={editForm.handleChange}
-								placeholder="https://example.com/image.jpg"
-							/>
 
 							<div className="flex items-center gap-2">
 								<Switch
@@ -492,4 +450,3 @@ function RouteComponent() {
 		</div>
 	);
 }
-

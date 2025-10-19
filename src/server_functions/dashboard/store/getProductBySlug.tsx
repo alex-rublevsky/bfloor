@@ -4,11 +4,7 @@ import { eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import type * as schema from "~/schema";
-import {
-	products,
-	productVariations,
-	variationAttributes,
-} from "~/schema";
+import { products, productVariations, variationAttributes } from "~/schema";
 
 export const getProductBySlug = createServerFn({ method: "GET" })
 	.inputValidator((data: { id: number }) => data)
@@ -33,7 +29,6 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 						stock: productVariations.stock,
 						sort: productVariations.sort,
 						discount: productVariations.discount,
-						shippingFrom: productVariations.shippingFrom,
 						attributeId: variationAttributes.attributeId,
 						attributeValue: variationAttributes.value,
 					})
@@ -63,7 +58,6 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 						stock: row.stock,
 						sort: row.sort,
 						discount: row.discount,
-						shippingFrom: row.shippingFrom,
 						attributes: [],
 					});
 				}

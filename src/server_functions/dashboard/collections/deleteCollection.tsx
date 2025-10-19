@@ -40,5 +40,3 @@ export const deleteCollection = createServerFn({ method: "POST" })
 			throw new Error("Failed to delete collection");
 		}
 	});
-
-

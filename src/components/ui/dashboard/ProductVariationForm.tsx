@@ -17,7 +17,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useState } from "react";
 import { Button } from "~/components/ui/shared/Button";
-import { Input } from "~/components/ui/shared/Input";
+import { Input } from "~/components/ui/shared/input";
 import {
 	Select,
 	SelectContent,
@@ -26,24 +26,20 @@ import {
 	SelectValue,
 } from "~/components/ui/shared/Select";
 import {
-	getCountryFlag,
-	getCountryName,
-	SHIPPING_COUNTRIES,
-} from "~/constants/countries";
-import {
+	generateVariationSKU,
 	getAttributeDisplayName,
-	PRODUCT_ATTRIBUTES,
-} from "~/lib/productAttributes";
+	useProductAttributes,
+} from "~/hooks/useProductAttributes";
+import type { ProductAttribute } from "~/types";
 
 // Define the Variation type since it's not exported from @/types
 interface Variation {
 	id: string;
-	sku: string;
+	sku: string; // Auto-generated SKU
 	price: number;
 	stock: number;
 	discount?: number | null; // Add discount field
 	sort: number;
-	shippingFrom?: string; // Country code for shipping origin
 	attributes: VariationAttribute[];
 }
 
@@ -54,6 +50,7 @@ interface VariationAttribute {
 
 interface ProductVariationFormProps {
 	variations: Variation[];
+	productSlug: string; // Product slug needed for variation slug generation
 	onChange: (variations: Variation[]) => void;
 }
 
@@ -66,6 +63,7 @@ function SortableVariationItem({
 	onRemoveAttribute,
 	onUpdateAttributeValue,
 	unusedAttributes,
+	productAttributes,
 }: {
 	variation: Variation;
 	onRemove: (id: string) => void;
@@ -82,6 +80,7 @@ function SortableVariationItem({
 		value: string,
 	) => void;
 	unusedAttributes: string[];
+	productAttributes: ProductAttribute[];
 }) {
 	const {
 		attributes,
@@ -199,41 +198,7 @@ function SortableVariationItem({
 					/>
 				</div>
 
-				<div className="w-20">
-					<label
-						htmlFor={`shipping-${variation.id}`}
-						className="block text-xs text-muted-foreground mb-1"
-					>
-						Ships From
-					</label>
-					<Select
-						value={variation.shippingFrom || "NONE"}
-						onValueChange={(value) =>
-							onUpdate(
-								variation.id,
-								"shippingFrom",
-								value === "NONE" ? null : value,
-							)
-						}
-					>
-						<SelectTrigger
-							id={`shipping-${variation.id}`}
-							className="text-sm w-20"
-							onPointerDown={(e) => e.stopPropagation()}
-						>
-							<SelectValue placeholder="Country">
-								{getCountryFlag(variation.shippingFrom || undefined) || ""}
-							</SelectValue>
-						</SelectTrigger>
-						<SelectContent>
-							{SHIPPING_COUNTRIES.map((code) => (
-								<SelectItem key={code} value={code}>
-									{getCountryName(code)}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-				</div>
+				<div className="w-20">{/* Empty div for layout */}</div>
 			</div>
 
 			{/* Attributes section */}
@@ -248,7 +213,10 @@ function SortableVariationItem({
 								<Input
 									id={`attr-${variation.id}-${attr.attributeId}`}
 									type="text"
-									label={getAttributeDisplayName(attr.attributeId)}
+									label={getAttributeDisplayName(
+										attr.attributeId,
+										productAttributes,
+									)}
 									value={attr.value}
 									onChange={(e) =>
 										onUpdateAttributeValue(
@@ -295,7 +263,7 @@ function SortableVariationItem({
 								<SelectContent>
 									{unusedAttributes.map((attr) => (
 										<SelectItem key={attr} value={attr}>
-											{getAttributeDisplayName(attr)}
+											{getAttributeDisplayName(attr, productAttributes)}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -323,10 +291,13 @@ function SortableVariationItem({
 
 export default function ProductVariationForm({
 	variations,
+	productSlug,
 	onChange,
 }: ProductVariationFormProps) {
+	const { data: attributes } = useProductAttributes();
+
 	const [availableAttributes] = useState<string[]>(
-		Object.values(PRODUCT_ATTRIBUTES).map((attr) => attr.id),
+		attributes?.map((attr) => attr.name) || [],
 	);
 
 	const sensors = useSensors(
@@ -357,12 +328,11 @@ export default function ProductVariationForm({
 	const handleAddVariation = () => {
 		const newVariation: Variation = {
 			id: `temp-${Date.now()}`,
-			sku: "",
+			sku: productSlug, // Start with base product slug as SKU
 			price: 0,
 			stock: 0,
 			discount: null,
 			sort: variations.length,
-			shippingFrom: undefined,
 			attributes: [],
 		};
 		onChange([...variations, newVariation]);
@@ -394,9 +364,19 @@ export default function ProductVariationForm({
 					);
 
 					if (!attributeExists) {
+						const newAttributes = [
+							...variation.attributes,
+							{ attributeId, value: "" },
+						];
+						const newSKU = generateVariationSKU(
+							productSlug,
+							newAttributes,
+							attributes || [],
+						);
 						return {
 							...variation,
-							attributes: [...variation.attributes, { attributeId, value: "" }],
+							attributes: newAttributes,
+							sku: newSKU,
 						};
 					}
 				}
@@ -409,11 +389,18 @@ export default function ProductVariationForm({
 		onChange(
 			variations.map((variation) => {
 				if (variation.id === variationId) {
+					const newAttributes = variation.attributes.filter(
+						(attr) => attr.attributeId !== attributeId,
+					);
+					const newSKU = generateVariationSKU(
+						productSlug,
+						newAttributes,
+						attributes || [],
+					);
 					return {
 						...variation,
-						attributes: variation.attributes.filter(
-							(attr) => attr.attributeId !== attributeId,
-						),
+						attributes: newAttributes,
+						sku: newSKU,
 					};
 				}
 				return variation;
@@ -429,11 +416,18 @@ export default function ProductVariationForm({
 		onChange(
 			variations.map((variation) => {
 				if (variation.id === variationId) {
+					const newAttributes = variation.attributes.map((attr) =>
+						attr.attributeId === attributeId ? { ...attr, value } : attr,
+					);
+					const newSKU = generateVariationSKU(
+						productSlug,
+						newAttributes,
+						attributes || [],
+					);
 					return {
 						...variation,
-						attributes: variation.attributes.map((attr) =>
-							attr.attributeId === attributeId ? { ...attr, value } : attr,
-						),
+						attributes: newAttributes,
+						sku: newSKU,
 					};
 				}
 				return variation;
@@ -474,6 +468,7 @@ export default function ProductVariationForm({
 								onRemoveAttribute={handleRemoveAttribute}
 								onUpdateAttributeValue={handleUpdateAttributeValue}
 								unusedAttributes={getUnusedAttributes(variation)}
+								productAttributes={attributes || []}
 							/>
 						))}
 					</div>

@@ -7,8 +7,7 @@ import { collections } from "~/schema";
 interface CollectionFormData {
 	name: string;
 	slug: string;
-	brandSlug: string | null;
-	image: string;
+	brandSlug: string;
 	isActive: boolean;
 }
 
@@ -19,9 +18,9 @@ export const createCollection = createServerFn({ method: "POST" })
 			const db = DB();
 			const collectionData = data.data;
 
-			if (!collectionData.name || !collectionData.slug) {
+			if (!collectionData.name || !collectionData.slug || !collectionData.brandSlug) {
 				setResponseStatus(400);
-				throw new Error("Missing required fields: name and slug are required");
+				throw new Error("Missing required fields: name, slug, and brandSlug are required");
 			}
 
 			// Check for duplicate slug
@@ -42,8 +41,7 @@ export const createCollection = createServerFn({ method: "POST" })
 				.values({
 					name: collectionData.name,
 					slug: collectionData.slug,
-					brandSlug: collectionData.brandSlug || null,
-					image: collectionData.image || null,
+					brandSlug: collectionData.brandSlug,
 					isActive: collectionData.isActive,
 				})
 				.returning();
@@ -58,4 +56,3 @@ export const createCollection = createServerFn({ method: "POST" })
 			throw new Error("Failed to create collection");
 		}
 	});
-

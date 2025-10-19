@@ -8,14 +8,14 @@ import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDial
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
 import { DescriptionField } from "~/components/ui/dashboard/DescriptionField";
 import { ImageUpload } from "~/components/ui/dashboard/ImageUpload";
+import ProductAttributesForm from "~/components/ui/dashboard/ProductAttributesForm";
 import { DrawerSection } from "~/components/ui/dashboard/ProductFormSection";
 import { ProductSettingsFields } from "~/components/ui/dashboard/ProductSettingsFields";
 import ProductVariationForm from "~/components/ui/dashboard/ProductVariationForm";
-import ProductAttributesForm from "~/components/ui/dashboard/ProductAttributesForm";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { StoreLocationsSelector } from "~/components/ui/dashboard/StoreLocationsSelector";
 import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
-import { Input } from "~/components/ui/shared/Input";
+import { Input } from "~/components/ui/shared/input";
 import {
 	Select,
 	SelectContent,
@@ -32,14 +32,16 @@ import { deleteProduct } from "~/server_functions/dashboard/store/deleteProduct"
 import { deleteProductImage } from "~/server_functions/dashboard/store/deleteProductImage";
 import { getAllProducts } from "~/server_functions/dashboard/store/getAllProducts";
 import { getProductBySlug } from "~/server_functions/dashboard/store/getProductBySlug";
+import {
+	getProductStoreLocations,
+	updateProductStoreLocations,
+} from "~/server_functions/dashboard/store/productStoreLocations";
 import { updateProduct } from "~/server_functions/dashboard/store/updateProduct";
 import { getAllStoreLocations } from "~/server_functions/dashboard/storeLocations/getAllStoreLocations";
-import { getProductStoreLocations, updateProductStoreLocations } from "~/server_functions/dashboard/store/productStoreLocations";
 import type {
 	Brand,
 	Category,
 	ProductFormData,
-	ProductGroup,
 	ProductVariationWithAttributes,
 	ProductWithVariations,
 	VariationAttribute,
@@ -79,26 +81,26 @@ function RouteComponent() {
 
 	// Use suspense query - data is guaranteed to be loaded by the loader
 	const { data: productsData } = useSuspenseQuery(productsQueryOptions());
-	
+
 	// Store locations query
 	const { data: storeLocations } = useSuspenseQuery({
 		queryKey: ["bfloorDashboardStoreLocations"],
 		queryFn: () => getAllStoreLocations(),
 		staleTime: 1000 * 60 * 5,
-	})
+	});
 
 	// Function to refetch data using query invalidation
 	const refetch = () => {
 		// Invalidate dashboard products cache
 		queryClient.invalidateQueries({
 			queryKey: ["bfloorDashboardProducts"],
-		})
+		});
 
 		// Remove store data cache completely - forces fresh fetch on all clients
 		queryClient.removeQueries({
 			queryKey: storeDataQueryOptions().queryKey,
-		})
-	}
+		});
+	};
 
 	// Function to invalidate specific product cache (for updates)
 	const invalidateProductCache = (
@@ -109,25 +111,25 @@ function RouteComponent() {
 		// Remove store data cache completely - forces fresh fetch on all clients
 		queryClient.removeQueries({
 			queryKey: storeDataQueryOptions().queryKey,
-		})
+		});
 
 		// If slug changed, remove both old and new product pages
 		if (oldSlug && newSlug && oldSlug !== newSlug) {
 			queryClient.removeQueries({
 				queryKey: ["bfloorProduct", oldSlug],
-			})
+			});
 			queryClient.removeQueries({
 				queryKey: ["bfloorProduct", newSlug],
-			})
+			});
 		} else if (newSlug) {
 			// If only new slug available, remove that product page
 			queryClient.removeQueries({
 				queryKey: ["bfloorProduct", newSlug],
-			})
+			});
 		}
 		// If no slug info, don't remove individual product pages
 		// (they'll get fresh data from storeData when accessed)
-	}
+	};
 
 	// Generate unique IDs for form elements
 	const editStockId = useId();
@@ -163,7 +165,7 @@ function RouteComponent() {
 		images: "",
 		attributes: [],
 		variations: [],
-	}
+	};
 
 	// All state hooks at the top level
 	const [formData, setFormData] = useState<ProductFormData>(defaultFormData);
@@ -182,28 +184,30 @@ function RouteComponent() {
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const [deletingProductId, setDeletingProductId] = useState<number | null>(
 		null,
-	)
+	);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [showCreateForm, setShowCreateForm] = useState(false);
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [_deletedImages, setDeletedImages] = useState<string[]>([]);
 	const [editDeletedImages, setEditDeletedImages] = useState<string[]>([]);
-	
-	// Store locations state
-	const [selectedStoreLocationIds, setSelectedStoreLocationIds] = useState<number[]>([]);
-	const [editSelectedStoreLocationIds, setEditSelectedStoreLocationIds] = useState<number[]>([]);
 
+	// Store locations state
+	const [selectedStoreLocationIds, setSelectedStoreLocationIds] = useState<
+		number[]
+	>([]);
+	const [editSelectedStoreLocationIds, setEditSelectedStoreLocationIds] =
+		useState<number[]>([]);
 
 	// Stable callbacks for slug generation
 	const handleCreateSlugChange = useCallback(
 		(slug: string) => setFormData((prev) => ({ ...prev, slug })),
 		[],
-	)
+	);
 
 	const handleEditSlugChange = useCallback(
 		(slug: string) => setEditFormData((prev) => ({ ...prev, slug })),
 		[],
-	)
+	);
 
 	// Auto-slug generation hooks
 	useSlugGeneration(formData.name, isAutoSlug, handleCreateSlugChange);
@@ -223,7 +227,7 @@ function RouteComponent() {
 					value: attr.value,
 				})),
 			})),
-		}))
+		}));
 	}, [variations]);
 
 	useEffect(() => {
@@ -240,14 +244,14 @@ function RouteComponent() {
 					value: attr.value,
 				})),
 			})),
-		}))
+		}));
 	}, [editVariations]);
 
 	// Listen for action button clicks from navbar
 	useEffect(() => {
 		const handleAction = () => {
 			setShowCreateForm(true);
-		}
+		};
 
 		window.addEventListener("dashboardAction", handleAction);
 		return () => window.removeEventListener("dashboardAction", handleAction);
@@ -256,11 +260,11 @@ function RouteComponent() {
 	// Event handlers and utility functions
 	const handleVariationsChange = (newVariations: Variation[]) => {
 		setVariations(newVariations);
-	}
+	};
 
 	const handleEditVariationsChange = (newVariations: Variation[]) => {
 		setEditVariations(newVariations);
-	}
+	};
 
 	// Store location handlers
 	const handleStoreLocationChange = (locationId: number, checked: boolean) => {
@@ -270,25 +274,28 @@ function RouteComponent() {
 			} else {
 				return prev.filter((id) => id !== locationId);
 			}
-		})
-	}
+		});
+	};
 
-	const handleEditStoreLocationChange = (locationId: number, checked: boolean) => {
+	const handleEditStoreLocationChange = (
+		locationId: number,
+		checked: boolean,
+	) => {
 		setEditSelectedStoreLocationIds((prev) => {
 			if (checked) {
 				return [...prev, locationId];
 			} else {
 				return prev.filter((id) => id !== locationId);
 			}
-		})
-	}
+		});
+	};
 
 	const handleImagesChange = (images: string, deletedImagesList?: string[]) => {
 		setFormData((prev) => ({ ...prev, images }));
 		if (deletedImagesList) {
 			setDeletedImages(deletedImagesList);
 		}
-	}
+	};
 
 	const handleEditImagesChange = (
 		images: string,
@@ -298,7 +305,7 @@ function RouteComponent() {
 		if (deletedImagesList) {
 			setEditDeletedImages(deletedImagesList);
 		}
-	}
+	};
 
 	const closeCreateModal = () => {
 		setShowCreateForm(false);
@@ -309,7 +316,7 @@ function RouteComponent() {
 		setIsAutoSlug(true);
 		setHasAttemptedSubmit(false);
 		setError("");
-	}
+	};
 
 	const closeEditModal = () => {
 		setShowEditModal(false);
@@ -321,7 +328,7 @@ function RouteComponent() {
 		setEditDeletedImages([]);
 		setIsEditAutoSlug(false);
 		setError("");
-	}
+	};
 
 	const formatPrice = (price: number | string | null): string => {
 		if (price === null) return "$0.00";
@@ -330,25 +337,21 @@ function RouteComponent() {
 			style: "currency",
 			currency: "р",
 		}).format(numericPrice);
-	}
+	};
 
 	const { groupedProducts, categories, brands, collections } = productsData;
 
-	// Filter grouped products based on search
-	// Products are already sorted by availability on the server side
-	const displayGroupedProducts: ProductGroup[] = searchTerm
-		? groupedProducts
-				.map((group) => ({
-					...group,
-					products: group.products.filter(
-						(product) =>
-							product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-							product.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
-							group.title.toLowerCase().includes(searchTerm.toLowerCase()),
-					),
-				}))
-				.filter((group) => group.products.length > 0)
-		: groupedProducts;
+	// Flatten all products from groups into a single array
+	const allProducts = groupedProducts.flatMap(group => group.products);
+
+	// Filter products based on search
+	const displayProducts = searchTerm
+		? allProducts.filter(
+				(product) =>
+					product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+					product.slug.toLowerCase().includes(searchTerm.toLowerCase())
+			)
+		: allProducts;
 
 	const handleChange = (
 		e: React.ChangeEvent<
@@ -371,12 +374,12 @@ function RouteComponent() {
 			updatedFormData = {
 				...updatedFormData,
 				discount: value === "" ? null : parseInt(value, 10) || null,
-			}
+			};
 		} else {
 			updatedFormData = {
 				...updatedFormData,
 				[name]: type === "checkbox" ? checked : value,
-			}
+			};
 		}
 
 		// Handle variations creation
@@ -388,12 +391,12 @@ function RouteComponent() {
 				stock: updatedFormData.stock ? parseInt(updatedFormData.stock, 10) : 0,
 				sort: 0,
 				attributes: [],
-			}
+			};
 			setVariations([defaultVariation]);
 		}
 
 		setFormData(updatedFormData);
-	}
+	};
 
 	const handleEditChange = (
 		e: React.ChangeEvent<
@@ -416,12 +419,12 @@ function RouteComponent() {
 			updatedFormData = {
 				...updatedFormData,
 				discount: value === "" ? null : parseInt(value, 10) || null,
-			}
+			};
 		} else {
 			updatedFormData = {
 				...updatedFormData,
 				[name]: type === "checkbox" ? checked : value,
-			}
+			};
 		}
 
 		// Handle variations creation
@@ -433,12 +436,12 @@ function RouteComponent() {
 				stock: updatedFormData.stock ? parseInt(updatedFormData.stock, 10) : 0,
 				sort: 0,
 				attributes: [],
-			}
+			};
 			setEditVariations([defaultVariation]);
 		}
 
 		setEditFormData(updatedFormData);
-	}
+	};
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -453,7 +456,7 @@ function RouteComponent() {
 
 		if (errors.length > 0) {
 			toast.error(`Please fill in all required fields: ${errors.join(", ")}`);
-			return
+			return;
 		}
 
 		setIsSubmitting(true);
@@ -472,12 +475,12 @@ function RouteComponent() {
 					attributeId: attr.attributeId,
 					value: attr.value,
 				})),
-			}))
+			}));
 
 			const submissionData = {
 				...formData,
 				variations: formattedVariations,
-			}
+			};
 
 			const result = await createProduct({ data: submissionData });
 
@@ -488,7 +491,7 @@ function RouteComponent() {
 						productId: result.product.id,
 						storeLocationIds: selectedStoreLocationIds,
 					},
-				})
+				});
 			}
 
 			toast.success("Product added successfully!");
@@ -506,12 +509,12 @@ function RouteComponent() {
 		} finally {
 			setIsSubmitting(false);
 		}
-	}
+	};
 
 	const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!editingProductId) {
-			return
+			return;
 		}
 
 		setIsSubmitting(true);
@@ -525,11 +528,11 @@ function RouteComponent() {
 						console.error(`Failed to delete ${filename}:`, error);
 						// Don't fail the whole update if one image deletion fails
 					}),
-				)
+				);
 				await Promise.all(deletePromises);
 				toast.success(
 					`Deleted ${editDeletedImages.length} image(s) from storage`,
-				)
+				);
 			}
 
 			const formattedVariations = editVariations.map(
@@ -546,16 +549,16 @@ function RouteComponent() {
 						value: attr.value,
 					})),
 				}),
-			)
+			);
 
 			const submissionData = {
 				...editFormData,
 				variations: formattedVariations,
-			}
+			};
 
 			await updateProduct({
 				data: { id: editingProductId, data: submissionData },
-			})
+			});
 
 			// Update store locations
 			await updateProductStoreLocations({
@@ -563,7 +566,7 @@ function RouteComponent() {
 					productId: editingProductId,
 					storeLocationIds: editSelectedStoreLocationIds,
 				},
-			})
+			});
 
 			toast.success("Product updated successfully!");
 
@@ -578,7 +581,7 @@ function RouteComponent() {
 				editingProductId,
 				originalProductSlug,
 				editFormData.slug,
-			)
+			);
 		} catch (err) {
 			const errorMessage =
 				err instanceof Error ? err.message : "An error occurred";
@@ -587,12 +590,12 @@ function RouteComponent() {
 		} finally {
 			setIsSubmitting(false);
 		}
-	}
+	};
 
 	const handleDeleteClick = (product: ProductWithVariations) => {
 		setDeletingProductId(product.id);
 		setShowDeleteDialog(true);
-	}
+	};
 
 	const handleDeleteConfirm = async () => {
 		if (!deletingProductId) return;
@@ -615,12 +618,12 @@ function RouteComponent() {
 		} finally {
 			setIsDeleting(false);
 		}
-	}
+	};
 
 	const handleDeleteCancel = () => {
 		setShowDeleteDialog(false);
 		setDeletingProductId(null);
-	}
+	};
 
 	const handleEdit = async (product: ProductWithVariations) => {
 		setEditingProductId(product.id);
@@ -632,7 +635,7 @@ function RouteComponent() {
 			// Fetch complete product data including variations and categories
 			const productWithDetails = await getProductBySlug({
 				data: { id: product.id },
-			})
+			});
 
 			// Convert variations to the frontend format
 			const formattedVariations =
@@ -645,7 +648,7 @@ function RouteComponent() {
 						sort: variation.sort ?? 0, // Handle null sort values
 						attributes: variation.attributes || [],
 					}),
-				) || []
+				) || [];
 
 			// Determine if slug is custom (doesn't match auto-generated)
 			const isCustomSlug =
@@ -660,23 +663,28 @@ function RouteComponent() {
 				} catch {
 					// If it's already a comma-separated string, use it as-is
 					// Otherwise, try to clean up the JSON string
-					if (typeof productWithDetails.images === 'string') {
+					if (typeof productWithDetails.images === "string") {
 						// Check if it looks like a JSON array string
-						if (productWithDetails.images.startsWith('[') && productWithDetails.images.endsWith(']')) {
+						if (
+							productWithDetails.images.startsWith("[") &&
+							productWithDetails.images.endsWith("]")
+						) {
 							// Try to extract filenames from the malformed JSON
 							const matches = productWithDetails.images.match(/"([^"]+)"/g);
 							if (matches) {
-								const filenames = matches.map(match => match.replace(/"/g, ''));
+								const filenames = matches.map((match) =>
+									match.replace(/"/g, ""),
+								);
 								imagesString = filenames.join(", ");
 							} else {
-								imagesString = ""
+								imagesString = "";
 							}
 						} else {
 							// Assume it's already a comma-separated string
 							imagesString = productWithDetails.images;
 						}
 					} else {
-						imagesString = ""
+						imagesString = "";
 					}
 				}
 			}
@@ -686,7 +694,8 @@ function RouteComponent() {
 				slug: productWithDetails.slug,
 				description: productWithDetails.description || "",
 				price: productWithDetails.price.toString(),
-				squareMetersPerPack: productWithDetails.squareMetersPerPack?.toString() || "",
+				squareMetersPerPack:
+					productWithDetails.squareMetersPerPack?.toString() || "",
 				categorySlug: productWithDetails.categorySlug || "",
 				brandSlug: productWithDetails.brandSlug || "",
 				collectionSlug: productWithDetails.collectionSlug || "",
@@ -698,15 +707,17 @@ function RouteComponent() {
 				weight: productWithDetails.weight || "",
 				images: imagesString,
 				variations: [],
-			})
+			});
 
 			// Load existing store locations for this product
 			const existingStoreLocations = await getProductStoreLocations({
 				data: { id: product.id },
-			})
+			});
 			setEditSelectedStoreLocationIds(
-				existingStoreLocations.map((location) => location.storeLocationId).filter((id): id is number => id !== null)
-			)
+				existingStoreLocations
+					.map((location) => location.storeLocationId)
+					.filter((id): id is number => id !== null),
+			);
 
 			// Set auto-slug state based on whether slug is custom
 			setIsEditAutoSlug(!isCustomSlug);
@@ -726,13 +737,18 @@ function RouteComponent() {
 				} catch {
 					// If it's already a comma-separated string, use it as-is
 					// Otherwise, try to clean up the JSON string
-					if (typeof product.images === 'string') {
+					if (typeof product.images === "string") {
 						// Check if it looks like a JSON array string
-						if (product.images.startsWith('[') && product.images.endsWith(']')) {
+						if (
+							product.images.startsWith("[") &&
+							product.images.endsWith("]")
+						) {
 							// Try to extract filenames from the malformed JSON
 							const matches = product.images.match(/"([^"]+)"/g);
 							if (matches) {
-								const filenames = matches.map(match => match.replace(/"/g, ''));
+								const filenames = matches.map((match) =>
+									match.replace(/"/g, ""),
+								);
 								fallbackImagesString = filenames.join(", ");
 							} else {
 								fallbackImagesString = "";
@@ -763,16 +779,16 @@ function RouteComponent() {
 				weight: product.weight || "",
 				images: fallbackImagesString,
 				variations: [],
-			})
+			});
 			setEditVariations([]);
 		}
-	}
+	};
 
 	return (
 		<div>
 			{/* Products List */}
 			<div className="space-y-6">
-				{displayGroupedProducts.length === 0 ? (
+				{displayProducts.length === 0 ? (
 					<div className="text-center py-8 text-muted-foreground px-4">
 						<div className="mb-4">
 							<div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center">
@@ -789,36 +805,19 @@ function RouteComponent() {
 						</p>
 					</div>
 				) : (
-					<div className="space-y-8">
-						{displayGroupedProducts.map((group) => (
-							<div key={group.title} className="space-y-4">
-								{/* Group Title */}
-								<div className="px-4">
-									<h2 className="text-2xl font-semibold text-foreground flex items-baseline gap-1">
-										{group.title}
-										<span className="text-sm text-muted-foreground">
-											{group.products.length}{" "}
-											{group.products.length === 1 ? "product" : "products"}
-										</span>
-									</h2>
-								</div>
-
-								{/* Products Grid */}
-								<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3 px-4">
-									{group.products.map((product) => (
-										<AdminProductCard
-											key={product.id}
-											product={product}
-											onEdit={handleEdit}
-											onDelete={handleDeleteClick}
-											formatPrice={formatPrice}
-										/>
-									))}
-								</div>
-
-								{/* No divider between groups */}
-							</div>
-						))}
+					<div className="px-4">
+						{/* Products Grid */}
+						<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
+							{displayProducts.map((product) => (
+								<AdminProductCard
+									key={product.id}
+									product={product}
+									onEdit={handleEdit}
+									onDelete={handleDeleteClick}
+									formatPrice={formatPrice}
+								/>
+							))}
+						</div>
 					</div>
 				)}
 			</div>
@@ -900,11 +899,11 @@ function RouteComponent() {
 								name={editFormData.name}
 								isAutoSlug={isEditAutoSlug}
 								onSlugChange={(slug) => {
-									setIsEditAutoSlug(false)
+									setIsEditAutoSlug(false);
 									setEditFormData((prev) => ({ ...prev, slug }));
 								}}
 								onAutoSlugChange={(isAuto) => {
-									setIsEditAutoSlug(isAuto)
+									setIsEditAutoSlug(isAuto);
 									if (isAuto && editFormData.name) {
 										const generated = generateSlug(editFormData.name);
 										setEditFormData((prev) => ({ ...prev, slug: generated }));
@@ -1024,7 +1023,10 @@ function RouteComponent() {
 
 								{/* Column 1: Collection */}
 								<div>
-									<label htmlFor={editCollectionId} className="block text-sm font-medium mb-1">
+									<label
+										htmlFor={editCollectionId}
+										className="block text-sm font-medium mb-1"
+									>
 										Коллекция (опционально)
 									</label>
 									<Select
@@ -1045,7 +1047,10 @@ function RouteComponent() {
 										<SelectContent>
 											<SelectItem value="none">None</SelectItem>
 											{collections?.map((collection) => (
-												<SelectItem key={collection.slug} value={collection.slug}>
+												<SelectItem
+													key={collection.slug}
+													value={collection.slug}
+												>
 													{collection.name}
 												</SelectItem>
 											))}
@@ -1073,7 +1078,6 @@ function RouteComponent() {
 								<div />
 							</div>
 						</div>
-
 					</DrawerSection>
 
 					{/* Store Locations Block */}
@@ -1090,7 +1094,9 @@ function RouteComponent() {
 					<DrawerSection variant="default" className="lg:col-span-2">
 						<ProductAttributesForm
 							attributes={editFormData.attributes || []}
-							onChange={(attributes) => setEditFormData({ ...editFormData, attributes })}
+							onChange={(attributes) =>
+								setEditFormData({ ...editFormData, attributes })
+							}
 						/>
 					</DrawerSection>
 
@@ -1187,7 +1193,7 @@ function RouteComponent() {
 								name={formData.name}
 								isAutoSlug={isAutoSlug}
 								onSlugChange={(slug) => {
-									setIsAutoSlug(false)
+									setIsAutoSlug(false);
 									setFormData((prev) => ({ ...prev, slug }));
 								}}
 								onAutoSlugChange={setIsAutoSlug}
@@ -1236,7 +1242,7 @@ function RouteComponent() {
 									name="squareMetersPerPack"
 									value={formData.squareMetersPerPack || ""}
 									onChange={handleChange}
-								step="0.001"
+									step="0.001"
 									min="0"
 									placeholder="Optional - for flooring products"
 								/>
@@ -1258,7 +1264,7 @@ function RouteComponent() {
 											setFormData({
 												...formData,
 												categorySlug: value,
-											})
+											});
 										}}
 										required
 									>
@@ -1296,7 +1302,7 @@ function RouteComponent() {
 											setFormData({
 												...formData,
 												brandSlug: value === "none" ? null : value,
-											})
+											});
 										}}
 									>
 										<SelectTrigger id={addBrandId}>
@@ -1315,7 +1321,10 @@ function RouteComponent() {
 
 								{/* Column 1: Collection */}
 								<div>
-									<label htmlFor={addCollectionId} className="block text-sm font-medium mb-1">
+									<label
+										htmlFor={addCollectionId}
+										className="block text-sm font-medium mb-1"
+									>
 										Коллекция (опционально)
 									</label>
 									<Select
@@ -1324,7 +1333,7 @@ function RouteComponent() {
 											setFormData({
 												...formData,
 												collectionSlug: value === "none" ? null : value,
-											})
+											});
 										}}
 									>
 										<SelectTrigger id={addCollectionId}>
@@ -1333,7 +1342,10 @@ function RouteComponent() {
 										<SelectContent>
 											<SelectItem value="none">None</SelectItem>
 											{collections?.map((collection) => (
-												<SelectItem key={collection.slug} value={collection.slug}>
+												<SelectItem
+													key={collection.slug}
+													value={collection.slug}
+												>
 													{collection.name}
 												</SelectItem>
 											))}
@@ -1351,14 +1363,13 @@ function RouteComponent() {
 									name="weight"
 									value={formData.weight}
 									onChange={handleChange}
-								placeholder="Enter weight in grams"
-							/>
+									placeholder="Enter weight in grams"
+								/>
 
-							{/* Column 2: Empty for grid alignment */}
-							<div />
+								{/* Column 2: Empty for grid alignment */}
+								<div />
+							</div>
 						</div>
-					</div>
-
 					</DrawerSection>
 
 					{/* Store Locations Block */}
@@ -1375,7 +1386,9 @@ function RouteComponent() {
 					<DrawerSection variant="default" className="lg:col-span-2">
 						<ProductAttributesForm
 							attributes={formData.attributes || []}
-							onChange={(attributes) => setFormData({ ...formData, attributes })}
+							onChange={(attributes) =>
+								setFormData({ ...formData, attributes })
+							}
 						/>
 					</DrawerSection>
 
@@ -1404,5 +1417,5 @@ function RouteComponent() {
 				/>
 			)}
 		</div>
-	)
+	);
 }

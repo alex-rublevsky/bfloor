@@ -1,10 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Button } from "~/components/ui/shared/Button";
 //import { usePrefetch } from "~/hooks/usePrefetch";
 import "../styles/app.css";
-import { seo } from "~/utils/seo";
 import { Banner } from "~/components/ui/Banner";
-
+import { seo } from "~/utils/seo";
 
 export const Route = createFileRoute("/")({
 	component: App,
@@ -26,15 +24,12 @@ function App() {
 			<main className="flex-1 flex items-center justify-center px-4 py-8">
 				<div className="w-full max-w-md space-y-6 text-center">
 					<section className="!p-0 !static">
-						<Banner/>
-						
+						<Banner />
+
 						{/*<TestimonialsSection/>*/}
-						
 					</section>
 				</div>
 			</main>
-
-		
 		</div>
 	);
 }

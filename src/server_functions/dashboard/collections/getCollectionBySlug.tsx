@@ -29,4 +29,3 @@ export const getCollectionBySlug = createServerFn({ method: "POST" })
 			throw new Error("Failed to fetch collection");
 		}
 	});
-

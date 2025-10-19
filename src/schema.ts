@@ -11,11 +11,16 @@ export const products = sqliteTable("products", {
 	brandSlug: text("brand_slug").references(() => brands.slug, {
 		onDelete: "cascade",
 	}),
+	collectionSlug: text("collection_slug").references(() => collections.slug, {
+		onDelete: "set null",
+	}),
+	storeLocationId: integer("store_location_id"),
 	name: text("name").notNull(),
 	slug: text("slug").notNull().unique(),
 	images: text("images"), // JSON stored as text
 	description: text("description"),
-	price: real("price").notNull().default(0), // Make price non-nullable with default value
+	price: real("price").notNull().default(0), // Make price non-nullable with default value (for flooring: price per m²)
+	squareMetersPerPack: real("square_meters_per_pack"), // For flooring products: area coverage per pack
 	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 	isFeatured: integer("is_featured", { mode: "boolean" })
 		.notNull()
@@ -29,7 +34,7 @@ export const products = sqliteTable("products", {
 	unlimitedStock: integer("unlimited_stock", { mode: "boolean" })
 		.notNull()
 		.default(false),
-	shippingFrom: text("shipping_from"), // Location where this product ships from
+	productAttributes: text("product_attributes"), // JSON stored as text
 	createdAt: integer("created_at", { mode: "timestamp" }),
 });
 
@@ -43,8 +48,13 @@ export const productVariations = sqliteTable("product_variations", {
 	stock: integer("stock").notNull().default(0),
 	discount: integer("discount"), // Discount percentage for this variation
 	sort: integer("sort"),
-	shippingFrom: text("shipping_from"), // Location where this variation ships from
 	createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
+});
+
+export const productAttributes = sqliteTable("product_attributes", {
+	id: integer("id").primaryKey({ autoIncrement: true }),
+	name: text("name").notNull().unique(), // Display name: "Размер (см)", "Цвет"
+	slug: text("slug").notNull().unique(), // URL/SKU friendly: "size-cm", "color"
 });
 
 export const variationAttributes = sqliteTable("variation_attributes", {
@@ -53,7 +63,7 @@ export const variationAttributes = sqliteTable("variation_attributes", {
 		() => productVariations.id,
 		{ onDelete: "cascade" },
 	),
-	attributeId: text("attributeId").notNull(),
+	attributeId: text("attributeId").notNull(), // Keep as string for backward compatibility
 	value: text("value").notNull(),
 	createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
 });
@@ -62,8 +72,10 @@ export const categories = sqliteTable("categories", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	name: text("name").notNull(),
 	slug: text("slug").notNull().unique(),
+	parentSlug: text("parent_slug"),
 	image: text("image"),
 	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+	order: integer("order").notNull().default(0), // For sorting categories
 });
 
 export const brands = sqliteTable("brands", {
@@ -72,6 +84,39 @@ export const brands = sqliteTable("brands", {
 	slug: text("slug").notNull().unique(),
 	image: text("image"),
 	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+});
+
+export const collections = sqliteTable("collections", {
+	id: integer("id").primaryKey({ autoIncrement: true }),
+	name: text("name").notNull(),
+	slug: text("slug").notNull().unique(),
+	brandSlug: text("brand_slug").notNull().references(() => brands.slug, {
+		onDelete: "cascade",
+	}),
+	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+});
+
+export const storeLocations = sqliteTable("store_locations", {
+	id: integer("id").primaryKey({ autoIncrement: true }),
+	address: text("address").notNull(),
+	description: text("description"),
+	openingHours: text("opening_hours"),
+	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+	createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+});
+
+export const productStoreLocations = sqliteTable("product_store_locations", {
+	id: integer("id").primaryKey({ autoIncrement: true }),
+	productId: integer("product_id").references(() => products.id, {
+		onDelete: "cascade",
+	}),
+	storeLocationId: integer("store_location_id").references(
+		() => storeLocations.id,
+		{
+			onDelete: "cascade",
+		},
+	),
+	createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 });
 
 export const orders = sqliteTable("orders", {
@@ -109,8 +154,6 @@ export const orderItems = sqliteTable("order_items", {
 	attributes: text("attributes"), // JSON stored as text
 	createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
 });
-
-
 
 // Inquiries
 // export const inquiries = sqliteTable('inquiries', {
@@ -187,9 +230,13 @@ export const schema = {
 	// Product tables
 	products,
 	productVariations,
+	productAttributes,
 	variationAttributes,
 	categories,
 	brands,
+	collections,
+	storeLocations,
+	productStoreLocations,
 	// Order tables
 	orders,
 	orderItems,

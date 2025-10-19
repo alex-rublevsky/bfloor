@@ -7,8 +7,7 @@ import { collections } from "~/schema";
 interface CollectionFormData {
 	name: string;
 	slug: string;
-	brandSlug: string | null;
-	image: string;
+	brandSlug: string;
 	isActive: boolean;
 }
 
@@ -24,9 +23,9 @@ export const updateCollection = createServerFn({ method: "POST" })
 				throw new Error("Invalid collection ID");
 			}
 
-			if (!collectionData.name || !collectionData.slug) {
+			if (!collectionData.name || !collectionData.slug || !collectionData.brandSlug) {
 				setResponseStatus(400);
-				throw new Error("Missing required fields: name and slug are required");
+				throw new Error("Missing required fields: name, slug, and brandSlug are required");
 			}
 
 			// Check if collection exists and for duplicate slug
@@ -59,8 +58,7 @@ export const updateCollection = createServerFn({ method: "POST" })
 				.set({
 					name: collectionData.name,
 					slug: collectionData.slug,
-					brandSlug: collectionData.brandSlug || null,
-					image: collectionData.image || null,
+					brandSlug: collectionData.brandSlug,
 					isActive: collectionData.isActive,
 				})
 				.where(eq(collections.id, collectionId));
@@ -82,4 +80,3 @@ export const updateCollection = createServerFn({ method: "POST" })
 			throw new Error("Failed to update collection");
 		}
 	});
-

@@ -18,41 +18,44 @@ export function useProductAttributes() {
 export function generateVariationSKU(
 	productSlug: string,
 	attributes: Array<{ attributeId: string; value: string }>,
-	attributeDefinitions: ProductAttribute[]
+	attributeDefinitions: ProductAttribute[],
 ): string {
 	if (!attributes || attributes.length === 0) {
 		return productSlug;
 	}
 
 	// Sort attributes by attributeId to ensure consistent SKU generation
-	const sortedAttributes = [...attributes].sort((a, b) => 
-		a.attributeId.localeCompare(b.attributeId)
+	const sortedAttributes = [...attributes].sort((a, b) =>
+		a.attributeId.localeCompare(b.attributeId),
 	);
 
 	// Build the SKU parts
 	const skuParts = [productSlug];
-	
+
 	for (const attr of sortedAttributes) {
 		// Find the attribute definition to get the slug
-		const attrDef = attributeDefinitions.find(def => def.name === attr.attributeId);
-		const attributeSlug = attrDef?.slug || attr.attributeId.toLowerCase().replace(/_/g, '-');
-		
+		const attrDef = attributeDefinitions.find(
+			(def) => def.name === attr.attributeId,
+		);
+		const attributeSlug =
+			attrDef?.slug || attr.attributeId.toLowerCase().replace(/_/g, "-");
+
 		// Convert value to SKU-friendly format
 		// Replace dots with dashes, remove special characters, convert to lowercase
 		const valueSlug = attr.value
 			.toString()
 			.toLowerCase()
-			.replace(/\./g, '-') // Replace dots with dashes
-			.replace(/[^a-z0-9-]/g, '') // Remove special characters except dashes
-			.replace(/-+/g, '-') // Replace multiple dashes with single dash
-			.replace(/^-|-$/g, ''); // Remove leading/trailing dashes
-		
+			.replace(/\./g, "-") // Replace dots with dashes
+			.replace(/[^a-z0-9-]/g, "") // Remove special characters except dashes
+			.replace(/-+/g, "-") // Replace multiple dashes with single dash
+			.replace(/^-|-$/g, ""); // Remove leading/trailing dashes
+
 		if (valueSlug) {
 			skuParts.push(`${attributeSlug}-${valueSlug}`);
 		}
 	}
 
-	return skuParts.join('-');
+	return skuParts.join("-");
 }
 
 /**
@@ -61,7 +64,7 @@ export function generateVariationSKU(
  */
 export function getAttributeDisplayName(
 	attributeId: string,
-	attributes: ProductAttribute[]
+	attributes: ProductAttribute[],
 ): string {
 	const attribute = attributes.find((attr) => attr.name === attributeId);
 	return attribute ? attribute.name : attributeId;
@@ -72,10 +75,10 @@ export function getAttributeDisplayName(
  */
 export function getAttributeSlug(
 	attributeName: string,
-	attributes: ProductAttribute[]
+	attributes: ProductAttribute[],
 ): string {
 	const attribute = attributes.find((attr) => attr.name === attributeName);
-	return attribute?.slug || attributeName.toLowerCase().replace(/_/g, '-');
+	return attribute?.slug || attributeName.toLowerCase().replace(/_/g, "-");
 }
 
 /**
@@ -83,8 +86,8 @@ export function getAttributeSlug(
  */
 export function getAttributeNameFromSlug(
 	slug: string,
-	attributes: ProductAttribute[]
+	attributes: ProductAttribute[],
 ): string {
 	const attribute = attributes.find((attr) => attr.slug === slug);
-	return attribute?.name || slug.replace(/-/g, '_').toUpperCase();
+	return attribute?.name || slug.replace(/-/g, "_").toUpperCase();
 }

@@ -17,7 +17,7 @@ export const deleteProductImage = createServerFn({ method: "POST" })
 				throw new Error("No filename provided");
 			}
 
-            const bucket = env.BFLOOR_STORAGE as R2Bucket;
+			const bucket = env.BFLOOR_STORAGE as R2Bucket;
 
 			if (!bucket) {
 				setResponseStatus(500);

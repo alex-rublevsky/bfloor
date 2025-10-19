@@ -4,11 +4,7 @@ import { eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import type * as schema from "~/schema";
-import {
-	products,
-	productVariations,
-	variationAttributes,
-} from "~/schema";
+import { products, productVariations, variationAttributes } from "~/schema";
 import type { ProductFormData } from "~/types";
 
 export const updateProduct = createServerFn({ method: "POST" })
@@ -50,14 +46,17 @@ export const updateProduct = createServerFn({ method: "POST" })
 				throw new Error("A product with this slug already exists");
 			}
 
-			// Process images
+			// Process images - convert comma-separated string to JSON array
 			// Use the provided images string directly, even if empty (to allow removing all images)
 			const imageString = productData.images?.trim() ?? "";
-
-			// Check if slug is changing and update blog post references
-			const oldSlug = existingProduct[0].slug;
-			const newSlug = productData.slug;
-			const slugChanged = oldSlug !== newSlug;
+			const imagesArray = imageString
+				? imageString
+						.split(",")
+						.map((img) => img.trim())
+						.filter(Boolean)
+				: [];
+			const imagesJson =
+				imagesArray.length > 0 ? JSON.stringify(imagesArray) : "";
 
 			// Update product and related data
 			await Promise.all([
@@ -69,16 +68,22 @@ export const updateProduct = createServerFn({ method: "POST" })
 						slug: productData.slug,
 						description: productData.description || null,
 						price: parseFloat(productData.price),
+						squareMetersPerPack: productData.squareMetersPerPack
+							? parseFloat(productData.squareMetersPerPack)
+							: null,
 						categorySlug: productData.categorySlug || null,
 						brandSlug: productData.brandSlug || null,
+						collectionSlug: productData.collectionSlug || null,
 						stock: parseInt(productData.stock, 10),
 						isActive: productData.isActive,
 						isFeatured: productData.isFeatured,
 						discount: productData.discount || null,
 						hasVariations: productData.hasVariations,
 						weight: productData.weight || null,
-						images: imageString,
-						shippingFrom: productData.shippingFrom || null,
+						images: imagesJson,
+						productAttributes: productData.attributes?.length
+							? JSON.stringify(productData.attributes)
+							: null,
 					})
 					.where(eq(products.id, productId)),
 
@@ -121,7 +126,6 @@ export const updateProduct = createServerFn({ method: "POST" })
 									discount: v.discount
 										? parseInt(v.discount.toString(), 10)
 										: null,
-									shippingFrom: v.shippingFrom || null,
 									createdAt: new Date(),
 								})),
 							)

@@ -73,7 +73,7 @@ export function OrderDrawer({ order, isOpen, onClose }: OrderDrawerProps) {
 				<DrawerBody className="w-full p-0">
 					<div className="space-y-6">
 						{/* Payment Details */}
-						<DrawerSection title="Payment Details">
+						<DrawerSection title="Детали оплаты">
 							<div className="space-y-2">
 								<p className="text-sm">
 									<span className="font-medium">Subtotal:</span>{" "}
@@ -109,7 +109,7 @@ export function OrderDrawer({ order, isOpen, onClose }: OrderDrawerProps) {
 						</DrawerSection>
 
 						{/* Shipping Details */}
-						<DrawerSection title="Shipping Details">
+						<DrawerSection title="Доставка">
 							<div className="space-y-2">
 								<p className="text-sm">
 									<span className="font-medium">Status:</span> {order.status}
@@ -130,14 +130,14 @@ export function OrderDrawer({ order, isOpen, onClose }: OrderDrawerProps) {
 
 						{/* Order Items */}
 						{order.items && order.items.length > 0 && (
-							<DrawerSection title="Items">
+							<DrawerSection title="Товары">
 								<div className="space-y-4">
 									{order.items.map((item) => (
 										<div key={item.id} className="flex items-center gap-4">
 											<div className="relative w-16 h-16 shrink-0 bg-muted rounded overflow-hidden">
 												{item.product.images ? (
 													<Image
-														src={`/${item.product.images.split(",").map((img) => img.trim())[0]}`}
+														src={`https://assets.rublevsky.studio/${item.product.images.split(",").map((img) => img.trim())[0]}`}
 														alt={item.product.name}
 														className="object-cover"
 														sizes="4rem"

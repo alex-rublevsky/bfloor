@@ -17,5 +17,3 @@ export const getAllCollections = createServerFn({ method: "GET" }).handler(
 		}
 	},
 );
-
-

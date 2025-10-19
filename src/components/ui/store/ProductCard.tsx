@@ -1,10 +1,14 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
+import { ASSETS_BASE_URL } from "~/constants/urls";
 import { usePrefetch } from "~/hooks/usePrefetch";
+import {
+	getAttributeDisplayName,
+	useProductAttributes,
+} from "~/hooks/useProductAttributes";
 import { useVariationSelection } from "~/hooks/useVariationSelection";
 import { useCart } from "~/lib/cartContext";
-import { getAttributeDisplayName } from "~/lib/productAttributes";
 import { storeDataQueryOptions } from "~/lib/queryOptions";
 import type {
 	CartItem,
@@ -36,7 +40,10 @@ const calculateImageArray = (images: string | null): string[] => {
 		return JSON.parse(images) as string[];
 	} catch {
 		// Fallback to comma-separated parsing for backward compatibility
-		return images.split(",").map((img) => img.trim()).filter(Boolean);
+		return images
+			.split(",")
+			.map((img) => img.trim())
+			.filter(Boolean);
 	}
 };
 
@@ -118,15 +125,12 @@ const getVariationSearchParams = (
 	return params;
 };
 
-function ProductCard({
-	product,
-}: {
-	product: ProductWithVariations;
-}) {
+function ProductCard({ product }: { product: ProductWithVariations }) {
 	const [isAddingToCart, setIsAddingToCart] = useState(false);
 	const { addProductToCart, cart } = useCart();
 	const { prefetchProduct } = usePrefetch();
 	const queryClient = useQueryClient();
+	const { data: attributes } = useProductAttributes();
 
 	// Use the variation selection hook
 	const {
@@ -281,7 +285,7 @@ function ProductCard({
 									<div className="relative w-full h-full">
 										{/* Primary Image */}
 										<img
-											src={`https://assets.rublevsky.studio/${imageArray[0]}`}
+											src={`${ASSETS_BASE_URL}/${imageArray[0]}`}
 											alt={product.name}
 											loading="eager"
 											className="absolute inset-0 w-full h-full object-cover object-center"
@@ -296,7 +300,7 @@ function ProductCard({
 										{/* Secondary Image (if exists) - Only on desktop devices with hover capability */}
 										{imageArray.length > 1 && (
 											<img
-												src={`https://assets.rublevsky.studio/${imageArray[1]}`}
+												src={`${ASSETS_BASE_URL}/${imageArray[1]}`}
 												alt={product.name}
 												loading="eager"
 												className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-500 ease-in-out opacity-0 group-hover:opacity-100 hidden md:block"
@@ -408,121 +412,126 @@ function ProductCard({
 												</span>
 											</div>
 										)}
+									</div>
+
+									{isComingSoon && (
+										<>
+											<span className="text-sm hidden sm:inline">
+												Coming Soon
+											</span>
+											<span className="text-sm w-full block sm:hidden mt-1">
+												Coming Soon
+											</span>
+										</>
+									)}
 								</div>
 
-								{isComingSoon && (
-									<>
-										<span className="text-sm hidden sm:inline">
-											Coming Soon
-										</span>
-										<span className="text-sm w-full block sm:hidden mt-1">
-											Coming Soon
-										</span>
-									</>
-								)}
+								{/* Product Name */}
+								<p
+									className=" mb-3"
+									style={{
+										viewTransitionName: `product-name-${product.slug}`,
+									}}
+								>
+									{product.name}
+								</p>
+
+								{/* Variations */}
+								{product.hasVariations &&
+									product.variations &&
+									product.variations.length > 0 && (
+										<div className="space-y-2">
+											{attributeNames.map((attributeId: string) => (
+												<FilterGroup
+													key={attributeId}
+													title={getAttributeDisplayName(
+														attributeId,
+														attributes || [],
+													)}
+													options={getUniqueAttributeValues(attributeId)}
+													selectedOptions={
+														selectedAttributes[attributeId] || null
+													}
+													onOptionChange={(value) => {
+														if (value) {
+															selectVariation(attributeId, value);
+														}
+													}}
+													showAllOption={false}
+													variant="product"
+													getOptionAvailability={(value) =>
+														isAttributeValueAvailable(attributeId, value)
+													}
+												/>
+											))}
+										</div>
+									)}
 							</div>
 
-							{/* Product Name */}
-							<p
-								className=" mb-3"
-								style={{
-									viewTransitionName: `product-name-${product.slug}`,
-								}}
-							>
-								{product.name}
-							</p>
-
-							{/* Variations */}
-							{product.hasVariations &&
-								product.variations &&
-								product.variations.length > 0 && (
-									<div className="space-y-2">
-										{attributeNames.map((attributeId: string) => (
-											<FilterGroup
-												key={attributeId}
-												title={getAttributeDisplayName(attributeId)}
-												options={getUniqueAttributeValues(attributeId)}
-												selectedOptions={
-													selectedAttributes[attributeId] || null
-												}
-												onOptionChange={(value) => {
-													if (value) {
-														selectVariation(attributeId, value);
-													}
-												}}
-												showAllOption={false}
-												variant="product"
-												getOptionAvailability={(value) =>
-													isAttributeValueAvailable(attributeId, value)
-												}
-											/>
-										))}
-									</div>
-								)}
-						</div>
-
-						{/* Mobile Add to Cart button */}
-						<div className="md:hidden mt-auto">
-							<button
-								type="button"
-								onClick={(e) => {
-									e.stopPropagation();
-									handleAddToCart(e);
-								}}
-								className={`w-full cursor-pointer flex items-center justify-center space-x-2 bg-muted backdrop-blur-xs text-foreground hover:bg-primary active:bg-primary transition-all duration-500 py-2 px-4 ${
-									!isAvailable
-										? "opacity-50 cursor-not-allowed hover:bg-muted/70 hover:text-foreground active:bg-muted/70 active:text-foreground"
-										: "hover:text-primary-foreground active:text-primary-foreground"
-								}`}
-								disabled={!isAvailable}
-							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									width="16"
-									height="16"
-									fill="none"
-									viewBox="0 0 33 30"
-									className="cart-icon"
-									aria-label="Добавить в корзину"
+							{/* Mobile Add to Cart button */}
+							<div className="md:hidden mt-auto">
+								<button
+									type="button"
+									onClick={(e) => {
+										e.stopPropagation();
+										handleAddToCart(e);
+									}}
+									className={`w-full cursor-pointer flex items-center justify-center space-x-2 bg-muted backdrop-blur-xs text-foreground hover:bg-primary active:bg-primary transition-all duration-500 py-2 px-4 ${
+										!isAvailable
+											? "opacity-50 cursor-not-allowed hover:bg-muted/70 hover:text-foreground active:bg-muted/70 active:text-foreground"
+											: "hover:text-primary-foreground active:text-primary-foreground"
+									}`}
+									disabled={!isAvailable}
 								>
-									<title>Add to cart</title>
-									<path
-										d="M1.94531 1.80127H7.27113L11.9244 18.602C12.2844 19.9016 13.4671 20.8013 14.8156 20.8013H25.6376C26.9423 20.8013 28.0974 19.958 28.495 18.7154L31.9453 7.9303H19.0041"
-										stroke="currentColor"
-										strokeWidth="2"
-										strokeLinecap="round"
-										strokeLinejoin="round"
-									/>
-									<circle
-										cx="13.4453"
-										cy="27.3013"
-										r="2.5"
-										fill="currentColor"
-									/>
-									<circle
-										cx="26.4453"
-										cy="27.3013"
-										r="2.5"
-										fill="currentColor"
-									/>
-								</svg>
-								{!isAddingToCart ? (
-									<span>
-										{!isAvailable
-											? "Out of Stock"
-											: isComingSoon
-												? "Pre-order"
-												: "Add to Cart"}
-									</span>
-								) : (
-									<span>{isComingSoon ? "Pre-ordering..." : "Adding..."}</span>
-								)}
-							</button>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										fill="none"
+										viewBox="0 0 33 30"
+										className="cart-icon"
+										aria-label="Добавить в корзину"
+									>
+										<title>Add to cart</title>
+										<path
+											d="M1.94531 1.80127H7.27113L11.9244 18.602C12.2844 19.9016 13.4671 20.8013 14.8156 20.8013H25.6376C26.9423 20.8013 28.0974 19.958 28.495 18.7154L31.9453 7.9303H19.0041"
+											stroke="currentColor"
+											strokeWidth="2"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										/>
+										<circle
+											cx="13.4453"
+											cy="27.3013"
+											r="2.5"
+											fill="currentColor"
+										/>
+										<circle
+											cx="26.4453"
+											cy="27.3013"
+											r="2.5"
+											fill="currentColor"
+										/>
+									</svg>
+									{!isAddingToCart ? (
+										<span>
+											{!isAvailable
+												? "Out of Stock"
+												: isComingSoon
+													? "Pre-order"
+													: "Add to Cart"}
+										</span>
+									) : (
+										<span>
+											{isComingSoon ? "Pre-ordering..." : "Adding..."}
+										</span>
+									)}
+								</button>
+							</div>
 						</div>
+					</div>
 				</div>
 			</div>
-		</div>
-		</div>
 		</Link>
 	);
 }

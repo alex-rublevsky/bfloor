@@ -1,14 +1,14 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useId, useMemo, useState, useEffect } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { toast } from "sonner";
-import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { CategoryTreeView } from "~/components/ui/dashboard/CategoryTreeView";
+import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
 import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { CategoriesPageSkeleton } from "~/components/ui/dashboard/skeletons/CategoriesPageSkeleton";
-import { Input } from "~/components/ui/shared/Input";
+import { Input } from "~/components/ui/shared/input";
 import {
 	Select,
 	SelectContent,
@@ -18,8 +18,8 @@ import {
 } from "~/components/ui/shared/Select";
 import { Switch } from "~/components/ui/shared/Switch";
 import { useDashboardForm } from "~/hooks/useDashboardForm";
-import { buildCategoryTree } from "~/lib/categoryTree";
 import { generateSlug, useSlugGeneration } from "~/hooks/useSlugGeneration";
+import { buildCategoryTree } from "~/lib/categoryTree";
 import { createProductCategory } from "~/server_functions/dashboard/categories/createProductCategory";
 import { deleteProductCategory } from "~/server_functions/dashboard/categories/deleteProductCategory";
 import { getAllProductCategories } from "~/server_functions/dashboard/categories/getAllProductCategories";
@@ -33,7 +33,6 @@ const productCategoriesQueryOptions = () => ({
 	staleTime: 1000 * 60 * 5, // Cache for 5 minutes
 });
 
-
 export const Route = createFileRoute("/dashboard/categories")({
 	component: RouteComponent,
 	pendingComponent: CategoriesPageSkeleton,
@@ -41,7 +40,7 @@ export const Route = createFileRoute("/dashboard/categories")({
 	// Loader prefetches data before component renders
 	loader: async ({ context: { queryClient } }) => {
 		// Ensure data is loaded before component renders
-        await queryClient.ensureQueryData(productCategoriesQueryOptions());
+		await queryClient.ensureQueryData(productCategoriesQueryOptions());
 	},
 });
 
@@ -56,15 +55,15 @@ function RouteComponent() {
 	const { data: categoriesData } = useSuspenseQuery(
 		productCategoriesQueryOptions(),
 	);
-	
+
 	// Build tree structure from flat categories
 	const categoryTree = useMemo(
 		() => buildCategoryTree(categoriesData || []),
 		[categoriesData],
 	);
-	
+
 	// Category type state - only product categories are supported
-    const [categoryType, setCategoryType] = useState<"product">("product");
+	const [categoryType, setCategoryType] = useState<"product">("product");
 
 	// Use our dashboard form hooks - one for each category type
 	const productCategoryForm = useDashboardForm<CategoryFormData>(
@@ -78,32 +77,31 @@ function RouteComponent() {
 		{ listenToActionButton: true },
 	);
 
-
 	// Get the active form based on category type
-    const activeForm = productCategoryForm;
+	const activeForm = productCategoryForm;
 
 	const [isCreateAutoSlug, setIsCreateAutoSlug] = useState(true);
 	const [isEditAutoSlug, setIsEditAutoSlug] = useState(false);
 	const [editingCategoryId, setEditingCategoryId] = useState<number | null>(
 		null,
 	);
-const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
-    null,
-);
+	const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
+		null,
+	);
 
 	// Stable callbacks for slug generation
 	const handleCreateSlugChange = useCallback(
-        (slug: string) => {
-            productCategoryForm.createForm.updateField("slug", slug);
-        },
-        [productCategoryForm.createForm.updateField],
+		(slug: string) => {
+			productCategoryForm.createForm.updateField("slug", slug);
+		},
+		[productCategoryForm.createForm.updateField],
 	);
 
 	const handleEditSlugChange = useCallback(
-        (slug: string) => {
-            productCategoryForm.editForm.updateField("slug", slug);
-        },
-        [productCategoryForm.editForm.updateField],
+		(slug: string) => {
+			productCategoryForm.editForm.updateField("slug", slug);
+		},
+		[productCategoryForm.editForm.updateField],
 	);
 
 	// Auto-slug generation hooks
@@ -135,14 +133,16 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 		activeForm.crud.startSubmitting();
 
 		try {
-            await createProductCategory({
-                data: productCategoryForm.createForm.formData as CategoryFormData,
-            });
+			await createProductCategory({
+				data: productCategoryForm.createForm.formData as CategoryFormData,
+			});
 
-            toast.success("Категория добавлена успешно!");
+			toast.success("Категория добавлена успешно!");
 
 			// Refresh the relevant query
-            queryClient.invalidateQueries({ queryKey: ["bfloorDashboardCategories"] });
+			queryClient.invalidateQueries({
+				queryKey: ["bfloorDashboardCategories"],
+			});
 
 			closeCreateDrawer();
 		} catch (err) {
@@ -162,7 +162,7 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 
 	// Handler for editing product categories
 	const handleEditCategory = (category: Category) => {
-        setEditingCategoryId(category.id);
+		setEditingCategoryId(category.id);
 
 		// Determine if slug is custom (doesn't match auto-generated)
 		const isCustomSlug = category.slug !== generateSlug(category.name);
@@ -183,22 +183,24 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 	// Handler for updating categories
 	const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-        if (!editingCategoryId) return;
+		if (!editingCategoryId) return;
 
 		activeForm.crud.startSubmitting();
 
 		try {
-            await updateProductCategory({
-                data: {
-                    id: editingCategoryId,
-                    data: productCategoryForm.editForm.formData as CategoryFormData,
-                },
-            });
+			await updateProductCategory({
+				data: {
+					id: editingCategoryId,
+					data: productCategoryForm.editForm.formData as CategoryFormData,
+				},
+			});
 
-            toast.success("Категория обновлена успешно!");
+			toast.success("Категория обновлена успешно!");
 
 			// Refresh the relevant query
-            queryClient.invalidateQueries({ queryKey: ["bfloorDashboardCategories"] });
+			queryClient.invalidateQueries({
+				queryKey: ["bfloorDashboardCategories"],
+			});
 
 			closeEditModal();
 		} catch (err) {
@@ -212,34 +214,36 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 
 	const closeEditModal = () => {
 		activeForm.crud.closeEditDrawer();
-        setEditingCategoryId(null);
-        productCategoryForm.editForm.resetForm();
+		setEditingCategoryId(null);
+		productCategoryForm.editForm.resetForm();
 		setIsEditAutoSlug(false);
 	};
 
 	// Handler for deleting product categories
 	const handleDeleteCategoryClick = (category: Category) => {
-        setDeletingCategoryId(category.id);
+		setDeletingCategoryId(category.id);
 		productCategoryForm.crud.openDeleteDialog();
 	};
 
 	// Handler for deleting categories
 
 	const handleDeleteConfirm = async () => {
-        if (!deletingCategoryId) return;
+		if (!deletingCategoryId) return;
 
 		activeForm.crud.startDeleting();
 
 		try {
-            await deleteProductCategory({ data: { id: deletingCategoryId } });
+			await deleteProductCategory({ data: { id: deletingCategoryId } });
 
-            toast.success("Категория удалена успешно!");
+			toast.success("Категория удалена успешно!");
 
 			// Refresh the relevant query
-            queryClient.invalidateQueries({ queryKey: ["bfloorDashboardCategories"] });
+			queryClient.invalidateQueries({
+				queryKey: ["bfloorDashboardCategories"],
+			});
 
 			activeForm.crud.closeDeleteDialog();
-            setDeletingCategoryId(null);
+			setDeletingCategoryId(null);
 		} catch (err) {
 			const errorMsg = err instanceof Error ? err.message : "An error occurred";
 			activeForm.crud.setError(errorMsg);
@@ -252,9 +256,8 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 	const handleDeleteCancel = () => {
 		activeForm.crud.closeDeleteDialog();
 		setDeletingCategoryId(null);
-    // no-op
+		// no-op
 	};
-
 
 	return (
 		<div className="space-y-6 px-6">
@@ -270,13 +273,13 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 			</div>
 
 			{/* Create Category Drawer */}
-            <DashboardFormDrawer
+			<DashboardFormDrawer
 				isOpen={activeForm.crud.showCreateDrawer}
 				onOpenChange={activeForm.crud.setShowCreateDrawer}
-                title={`Add New Product Category`}
+				title={`Add New Product Category`}
 				formId={createFormId}
 				isSubmitting={activeForm.crud.isSubmitting}
-                submitButtonText={`Create Category`}
+				submitButtonText={`Create Category`}
 				submittingText="Creating..."
 				onCancel={closeCreateDrawer}
 				error={
@@ -287,13 +290,10 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 				layout="single-column"
 			>
 				<form onSubmit={handleSubmit} id={createFormId} className="contents">
-					<DrawerSection
-						maxWidth
-                        title={`Category Details`}
-					>
+					<DrawerSection maxWidth title={`Category Details`}>
 						<div className="space-y-4">
 							<Input
-                                label={`Category Name`}
+								label={`Category Name`}
 								type="text"
 								name="name"
 								value={activeForm.createForm.formData.name}
@@ -307,7 +307,7 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 								isAutoSlug={isCreateAutoSlug}
 								onSlugChange={(slug) => {
 									setIsCreateAutoSlug(false);
-                                    productCategoryForm.createForm.updateField("slug", slug);
+									productCategoryForm.createForm.updateField("slug", slug);
 								}}
 								onAutoSlugChange={setIsCreateAutoSlug}
 								idPrefix="create"
@@ -315,15 +315,21 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 
 							{/* Parent Category Selector */}
 							<div>
-								<label htmlFor={createParentCategoryId} className="block text-sm font-medium mb-1">
+								<label
+									htmlFor={createParentCategoryId}
+									className="block text-sm font-medium mb-1"
+								>
 									Parent Category (optional)
 								</label>
 								<Select
-									value={(activeForm.createForm.formData as CategoryFormData).parentSlug || "none"}
+									value={
+										(activeForm.createForm.formData as CategoryFormData)
+											.parentSlug || "none"
+									}
 									onValueChange={(value: string) => {
 										productCategoryForm.createForm.updateField(
 											"parentSlug",
-											value === "none" ? null : value
+											value === "none" ? null : value,
 										);
 									}}
 								>
@@ -331,7 +337,9 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 										<SelectValue placeholder="None (top-level category)" />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="none">None (top-level category)</SelectItem>
+										<SelectItem value="none">
+											None (top-level category)
+										</SelectItem>
 										{categoriesData
 											.filter((cat) => cat.isActive)
 											.map((category) => (
@@ -371,13 +379,13 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 			</DashboardFormDrawer>
 
 			{/* Edit Category Drawer */}
-            <DashboardFormDrawer
+			<DashboardFormDrawer
 				isOpen={activeForm.crud.showEditDrawer}
 				onOpenChange={activeForm.crud.setShowEditDrawer}
-                title={`Edit Product Category`}
+				title={`Edit Product Category`}
 				formId={editFormId}
 				isSubmitting={activeForm.crud.isSubmitting}
-                submitButtonText={`Update Category`}
+				submitButtonText={`Update Category`}
 				submittingText="Updating..."
 				onCancel={closeEditModal}
 				error={
@@ -388,13 +396,10 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 				layout="single-column"
 			>
 				<form onSubmit={handleUpdate} id={editFormId} className="contents">
-					<DrawerSection
-						maxWidth
-                        title={`Category Details`}
-					>
+					<DrawerSection maxWidth title={`Category Details`}>
 						<div className="space-y-4">
 							<Input
-                                label={`Category Name`}
+								label={`Category Name`}
 								type="text"
 								name="name"
 								value={activeForm.editForm.formData.name}
@@ -408,7 +413,7 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 								isAutoSlug={isEditAutoSlug}
 								onSlugChange={(slug) => {
 									setIsEditAutoSlug(false);
-                                    productCategoryForm.editForm.updateField("slug", slug);
+									productCategoryForm.editForm.updateField("slug", slug);
 								}}
 								onAutoSlugChange={setIsEditAutoSlug}
 								idPrefix="edit"
@@ -416,15 +421,21 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 
 							{/* Parent Category Selector */}
 							<div>
-								<label htmlFor={editParentCategoryId} className="block text-sm font-medium mb-1">
+								<label
+									htmlFor={editParentCategoryId}
+									className="block text-sm font-medium mb-1"
+								>
 									Parent Category (optional)
 								</label>
 								<Select
-									value={(activeForm.editForm.formData as CategoryFormData).parentSlug || "none"}
+									value={
+										(activeForm.editForm.formData as CategoryFormData)
+											.parentSlug || "none"
+									}
 									onValueChange={(value: string) => {
 										productCategoryForm.editForm.updateField(
 											"parentSlug",
-											value === "none" ? null : value
+											value === "none" ? null : value,
 										);
 									}}
 								>
@@ -432,9 +443,15 @@ const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
 										<SelectValue placeholder="None (top-level category)" />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="none">None (top-level category)</SelectItem>
+										<SelectItem value="none">
+											None (top-level category)
+										</SelectItem>
 										{categoriesData
-											.filter((cat) => cat.isActive && cat.slug !== activeForm.editForm.formData.slug)
+											.filter(
+												(cat) =>
+													cat.isActive &&
+													cat.slug !== activeForm.editForm.formData.slug,
+											)
 											.map((category) => (
 												<SelectItem key={category.slug} value={category.slug}>
 													{category.name}

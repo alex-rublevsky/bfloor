@@ -7,12 +7,6 @@ import {
 } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Button } from "~/components/ui/shared/Button";
-import {
-	markdownComponents,
-	rehypePlugins,
-} from "~/components/ui/shared/MarkdownComponents";
-import { ProductPageSkeleton } from "~/components/ui/store/skeletons/ProductPageSkeleton";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -21,10 +15,17 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "~/components/ui/dashboard/breadcrumb";
-import { getCountryName } from "~/constants/countries";
+import { Button } from "~/components/ui/shared/Button";
+import {
+	markdownComponents,
+	rehypePlugins,
+} from "~/components/ui/shared/MarkdownComponents";
+import { ProductPageSkeleton } from "~/components/ui/store/skeletons/ProductPageSkeleton";
+import { VariationSelector } from "~/components/ui/store/VariationSelector";
+import { ASSETS_BASE_URL } from "~/constants/urls";
+import { useProductAttributes } from "~/hooks/useProductAttributes";
 import { useVariationSelection } from "~/hooks/useVariationSelection";
 import { useCart } from "~/lib/cartContext";
-import { PRODUCT_ATTRIBUTES } from "~/lib/productAttributes";
 import { productQueryOptions, storeDataQueryOptions } from "~/lib/queryOptions";
 import type {
 	ProductWithDetails,
@@ -34,24 +35,15 @@ import type {
 import { seo } from "~/utils/seo";
 import { getAvailableQuantityForVariation } from "~/utils/validateStock";
 
-
 // Simple search params - no Zod needed for basic optional strings
 const validateSearch = (search: Record<string, unknown>) => {
-	// Get all known attribute parameter names from PRODUCT_ATTRIBUTES
-	const knownParams = Object.keys(PRODUCT_ATTRIBUTES).map((id) =>
-		id.toLowerCase(),
-	);
-
-	// Create base object with known attributes
+	// For now, we'll accept any string parameters as potential attributes
+	// The actual validation will happen in the component using database attributes
 	const result: Record<string, string | undefined> = {};
-	knownParams.forEach((param) => {
-		result[param] = (search[param] as string) || undefined;
-	});
 
-	// Handle any additional dynamic attributes
 	Object.entries(search).forEach(([key, value]) => {
-		if (!knownParams.includes(key)) {
-			result[key] = (value as string) || undefined;
+		if (typeof value === "string") {
+			result[key] = value;
 		}
 	});
 
@@ -153,16 +145,7 @@ export const Route = createFileRoute("/store/$productId")({
 	validateSearch,
 	// Strip undefined values from URL to keep it clean
 	search: {
-		middlewares: [
-			stripSearchParams(
-				Object.fromEntries(
-					Object.keys(PRODUCT_ATTRIBUTES).map((id) => [
-						id.toLowerCase(),
-						undefined,
-					]),
-				),
-			),
-		],
+		middlewares: [stripSearchParams({})],
 	},
 });
 
@@ -173,6 +156,7 @@ function ProductPage() {
 	const [quantity, setQuantity] = useState(1);
 
 	const { addProductToCart, cart } = useCart();
+	const { data: attributes } = useProductAttributes();
 
 	// Use suspense query - data is guaranteed to be loaded by the loader
 	const { data: product } = useSuspenseQuery(productQueryOptions(productId));
@@ -224,8 +208,11 @@ function ProductPage() {
 			const autoSearchParams: Record<string, string | undefined> = {};
 
 			firstVariation.attributes.forEach((attr: VariationAttribute) => {
-				const paramName = attr.attributeId.toLowerCase();
-				autoSearchParams[paramName] = attr.value;
+				// Convert attribute name to slug for URL
+				const attribute = attributes?.find((a) => a.name === attr.attributeId);
+				const slug =
+					attribute?.slug || attr.attributeId.toLowerCase().replace(/_/g, "-");
+				autoSearchParams[slug] = attr.value;
 			});
 
 			// Navigate with auto-selected variation
@@ -234,7 +221,7 @@ function ProductPage() {
 				replace: true,
 			});
 		}
-	}, [product, search, navigate, cart.items]);
+	}, [product, search, navigate, cart.items, attributes]);
 
 	// Sync product data with cart context for stock info
 	const syncedProduct = useMemo(() => {
@@ -253,14 +240,12 @@ function ProductPage() {
 	}, [product, products]);
 
 	// Use variation selection hook with URL state for product page
-	const {
-		selectedVariation,
-		selectedAttributes,
-	} = useVariationSelection({
+	const { selectedVariation, selectedAttributes } = useVariationSelection({
 		product: syncedProduct as ProductWithVariations | null,
 		cartItems: cart.items,
 		search, // Providing search enables URL state mode
 		onVariationChange: () => setQuantity(1), // Reset quantity when variation changes
+		attributes: attributes || [], // Pass database attributes for slug conversion
 	});
 
 	// Find variation for pricing (regardless of stock status)
@@ -356,6 +341,32 @@ function ProductPage() {
 	}, [quantity]);
 
 	// Handle add to cart
+	const handleAttributeChange = useCallback(
+		(attributeId: string, value: string) => {
+			const newSearch = { ...search };
+
+			// Convert attribute name to slug for URL
+			const attribute = attributes?.find((attr) => attr.name === attributeId);
+			const slug =
+				attribute?.slug || attributeId.toLowerCase().replace(/_/g, "-");
+
+			newSearch[slug] = value;
+
+			// Remove undefined values
+			Object.keys(newSearch).forEach((key) => {
+				if (newSearch[key] === undefined) {
+					delete newSearch[key];
+				}
+			});
+
+			navigate({
+				search: newSearch as Record<string, string | undefined>,
+				replace: true,
+			});
+		},
+		[search, navigate, attributes],
+	);
+
 	const handleAddToCart = useCallback(async () => {
 		if (!syncedProduct || !canAddToCart) return;
 
@@ -377,7 +388,6 @@ function ProductPage() {
 		canAddToCart,
 		addProductToCart,
 	]);
-
 
 	// Calculate total price for display
 	const totalPrice = currentPrice * quantity;
@@ -409,7 +419,10 @@ function ProductPage() {
 							<BreadcrumbSeparator />
 							<BreadcrumbItem>
 								<BreadcrumbLink asChild>
-									<Link to="/store" className="text-gray-400 hover:text-gray-600">
+									<Link
+										to="/store"
+										className="text-gray-400 hover:text-gray-600"
+									>
 										Ламинат
 									</Link>
 								</BreadcrumbLink>
@@ -436,13 +449,13 @@ function ProductPage() {
 											type="button"
 											key={image}
 											className={`w-24 h-24 rounded-sm overflow-hidden border-2 transition-colors ${
-												index === 0 
-													? "border-red-600" 
+												index === 0
+													? "border-red-600"
 													: "border-transparent hover:border-gray-300"
 											}`}
 										>
 											<img
-												src={image}
+												src={`${ASSETS_BASE_URL}/${image}`}
 												alt={`${syncedProduct?.name || "Product"} ${index + 1}`}
 												className="w-full h-full object-cover"
 											/>
@@ -455,7 +468,7 @@ function ProductPage() {
 							<div className="flex-1">
 								<div className="aspect-square bg-white rounded-lg overflow-hidden">
 									<img
-										src={productImages[0]}
+										src={`${ASSETS_BASE_URL}/${productImages[0]}`}
 										alt={syncedProduct?.name || "Product"}
 										className="w-full h-full object-contain"
 									/>
@@ -474,17 +487,12 @@ function ProductPage() {
 								</h1>
 								<div className="flex items-center gap-4 text-gray-600">
 									{syncedProduct?.brand && (
-										<span className="text-lg font-medium">{syncedProduct.brand.name}</span>
+										<span className="text-lg font-medium">
+											{syncedProduct.brand.name}
+										</span>
 									)}
 								</div>
-								<div className="flex items-center gap-4 mt-2 text-sm text-gray-400">
-									{syncedProduct?.shippingFrom && (
-										<div className="flex items-center gap-1">
-											<span>🏭</span>
-											<span>{getCountryName(syncedProduct.shippingFrom)}</span>
-										</div>
-									)}
-								</div>
+								<div className="flex items-center gap-4 mt-2 text-sm text-gray-400"></div>
 							</div>
 
 							{/* Price and Quantity */}
@@ -495,6 +503,11 @@ function ProductPage() {
 									<div className="text-2xl font-bold text-gray-800">
 										{currentPrice.toLocaleString()} ₽
 									</div>
+									{syncedProduct?.squareMetersPerPack && (
+										<div className="text-sm text-gray-500 mt-1">
+											{syncedProduct.squareMetersPerPack} м² в упаковке
+										</div>
+									)}
 									{currentDiscount && (
 										<div className="text-sm text-green-600 font-medium">
 											Скидка: {currentDiscount}%
@@ -514,7 +527,17 @@ function ProductPage() {
 											-
 										</button>
 										<div className="text-center">
-											<div className="font-medium text-gray-800">{quantity} шт</div>
+											<div className="font-medium text-gray-800">
+												{quantity} уп
+											</div>
+											{syncedProduct?.squareMetersPerPack && (
+												<div className="text-xs text-gray-500">
+													{(
+														quantity * syncedProduct.squareMetersPerPack
+													).toFixed(1)}{" "}
+													м²
+												</div>
+											)}
 											{syncedProduct?.weight && (
 												<div className="text-xs text-gray-500">
 													{syncedProduct.weight}
@@ -524,7 +547,10 @@ function ProductPage() {
 										<button
 											type="button"
 											onClick={incrementQuantity}
-											disabled={!syncedProduct?.unlimitedStock && quantity >= effectiveStock}
+											disabled={
+												!syncedProduct?.unlimitedStock &&
+												quantity >= effectiveStock
+											}
 											className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
 										>
 											+
@@ -533,6 +559,16 @@ function ProductPage() {
 								</div>
 							</div>
 
+							{/* Variation Selector */}
+							{syncedProduct?.hasVariations && (
+								<VariationSelector
+									product={syncedProduct as ProductWithVariations}
+									selectedAttributes={selectedAttributes}
+									search={search}
+									onAttributeChange={handleAttributeChange}
+								/>
+							)}
+
 							{/* Add to Cart Button */}
 							<Button
 								onClick={handleAddToCart}
@@ -540,7 +576,7 @@ function ProductPage() {
 								className=""
 								size="lg"
 							>
-								<span className="text-xl font-bold">
+								<span className="text-xl font-thin">
 									{totalPrice.toLocaleString()} ₽
 								</span>
 								<span className="text-lg">

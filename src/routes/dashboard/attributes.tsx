@@ -1,10 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState, useCallback, useId, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button } from "~/components/ui/shared/Button";
-import { Input } from "~/components/ui/shared/Input";
-import { SlugField } from "~/components/ui/dashboard/SlugField";
+import { createFileRoute } from "@tanstack/react-router";
+import { useCallback, useEffect, useId, useState } from "react";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
+import { SlugField } from "~/components/ui/dashboard/SlugField";
+import { Button } from "~/components/ui/shared/Button";
+import { Input } from "~/components/ui/shared/input";
 import { useProductAttributes } from "~/hooks/useProductAttributes";
 import { useSlugGeneration } from "~/hooks/useSlugGeneration";
 import { createProductAttribute } from "~/server_functions/dashboard/attributes/createProductAttribute";
@@ -22,18 +22,18 @@ function AttributesPage() {
 	const editFormId = useId();
 	const createNameId = useId();
 	const editNameId = useId();
-	
+
 	const [isCreating, setIsCreating] = useState(false);
 	const [isEditing, setIsEditing] = useState(false);
 	const [editingId, setEditingId] = useState<number | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	
+
 	// Create form state
 	const [newAttributeName, setNewAttributeName] = useState("");
 	const [newAttributeSlug, setNewAttributeSlug] = useState("");
 	const [isCreateAutoSlug, setIsCreateAutoSlug] = useState(true);
-	
+
 	// Edit form state
 	const [editAttributeName, setEditAttributeName] = useState("");
 	const [editAttributeSlug, setEditAttributeSlug] = useState("");
@@ -64,14 +64,15 @@ function AttributesPage() {
 
 	const handleCreate = async () => {
 		if (!newAttributeName.trim()) return;
-		
+
 		setError(null);
 		setIsSubmitting(true);
 		try {
-			await createProductAttribute({ 
-				data: { 
-					name: newAttributeName.trim()
-				} 
+			await createProductAttribute({
+				data: {
+					name: newAttributeName.trim(),
+					slug: newAttributeSlug.trim(),
+				},
 			});
 			queryClient.invalidateQueries({ queryKey: ["productAttributes"] });
 			setNewAttributeName("");
@@ -79,7 +80,9 @@ function AttributesPage() {
 			setIsCreateAutoSlug(true);
 			setIsCreating(false);
 		} catch (error) {
-			setError(error instanceof Error ? error.message : "Failed to create attribute");
+			setError(
+				error instanceof Error ? error.message : "Failed to create attribute",
+			);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -87,17 +90,17 @@ function AttributesPage() {
 
 	const handleEdit = async () => {
 		if (!editingId || !editAttributeName.trim()) return;
-		
+
 		setIsSubmitting(true);
 		try {
-			await updateProductAttribute({ 
-				data: { 
-					id: editingId, 
-					data: { 
+			await updateProductAttribute({
+				data: {
+					id: editingId,
+					data: {
 						name: editAttributeName.trim(),
-						slug: editAttributeSlug.trim()
-					} 
-				}
+						slug: editAttributeSlug.trim(),
+					},
+				},
 			});
 			queryClient.invalidateQueries({ queryKey: ["productAttributes"] });
 			setIsEditing(false);
@@ -106,7 +109,9 @@ function AttributesPage() {
 			setEditAttributeSlug("");
 			setIsEditAutoSlug(false);
 		} catch (error) {
-			setError(error instanceof Error ? error.message : "Failed to update attribute");
+			setError(
+				error instanceof Error ? error.message : "Failed to update attribute",
+			);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -139,8 +144,6 @@ function AttributesPage() {
 
 	return (
 		<div className="space-y-6">
-
-
 			{/* Create Attribute Drawer */}
 			<DashboardFormDrawer
 				isOpen={isCreating}
@@ -154,7 +157,14 @@ function AttributesPage() {
 				error={error && isCreating ? error : undefined}
 				layout="single-column"
 			>
-				<form onSubmit={(e) => { e.preventDefault(); handleCreate(); }} id={createFormId} className="space-y-4">
+				<form
+					onSubmit={(e) => {
+						e.preventDefault();
+						handleCreate();
+					}}
+					id={createFormId}
+					className="space-y-4"
+				>
 					<Input
 						label="Название атрибута"
 						id={createNameId}
@@ -219,7 +229,14 @@ function AttributesPage() {
 				error={error && isEditing ? error : undefined}
 				layout="single-column"
 			>
-				<form onSubmit={(e) => { e.preventDefault(); handleEdit(); }} id={editFormId} className="space-y-4">
+				<form
+					onSubmit={(e) => {
+						e.preventDefault();
+						handleEdit();
+					}}
+					id={editFormId}
+					className="space-y-4"
+				>
 					<Input
 						label="Название атрибута"
 						id={editNameId}
