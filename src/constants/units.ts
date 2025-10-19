@@ -35,3 +35,43 @@ export const getBrandCountryName = (code: string | undefined | null): string => 
 			return "Не указано";
 	}
 };
+
+// Теги для товаров - категоризация по назначению
+export const PRODUCT_TAGS = [
+	"kitchen", // Кухня
+	"living-room", // Гостиная
+	"bedroom", // Спальня
+	"bathroom", // Ванная
+	"hallway", // Прихожая
+	"balcony", // Балкон
+	"commercial", // Коммерческие помещения
+	"outdoor", // Уличное использование
+	"waterproof", // Водостойкие
+] as const;
+
+export type ProductTag = (typeof PRODUCT_TAGS)[number];
+
+export const getProductTagName = (tag: string): string => {
+	switch (tag) {
+		case "kitchen":
+			return "🍳 Кухня";
+		case "living-room":
+			return "🛋️ Гостиная";
+		case "bedroom":
+			return "🛏️ Спальня";
+		case "bathroom":
+			return "🚿 Ванная";
+		case "hallway":
+			return "🚪 Прихожая";
+		case "balcony":
+			return "🌿 Балкон";
+		case "commercial":
+			return "🏢 Коммерческие помещения";
+		case "outdoor":
+			return "🌳 Уличное использование";
+		case "waterproof":
+			return "💧 Водостойкие";
+		default:
+			return tag;
+	}
+};

@@ -18,7 +18,8 @@ import { StoreLocationsSelector } from "~/components/ui/dashboard/StoreLocations
 import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { Input } from "~/components/ui/shared/input";
-import { UNITS_OF_MEASUREMENT } from "~/constants/units";
+import { CheckboxList } from "~/components/ui/shared/CheckboxList";
+import { PRODUCT_TAGS, getProductTagName, UNITS_OF_MEASUREMENT } from "~/constants/units";
 import {
 	generateVariationSKU,
 	useProductAttributes,
@@ -152,6 +153,8 @@ function RouteComponent() {
 		name: "",
 		slug: "",
 		description: "",
+		importantNote: "",
+		tags: [],
 		price: "0",
 		squareMetersPerPack: "",
 		unitOfMeasurement: "штука",
@@ -740,10 +743,23 @@ function RouteComponent() {
 				}
 			}
 
+			// Parse product tags from JSON
+			let parsedTags: string[] = [];
+			if (productWithDetails.tags) {
+				try {
+					parsedTags = JSON.parse(productWithDetails.tags) as string[];
+				} catch (error) {
+					console.error("Error parsing product tags:", error);
+					parsedTags = [];
+				}
+			}
+
 			setEditFormData({
 				name: productWithDetails.name,
 				slug: productWithDetails.slug,
 				description: productWithDetails.description || "",
+				importantNote: productWithDetails.importantNote || "",
+				tags: parsedTags,
 				price: productWithDetails.price.toString(),
 				squareMetersPerPack:
 					productWithDetails.squareMetersPerPack?.toString() || "",
@@ -821,6 +837,8 @@ function RouteComponent() {
 				name: product.name,
 				slug: product.slug,
 				description: product.description || "",
+				importantNote: product.importantNote || "",
+				tags: [],
 				price: product.price.toString(),
 				squareMetersPerPack: product.squareMetersPerPack?.toString() || "",
 				unitOfMeasurement: product.unitOfMeasurement || "штука",
@@ -882,7 +900,7 @@ function RouteComponent() {
 					id={editProductFormId}
 					className="contents"
 				>
-					{/* Left Column - Images, Settings, Description */}
+					{/* Left Column - Images, Settings, Tags, Store Locations */}
 					<div className="space-y-4 flex flex-col">
 						{/* Product Images Block */}
 						<DrawerSection variant="default">
@@ -910,32 +928,58 @@ function RouteComponent() {
 							/>
 						</DrawerSection>
 
-						{/* Description Block - flex-1 to take remaining space */}
-						<DrawerSection
-							variant="default"
-							className="flex-1"
-							style={{ minHeight: "7rem" }}
-						>
-							<DescriptionField
-								name="description"
-								value={editFormData.description}
-								onChange={handleEditChange}
-								className="h-full"
+
+						{/* Tags Block */}
+						<DrawerSection variant="default" title="Теги">
+							<CheckboxList
+								items={PRODUCT_TAGS.map((tag) => ({
+									id: tag,
+									label: getProductTagName(tag),
+								}))}
+								selectedIds={editFormData.tags || []}
+								onItemChange={(itemId, checked) => {
+									const currentTags = editFormData.tags || [];
+									if (checked) {
+										setEditFormData({
+											...editFormData,
+											tags: [...currentTags, itemId as string],
+										});
+									} else {
+										setEditFormData({
+											...editFormData,
+											tags: currentTags.filter((t) => t !== itemId),
+										});
+									}
+								}}
+								idPrefix="edit-tag"
+								columns={2}
+							/>
+						</DrawerSection>
+
+						{/* Store Locations Block */}
+						<DrawerSection variant="default" title="Местоположения магазинов">
+							<StoreLocationsSelector
+								storeLocations={storeLocations}
+								selectedLocationIds={editSelectedStoreLocationIds}
+								onLocationChange={handleEditStoreLocationChange}
+								idPrefix="edit"
 							/>
 						</DrawerSection>
 					</div>
 
-					{/* Right Column - Basic Info and Categories */}
-					<DrawerSection variant="default" title="Базовая информация">
-						<div className="grid grid-cols-1 gap-4">
-							<Input
-								label="Название"
-								type="text"
-								name="name"
-								value={editFormData.name}
-								onChange={handleEditChange}
-								required
-							/>
+					{/* Right Column - Basic Information */}
+					<div className="space-y-4 flex flex-col">
+						{/* Basic Info */}
+						<DrawerSection variant="default" title="Базовая информация">
+							<div className="grid grid-cols-1 gap-4">
+								<Input
+									label="Название"
+									type="text"
+									name="name"
+									value={editFormData.name}
+									onChange={handleEditChange}
+									required
+								/>
 							<SlugField
 								slug={editFormData.slug}
 								name={editFormData.name}
@@ -1081,18 +1125,30 @@ function RouteComponent() {
 								<div />
 								<div />
 							</div>
-						</div>
-					</DrawerSection>
 
-					{/* Store Locations Block */}
-					<DrawerSection variant="default" title="Местоположения магазинов">
-						<StoreLocationsSelector
-							storeLocations={storeLocations}
-							selectedLocationIds={editSelectedStoreLocationIds}
-							onLocationChange={handleEditStoreLocationChange}
-							idPrefix="edit"
-						/>
-					</DrawerSection>
+							{/* Description Field */}
+							<DescriptionField
+								name="description"
+								value={editFormData.description || ""}
+								onChange={handleEditChange}
+								placeholder="Добавьте описание товара..."
+								className="min-h-[4rem]"
+							/>
+
+							{/* Important Note Field */}
+							<DescriptionField
+								name="importantNote"
+								value={editFormData.importantNote || ""}
+								onChange={handleEditChange}
+								placeholder="Добавьте важную заметку с поддержкой Markdown..."
+								className="min-h-[4rem]"
+								label="Важная заметка"
+							/>
+						</div>
+						</DrawerSection>
+
+
+					</div>
 
 					{/* Product Attributes Block */}
 					<DrawerSection variant="default" className="lg:col-span-2">
@@ -1147,7 +1203,7 @@ function RouteComponent() {
 					id={createProductFormId}
 					className="contents"
 				>
-					{/* Left Column - Images, Settings, Description */}
+					{/* Left Column - Images, Settings, Tags, Store Locations */}
 					<div className="space-y-4 flex flex-col">
 						{/* Product Images Block */}
 						<DrawerSection variant="default">
@@ -1175,35 +1231,61 @@ function RouteComponent() {
 							/>
 						</DrawerSection>
 
-						{/* Description Block - flex-1 to take remaining space */}
-						<DrawerSection
-							variant="default"
-							className="flex-1"
-							style={{ minHeight: "7rem" }}
-						>
-							<DescriptionField
-								name="description"
-								value={formData.description}
-								onChange={handleChange}
-								className="h-full"
+
+						{/* Tags Block */}
+						<DrawerSection variant="default" title="Теги">
+							<CheckboxList
+								items={PRODUCT_TAGS.map((tag) => ({
+									id: tag,
+									label: getProductTagName(tag),
+								}))}
+								selectedIds={formData.tags || []}
+								onItemChange={(itemId, checked) => {
+									const currentTags = formData.tags || [];
+									if (checked) {
+										setFormData({
+											...formData,
+											tags: [...currentTags, itemId as string],
+										});
+									} else {
+										setFormData({
+											...formData,
+											tags: currentTags.filter((t) => t !== itemId),
+										});
+									}
+								}}
+								idPrefix="create-tag"
+								columns={2}
+							/>
+						</DrawerSection>
+
+						{/* Store Locations Block */}
+						<DrawerSection variant="default" title="Местоположения магазинов">
+							<StoreLocationsSelector
+								storeLocations={storeLocations}
+								selectedLocationIds={selectedStoreLocationIds}
+								onLocationChange={handleStoreLocationChange}
+								idPrefix="create"
 							/>
 						</DrawerSection>
 					</div>
 
-					{/* Right Column - Basic Info and Categories */}
-					<DrawerSection variant="default" title="Базовая информация">
-						<div className="grid grid-cols-1 gap-4">
-							<Input
-								label="Название товара"
-								type="text"
-								name="name"
-								value={formData.name}
-								onChange={handleChange}
-								required
-								className={
-									hasAttemptedSubmit && !formData.name ? "border-red-500" : ""
-								}
-							/>
+					{/* Right Column - Basic Information */}
+					<div className="space-y-4 flex flex-col">
+						{/* Basic Info */}
+						<DrawerSection variant="default" title="Базовая информация">
+							<div className="grid grid-cols-1 gap-4">
+								<Input
+									label="Название товара"
+									type="text"
+									name="name"
+									value={formData.name}
+									onChange={handleChange}
+									required
+									className={
+										hasAttemptedSubmit && !formData.name ? "border-red-500" : ""
+									}
+								/>
 							<SlugField
 								slug={formData.slug}
 								name={formData.name}
@@ -1352,18 +1434,30 @@ function RouteComponent() {
 								<div />
 								<div />
 							</div>
-						</div>
-					</DrawerSection>
 
-					{/* Store Locations Block */}
-					<DrawerSection variant="default" title="Местоположения магазинов">
-						<StoreLocationsSelector
-							storeLocations={storeLocations}
-							selectedLocationIds={selectedStoreLocationIds}
-							onLocationChange={handleStoreLocationChange}
-							idPrefix="create"
-						/>
-					</DrawerSection>
+							{/* Description Field */}
+							<DescriptionField
+								name="description"
+								value={formData.description || ""}
+								onChange={handleChange}
+								placeholder="Добавьте описание товара..."
+								className="min-h-[4rem]"
+							/>
+
+							{/* Important Note Field */}
+							<DescriptionField
+								name="importantNote"
+								value={formData.importantNote || ""}
+								onChange={handleChange}
+								placeholder="Добавьте важную заметку с поддержкой Markdown..."
+								className="min-h-[4rem]"
+								label="Важная заметка"
+							/>
+						</div>
+						</DrawerSection>
+
+
+					</div>
 
 					{/* Product Attributes Block */}
 					<DrawerSection variant="default" className="lg:col-span-2">

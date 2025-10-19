@@ -1,6 +1,6 @@
 import { Edit, Trash2 } from "lucide-react";
 import { Badge } from "~/components/ui/shared/Badge";
-import { getCountryFlag } from "~/constants/countries";
+import { getBrandCountryName } from "~/constants/units";
 import { ASSETS_BASE_URL } from "~/constants/urls";
 import { cn } from "~/lib/utils";
 import type { ProductWithVariations } from "~/types";
@@ -213,7 +213,7 @@ export function AdminProductCard({
 												.filter((code) => code !== "" && code !== "NONE")
 												.map(
 													(countryCode) =>
-														getCountryFlag(countryCode) || countryCode,
+														getBrandCountryName(countryCode),
 												)
 												.join(" ")}
 										</span>

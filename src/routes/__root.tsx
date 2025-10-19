@@ -46,7 +46,7 @@ if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
 		queryClient,
 		persister,
 		maxAge: 1000 * 60 * 60 * 24 * 1, // 1 day - persist for a day
-		buster: "v10",
+		buster: "v12",
 	});
 }
 

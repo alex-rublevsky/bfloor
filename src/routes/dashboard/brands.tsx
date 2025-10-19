@@ -7,6 +7,7 @@ import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDraw
 import { ImageUpload } from "~/components/ui/dashboard/ImageUpload";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { BrandsPageSkeleton } from "~/components/ui/dashboard/skeletons/BrandsPageSkeleton";
+import { ASSETS_BASE_URL } from "~/constants/urls";
 import { Badge } from "~/components/ui/shared/Badge";
 import { Button } from "~/components/ui/shared/Button";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
@@ -245,7 +246,7 @@ function RouteComponent() {
 											{brand.image ? (
 												<div className="h-10 w-10 relative">
 													<Image
-														src={brand.image}
+														src={`${ASSETS_BASE_URL}/${brand.image}`}
 														alt={brand.name}
 														className="object-cover rounded"
 													/>

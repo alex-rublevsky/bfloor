@@ -1,4 +1,4 @@
-import { Checkbox } from "~/components/ui/shared/Checkbox";
+import { CheckboxList, type CheckboxListItem } from "~/components/ui/shared/CheckboxList";
 import type { StoreLocation } from "~/types";
 
 interface StoreLocationsSelectorProps {
@@ -14,39 +14,24 @@ export function StoreLocationsSelector({
 	onLocationChange,
 	idPrefix,
 }: StoreLocationsSelectorProps) {
+	// Convert store locations to CheckboxListItem format
+	const checkboxItems: CheckboxListItem[] = storeLocations.map((location) => ({
+		id: location.id,
+		label: location.address,
+		description: location.description || undefined,
+		isActive: location.isActive,
+	}));
+
 	return (
-		<fieldset>
-			<legend className="text-lg font-medium mb-4">
-				Местоположения магазинов
-			</legend>
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-				{storeLocations
-					.filter((location) => location.isActive)
-					.map((location) => (
-						<label
-							key={location.id}
-							htmlFor={`${idPrefix}-store-location-${location.id}`}
-							className="flex items-center space-x-2 cursor-pointer"
-						>
-							<Checkbox
-								id={`${idPrefix}-store-location-${location.id}`}
-								name={`storeLocation-${location.id}`}
-								checked={selectedLocationIds?.includes(location.id) || false}
-								onCheckedChange={(checked) => {
-									onLocationChange(location.id, !!checked);
-								}}
-							/>
-							<div className="flex flex-col">
-								<span className="text-sm font-medium">{location.address}</span>
-								{location.description && (
-									<span className="text-xs text-muted-foreground">
-										{location.description}
-									</span>
-								)}
-							</div>
-						</label>
-					))}
-			</div>
-		</fieldset>
+		<CheckboxList
+			items={checkboxItems}
+			selectedIds={selectedLocationIds}
+			onItemChange={(itemId, checked) => {
+				onLocationChange(itemId as number, checked);
+			}}
+			idPrefix={`${idPrefix}-store-location`}
+			columns={2}
+			showOnlyActive={true}
+		/>
 	);
 }

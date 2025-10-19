@@ -252,7 +252,7 @@ export function ImageUpload({
 				"image/webp",
 			];
 			if (!allowedTypes.includes(file.type)) {
-				toast.error("Invalid file type. Only JPEG, PNG, and WebP are allowed.");
+				toast.error("Недопустимый тип файла. Разрешены только JPEG, PNG и WebP.");
 				return;
 			}
 
@@ -273,7 +273,7 @@ export function ImageUpload({
 				// Hard guard: if still above target, ask user to try a smaller image
 				if (processed.size > TARGET_MAX_BYTES) {
 					toast.error(
-						"Image is too large after compression. Please use a smaller image (~700KB max).",
+						"Изображение слишком большое после сжатия. Используйте изображение меньшего размера (~700КБ макс.).",
 					);
 					setIsUploading(false);
 					return;
@@ -299,7 +299,7 @@ export function ImageUpload({
 						});
 
 						if (result.success) {
-							toast.success("Image uploaded successfully!");
+							toast.success("Изображение успешно загружено!");
 							// Add new image to the list
 							const newImages = [...imageList, result.filename];
 
@@ -312,7 +312,7 @@ export function ImageUpload({
 						}
 					} catch (_error) {
 						toast.error(
-							error instanceof Error ? error.message : "Failed to upload image",
+							error instanceof Error ? error.message : "Не удалось загрузить изображение",
 						);
 					} finally {
 						setIsUploading(false);
@@ -320,14 +320,14 @@ export function ImageUpload({
 				};
 
 				reader.onerror = () => {
-					toast.error("Failed to read file");
+					toast.error("Не удалось прочитать файл");
 					setIsUploading(false);
 				};
 
 				reader.readAsDataURL(processed);
 			} catch (error) {
 				toast.error(
-					error instanceof Error ? error.message : "Failed to upload image",
+					error instanceof Error ? error.message : "Не удалось загрузить изображение",
 				);
 				setIsUploading(false);
 			}
@@ -383,10 +383,10 @@ export function ImageUpload({
 
 							await validateAndUploadFile(namedFile);
 						} else {
-							toast.error("Could not extract image from clipboard");
+							toast.error("Не удалось извлечь изображение из буфера обмена");
 						}
 					} catch (_error) {
-						toast.error("Failed to paste image from clipboard");
+						toast.error("Не удалось вставить изображение из буфера обмена");
 					} finally {
 						setIsPasting(false);
 					}
@@ -435,10 +435,10 @@ export function ImageUpload({
 
 							await validateAndUploadFile(namedFile);
 						} else {
-							toast.error("Could not extract image from clipboard");
+							toast.error("Не удалось извлечь изображение из буфера обмена");
 						}
 					} catch (_error) {
-						toast.error("Failed to paste image from clipboard");
+						toast.error("Не удалось вставить изображение из буфера обмена");
 					} finally {
 						setIsPasting(false);
 					}
@@ -506,7 +506,7 @@ export function ImageUpload({
 		setImageList(newImages);
 		// Update parent with new list and deleted images
 		onImagesChange(newImagesString, [...deletedImages, imageToRemove]);
-		toast.info("Image will be deleted when you save");
+		toast.info("Изображение будет удалено при сохранении");
 	};
 
 	const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -538,7 +538,7 @@ export function ImageUpload({
 					className="block text-sm font-medium"
 					id={`${fileInputId}-label`}
 				>
-					Product Images {imageList.length > 0 && `(${imageList.length})`}
+					Изображения товара {imageList.length > 0 && `(${imageList.length})`}
 				</label>
 				{imageList.length > 0 && (
 					<Button
@@ -547,7 +547,7 @@ export function ImageUpload({
 						variant="outline"
 						size="sm"
 					>
-						{showTextarea ? "Hide" : "Edit"} Raw
+						{showTextarea ? "Скрыть" : "Редактировать"} Raw
 					</Button>
 				)}
 			</div>
@@ -601,14 +601,14 @@ export function ImageUpload({
 										<>
 											<span className="animate-spin text-2xl">⏳</span>
 											<span className="text-xs">
-												{isPasting ? "Pasting..." : "Uploading..."}
+												{isPasting ? "Вставка..." : "Загрузка..."}
 											</span>
 										</>
 									) : (
 										<>
 											<Upload className="w-6 h-6 group-hover:scale-110 transition-transform" />
 											<span className="text-xs text-center px-2">
-												Drag and drop, select a file, or paste (Ctrl+V)
+												Перетащите файлы, выберите файл или вставьте (Ctrl+V)
 											</span>
 										</>
 									)}
@@ -618,7 +618,7 @@ export function ImageUpload({
 					</DndContext>
 
 					<p className="text-xs text-muted-foreground mt-3 text-center">
-						JPEG, PNG, WebP • Max 700KB • Paste images with Ctrl+V
+						JPEG, PNG, WebP • Макс. 700КБ • Вставка изображений Ctrl+V
 					</p>
 				</section>
 			)}

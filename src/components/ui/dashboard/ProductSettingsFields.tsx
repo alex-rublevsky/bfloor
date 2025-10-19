@@ -62,7 +62,6 @@ export function ProductSettingsFields({
 					name="discount"
 					value={discount || ""}
 					onChange={onDiscountChange}
-					placeholder="Скидка %"
 					min="0"
 					max="100"
 					className="w-20"

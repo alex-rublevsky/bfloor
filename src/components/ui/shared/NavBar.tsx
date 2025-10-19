@@ -317,14 +317,14 @@ export function NavBar({
 							</div>
 
 							{/* Search + Action button + Menu - grouped together with proper flex behavior */}
-							<div className="flex items-center gap-3 flex-shrink-0">
+							<div className="flex items-center gap-3 flex-1 min-w-0">
 								{/* Search - flexible width */}
 								{searchTerm !== undefined && onSearchChange && (
 									<SearchInput
 										placeholder={dynamicPlaceholder}
 										value={searchTerm}
 										onChange={onSearchChange}
-										className="w-64 min-w-48 max-w-80"
+										className="flex-1 min-w-0"
 									/>
 								)}
 
@@ -333,7 +333,7 @@ export function NavBar({
 									<button
 										type="button"
 										onClick={actionButton.onClick}
-										className="relative flex rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground transition-all duration-300 p-[0.3rem] focus:outline-hidden focus:ring-1 focus:ring-ring whitespace-nowrap min-w-fit"
+										className="relative flex rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground transition-all duration-300 p-[0.3rem] focus:outline-hidden focus:ring-1 focus:ring-ring whitespace-nowrap min-w-fit flex-shrink-0"
 									>
 										<span className="relative z-10 flex items-center gap-1.5 cursor-pointer px-3 py-1.5 text-xs">
 											<Plus className="w-4 h-4" />
@@ -384,14 +384,14 @@ export function NavBar({
 							</div>
 
 							{/* Search + Action button + Menu - compact */}
-							<div className="flex items-center gap-2 flex-shrink-0">
+							<div className="flex items-center gap-2 flex-1 min-w-0">
 								{/* Search - smaller */}
 								{searchTerm !== undefined && onSearchChange && (
 									<SearchInput
 										placeholder={dynamicPlaceholder}
 										value={searchTerm}
 										onChange={onSearchChange}
-										className="w-48 min-w-40"
+										className="flex-1 min-w-0"
 									/>
 								)}
 
@@ -400,7 +400,7 @@ export function NavBar({
 									<button
 										type="button"
 										onClick={actionButton.onClick}
-										className="relative flex rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground transition-all duration-300 p-[0.3rem] focus:outline-hidden focus:ring-1 focus:ring-ring whitespace-nowrap min-w-fit"
+										className="relative flex rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground transition-all duration-300 p-[0.3rem] focus:outline-hidden focus:ring-1 focus:ring-ring whitespace-nowrap min-w-fit flex-shrink-0"
 									>
 										<span className="relative z-10 flex items-center gap-1 cursor-pointer px-2 py-1.5 text-xs">
 											<Plus className="w-3 h-3" />
@@ -546,13 +546,13 @@ export function NavBar({
 						</div>
 
 						{/* Search + Cart + Dashboard button - grouped together */}
-						<div className="flex items-center gap-3 flex-shrink-0">
+						<div className="flex items-center gap-3 flex-1 min-w-0">
 							{/* Search - flexible width */}
 							<SearchInput
 								placeholder={dynamicPlaceholder || "Поиск..."}
 								value={clientSearch.searchTerm}
 								onChange={clientSearch.setSearchTerm}
-								className="w-64 min-w-48 max-w-80"
+								className="flex-1 min-w-0"
 							/>
 
 							{/* Cart button */}

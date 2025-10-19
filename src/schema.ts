@@ -19,6 +19,8 @@ export const products = sqliteTable("products", {
 	slug: text("slug").notNull().unique(),
 	images: text("images"), // JSON stored as text
 	description: text("description"),
+	importantNote: text("important_note"), // Важная заметка с поддержкой Markdown - опционально
+	tags: text("tags"), // Теги для категоризации товаров (JSON массив) - опционально
 	price: real("price").notNull().default(0), // Make price non-nullable with default value (for flooring: price per m²)
 	squareMetersPerPack: real("square_meters_per_pack"), // For flooring products: area coverage per pack
 	unitOfMeasurement: text("unit_of_measurement").notNull().default("штука"), // Единица количества: погонный метр, квадратный метр, литр, штука, упаковка

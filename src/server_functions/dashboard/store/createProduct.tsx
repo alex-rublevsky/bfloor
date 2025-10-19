@@ -49,6 +49,8 @@ export const createProduct = createServerFn({ method: "POST" })
 					name: productData.name,
 					slug: productData.slug,
 					description: productData.description || null,
+					importantNote: productData.importantNote || null,
+					tags: productData.tags?.length ? JSON.stringify(productData.tags) : null,
 					price: parseFloat(productData.price),
 					squareMetersPerPack: productData.squareMetersPerPack
 						? parseFloat(productData.squareMetersPerPack)

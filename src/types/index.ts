@@ -105,6 +105,8 @@ export interface ProductFormData {
 	name: string;
 	slug: string;
 	description: string;
+	importantNote?: string; // Важная заметка с поддержкой Markdown - опционально
+	tags?: string[]; // Теги для категоризации товаров - опционально
 	price: string;
 	squareMetersPerPack?: string; // For flooring products: area coverage per pack
 	unitOfMeasurement: string; // Единица количества: погонный метр, квадратный метр, литр, штука, упаковка

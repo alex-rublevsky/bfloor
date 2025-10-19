@@ -21,22 +21,16 @@ const buttonVariants = cva(
 				default: "bg-primary text-primary-foreground hover:bg-primary-hover",
 				secondary:
 					"text-primary border border-black hover:bg-[oklch(from_theme(colors.primary)_calc(l_+_0.1)_c_h)] hover:text-primary-foreground active:bg-[oklch(from_theme(colors.primary)_calc(l_+_0.1)_c_h)] active:text-primary-foreground",
-				inverted:
-					"bg-white text-foreground border border-white hover:bg-transparent hover:text-primary-foreground active:bg-transparent active:text-primary-foreground",
 				destructive:
 					"bg-backgorund text-destructive border border-destructive shadow-2xs hover:bg-destructive/90 hover:text-destructive-foreground active:bg-destructive/90 active:text-destructive-foreground",
-				invertedDestructive:
-					"bg-destructive text-destructive-foreground border border-destructive hover:bg-transparent active:bg-transparent",
-				greenInverted:
-					"bg-green-500 text-foreground font-medium border border-green-500 hover:bg-transparent hover:text-green-500 active:bg-transparent active:text-green-500",
+				green:
+				//TODO: update with hover and active styles. create the colors using oklch in css variables.
+					"bg-discount-badge text-discount-badge-foreground hover:bg-destructive/90",
+
 				outline:
 					"bg-transparent text-foreground border border-black hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground",
 				accent:
 					"bg-primary text-foreground border border-black hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground",
-				secondaryInverted:
-					"bg-secondary font-medium text-secondary-foreground border border-secondary hover:bg-transparent active:bg-transparent",
-				ghost:
-					"hover:bg-accent hover:text-accent-foreground active:bg-accent active:text-accent-foreground",
 				link: "text-primary underline-offset-4 hover:underline active:underline",
 			},
 			size: {

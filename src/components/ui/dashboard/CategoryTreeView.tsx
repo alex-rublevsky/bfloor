@@ -1,5 +1,4 @@
-import { ChevronDown, ChevronRight, Folder, FolderOpen } from "lucide-react";
-import { useState } from "react";
+import { Edit, Trash2 } from "lucide-react";
 import { Badge } from "~/components/ui/shared/Badge";
 import { Button } from "~/components/ui/shared/Button";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
@@ -17,111 +16,85 @@ export function CategoryTreeView({
 	onEdit,
 	onDelete,
 }: CategoryTreeViewProps) {
-	const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-
-	const toggleExpanded = (slug: string) => {
-		setExpandedIds((prev) => {
-			const next = new Set(prev);
-			if (next.has(slug)) {
-				next.delete(slug);
-			} else {
-				next.add(slug);
-			}
-			return next;
-		});
+	// Flatten the tree structure for grid display
+	const flattenTree = (nodes: CategoryTreeNode[]): CategoryTreeNode[] => {
+		const result: CategoryTreeNode[] = [];
+		const traverse = (node: CategoryTreeNode) => {
+			result.push(node);
+			node.children.forEach(traverse);
+		};
+		nodes.forEach(traverse);
+		return result;
 	};
 
-	const renderTreeNode = (node: CategoryTreeNode) => {
-		const isExpanded = expandedIds.has(node.slug);
-		const hasChildren = node.children.length > 0;
-
-		return (
-			<div key={node.slug}>
-				<CategoryTreeItem
-					category={node}
-					isExpanded={isExpanded}
-					hasChildren={hasChildren}
-					onToggle={() => toggleExpanded(node.slug)}
-					onEdit={onEdit}
-					onDelete={onDelete}
-				/>
-				{hasChildren && isExpanded && (
-					<div className="ml-6 border-l-2 border-muted pl-4 mt-1 space-y-1">
-						{node.children.map((child) => renderTreeNode(child))}
-					</div>
-				)}
-			</div>
-		);
-	};
+	const flatCategories = flattenTree(tree);
 
 	return (
-		<div className="space-y-1">
-			{tree.length === 0 ? (
+		<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+			{flatCategories.length === 0 ? (
 				<EmptyState entityType="categories" />
 			) : (
-				tree.map((node) => renderTreeNode(node))
+				flatCategories.map((category) => (
+					<CategoryGridItem
+						key={category.slug}
+						category={category}
+						onEdit={onEdit}
+						onDelete={onDelete}
+					/>
+				))
 			)}
 		</div>
 	);
 }
 
-interface CategoryTreeItemProps {
+interface CategoryGridItemProps {
 	category: CategoryTreeNode;
-	isExpanded: boolean;
-	hasChildren: boolean;
-	onToggle: () => void;
 	onEdit: (category: Category) => void;
 	onDelete: (category: Category) => void;
 }
 
-function CategoryTreeItem({
+function CategoryGridItem({
 	category,
-	isExpanded,
-	hasChildren,
-	onToggle,
 	onEdit,
 	onDelete,
-}: CategoryTreeItemProps) {
+}: CategoryGridItemProps) {
 	return (
 		<div
 			className={cn(
-				"group flex items-center gap-2 p-2 rounded-md transition-all",
-				"border-2 border-transparent hover:border-border hover:bg-muted/50",
+				"group flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer",
+				"border border-transparent hover:border-border"
 			)}
-			data-category-slug={category.slug}
 		>
-			{/* Expand/Collapse Button */}
-			<button
-				type="button"
-				onClick={onToggle}
-				className={cn(
-					"w-5 h-5 flex items-center justify-center rounded hover:bg-muted transition-colors flex-shrink-0",
-					!hasChildren && "invisible",
-				)}
-			>
-				{hasChildren &&
-					(isExpanded ? (
-						<ChevronDown className="h-4 w-4" />
-					) : (
-						<ChevronRight className="h-4 w-4" />
-					))}
-			</button>
-
-			{/* Folder Icon */}
-			{hasChildren ? (
-				isExpanded ? (
-					<FolderOpen className="h-4 w-4 text-primary flex-shrink-0" />
-				) : (
-					<Folder className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-				)
-			) : (
-				<div className="h-4 w-4 rounded bg-muted flex-shrink-0" />
-			)}
+			{/* Action Buttons - Icon only */}
+			<div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+				<Button 
+					size="sm" 
+					variant="outline" 
+					onClick={(e) => {
+						e.stopPropagation();
+						onEdit(category);
+					}}
+					className="w-8 h-8 p-0"
+				>
+					<Edit className="w-4 h-4" />
+				</Button>
+				<Button
+					size="sm"
+					variant="destructive"
+					onClick={(e) => {
+						e.stopPropagation();
+						onDelete(category);
+					}}
+					className="w-8 h-8 p-0"
+				>
+					<Trash2 className="w-4 h-4" />
+				</Button>
+			</div>
 
 			{/* Category Info */}
-			<div className="flex-1 min-w-0">
+			<div className="flex flex-col flex-1 min-w-0">
 				<div className="flex items-center gap-2">
-					<span className="font-medium truncate">{category.name}</span>
+					<span className="text-sm font-medium truncate">{category.name}</span>
 					{category.depth > 0 && (
 						<Badge variant="outline" className="text-xs flex-shrink-0">
 							Level {category.depth + 1}
@@ -133,23 +106,9 @@ function CategoryTreeItem({
 						</Badge>
 					)}
 				</div>
-				<div className="text-sm text-muted-foreground truncate">
+				<span className="text-xs text-muted-foreground truncate">
 					{category.slug}
-				</div>
-			</div>
-
-			{/* Action Buttons */}
-			<div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-				<Button size="sm" variant="outline" onClick={() => onEdit(category)}>
-					Edit
-				</Button>
-				<Button
-					size="sm"
-					variant="destructive"
-					onClick={() => onDelete(category)}
-				>
-					Delete
-				</Button>
+				</span>
 			</div>
 		</div>
 	);

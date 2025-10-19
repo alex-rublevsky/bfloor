@@ -61,7 +61,7 @@ export function SlugField({
 				<div className="flex items-center justify-between mb-1">
 					<div className="flex items-center gap-2">
 						<label htmlFor={slugId} className="block text-sm font-medium">
-							Slug
+							Идентификатор
 						</label>
 						{isCustomSlug && (
 							<Badge className="" variant="default">
@@ -123,7 +123,7 @@ export function SlugField({
 				variant="outline"
 				onClick={handleResetClick}
 			>
-				Reset
+				Сбросить
 			</Button>
 		</div>
 	);

@@ -48,14 +48,12 @@ export default function ProductAttributesForm({
 
 	return (
 		<div className="space-y-4">
-			<div>
+			
 				<h3 className="text-sm font-medium text-foreground mb-2">
 					Атрибуты товара
 				</h3>
-				<p className="text-sm text-muted-foreground">
-					Все доступные атрибуты отображаются ниже
-				</p>
-			</div>
+				
+			
 
 			<div className="grid grid-cols-2 gap-3">
 				{(attributes || []).map((attr) => {
