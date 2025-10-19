@@ -137,9 +137,9 @@ function SortableVariationItem({
 					variant="destructive"
 					size="sm"
 					className="bg-destructive/20 hover:bg-destructive/90 shrink-0"
-				>
-					Remove
-				</Button>
+					>
+						Удалить
+					</Button>
 			</div>
 
 			{/* Second row: Price, Discount, Stock, Country */}
@@ -204,7 +204,7 @@ function SortableVariationItem({
 			{/* Attributes section */}
 			<div>
 				<div className="block text-sm font-medium text-foreground mb-2">
-					Attributes
+					Атрибуты
 				</div>
 				<div className="grid grid-cols-2 gap-2">
 					{variation.attributes.map((attr) => (
@@ -226,7 +226,7 @@ function SortableVariationItem({
 										)
 									}
 									onPointerDown={(e) => e.stopPropagation()}
-									placeholder="Value"
+									placeholder="Значение"
 									className="text-sm"
 								/>
 							</div>
@@ -258,7 +258,7 @@ function SortableVariationItem({
 									className="text-sm flex-1"
 									onPointerDown={(e) => e.stopPropagation()}
 								>
-									<SelectValue placeholder="Add attribute..." />
+									<SelectValue placeholder="Добавить атрибут..." />
 								</SelectTrigger>
 								<SelectContent>
 									{unusedAttributes.map((attr) => (
@@ -279,7 +279,7 @@ function SortableVariationItem({
 								size="sm"
 								className="shrink-0"
 							>
-								Add
+								Добавить
 							</Button>
 						</div>
 					)}
@@ -476,7 +476,7 @@ export default function ProductVariationForm({
 			</DndContext>
 
 			<Button type="button" onClick={handleAddVariation}>
-				Add Variation
+				Добавить вариант
 			</Button>
 		</div>
 	);

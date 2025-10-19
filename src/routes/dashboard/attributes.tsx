@@ -152,8 +152,8 @@ function AttributesPage() {
 				title="Добавить новый атрибут"
 				formId={createFormId}
 				isSubmitting={isSubmitting}
-				submitButtonText="Create Attribute"
-				submittingText="Creating..."
+				submitButtonText="Создать атрибут"
+				submittingText="Создание..."
 				onCancel={closeCreateDrawer}
 				error={error && isCreating ? error : undefined}
 				layout="single-column"
@@ -176,7 +176,7 @@ function AttributesPage() {
 							setNewAttributeName(e.target.value);
 							setError(null);
 						}}
-						placeholder="Attribute name (e.g., Размер, Цвет)"
+						placeholder="Название атрибута (например, Размер, Цвет)"
 						required
 					/>
 					<SlugField
@@ -212,7 +212,7 @@ function AttributesPage() {
 										size="sm"
 										onClick={() => startEdit(attribute)}
 									>
-										Edit
+										Редактировать
 									</Button>
 								</div>
 							</div>
@@ -228,8 +228,8 @@ function AttributesPage() {
 				title="Изменить атрибут"
 				formId={editFormId}
 				isSubmitting={isSubmitting}
-				submitButtonText="Update Attribute"
-				submittingText="Updating..."
+				submitButtonText="Обновить атрибут"
+				submittingText="Обновление..."
 				onCancel={closeEditDrawer}
 				error={error && isEditing ? error : undefined}
 				layout="single-column"
@@ -249,7 +249,7 @@ function AttributesPage() {
 						name="name"
 						value={editAttributeName}
 						onChange={(e) => setEditAttributeName(e.target.value)}
-						placeholder="Attribute name"
+						placeholder="Название атрибута"
 						required
 					/>
 					<SlugField

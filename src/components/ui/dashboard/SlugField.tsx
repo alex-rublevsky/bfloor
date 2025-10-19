@@ -65,7 +65,7 @@ export function SlugField({
 						</label>
 						{isCustomSlug && (
 							<Badge className="" variant="default">
-								custom
+								пользовательский
 							</Badge>
 						)}
 					</div>
@@ -81,7 +81,7 @@ export function SlugField({
 							htmlFor={autoSlugId}
 							className="text-xs text-muted-foreground"
 						>
-							Auto-generate
+							Авто-генерация
 						</label>
 					</div>
 				</div>

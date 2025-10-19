@@ -8,7 +8,7 @@ import { schema } from "../schema";
 /**
  * BetterAuth configuration
  *
- * Note: BETTER_AUTH_SECRET, GITHUB_CLIENT_ID, and GITHUB_CLIENT_SECRET
+ * Note: BETTER_AUTH_SECRET, GOOGLE_CLIENT_ID, and GOOGLE_CLIENT_SECRET
  * must be set in .dev.vars for local development and as Wrangler secrets for production.
  * They need to be accessed synchronously at module initialization.
  *
@@ -23,9 +23,9 @@ export const auth = betterAuth({
 	baseURL: env.BETTER_AUTH_URL as string,
 	secret: env.BETTER_AUTH_SECRET as unknown as string,
 	socialProviders: {
-		github: {
-			clientId: env.GITHUB_CLIENT_ID as unknown as string,
-			clientSecret: env.GITHUB_CLIENT_SECRET as unknown as string,
+		google: {
+			clientId: env.GOOGLE_CLIENT_ID as unknown as string,
+			clientSecret: env.GOOGLE_CLIENT_SECRET as unknown as string,
 		},
 	},
 	plugins: [reactStartCookies()],

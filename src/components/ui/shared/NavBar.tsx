@@ -267,12 +267,13 @@ export function NavBar({
 				onClick: handleActionClick,
 			};
 		}
-		if (pathname === "/dashboard/misc") {
+		if (pathname === "/dashboard/attributes") {
 			return {
-				label: "Добавить адрес",
+				label: "Добавить атрибут",
 				onClick: handleActionClick,
 			};
 		}
+		// Misc page no longer needs navbar action button - it has its own create button
 		return null;
 	};
 

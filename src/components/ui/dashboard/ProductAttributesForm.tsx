@@ -65,11 +65,11 @@ export default function ProductAttributesForm({
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
-				<h3 className="text-lg font-semibold">Product Attributes</h3>
+				<h3 className="text-lg font-semibold">Атрибуты товара</h3>
 				{unusedAttributes.length > 0 && (
 					<Select onValueChange={handleAddAttribute}>
 						<SelectTrigger className="w-48">
-							<SelectValue placeholder="Add attribute" />
+							<SelectValue placeholder="Добавить атрибут" />
 						</SelectTrigger>
 						<SelectContent>
 							{unusedAttributes.map((attr) => (
@@ -84,8 +84,7 @@ export default function ProductAttributesForm({
 
 			{(attributes || []).length === 0 ? (
 				<p className="text-muted-foreground text-sm">
-					No attributes added yet. Add attributes to provide additional product
-					information.
+					Пока не добавлено атрибутов. Добавьте атрибуты для предоставления дополнительной информации о товаре.
 				</p>
 			) : (
 				<div className="space-y-3">
@@ -103,7 +102,7 @@ export default function ProductAttributesForm({
 								</label>
 								<Input
 									id={`attr-${attr.attributeId}`}
-									placeholder={`Enter ${attr.attributeId.toLowerCase()} value`}
+									placeholder={`Введите значение ${attr.attributeId.toLowerCase()}`}
 									value={attr.value}
 									onChange={(e) =>
 										handleUpdateAttributeValue(attr.attributeId, e.target.value)
@@ -115,7 +114,7 @@ export default function ProductAttributesForm({
 								size="sm"
 								onClick={() => handleRemoveAttribute(attr.attributeId)}
 							>
-								Remove
+								Удалить
 							</Button>
 						</div>
 					))}

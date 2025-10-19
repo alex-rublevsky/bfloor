@@ -1,4 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { getAllProductAttributes } from "~/server_functions/dashboard/attributes/getAllProductAttributes";
 import { getAllProductCategories } from "~/server_functions/dashboard/categories/getAllProductCategories";
 import { getAllCollections } from "~/server_functions/dashboard/collections/getAllCollections";
 import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
@@ -85,6 +86,19 @@ export function useOrdersCount() {
 	}
 
 	return totalOrders;
+}
+
+/**
+ * Hook to get attributes count
+ */
+export function useAttributesCount() {
+	const { data: attributes } = useSuspenseQuery({
+		queryKey: ["productAttributes"],
+		queryFn: () => getAllProductAttributes(),
+		staleTime: 1000 * 60 * 5,
+	});
+
+	return attributes?.length || 0;
 }
 
 /**

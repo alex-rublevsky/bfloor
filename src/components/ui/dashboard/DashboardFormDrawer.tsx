@@ -77,7 +77,7 @@ export function DashboardFormDrawer({
 							type="button"
 							onClick={onCancel}
 						>
-							Cancel
+							Отмена
 						</Button>
 						<Button
 							variant="greenInverted"

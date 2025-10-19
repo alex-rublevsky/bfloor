@@ -282,11 +282,11 @@ function RouteComponent() {
 			<DashboardFormDrawer
 				isOpen={activeForm.crud.showCreateDrawer}
 				onOpenChange={activeForm.crud.setShowCreateDrawer}
-				title={`Add New Product Category`}
+				title={`Добавить новую категорию товаров`}
 				formId={createFormId}
 				isSubmitting={activeForm.crud.isSubmitting}
-				submitButtonText={`Create Category`}
-				submittingText="Creating..."
+				submitButtonText={`Создать категорию`}
+				submittingText="Создание..."
 				onCancel={closeCreateDrawer}
 				error={
 					activeForm.crud.error && !activeForm.crud.showEditDrawer
@@ -296,10 +296,10 @@ function RouteComponent() {
 				layout="single-column"
 			>
 				<form onSubmit={handleSubmit} id={createFormId} className="contents">
-					<DrawerSection maxWidth title={`Category Details`}>
+					<DrawerSection maxWidth title={`Детали категории`}>
 						<div className="space-y-4">
 							<Input
-								label={`Category Name`}
+								label={`Название категории`}
 								type="text"
 								name="name"
 								value={activeForm.createForm.formData.name}
@@ -325,7 +325,7 @@ function RouteComponent() {
 									htmlFor={createParentCategoryId}
 									className="block text-sm font-medium mb-1"
 								>
-									Parent Category (optional)
+									Родительская категория (опционально)
 								</label>
 								<Select
 									value={
@@ -340,11 +340,11 @@ function RouteComponent() {
 									}}
 								>
 									<SelectTrigger id={createParentCategoryId}>
-										<SelectValue placeholder="None (top-level category)" />
+										<SelectValue placeholder="Нет (корневая категория)" />
 									</SelectTrigger>
 									<SelectContent>
 										<SelectItem value="none">
-											None (top-level category)
+											Нет (корневая категория)
 										</SelectItem>
 										{categoriesData
 											.filter((cat) => cat.isActive)
@@ -364,9 +364,6 @@ function RouteComponent() {
 									folder="categories"
 									slug={(activeForm.createForm.formData as CategoryFormData).slug}
 									productName={(activeForm.createForm.formData as CategoryFormData).name}
-									maxImages={1}
-									label="Category Image"
-									placeholder="https://example.com/image.jpg"
 								/>
 							)}
 
@@ -376,7 +373,7 @@ function RouteComponent() {
 									checked={activeForm.createForm.formData.isActive}
 									onChange={activeForm.createForm.handleChange}
 								/>
-								<span className="text-sm">Active</span>
+								<span className="text-sm">Активна</span>
 							</div>
 						</div>
 					</DrawerSection>
@@ -387,11 +384,11 @@ function RouteComponent() {
 			<DashboardFormDrawer
 				isOpen={activeForm.crud.showEditDrawer}
 				onOpenChange={activeForm.crud.setShowEditDrawer}
-				title={`Edit Product Category`}
+				title={`Редактировать категорию товаров`}
 				formId={editFormId}
 				isSubmitting={activeForm.crud.isSubmitting}
-				submitButtonText={`Update Category`}
-				submittingText="Updating..."
+				submitButtonText={`Обновить категорию`}
+				submittingText="Обновление..."
 				onCancel={closeEditModal}
 				error={
 					activeForm.crud.error && activeForm.crud.showEditDrawer
@@ -401,10 +398,10 @@ function RouteComponent() {
 				layout="single-column"
 			>
 				<form onSubmit={handleUpdate} id={editFormId} className="contents">
-					<DrawerSection maxWidth title={`Category Details`}>
+					<DrawerSection maxWidth title={`Детали категории`}>
 						<div className="space-y-4">
 							<Input
-								label={`Category Name`}
+								label={`Название категории`}
 								type="text"
 								name="name"
 								value={activeForm.editForm.formData.name}
@@ -430,7 +427,7 @@ function RouteComponent() {
 									htmlFor={editParentCategoryId}
 									className="block text-sm font-medium mb-1"
 								>
-									Parent Category (optional)
+									Родительская категория (опционально)
 								</label>
 								<Select
 									value={
@@ -445,11 +442,11 @@ function RouteComponent() {
 									}}
 								>
 									<SelectTrigger id={editParentCategoryId}>
-										<SelectValue placeholder="None (top-level category)" />
+										<SelectValue placeholder="Нет (корневая категория)" />
 									</SelectTrigger>
 									<SelectContent>
 										<SelectItem value="none">
-											None (top-level category)
+											Нет (корневая категория)
 										</SelectItem>
 										{categoriesData
 											.filter(
@@ -473,9 +470,6 @@ function RouteComponent() {
 									folder="categories"
 									slug={(activeForm.editForm.formData as CategoryFormData).slug}
 									productName={(activeForm.editForm.formData as CategoryFormData).name}
-									maxImages={1}
-									label="Category Image"
-									placeholder="https://example.com/image.jpg"
 								/>
 							)}
 
@@ -485,7 +479,7 @@ function RouteComponent() {
 									checked={activeForm.editForm.formData.isActive}
 									onChange={activeForm.editForm.handleChange}
 								/>
-								<span className="text-sm">Active</span>
+								<span className="text-sm">Активна</span>
 							</div>
 						</div>
 					</DrawerSection>
@@ -497,8 +491,8 @@ function RouteComponent() {
 					isOpen={activeForm.crud.showDeleteDialog}
 					onClose={handleDeleteCancel}
 					onConfirm={handleDeleteConfirm}
-					title={`Удалить категорию,`}
-					description={`Are you sure you want to delete this category? This action cannot be undone.`}
+					title={`Удалить категорию`}
+					description={`Вы уверены, что хотите удалить эту категорию? Это действие нельзя отменить.`}
 					isDeleting={activeForm.crud.isDeleting}
 				/>
 			)}

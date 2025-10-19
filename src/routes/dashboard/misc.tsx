@@ -1,6 +1,6 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import { toast } from "sonner";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
@@ -50,15 +50,7 @@ function RouteComponent() {
 	const [editingId, setEditingId] = useState<number | null>(null);
 	const [deletingId, setDeletingId] = useState<number | null>(null);
 
-	// Listen for action button clicks from navbar
-	useEffect(() => {
-		const handleAction = () => {
-			crud.openCreateDrawer();
-		};
-
-		window.addEventListener("dashboardAction", handleAction);
-		return () => window.removeEventListener("dashboardAction", handleAction);
-	}, [crud.openCreateDrawer]);
+	// No longer listening for navbar action button since we have our own create button
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -155,46 +147,67 @@ function RouteComponent() {
 
 	return (
 		<div className="space-y-6 px-6">
-
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-				{locations.map((loc) => (
-					<div key={loc.id} className="border rounded-lg p-4 bg-card space-y-3">
-						<div className="space-y-1">
-							<div className="font-medium break-words">{loc.address}</div>
-							{loc.description && (
-								<div className="text-sm text-muted-foreground break-words">
-									{loc.description}
-								</div>
-							)}
-							{loc.openingHours && (
-								<div className="text-sm text-muted-foreground break-words">
-									{loc.openingHours}
-								</div>
-							)}
-							{!loc.isActive && (
-								<div className="text-xs text-muted-foreground">Неактивен</div>
-							)}
-						</div>
-						<div className="flex gap-2">
-							<Button
-								variant="outline"
-								size="sm"
-								className="flex-1"
-								onClick={() => handleEdit(loc)}
-							>
-								Редактировать
-							</Button>
-							<Button
-								variant="destructive"
-								size="sm"
-								className="flex-1"
-								onClick={() => handleDeleteClick(loc)}
-							>
-								Удалить
-							</Button>
-						</div>
+			{/* Main grid layout - 3 columns on desktop, 1 column on mobile */}
+			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+				{/* Store Addresses Card */}
+				<div className="border rounded-lg p-6 bg-card space-y-4">
+					<div className="flex items-center justify-between">
+						<h3 className="text-lg font-semibold">Адреса магазинов</h3>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={crud.openCreateDrawer}
+						>
+							Добавить адрес
+						</Button>
 					</div>
-				))}
+					
+					<div className="space-y-3">
+						{locations.map((loc) => (
+							<div key={loc.id} className="border rounded-lg p-4 bg-background space-y-3">
+								<div className="space-y-1">
+									<div className="font-medium break-words">{loc.address}</div>
+									{loc.description && (
+										<div className="text-sm text-muted-foreground break-words">
+											{loc.description}
+										</div>
+									)}
+									{loc.openingHours && (
+										<div className="text-sm text-muted-foreground break-words">
+											{loc.openingHours}
+										</div>
+									)}
+									{!loc.isActive && (
+										<div className="text-xs text-muted-foreground">Неактивен</div>
+									)}
+								</div>
+								<div className="flex gap-2">
+									<Button
+										variant="outline"
+										size="sm"
+										className="flex-1"
+										onClick={() => handleEdit(loc)}
+									>
+										Редактировать
+									</Button>
+									<Button
+										variant="destructive"
+										size="sm"
+										className="flex-1"
+										onClick={() => handleDeleteClick(loc)}
+									>
+										Удалить
+									</Button>
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+
+				{/* Placeholder for future cards */}
+				<div className="lg:col-span-2 space-y-6">
+					{/* Additional cards will be added here in the future */}
+				</div>
 			</div>
 
 			<DashboardFormDrawer

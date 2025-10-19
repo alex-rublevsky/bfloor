@@ -33,7 +33,7 @@ export default function DeleteConfirmationDialog({
 				</AlertDialogHeader>
 				<AlertDialogFooter>
 					<Button variant="outline" onClick={onClose} disabled={isDeleting}>
-						Cancel
+						Отмена
 					</Button>
 					<Button
 						variant="destructive"

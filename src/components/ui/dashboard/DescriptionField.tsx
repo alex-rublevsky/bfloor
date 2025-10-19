@@ -16,7 +16,7 @@ export const DescriptionField = React.forwardRef<
 	DescriptionFieldProps
 >(
 	(
-		{ className, label = "Description", variant = "default", ...props },
+		{ className, label = "Описание", variant = "default", ...props },
 		ref,
 	) => {
 		const id = React.useId();

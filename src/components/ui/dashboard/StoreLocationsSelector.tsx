@@ -16,7 +16,7 @@ export function StoreLocationsSelector({
 }: StoreLocationsSelectorProps) {
 	return (
 		<fieldset>
-			<legend className="text-lg font-medium mb-4">Store Locations</legend>
+			<legend className="text-lg font-medium mb-4">Местоположения магазинов</legend>
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 				{storeLocations
 					.filter((location) => location.isActive)

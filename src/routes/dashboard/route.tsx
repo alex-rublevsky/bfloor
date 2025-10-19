@@ -3,6 +3,7 @@ import {
 	Outlet,
 	// redirect,
 	useLoaderData,
+	useRouter,
 } from "@tanstack/react-router";
 import { NavBar } from "~/components/ui/shared/NavBar";
 import { Toaster } from "~/components/ui/shared/sonner";
@@ -61,7 +62,15 @@ function DashboardLayout() {
 		  }
 		| undefined;
 
+	const router = useRouter();
+	const pathname = router.state.location.pathname;
+	
 	const { searchTerm, setSearchTerm } = useDashboardSearch();
+
+	// Only provide search functionality to pages that need it (not misc page)
+	// Check if we're on the misc page specifically
+	const isMiscPage = pathname === "/dashboard/misc";
+	const shouldProvideSearch = !isMiscPage;
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -70,8 +79,8 @@ function DashboardLayout() {
 			</main>
 			<NavBar
 				userData={loaderData}
-				searchTerm={searchTerm}
-				onSearchChange={setSearchTerm}
+				searchTerm={shouldProvideSearch ? searchTerm : undefined}
+				onSearchChange={shouldProvideSearch ? setSearchTerm : undefined}
 			/>
 			<Toaster />
 		</div>

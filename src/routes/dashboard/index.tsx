@@ -815,11 +815,11 @@ function RouteComponent() {
 			<DashboardFormDrawer
 				isOpen={showEditModal}
 				onOpenChange={setShowEditModal}
-				title="Edit Product"
+				title="Редактировать товар"
 				formId={editProductFormId}
 				isSubmitting={isSubmitting}
-				submitButtonText="Update Product"
-				submittingText="Updating..."
+				submitButtonText="Обновить товар"
+				submittingText="Обновление..."
 				onCancel={closeEditModal}
 				error={error && isEditMode ? error : undefined}
 				layout="two-column"
@@ -939,7 +939,7 @@ function RouteComponent() {
 									onChange={handleEditChange}
 									step="0.001"
 									min="0"
-									placeholder="Optional - for flooring products"
+									placeholder="Опционально - для напольных покрытий"
 								/>
 
 								{/* Empty cell for grid alignment */}
@@ -951,7 +951,7 @@ function RouteComponent() {
 										htmlFor={editCategoryId}
 										className="block text-sm font-medium mb-1"
 									>
-										Category
+										Категория
 									</label>
 									<Select
 										name="categorySlug"
@@ -964,7 +964,7 @@ function RouteComponent() {
 										required
 									>
 										<SelectTrigger id={editCategoryId}>
-											<SelectValue placeholder="Select a category" />
+											<SelectValue placeholder="Выберите категорию" />
 										</SelectTrigger>
 										<SelectContent>
 											{categories.map((category) => (
@@ -982,7 +982,7 @@ function RouteComponent() {
 										htmlFor={editBrandId}
 										className="block text-sm font-medium mb-1"
 									>
-										Brand (optional)
+										Бренд (опционально)
 									</label>
 									<Select
 										name="brandSlug"
@@ -997,10 +997,10 @@ function RouteComponent() {
 										}
 									>
 										<SelectTrigger id={editBrandId}>
-											<SelectValue placeholder="Select a brand (optional)" />
+											<SelectValue placeholder="Выберите бренд (опционально)" />
 										</SelectTrigger>
 										<SelectContent>
-											<SelectItem value="none">None</SelectItem>
+											<SelectItem value="none">Нет</SelectItem>
 											{brands.map((brand) => (
 												<SelectItem key={brand.slug} value={brand.slug}>
 													{brand.name}
@@ -1059,7 +1059,7 @@ function RouteComponent() {
 										label="Вес (в граммах)"
 										value={editFormData.weight}
 										onChange={handleEditChange}
-										placeholder="Enter weight in grams"
+										placeholder="Введите вес в граммах"
 									/>
 								</div>
 
@@ -1070,7 +1070,7 @@ function RouteComponent() {
 					</DrawerSection>
 
 					{/* Store Locations Block */}
-					<DrawerSection variant="default" title="Store Locations">
+					<DrawerSection variant="default" title="Местоположения магазинов">
 						<StoreLocationsSelector
 							storeLocations={storeLocations}
 							selectedLocationIds={editSelectedStoreLocationIds}
@@ -1109,8 +1109,8 @@ function RouteComponent() {
 				title="Создать новый товар"
 				formId={createProductFormId}
 				isSubmitting={isSubmitting}
-				submitButtonText="Create Product"
-				submittingText="Creating..."
+				submitButtonText="Создать товар"
+				submittingText="Создание..."
 				onCancel={closeCreateModal}
 				error={error && !isEditMode ? error : undefined}
 				layout="two-column"
@@ -1233,7 +1233,7 @@ function RouteComponent() {
 									onChange={handleChange}
 									step="0.001"
 									min="0"
-									placeholder="Optional - for flooring products"
+									placeholder="Опционально - для напольных покрытий"
 								/>
 
 								{/* Empty cell for grid alignment */}
@@ -1245,7 +1245,7 @@ function RouteComponent() {
 										htmlFor={addCategoryId}
 										className="block text-sm font-medium mb-1"
 									>
-										Category
+										Категория
 									</label>
 									<Select
 										value={formData.categorySlug}
@@ -1265,7 +1265,7 @@ function RouteComponent() {
 													: ""
 											}
 										>
-											<SelectValue placeholder="Select a category" />
+											<SelectValue placeholder="Выберите категорию" />
 										</SelectTrigger>
 										<SelectContent>
 											{categories.map((category: Category) => (
@@ -1283,7 +1283,7 @@ function RouteComponent() {
 										htmlFor={addBrandId}
 										className="block text-sm font-medium mb-1"
 									>
-										Brand (optional)
+										Бренд (опционально)
 									</label>
 									<Select
 										value={formData.brandSlug || "none"}
@@ -1295,10 +1295,10 @@ function RouteComponent() {
 										}}
 									>
 										<SelectTrigger id={addBrandId}>
-											<SelectValue placeholder="Select a brand (optional)" />
+											<SelectValue placeholder="Выберите бренд (опционально)" />
 										</SelectTrigger>
 										<SelectContent>
-											<SelectItem value="none">None</SelectItem>
+											<SelectItem value="none">Нет</SelectItem>
 											{brands.map((brand: Brand) => (
 												<SelectItem key={brand.slug} value={brand.slug}>
 													{brand.name}
@@ -1362,7 +1362,7 @@ function RouteComponent() {
 					</DrawerSection>
 
 					{/* Store Locations Block */}
-					<DrawerSection variant="default" title="Store Locations">
+					<DrawerSection variant="default" title="Местоположения магазинов">
 						<StoreLocationsSelector
 							storeLocations={storeLocations}
 							selectedLocationIds={selectedStoreLocationIds}
@@ -1401,7 +1401,7 @@ function RouteComponent() {
 					onClose={handleDeleteCancel}
 					onConfirm={handleDeleteConfirm}
 					title="Удалить товар"
-					description="Are you sure you want to delete this product? This action cannot be undone."
+					description="Вы уверены, что хотите удалить этот товар? Это действие нельзя отменить."
 					isDeleting={isDeleting}
 				/>
 			)}

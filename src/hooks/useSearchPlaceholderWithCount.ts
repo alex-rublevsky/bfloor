@@ -1,5 +1,6 @@
 import { useRouterState } from "@tanstack/react-router";
 import {
+	useAttributesCount,
 	useBrandsCount,
 	useCategoriesCount,
 	useCollectionsCount,
@@ -20,6 +21,7 @@ export function useSearchPlaceholderWithCount() {
 	const brandsCount = useBrandsCount();
 	const collectionsCount = useCollectionsCount();
 	const ordersCount = useOrdersCount();
+	const attributesCount = useAttributesCount();
 	const storeLocationsCount = useStoreLocationsCount();
 
 	// Generate placeholder based on current route
@@ -32,6 +34,8 @@ export function useSearchPlaceholderWithCount() {
 			return `искать среди ${brandsCount} брендов`;
 		case "/dashboard/collections":
 			return `искать среди ${collectionsCount} коллекций`;
+		case "/dashboard/attributes":
+			return `искать среди ${attributesCount} атрибутов`;
 		case "/dashboard/orders":
 			return `искать среди ${ordersCount} заказов`;
 		case "/dashboard/misc":

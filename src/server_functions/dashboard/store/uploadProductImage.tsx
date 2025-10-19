@@ -20,6 +20,18 @@ interface UploadImageInput {
 export const uploadProductImage = createServerFn({ method: "POST" })
 	.inputValidator((data: UploadImageInput) => data)
 	.handler(async ({ data }) => {
+		console.log("🖥️ Server: Starting image upload process");
+		console.log("🖥️ Server: Received data:", {
+			fileName: data.fileName,
+			fileType: data.fileType,
+			fileSize: data.fileSize,
+			folder: data.folder,
+			slug: data.slug,
+			categorySlug: data.categorySlug,
+			productName: data.productName,
+			fileDataLength: data.fileData?.length || 0,
+		});
+
 		try {
 			const {
 				fileData,
@@ -33,12 +45,14 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 			} = data;
 
 			if (!fileData) {
+				console.error("🖥️ Server: No file data provided");
 				setResponseStatus(400);
 				throw new Error("No file provided");
 			}
 
 			// Validate file type
 			if (!ALLOWED_TYPES.includes(fileType)) {
+				console.error("🖥️ Server: Invalid file type:", fileType);
 				setResponseStatus(400);
 				throw new Error(
 					"Invalid file type. Only JPEG, PNG, and WebP images are allowed.",
@@ -47,17 +61,23 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 
 			// Validate file size
 			if (fileSize > MAX_FILE_SIZE) {
+				console.error("🖥️ Server: File too large:", fileSize, "bytes");
 				setResponseStatus(400);
 				throw new Error("File size must be less than 1.5MB");
 			}
+
+			console.log("🖥️ Server: File validation passed");
 
 			// Resolve R2 bucket binding (supports new and legacy names)
 			const bucket = env.BFLOOR_STORAGE as R2Bucket;
 
 			if (!bucket) {
+				console.error("🖥️ Server: Storage bucket not configured");
 				setResponseStatus(500);
 				throw new Error("Storage bucket not configured");
 			}
+
+			console.log("🖥️ Server: R2 bucket found");
 
 			// Helper function to sanitize filename
 			const sanitizeFilename = (name: string): string => {
@@ -117,6 +137,9 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 				bytes[i] = binaryString.charCodeAt(i);
 			}
 
+			console.log("🖥️ Server: About to upload to R2. Filename:", filename);
+			console.log("🖥️ Server: File size:", bytes.buffer.byteLength, "bytes");
+
 			// Upload to R2
 			await bucket.put(filename, bytes.buffer, {
 				httpMetadata: {
@@ -124,14 +147,24 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 				},
 			});
 
+			console.log("🖥️ Server: Upload to R2 successful!");
+
 			// Return the filename (path in R2)
-			return {
+			const result = {
 				success: true,
 				filename,
 				url: `${ASSETS_BASE_URL}/${filename}`,
 			};
+
+			console.log("🖥️ Server: Returning result:", result);
+			return result;
 		} catch (error) {
-			console.error("Error uploading image:", error);
+			console.error("🖥️ Server: Error uploading image:", error);
+			console.error("🖥️ Server: Error details:", {
+				message: error instanceof Error ? error.message : "Unknown error",
+				stack: error instanceof Error ? error.stack : undefined,
+				name: error instanceof Error ? error.name : undefined,
+			});
 			setResponseStatus(500);
 			throw new Error(
 				error instanceof Error ? error.message : "Failed to upload image",

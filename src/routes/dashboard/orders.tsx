@@ -290,7 +290,7 @@ function OrderList() {
 						className="flex items-center gap-1"
 					>
 						<Trash2 className="h-4 w-4" />
-						Delete ({selectedOrders.size})
+						Удалить ({selectedOrders.size})
 					</Button>
 				)}
 				<Button
@@ -304,7 +304,7 @@ function OrderList() {
 					) : (
 						<Square className="h-4 w-4" />
 					)}
-					Select
+					Выбрать
 				</Button>
 				{isSelectionMode && (
 					<Button
@@ -314,8 +314,8 @@ function OrderList() {
 						className="flex items-center gap-1"
 					>
 						{selectedOrders.size === allOrders.length
-							? "Select None"
-							: "Select All"}
+							? "Снять выделение"
+							: "Выбрать все"}
 					</Button>
 				)}
 			</div>
@@ -338,7 +338,7 @@ function OrderList() {
 										{group.title}
 										<span className="text-sm text-muted-foreground">
 											{group.orders.length}{" "}
-											{group.orders.length === 1 ? "order" : "orders"}
+											{group.orders.length === 1 ? "заказ" : "заказов"}
 										</span>
 									</h2>
 								</div>
@@ -372,7 +372,7 @@ function OrderList() {
 					onClose={handleSingleDeleteCancel}
 					onConfirm={handleSingleDeleteConfirm}
 					title="Удалить заказ"
-					description={`Are you sure you want to delete order #${deletingOrderId}? This action cannot be undone.`}
+					description={`Вы уверены, что хотите удалить заказ #${deletingOrderId}? Это действие нельзя отменить.`}
 					isDeleting={isDeleting}
 				/>
 			)}
@@ -384,7 +384,7 @@ function OrderList() {
 					onClose={handleBulkDeleteCancel}
 					onConfirm={handleBulkDeleteConfirm}
 					title="Удалить заказы"
-					description={`Are you sure you want to delete ${selectedOrders.size} selected order(s)? This action cannot be undone.`}
+					description={`Вы уверены, что хотите удалить ${selectedOrders.size} выбранных заказов? Это действие нельзя отменить.`}
 					isDeleting={isDeleting}
 				/>
 			)}

@@ -39,7 +39,7 @@ export function ProductSettingsFields({
 					onChange={onIsActiveChange}
 				/>
 				<label htmlFor={isActiveId} className="ml-2 text-sm">
-					Active
+					Активен
 				</label>
 			</div>
 
@@ -51,7 +51,7 @@ export function ProductSettingsFields({
 					onChange={onIsFeaturedChange}
 				/>
 				<label htmlFor={isFeaturedId} className="ml-2 text-sm">
-					Featured
+					Рекомендуемый
 				</label>
 			</div>
 
@@ -62,13 +62,13 @@ export function ProductSettingsFields({
 					name="discount"
 					value={discount || ""}
 					onChange={onDiscountChange}
-					placeholder="Discount %"
+					placeholder="Скидка %"
 					min="0"
 					max="100"
 					className="w-20"
 				/>
 				<label htmlFor={discountId} className="text-sm whitespace-nowrap">
-					% Off
+					% Скидка
 				</label>
 			</div>
 
@@ -80,7 +80,7 @@ export function ProductSettingsFields({
 					onChange={onHasVariationsChange}
 				/>
 				<label htmlFor={hasVariationsId} className="ml-2 text-sm">
-					Has Variations
+					Есть варианты
 				</label>
 			</div>
 		</div>

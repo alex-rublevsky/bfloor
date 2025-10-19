@@ -216,19 +216,19 @@ function RouteComponent() {
 							<thead>
 								<tr>
 									<th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-										Name
+										Название
 									</th>
 									<th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
 										Slug
 									</th>
 									<th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-										Logo
+										Логотип
 									</th>
 									<th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-										Status
+										Статус
 									</th>
 									<th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-										Actions
+										Действия
 									</th>
 								</tr>
 							</thead>
@@ -251,12 +251,12 @@ function RouteComponent() {
 													/>
 												</div>
 											) : (
-												<span className="text-muted-foreground">No logo</span>
+												<span className="text-muted-foreground">Нет логотипа</span>
 											)}
 										</td>
 										<td className="px-6 py-4 whitespace-nowrap">
 											<Badge variant={brand.isActive ? "default" : "secondary"}>
-												{brand.isActive ? "Active" : "Inactive"}
+												{brand.isActive ? "Активен" : "Неактивен"}
 											</Badge>
 										</td>
 										<td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -265,14 +265,14 @@ function RouteComponent() {
 												onClick={() => handleEdit(brand)}
 												className="mr-4"
 											>
-												Edit
+												Редактировать
 											</Button>
 											<Button
 												variant="destructive"
 												size="sm"
 												onClick={() => handleDeleteClick(brand)}
 											>
-												Delete
+												Удалить
 											</Button>
 										</td>
 									</tr>
@@ -290,8 +290,8 @@ function RouteComponent() {
 				title="Добавить новый бренд"
 				formId={createFormId}
 				isSubmitting={crud.isSubmitting}
-				submitButtonText="Create Brand"
-				submittingText="Creating..."
+				submitButtonText="Создать бренд"
+				submittingText="Создание..."
 				onCancel={() => {
 					crud.closeCreateDrawer();
 					createForm.resetForm();
@@ -326,9 +326,6 @@ function RouteComponent() {
 						folder="brands"
 						slug={createForm.formData.slug}
 						productName={createForm.formData.name}
-						maxImages={1}
-						label="Logo"
-						placeholder="https://example.com/logo.jpg"
 					/>
 
 					<div className="flex items-center">
@@ -338,7 +335,7 @@ function RouteComponent() {
 							checked={createForm.formData.isActive}
 							onChange={createForm.handleChange}
 						/>
-						<label htmlFor={createIsActiveId} className="ml-2 text-sm">Active</label>
+						<label htmlFor={createIsActiveId} className="ml-2 text-sm">Активен</label>
 					</div>
 				</form>
 			</DashboardFormDrawer>
@@ -349,8 +346,8 @@ function RouteComponent() {
 				title="Изменить бренд"
 				formId={editFormId}
 				isSubmitting={crud.isSubmitting}
-				submitButtonText="Update Brand"
-				submittingText="Updating..."
+				submitButtonText="Обновить бренд"
+				submittingText="Обновление..."
 				onCancel={() => {
 					crud.closeEditDrawer();
 					setEditingBrandId(null);
@@ -386,9 +383,6 @@ function RouteComponent() {
 						folder="brands"
 						slug={editForm.formData.slug}
 						productName={editForm.formData.name}
-						maxImages={1}
-						label="Logo"
-						placeholder="https://example.com/logo.jpg"
 					/>
 
 					<div className="flex items-center">
@@ -398,7 +392,7 @@ function RouteComponent() {
 							checked={editForm.formData.isActive}
 							onChange={editForm.handleChange}
 						/>
-						<label htmlFor={editIsActiveId} className="ml-2 text-sm">Active</label>
+						<label htmlFor={editIsActiveId} className="ml-2 text-sm">Активен</label>
 					</div>
 				</form>
 			</DashboardFormDrawer>
@@ -410,7 +404,7 @@ function RouteComponent() {
 					onClose={handleDeleteCancel}
 					onConfirm={handleDeleteConfirm}
 					title="Удалить бренд"
-					description="Are you sure you want to delete this brand? This action cannot be undone."
+					description="Вы уверены, что хотите удалить этот бренд? Это действие нельзя отменить."
 					isDeleting={crud.isDeleting}
 				/>
 			)}
