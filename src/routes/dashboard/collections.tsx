@@ -8,6 +8,7 @@ import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { Badge } from "~/components/ui/shared/Badge";
 import { Button } from "~/components/ui/shared/Button";
+import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { Input } from "~/components/ui/shared/input";
 import {
 	Select,
@@ -231,54 +232,64 @@ function RouteComponent() {
 	return (
 		<div className="space-y-6 px-6">
 			{/* Collections Grid */}
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-				{collections.map((collection) => {
-					const brand = brands.find((b) => b.slug === collection.brandSlug);
-					return (
-						<div
-							key={collection.id}
-							className="border rounded-lg overflow-hidden bg-card hover:shadow-md transition-shadow"
-						>
-							{/* Collection Info */}
-							<div className="p-4 space-y-3">
-								<div>
-									<h3 className="font-medium truncate">{collection.name}</h3>
-									{brand && (
-										<p className="text-xs text-muted-foreground">
-											Бренд: {brand.name}
-										</p>
-									)}
-									{!collection.isActive && (
-										<Badge variant="secondary" className="mt-2">
-											Неактивна
-										</Badge>
-									)}
-								</div>
+			{collections.length === 0 ? (
+				<EmptyState
+					entityType="collections"
+					actionButton={{
+						text: "Добавить коллекцию",
+						onClick: crud.openCreateDrawer,
+					}}
+				/>
+			) : (
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+					{collections.map((collection) => {
+						const brand = brands.find((b) => b.slug === collection.brandSlug);
+						return (
+							<div
+								key={collection.id}
+								className="border rounded-lg overflow-hidden bg-card hover:shadow-md transition-shadow"
+							>
+								{/* Collection Info */}
+								<div className="p-4 space-y-3">
+									<div>
+										<h3 className="font-medium truncate">{collection.name}</h3>
+										{brand && (
+											<p className="text-xs text-muted-foreground">
+												Бренд: {brand.name}
+											</p>
+										)}
+										{!collection.isActive && (
+											<Badge variant="secondary" className="mt-2">
+												Неактивна
+											</Badge>
+										)}
+									</div>
 
-								{/* Action Buttons */}
-								<div className="flex gap-2">
-									<Button
-										variant="outline"
-										size="sm"
-										className="flex-1"
-										onClick={() => handleEditCollection(collection)}
-									>
-										Изменить
-									</Button>
-									<Button
-										variant="destructive"
-										size="sm"
-										className="flex-1"
-										onClick={() => handleDeleteClick(collection)}
-									>
-										Удалить
-									</Button>
+									{/* Action Buttons */}
+									<div className="flex gap-2">
+										<Button
+											variant="outline"
+											size="sm"
+											className="flex-1"
+											onClick={() => handleEditCollection(collection)}
+										>
+											Изменить
+										</Button>
+										<Button
+											variant="destructive"
+											size="sm"
+											className="flex-1"
+											onClick={() => handleDeleteClick(collection)}
+										>
+											Удалить
+										</Button>
+									</div>
 								</div>
 							</div>
-						</div>
-					);
-				})}
-			</div>
+						);
+					})}
+				</div>
+			)}
 
 			{/* Create Collection Drawer */}
 			<DashboardFormDrawer

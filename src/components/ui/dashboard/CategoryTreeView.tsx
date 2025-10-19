@@ -2,6 +2,7 @@ import { ChevronDown, ChevronRight, Folder, FolderOpen } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "~/components/ui/shared/Badge";
 import { Button } from "~/components/ui/shared/Button";
+import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { cn } from "~/lib/utils";
 import type { Category, CategoryTreeNode } from "~/types";
 
@@ -9,12 +10,14 @@ interface CategoryTreeViewProps {
 	tree: CategoryTreeNode[];
 	onEdit: (category: Category) => void;
 	onDelete: (category: Category) => void;
+	onCreateCategory?: () => void;
 }
 
 export function CategoryTreeView({
 	tree,
 	onEdit,
 	onDelete,
+	onCreateCategory,
 }: CategoryTreeViewProps) {
 	const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
@@ -56,9 +59,13 @@ export function CategoryTreeView({
 	return (
 		<div className="space-y-1">
 			{tree.length === 0 ? (
-				<div className="text-center py-8 text-muted-foreground">
-					No categories yet. Create one to get started!
-				</div>
+				<EmptyState
+					entityType="categories"
+					actionButton={onCreateCategory ? {
+						text: "Добавить категорию",
+						onClick: onCreateCategory,
+					} : undefined}
+				/>
 			) : (
 				tree.map((node) => renderTreeNode(node))
 			)}

@@ -7,6 +7,7 @@ import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDial
 import { OrderCard } from "~/components/ui/dashboard/OrderCard";
 import { OrderDrawer } from "~/components/ui/dashboard/OrderDrawer";
 import { OrdersPageSkeleton } from "~/components/ui/dashboard/skeletons/OrdersPageSkeleton";
+import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { Button } from "~/components/ui/shared/Button";
 import { useDashboardSearch } from "~/lib/dashboardSearchContext";
 import { dashboardOrdersQueryOptions } from "~/lib/queryOptions";
@@ -318,16 +319,10 @@ function OrderList() {
 
 			{/* Orders Groups */}
 			{filteredGroupedOrders.length === 0 ? (
-				<div className="text-center py-8 text-muted-foreground px-4">
-					<h3 className="text-lg font-medium mb-2">
-						{searchTerm ? "No orders found" : "No orders yet"}
-					</h3>
-					<p className="text-sm text-muted-foreground">
-						{searchTerm
-							? "Try adjusting your search"
-							: "Orders will appear here once customers place them"}
-					</p>
-				</div>
+				<EmptyState
+					entityType="orders"
+					isSearchResult={!!searchTerm}
+				/>
 			) : (
 				<div className="space-y-8">
 					{/* Render each group from server */}

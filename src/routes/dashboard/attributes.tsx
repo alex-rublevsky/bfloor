@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useState } from "react";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { Button } from "~/components/ui/shared/Button";
+import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { Input } from "~/components/ui/shared/input";
 import { useProductAttributes } from "~/hooks/useProductAttributes";
 import { useSlugGeneration } from "~/hooks/useSlugGeneration";
@@ -190,31 +191,41 @@ function AttributesPage() {
 			</DashboardFormDrawer>
 
 			{/* Attributes List */}
-			<div className="grid gap-4">
-				{attributes?.map((attribute) => (
-					<div key={attribute.id} className="p-4 border rounded-lg">
-						<div className="flex items-center justify-between">
-							<div className="flex items-center gap-4">
-								<div>
-									<h3 className="font-medium">{attribute.name}</h3>
-									<p className="text-sm text-muted-foreground">
-										Slug: {attribute.slug} • ID: {attribute.id}
-									</p>
+			{!attributes || attributes.length === 0 ? (
+				<EmptyState
+					entityType="attributes"
+					actionButton={{
+						text: "Добавить атрибут",
+						onClick: () => setIsCreating(true),
+					}}
+				/>
+			) : (
+				<div className="grid gap-4">
+					{attributes.map((attribute) => (
+						<div key={attribute.id} className="p-4 border rounded-lg">
+							<div className="flex items-center justify-between">
+								<div className="flex items-center gap-4">
+									<div>
+										<h3 className="font-medium">{attribute.name}</h3>
+										<p className="text-sm text-muted-foreground">
+											Slug: {attribute.slug} • ID: {attribute.id}
+										</p>
+									</div>
+								</div>
+								<div className="flex items-center gap-2">
+									<Button
+										variant="outline"
+										size="sm"
+										onClick={() => startEdit(attribute)}
+									>
+										Edit
+									</Button>
 								</div>
 							</div>
-							<div className="flex items-center gap-2">
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => startEdit(attribute)}
-								>
-									Edit
-								</Button>
-							</div>
 						</div>
-					</div>
-				))}
-			</div>
+					))}
+				</div>
+			)}
 
 			{/* Edit Attribute Drawer */}
 			<DashboardFormDrawer

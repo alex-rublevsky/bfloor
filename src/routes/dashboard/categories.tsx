@@ -6,6 +6,7 @@ import { CategoryTreeView } from "~/components/ui/dashboard/CategoryTreeView";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
 import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
+import { ImageUpload } from "~/components/ui/dashboard/ImageUpload";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { CategoriesPageSkeleton } from "~/components/ui/dashboard/skeletons/CategoriesPageSkeleton";
 import { Input } from "~/components/ui/shared/input";
@@ -268,6 +269,10 @@ function RouteComponent() {
 						tree={categoryTree}
 						onEdit={handleEditCategory}
 						onDelete={handleDeleteCategoryClick}
+						onCreateCategory={() => {
+							setCategoryType("product");
+							productCategoryForm.crud.openCreateDrawer();
+						}}
 					/>
 				</div>
 			</div>
@@ -352,15 +357,14 @@ function RouteComponent() {
 							</div>
 
 							{categoryType === "product" && (
-								<Input
-									label="Ссылка на изображение"
-									type="text"
-									name="image"
-									value={
-										(activeForm.createForm.formData as CategoryFormData)
-											.image || ""
-									}
-									onChange={activeForm.createForm.handleChange}
+								<ImageUpload
+									currentImages={(activeForm.createForm.formData as CategoryFormData).image || ""}
+									onImagesChange={(images) => activeForm.createForm.updateField("image", images)}
+									folder="categories"
+									slug={(activeForm.createForm.formData as CategoryFormData).slug}
+									productName={(activeForm.createForm.formData as CategoryFormData).name}
+									maxImages={1}
+									label="Category Image"
 									placeholder="https://example.com/image.jpg"
 								/>
 							)}
@@ -462,15 +466,14 @@ function RouteComponent() {
 							</div>
 
 							{categoryType === "product" && (
-								<Input
-									label="Ссылка на изображение"
-									type="text"
-									name="image"
-									value={
-										(activeForm.editForm.formData as CategoryFormData).image ||
-										""
-									}
-									onChange={activeForm.editForm.handleChange}
+								<ImageUpload
+									currentImages={(activeForm.editForm.formData as CategoryFormData).image || ""}
+									onImagesChange={(images) => activeForm.editForm.updateField("image", images)}
+									folder="categories"
+									slug={(activeForm.editForm.formData as CategoryFormData).slug}
+									productName={(activeForm.editForm.formData as CategoryFormData).name}
+									maxImages={1}
+									label="Category Image"
 									placeholder="https://example.com/image.jpg"
 								/>
 							)}

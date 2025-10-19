@@ -1,6 +1,5 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
 import { useCallback, useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 import { AdminProductCard } from "~/components/ui/dashboard/AdminProductCard";
@@ -15,6 +14,7 @@ import ProductVariationForm from "~/components/ui/dashboard/ProductVariationForm
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { StoreLocationsSelector } from "~/components/ui/dashboard/StoreLocationsSelector";
 import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
+import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { Input } from "~/components/ui/shared/input";
 import {
 	Select,
@@ -789,21 +789,14 @@ function RouteComponent() {
 			{/* Products List */}
 			<div className="space-y-6">
 				{displayProducts.length === 0 ? (
-					<div className="text-center py-8 text-muted-foreground px-4">
-						<div className="mb-4">
-							<div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center">
-								<Plus className="w-8 h-8" />
-							</div>
-						</div>
-						<h3 className="text-lg font-medium mb-2">
-							{searchTerm ? "No products found" : "No products yet"}
-						</h3>
-						<p className="text-sm text-muted-foreground">
-							{searchTerm
-								? "Try adjusting your search"
-								: "Get started by creating your first product"}
-						</p>
-					</div>
+					<EmptyState
+						entityType="products"
+						isSearchResult={!!searchTerm}
+						actionButton={{
+							text: "Добавить товар",
+							onClick: () => setShowCreateForm(true),
+						}}
+					/>
 				) : (
 					<div className="px-4">
 						{/* Products Grid */}

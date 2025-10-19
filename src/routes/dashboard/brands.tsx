@@ -4,10 +4,12 @@ import { useCallback, useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
+import { ImageUpload } from "~/components/ui/dashboard/ImageUpload";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { BrandsPageSkeleton } from "~/components/ui/dashboard/skeletons/BrandsPageSkeleton";
 import { Badge } from "~/components/ui/shared/Badge";
 import { Button } from "~/components/ui/shared/Button";
+import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { Image } from "~/components/ui/shared/Image";
 import { Input } from "~/components/ui/shared/input";
 import { Switch } from "~/components/ui/shared/Switch";
@@ -207,9 +209,13 @@ function RouteComponent() {
 		<div className="space-y-8">
 			<div>
 				{!data || data.length === 0 ? (
-					<div className="text-center py-4 text-muted-foreground">
-						No brands found
-					</div>
+					<EmptyState
+						entityType="brands"
+						actionButton={{
+							text: "Добавить бренд",
+							onClick: crud.openCreateDrawer,
+						}}
+					/>
 				) : (
 					<div className="overflow-x-auto">
 						<table className="min-w-full divide-y divide-border">
@@ -320,12 +326,14 @@ function RouteComponent() {
 						idPrefix="create"
 					/>
 
-					<Input
-						label="Ссылка на логотип"
-						type="text"
-						name="logo"
-						value={createForm.formData.logo}
-						onChange={createForm.handleChange}
+					<ImageUpload
+						currentImages={createForm.formData.logo}
+						onImagesChange={(images) => createForm.updateField("logo", images)}
+						folder="brands"
+						slug={createForm.formData.slug}
+						productName={createForm.formData.name}
+						maxImages={1}
+						label="Logo"
 						placeholder="https://example.com/logo.jpg"
 					/>
 
@@ -378,12 +386,14 @@ function RouteComponent() {
 						idPrefix="edit"
 					/>
 
-					<Input
-						label="Ссылка на логотип"
-						type="text"
-						name="logo"
-						value={editForm.formData.logo}
-						onChange={editForm.handleChange}
+					<ImageUpload
+						currentImages={editForm.formData.logo}
+						onImagesChange={(images) => editForm.updateField("logo", images)}
+						folder="brands"
+						slug={editForm.formData.slug}
+						productName={editForm.formData.name}
+						maxImages={1}
+						label="Logo"
 						placeholder="https://example.com/logo.jpg"
 					/>
 
