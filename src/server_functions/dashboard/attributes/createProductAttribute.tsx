@@ -14,9 +14,7 @@ export const createProductAttribute = createServerFn({ method: "POST" })
 
 			// Validate that slug is not empty
 			if (!data.slug.trim()) {
-				throw new Error(
-					"Cannot create attribute: slug must not be empty",
-				);
+				throw new Error("Cannot create attribute: slug must not be empty");
 			}
 
 			// Check if attribute with this name already exists

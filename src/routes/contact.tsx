@@ -7,7 +7,8 @@ export const Route = createFileRoute("/contact")({
 		meta: [
 			...seo({
 				title: "Контакты - BeautyFloor",
-				description: "Свяжитесь с нами для получения информации о напольных покрытиях",
+				description:
+					"Свяжитесь с нами для получения информации о напольных покрытиях",
 			}),
 		],
 	}),
@@ -19,7 +20,7 @@ function ContactPage() {
 			<div className="container mx-auto px-4 py-8">
 				<div className="max-w-2xl mx-auto">
 					<h1 className="text-3xl font-bold mb-8 text-center">Контакты</h1>
-					
+
 					<div className="space-y-6">
 						<div className="bg-card p-6 rounded-lg border">
 							<h2 className="text-xl font-semibold mb-4">Свяжитесь с нами</h2>
@@ -34,7 +35,9 @@ function ContactPage() {
 								</div>
 								<div>
 									<h3 className="font-medium">Адрес:</h3>
-									<p className="text-muted-foreground">Владивосток, ул. Примерная, д. 123</p>
+									<p className="text-muted-foreground">
+										Владивосток, ул. Примерная, д. 123
+									</p>
 								</div>
 							</div>
 						</div>

@@ -53,6 +53,7 @@ export const createProduct = createServerFn({ method: "POST" })
 					squareMetersPerPack: productData.squareMetersPerPack
 						? parseFloat(productData.squareMetersPerPack)
 						: null,
+					unitOfMeasurement: productData.unitOfMeasurement,
 					categorySlug: productData.categorySlug || null,
 					brandSlug: productData.brandSlug || null,
 					collectionSlug: productData.collectionSlug || null,

@@ -52,7 +52,9 @@ export const updateProductAttribute = createServerFn({ method: "POST" })
 					.limit(1);
 
 				if (duplicateSlug.length > 0) {
-					throw new Error(`Attribute with slug "${data.data.slug}" already exists`);
+					throw new Error(
+						`Attribute with slug "${data.data.slug}" already exists`,
+					);
 				}
 			}
 

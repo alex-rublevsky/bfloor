@@ -38,6 +38,7 @@ export const createBrand = createServerFn({ method: "POST" })
 					name: brandData.name,
 					slug: brandData.slug,
 					image: brandData.logo || null,
+					country: brandData.country || null,
 					isActive: brandData.isActive ?? true,
 				})
 				.returning();

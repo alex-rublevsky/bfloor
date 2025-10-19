@@ -1,13 +1,5 @@
-import { useState } from "react";
-import { Button } from "~/components/ui/shared/Button";
+import { useEffect } from "react";
 import { Input } from "~/components/ui/shared/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "~/components/ui/shared/Select";
 import { useProductAttributes } from "~/hooks/useProductAttributes";
 import type { ProductAttributeFormData } from "~/types";
 
@@ -22,28 +14,21 @@ export default function ProductAttributesForm({
 }: ProductAttributesFormProps) {
 	const { data: availableAttributes } = useProductAttributes();
 
-	const [availableAttributeNames] = useState<string[]>(
-		availableAttributes?.map((attr) => attr.name) || [],
-	);
+	// Ensure all available attributes are always present
+	useEffect(() => {
+		if (availableAttributes && availableAttributes.length > 0) {
+			const currentAttributeIds = (attributes || []).map(
+				(attr) => attr.attributeId,
+			);
+			const missingAttributes = availableAttributes
+				.filter((attr) => !currentAttributeIds.includes(attr.id.toString()))
+				.map((attr) => ({ attributeId: attr.id.toString(), value: "" }));
 
-	const handleAddAttribute = (attributeId: string) => {
-		// Check if attribute already exists
-		const attributeExists = attributes?.some(
-			(attr) => attr.attributeId === attributeId,
-		);
-
-		if (!attributeExists) {
-			const newAttributes = [...(attributes || []), { attributeId, value: "" }];
-			onChange(newAttributes);
+			if (missingAttributes.length > 0) {
+				onChange([...(attributes || []), ...missingAttributes]);
+			}
 		}
-	};
-
-	const handleRemoveAttribute = (attributeId: string) => {
-		const newAttributes = (attributes || []).filter(
-			(attr) => attr.attributeId !== attributeId,
-		);
-		onChange(newAttributes);
-	};
+	}, [availableAttributes, attributes, onChange]);
 
 	const handleUpdateAttributeValue = (attributeId: string, value: string) => {
 		const newAttributes = (attributes || []).map((attr) =>
@@ -52,74 +37,53 @@ export default function ProductAttributesForm({
 		onChange(newAttributes);
 	};
 
-	// Get unused attributes
-	const getUnusedAttributes = () => {
-		const usedAttributeIds = (attributes || []).map((attr) => attr.attributeId);
-		return availableAttributeNames.filter(
-			(attr) => !usedAttributeIds.includes(attr),
+	if (!availableAttributes || availableAttributes.length === 0) {
+		return (
+			<div className="p-4 text-center text-muted-foreground">
+				<p>Нет доступных атрибутов</p>
+				<p className="text-sm mt-1">Создайте атрибуты в разделе "Атрибуты"</p>
+			</div>
 		);
-	};
-
-	const unusedAttributes = getUnusedAttributes();
+	}
 
 	return (
 		<div className="space-y-4">
-			<div className="flex items-center justify-between">
-				<h3 className="text-lg font-semibold">Атрибуты товара</h3>
-				{unusedAttributes.length > 0 && (
-					<Select onValueChange={handleAddAttribute}>
-						<SelectTrigger className="w-48">
-							<SelectValue placeholder="Добавить атрибут" />
-						</SelectTrigger>
-						<SelectContent>
-							{unusedAttributes.map((attr) => (
-								<SelectItem key={attr} value={attr}>
-									{attr}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-				)}
+			<div>
+				<h3 className="text-sm font-medium text-foreground mb-2">
+					Атрибуты товара
+				</h3>
+				<p className="text-sm text-muted-foreground">
+					Все доступные атрибуты отображаются ниже
+				</p>
 			</div>
 
-			{(attributes || []).length === 0 ? (
-				<p className="text-muted-foreground text-sm">
-					Пока не добавлено атрибутов. Добавьте атрибуты для предоставления дополнительной информации о товаре.
-				</p>
-			) : (
-				<div className="space-y-3">
-					{(attributes || []).map((attr) => (
-						<div
-							key={attr.attributeId}
-							className="flex items-center gap-3 p-3 border rounded-lg"
-						>
-							<div className="flex-1">
-								<label
-									htmlFor={`attr-${attr.attributeId}`}
-									className="block text-sm font-medium mb-1"
-								>
-									{attr.attributeId}
-								</label>
-								<Input
-									id={`attr-${attr.attributeId}`}
-									placeholder={`Введите значение ${attr.attributeId.toLowerCase()}`}
-									value={attr.value}
-									onChange={(e) =>
-										handleUpdateAttributeValue(attr.attributeId, e.target.value)
-									}
-								/>
-							</div>
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={() => handleRemoveAttribute(attr.attributeId)}
+			<div className="grid grid-cols-2 gap-3">
+				{(attributes || []).map((attr) => {
+					const attributeInfo = availableAttributes.find(
+						(a) => a.id.toString() === attr.attributeId,
+					);
+					if (!attributeInfo) return null;
+
+					return (
+						<div key={attr.attributeId} className="space-y-1">
+							<label
+								htmlFor={`attr-${attr.attributeId}`}
+								className="block text-sm font-medium text-foreground"
 							>
-								Удалить
-							</Button>
+								{attributeInfo.name}
+							</label>
+							<Input
+								id={`attr-${attr.attributeId}`}
+								value={attr.value}
+								onChange={(e) =>
+									handleUpdateAttributeValue(attr.attributeId, e.target.value)
+								}
+								className="text-sm"
+							/>
 						</div>
-					))}
-				</div>
-			)}
+					);
+				})}
+			</div>
 		</div>
 	);
 }

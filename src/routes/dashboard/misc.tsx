@@ -9,6 +9,7 @@ import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
 import { Button } from "~/components/ui/shared/Button";
 import { Input } from "~/components/ui/shared/input";
 import { Switch } from "~/components/ui/shared/Switch";
+import { Textarea } from "~/components/ui/shared/TextArea";
 import { useDashboardForm } from "~/hooks/useDashboardForm";
 import { createStoreLocation } from "~/server_functions/dashboard/storeLocations/createStoreLocation";
 import { deleteStoreLocation } from "~/server_functions/dashboard/storeLocations/deleteStoreLocation";
@@ -153,18 +154,17 @@ function RouteComponent() {
 				<div className="border rounded-lg p-6 bg-card space-y-4">
 					<div className="flex items-center justify-between">
 						<h3 className="text-lg font-semibold">Адреса магазинов</h3>
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={crud.openCreateDrawer}
-						>
+						<Button variant="outline" size="sm" onClick={crud.openCreateDrawer}>
 							Добавить адрес
 						</Button>
 					</div>
-					
+
 					<div className="space-y-3">
 						{locations.map((loc) => (
-							<div key={loc.id} className="border rounded-lg p-4 bg-background space-y-3">
+							<div
+								key={loc.id}
+								className="border rounded-lg p-4 bg-background space-y-3"
+							>
 								<div className="space-y-1">
 									<div className="font-medium break-words">{loc.address}</div>
 									{loc.description && (
@@ -173,12 +173,14 @@ function RouteComponent() {
 										</div>
 									)}
 									{loc.openingHours && (
-										<div className="text-sm text-muted-foreground break-words">
+										<div className="text-sm text-muted-foreground break-words whitespace-pre-line">
 											{loc.openingHours}
 										</div>
 									)}
 									{!loc.isActive && (
-										<div className="text-xs text-muted-foreground">Неактивен</div>
+										<div className="text-xs text-muted-foreground">
+											Неактивен
+										</div>
 									)}
 								</div>
 								<div className="flex gap-2">
@@ -239,13 +241,13 @@ function RouteComponent() {
 								onChange={createForm.handleChange}
 								placeholder="Дополнительная информация о местоположении..."
 							/>
-							<Input
+							<Textarea
 								label="Часы работы"
-								type="text"
 								name="openingHours"
 								value={createForm.formData.openingHours}
 								onChange={createForm.handleChange}
-								placeholder="Например: Пн-Пт: 9:00-18:00, Сб: 10:00-16:00"
+								placeholder="Например:&#10;Пн-Пт: 9:00-18:00&#10;Сб: 10:00-16:00&#10;Вс: выходной"
+								rows={4}
 							/>
 							<div className="flex items-center gap-2">
 								<Switch
@@ -289,13 +291,13 @@ function RouteComponent() {
 								onChange={editForm.handleChange}
 								placeholder="Дополнительная информация о местоположении..."
 							/>
-							<Input
+							<Textarea
 								label="Часы работы"
-								type="text"
 								name="openingHours"
 								value={editForm.formData.openingHours}
 								onChange={editForm.handleChange}
-								placeholder="Например: Пн-Пт: 9:00-18:00, Сб: 10:00-16:00"
+								placeholder="Например:&#10;Пн-Пт: 9:00-18:00&#10;Сб: 10:00-16:00&#10;Вс: выходной"
+								rows={4}
 							/>
 							<div className="flex items-center gap-2">
 								<Switch

@@ -21,6 +21,7 @@ export const products = sqliteTable("products", {
 	description: text("description"),
 	price: real("price").notNull().default(0), // Make price non-nullable with default value (for flooring: price per m²)
 	squareMetersPerPack: real("square_meters_per_pack"), // For flooring products: area coverage per pack
+	unitOfMeasurement: text("unit_of_measurement").notNull().default("штука"), // Единица количества: погонный метр, квадратный метр, литр, штука, упаковка
 	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 	isFeatured: integer("is_featured", { mode: "boolean" })
 		.notNull()
@@ -82,6 +83,7 @@ export const brands = sqliteTable("brands", {
 	name: text("name").notNull(),
 	slug: text("slug").notNull().unique(),
 	image: text("image"),
+	country: text("country"), // Страна происхождения бренда (ID) - опционально
 	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 });
 
@@ -89,9 +91,11 @@ export const collections = sqliteTable("collections", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	name: text("name").notNull(),
 	slug: text("slug").notNull().unique(),
-	brandSlug: text("brand_slug").notNull().references(() => brands.slug, {
-		onDelete: "cascade",
-	}),
+	brandSlug: text("brand_slug")
+		.notNull()
+		.references(() => brands.slug, {
+			onDelete: "cascade",
+		}),
 	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 });
 

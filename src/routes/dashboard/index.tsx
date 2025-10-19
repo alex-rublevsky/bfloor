@@ -10,19 +10,19 @@ import { ImageUpload } from "~/components/ui/dashboard/ImageUpload";
 import ProductAttributesForm from "~/components/ui/dashboard/ProductAttributesForm";
 import { DrawerSection } from "~/components/ui/dashboard/ProductFormSection";
 import { ProductSettingsFields } from "~/components/ui/dashboard/ProductSettingsFields";
+import ProductVariationAttributesSelector from "~/components/ui/dashboard/ProductVariationAttributesSelector";
 import ProductVariationForm from "~/components/ui/dashboard/ProductVariationForm";
+import { SelectWithCreate } from "~/components/ui/dashboard/SelectWithCreate";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { StoreLocationsSelector } from "~/components/ui/dashboard/StoreLocationsSelector";
 import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { Input } from "~/components/ui/shared/input";
+import { UNITS_OF_MEASUREMENT } from "~/constants/units";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "~/components/ui/shared/Select";
+	generateVariationSKU,
+	useProductAttributes,
+} from "~/hooks/useProductAttributes";
 import { generateSlug, useSlugGeneration } from "~/hooks/useSlugGeneration";
 import { useDashboardSearch } from "~/lib/dashboardSearchContext";
 import { storeDataQueryOptions } from "~/lib/queryOptions";
@@ -39,12 +39,10 @@ import {
 import { updateProduct } from "~/server_functions/dashboard/store/updateProduct";
 import { getAllStoreLocations } from "~/server_functions/dashboard/storeLocations/getAllStoreLocations";
 import type {
-	Brand,
-	Category,
+	ProductAttributeFormData,
 	ProductFormData,
 	ProductVariationWithAttributes,
 	ProductWithVariations,
-	VariationAttribute,
 } from "~/types";
 
 interface Variation {
@@ -54,7 +52,7 @@ interface Variation {
 	stock: number;
 	discount?: number | null;
 	sort: number;
-	attributes: VariationAttribute[];
+	attributeValues: Record<string, string>; // attributeId -> value mapping
 }
 
 // Query options factory for reuse
@@ -88,6 +86,9 @@ function RouteComponent() {
 		queryFn: () => getAllStoreLocations(),
 		staleTime: 1000 * 60 * 5,
 	});
+
+	// Product attributes query
+	const { data: attributes } = useProductAttributes();
 
 	// Function to refetch data using query invalidation
 	const refetch = () => {
@@ -136,11 +137,13 @@ function RouteComponent() {
 	const editCategoryId = useId();
 	const editBrandId = useId();
 	const editCollectionId = useId();
+	const editUnitId = useId();
 
 	const addPriceId = useId();
 	const addCategoryId = useId();
 	const addBrandId = useId();
 	const addCollectionId = useId();
+	const createUnitId = useId();
 	const editProductFormId = useId();
 	const createProductFormId = useId();
 	const editPriceId = useId();
@@ -151,6 +154,7 @@ function RouteComponent() {
 		description: "",
 		price: "0",
 		squareMetersPerPack: "",
+		unitOfMeasurement: "штука",
 		categorySlug: "",
 		brandSlug: "",
 		collectionSlug: "",
@@ -178,6 +182,10 @@ function RouteComponent() {
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [variations, setVariations] = useState<Variation[]>([]);
 	const [editVariations, setEditVariations] = useState<Variation[]>([]);
+	const [selectedVariationAttributes, setSelectedVariationAttributes] =
+		useState<string[]>([]);
+	const [editSelectedVariationAttributes, setEditSelectedVariationAttributes] =
+		useState<string[]>([]);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const [deletingProductId, setDeletingProductId] = useState<number | null>(
 		null,
@@ -219,10 +227,12 @@ function RouteComponent() {
 				price: v.price.toString(),
 				stock: v.stock.toString(),
 				sort: v.sort,
-				attributes: v.attributes.map((attr) => ({
-					attributeId: attr.attributeId,
-					value: attr.value,
-				})),
+				attributes: Object.entries(v.attributeValues).map(
+					([attributeId, value]) => ({
+						attributeId,
+						value,
+					}),
+				),
 			})),
 		}));
 	}, [variations]);
@@ -236,10 +246,12 @@ function RouteComponent() {
 				price: v.price.toString(),
 				stock: v.stock.toString(),
 				sort: v.sort,
-				attributes: v.attributes.map((attr) => ({
-					attributeId: attr.attributeId,
-					value: attr.value,
-				})),
+				attributes: Object.entries(v.attributeValues).map(
+					([attributeId, value]) => ({
+						attributeId,
+						value,
+					}),
+				),
 			})),
 		}));
 	}, [editVariations]);
@@ -339,14 +351,22 @@ function RouteComponent() {
 	const { groupedProducts, categories, brands, collections } = productsData;
 
 	// Flatten all products from groups into a single array
-	const allProducts = groupedProducts.flatMap(group => group.products);
+	const allProducts = groupedProducts.flatMap((group) => group.products);
+
+	// Handlers for refreshing data when new entities are created
+	const handleEntityCreated = () => {
+		// Invalidate dashboard products cache to refresh categories, brands, collections
+		queryClient.invalidateQueries({
+			queryKey: ["bfloorDashboardProducts"],
+		});
+	};
 
 	// Filter products based on search
 	const displayProducts = searchTerm
 		? allProducts.filter(
 				(product) =>
 					product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-					product.slug.toLowerCase().includes(searchTerm.toLowerCase())
+					product.slug.toLowerCase().includes(searchTerm.toLowerCase()),
 			)
 		: allProducts;
 
@@ -383,11 +403,11 @@ function RouteComponent() {
 		if (name === "hasVariations" && checked && variations.length === 0) {
 			const defaultVariation: Variation = {
 				id: `temp-${Date.now()}`,
-				sku: "",
+				sku: generateVariationSKU(updatedFormData.slug, [], attributes || []),
 				price: updatedFormData.price ? parseFloat(updatedFormData.price) : 0,
 				stock: updatedFormData.stock ? parseInt(updatedFormData.stock, 10) : 0,
 				sort: 0,
-				attributes: [],
+				attributeValues: {},
 			};
 			setVariations([defaultVariation]);
 		}
@@ -428,11 +448,11 @@ function RouteComponent() {
 		if (name === "hasVariations" && checked && editVariations.length === 0) {
 			const defaultVariation: Variation = {
 				id: `temp-${Date.now()}`,
-				sku: "",
+				sku: generateVariationSKU(updatedFormData.slug, [], attributes || []), // Generate proper SKU
 				price: updatedFormData.price ? parseFloat(updatedFormData.price) : 0,
 				stock: updatedFormData.stock ? parseInt(updatedFormData.stock, 10) : 0,
 				sort: 0,
-				attributes: [],
+				attributeValues: {}, // Empty attribute values initially
 			};
 			setEditVariations([defaultVariation]);
 		}
@@ -468,10 +488,12 @@ function RouteComponent() {
 				price: variation.price.toString(),
 				stock: variation.stock.toString(),
 				sort: variation.sort,
-				attributes: variation.attributes.map((attr: VariationAttribute) => ({
-					attributeId: attr.attributeId,
-					value: attr.value,
-				})),
+				attributes: Object.entries(variation.attributeValues).map(
+					([attributeId, value]) => ({
+						attributeId,
+						value,
+					}),
+				),
 			}));
 
 			const submissionData = {
@@ -541,10 +563,12 @@ function RouteComponent() {
 					price: variation.price.toString(),
 					stock: variation.stock.toString(),
 					sort: variation.sort,
-					attributes: variation.attributes.map((attr: VariationAttribute) => ({
-						attributeId: attr.attributeId,
-						value: attr.value,
-					})),
+					attributes: Object.entries(variation.attributeValues).map(
+						([attributeId, value]) => ({
+							attributeId,
+							value,
+						}),
+					),
 				}),
 			);
 
@@ -634,18 +658,35 @@ function RouteComponent() {
 				data: { id: product.id },
 			});
 
-			// Convert variations to the frontend format
+			// Convert variations to the new frontend format
 			const formattedVariations =
 				productWithDetails.variations?.map(
-					(variation: ProductVariationWithAttributes) => ({
-						id: variation.id.toString(),
-						sku: variation.sku,
-						price: variation.price,
-						stock: variation.stock,
-						sort: variation.sort ?? 0, // Handle null sort values
-						attributes: variation.attributes || [],
-					}),
+					(variation: ProductVariationWithAttributes) => {
+						// Convert attributes array to attributeValues object
+						const attributeValues: Record<string, string> = {};
+						variation.attributes?.forEach((attr) => {
+							attributeValues[attr.attributeId] = attr.value;
+						});
+
+						return {
+							id: variation.id.toString(),
+							sku: variation.sku,
+							price: variation.price,
+							stock: variation.stock,
+							discount: variation.discount,
+							sort: variation.sort ?? 0,
+							attributeValues,
+						};
+					},
 				) || [];
+
+			// Extract selected attributes from variations
+			const selectedAttributes = new Set<string>();
+			formattedVariations.forEach((variation) => {
+				Object.keys(variation.attributeValues).forEach((attrId) => {
+					selectedAttributes.add(attrId);
+				});
+			});
 
 			// Determine if slug is custom (doesn't match auto-generated)
 			const isCustomSlug =
@@ -686,6 +727,19 @@ function RouteComponent() {
 				}
 			}
 
+			// Parse product attributes from JSON
+			let parsedAttributes: ProductAttributeFormData[] = [];
+			if (productWithDetails.productAttributes) {
+				try {
+					parsedAttributes = JSON.parse(
+						productWithDetails.productAttributes,
+					) as ProductAttributeFormData[];
+				} catch (error) {
+					console.error("Error parsing product attributes:", error);
+					parsedAttributes = [];
+				}
+			}
+
 			setEditFormData({
 				name: productWithDetails.name,
 				slug: productWithDetails.slug,
@@ -693,6 +747,7 @@ function RouteComponent() {
 				price: productWithDetails.price.toString(),
 				squareMetersPerPack:
 					productWithDetails.squareMetersPerPack?.toString() || "",
+				unitOfMeasurement: productWithDetails.unitOfMeasurement || "штука",
 				categorySlug: productWithDetails.categorySlug || "",
 				brandSlug: productWithDetails.brandSlug || "",
 				collectionSlug: productWithDetails.collectionSlug || "",
@@ -702,6 +757,7 @@ function RouteComponent() {
 				discount: productWithDetails.discount,
 				hasVariations: productWithDetails.hasVariations,
 				images: imagesString,
+				attributes: parsedAttributes,
 				variations: [],
 			});
 
@@ -718,8 +774,9 @@ function RouteComponent() {
 			// Set auto-slug state based on whether slug is custom
 			setIsEditAutoSlug(!isCustomSlug);
 
-			// Set the variations separately
+			// Set the variations and selected attributes separately
 			setEditVariations(formattedVariations);
+			setEditSelectedVariationAttributes(Array.from(selectedAttributes));
 		} catch (error) {
 			console.error("Error fetching product details:", error);
 			toast.error("Failed to load product details");
@@ -765,14 +822,18 @@ function RouteComponent() {
 				slug: product.slug,
 				description: product.description || "",
 				price: product.price.toString(),
+				squareMetersPerPack: product.squareMetersPerPack?.toString() || "",
+				unitOfMeasurement: product.unitOfMeasurement || "штука",
 				categorySlug: product.categorySlug || "",
 				brandSlug: product.brandSlug || "",
+				collectionSlug: product.collectionSlug || "",
 				stock: product.stock.toString(),
 				isActive: product.isActive,
 				isFeatured: product.isFeatured,
 				discount: product.discount,
 				hasVariations: product.hasVariations,
 				images: fallbackImagesString,
+				attributes: [],
 				variations: [],
 			});
 			setEditVariations([]);
@@ -784,10 +845,7 @@ function RouteComponent() {
 			{/* Products List */}
 			<div className="space-y-6">
 				{displayProducts.length === 0 ? (
-					<EmptyState
-						entityType="products"
-						isSearchResult={!!searchTerm}
-					/>
+					<EmptyState entityType="products" isSearchResult={!!searchTerm} />
 				) : (
 					<div className="px-4">
 						{/* Products Grid */}
@@ -937,109 +995,83 @@ function RouteComponent() {
 									placeholder="Опционально - для напольных покрытий"
 								/>
 
-								{/* Empty cell for grid alignment */}
-								<div />
+								{/* Unit of Measurement */}
+								<div>
+									<label
+										htmlFor={editUnitId}
+										className="block text-sm font-medium mb-1"
+									>
+										Единица количества
+									</label>
+									<select
+										id={editUnitId}
+										name="unitOfMeasurement"
+										value={editFormData.unitOfMeasurement}
+										onChange={handleEditChange}
+										className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+									>
+										{UNITS_OF_MEASUREMENT.map((unit) => (
+											<option key={unit} value={unit}>
+												{unit}
+											</option>
+										))}
+									</select>
+								</div>
 
 								{/* Column 1: Category */}
 								<div>
-									<label
-										htmlFor={editCategoryId}
-										className="block text-sm font-medium mb-1"
-									>
-										Категория
-									</label>
-									<Select
-										name="categorySlug"
+									<SelectWithCreate
 										value={editFormData.categorySlug}
-										onValueChange={(value: string) =>
+										onValueChange={(value) => {
 											handleEditChange({
-												target: { name: "categorySlug", value },
-											} as React.ChangeEvent<HTMLSelectElement>)
-										}
+												target: { name: "categorySlug", value: value || "" },
+											} as React.ChangeEvent<HTMLSelectElement>);
+										}}
+										placeholder="Выберите категорию"
+										label="Категория"
 										required
-									>
-										<SelectTrigger id={editCategoryId}>
-											<SelectValue placeholder="Выберите категорию" />
-										</SelectTrigger>
-										<SelectContent>
-											{categories.map((category) => (
-												<SelectItem key={category.slug} value={category.slug}>
-													{category.name}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
+										id={editCategoryId}
+										entityType="category"
+										options={categories}
+										onEntityCreated={handleEntityCreated}
+									/>
 								</div>
 
 								{/* Column 2: Brand */}
 								<div>
-									<label
-										htmlFor={editBrandId}
-										className="block text-sm font-medium mb-1"
-									>
-										Бренд (опционально)
-									</label>
-									<Select
-										name="brandSlug"
-										value={editFormData.brandSlug || "none"}
-										onValueChange={(value: string) =>
+									<SelectWithCreate
+										value={editFormData.brandSlug}
+										onValueChange={(value) => {
 											handleEditChange({
-												target: {
-													name: "brandSlug",
-													value: value === "none" ? null : value,
-												},
-											} as React.ChangeEvent<HTMLSelectElement>)
-										}
-									>
-										<SelectTrigger id={editBrandId}>
-											<SelectValue placeholder="Выберите бренд (опционально)" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="none">Нет</SelectItem>
-											{brands.map((brand) => (
-												<SelectItem key={brand.slug} value={brand.slug}>
-													{brand.name}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
+												target: { name: "brandSlug", value },
+											} as React.ChangeEvent<HTMLSelectElement>);
+										}}
+										placeholder="Выберите бренд (опционально)"
+										label="Бренд (опционально)"
+										id={editBrandId}
+										entityType="brand"
+										options={brands}
+										onEntityCreated={handleEntityCreated}
+									/>
 								</div>
 
 								{/* Column 1: Collection */}
 								<div>
-									<label
-										htmlFor={editCollectionId}
-										className="block text-sm font-medium mb-1"
-									>
-										Коллекция (опционально)
-									</label>
-									<Select
-										name="collectionSlug"
-										value={editFormData.collectionSlug || "none"}
-										onValueChange={(value: string) =>
+									<SelectWithCreate
+										value={editFormData.collectionSlug || null}
+										onValueChange={(value) => {
 											handleEditChange({
-												target: {
-													name: "collectionSlug",
-													value: value === "none" ? null : value,
-												},
-											} as React.ChangeEvent<HTMLSelectElement>)
-										}
-									>
-										<SelectTrigger id={editCollectionId}>
-											<SelectValue placeholder="Выберите коллекцию (опционально)" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="none">None</SelectItem>
-											{collections?.map((collection) => (
-												<SelectItem
-													key={collection.slug}
-													value={collection.slug}
-												>
-													{collection.name}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
+												target: { name: "collectionSlug", value },
+											} as React.ChangeEvent<HTMLSelectElement>);
+										}}
+										placeholder="Выберите коллекцию (опционально)"
+										label="Коллекция (опционально)"
+										id={editCollectionId}
+										entityType="collection"
+										options={collections}
+										brands={brands}
+										onEntityCreated={handleEntityCreated}
+									/>
 								</div>
 
 								{/* Column 2: Empty for grid alignment */}
@@ -1074,13 +1106,25 @@ function RouteComponent() {
 
 					{/* Variations Block */}
 					{editFormData.hasVariations && (
-						<DrawerSection variant="default" className="lg:col-span-2">
-							<ProductVariationForm
-								variations={editVariations}
-								productSlug={editFormData.slug}
-								onChange={handleEditVariationsChange}
-							/>
-						</DrawerSection>
+						<>
+							{/* Attribute Selection */}
+							<DrawerSection variant="default" className="lg:col-span-2">
+								<ProductVariationAttributesSelector
+									selectedAttributes={editSelectedVariationAttributes}
+									onChange={setEditSelectedVariationAttributes}
+								/>
+							</DrawerSection>
+
+							{/* Variations */}
+							<DrawerSection variant="default" className="lg:col-span-2">
+								<ProductVariationForm
+									variations={editVariations}
+									productSlug={editFormData.slug}
+									selectedAttributes={editSelectedVariationAttributes}
+									onChange={handleEditVariationsChange}
+								/>
+							</DrawerSection>
+						</>
 					)}
 				</form>
 			</DashboardFormDrawer>
@@ -1219,110 +1263,86 @@ function RouteComponent() {
 									placeholder="Опционально - для напольных покрытий"
 								/>
 
-								{/* Empty cell for grid alignment */}
-								<div />
+								{/* Unit of Measurement */}
+								<div>
+									<label
+										htmlFor={createUnitId}
+										className="block text-sm font-medium mb-1"
+									>
+										Единица количества
+									</label>
+									<select
+										id={createUnitId}
+										name="unitOfMeasurement"
+										value={formData.unitOfMeasurement}
+										onChange={handleChange}
+										className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+									>
+										{UNITS_OF_MEASUREMENT.map((unit) => (
+											<option key={unit} value={unit}>
+												{unit}
+											</option>
+										))}
+									</select>
+								</div>
 
 								{/* Column 1: Category */}
 								<div>
-									<label
-										htmlFor={addCategoryId}
-										className="block text-sm font-medium mb-1"
-									>
-										Категория
-									</label>
-									<Select
+									<SelectWithCreate
 										value={formData.categorySlug}
 										onValueChange={(value) => {
 											setFormData({
 												...formData,
-												categorySlug: value,
+												categorySlug: value || "",
 											});
 										}}
+										placeholder="Выберите категорию"
+										label="Категория"
 										required
-									>
-										<SelectTrigger
-											id={addCategoryId}
-											className={
-												hasAttemptedSubmit && !formData.categorySlug
-													? "border-red-500"
-													: ""
-											}
-										>
-											<SelectValue placeholder="Выберите категорию" />
-										</SelectTrigger>
-										<SelectContent>
-											{categories.map((category: Category) => (
-												<SelectItem key={category.slug} value={category.slug}>
-													{category.name}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
+										id={addCategoryId}
+										entityType="category"
+										options={categories}
+										onEntityCreated={handleEntityCreated}
+									/>
 								</div>
 
 								{/* Column 2: Brand */}
 								<div>
-									<label
-										htmlFor={addBrandId}
-										className="block text-sm font-medium mb-1"
-									>
-										Бренд (опционально)
-									</label>
-									<Select
-										value={formData.brandSlug || "none"}
+									<SelectWithCreate
+										value={formData.brandSlug}
 										onValueChange={(value) => {
 											setFormData({
 												...formData,
-												brandSlug: value === "none" ? null : value,
+												brandSlug: value,
 											});
 										}}
-									>
-										<SelectTrigger id={addBrandId}>
-											<SelectValue placeholder="Выберите бренд (опционально)" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="none">Нет</SelectItem>
-											{brands.map((brand: Brand) => (
-												<SelectItem key={brand.slug} value={brand.slug}>
-													{brand.name}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
+										placeholder="Выберите бренд (опционально)"
+										label="Бренд (опционально)"
+										id={addBrandId}
+										entityType="brand"
+										options={brands}
+										onEntityCreated={handleEntityCreated}
+									/>
 								</div>
 
 								{/* Column 1: Collection */}
 								<div>
-									<label
-										htmlFor={addCollectionId}
-										className="block text-sm font-medium mb-1"
-									>
-										Коллекция (опционально)
-									</label>
-									<Select
-										value={formData.collectionSlug || "none"}
+									<SelectWithCreate
+										value={formData.collectionSlug || null}
 										onValueChange={(value) => {
 											setFormData({
 												...formData,
-												collectionSlug: value === "none" ? null : value,
+												collectionSlug: value,
 											});
 										}}
-									>
-										<SelectTrigger id={addCollectionId}>
-											<SelectValue placeholder="Выберите коллекцию (опционально)" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="none">None</SelectItem>
-											{collections?.map((collection) => (
-												<SelectItem
-													key={collection.slug}
-													value={collection.slug}
-												>
-													{collection.name}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
+										placeholder="Выберите коллекцию (опционально)"
+										label="Коллекция (опционально)"
+										id={addCollectionId}
+										entityType="collection"
+										options={collections}
+										brands={brands}
+										onEntityCreated={handleEntityCreated}
+									/>
 								</div>
 
 								{/* Column 2: Empty for grid alignment */}
@@ -1357,13 +1377,25 @@ function RouteComponent() {
 
 					{/* Variations Block */}
 					{formData.hasVariations && (
-						<DrawerSection variant="default" className="lg:col-span-2">
-							<ProductVariationForm
-								variations={variations}
-								productSlug={formData.slug}
-								onChange={handleVariationsChange}
-							/>
-						</DrawerSection>
+						<>
+							{/* Attribute Selection */}
+							<DrawerSection variant="default" className="lg:col-span-2">
+								<ProductVariationAttributesSelector
+									selectedAttributes={selectedVariationAttributes}
+									onChange={setSelectedVariationAttributes}
+								/>
+							</DrawerSection>
+
+							{/* Variations */}
+							<DrawerSection variant="default" className="lg:col-span-2">
+								<ProductVariationForm
+									variations={variations}
+									productSlug={formData.slug}
+									selectedAttributes={selectedVariationAttributes}
+									onChange={handleVariationsChange}
+								/>
+							</DrawerSection>
+						</>
 					)}
 				</form>
 			</DashboardFormDrawer>

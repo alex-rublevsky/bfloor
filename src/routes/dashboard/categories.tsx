@@ -359,11 +359,20 @@ function RouteComponent() {
 
 							{categoryType === "product" && (
 								<ImageUpload
-									currentImages={(activeForm.createForm.formData as CategoryFormData).image || ""}
-									onImagesChange={(images) => activeForm.createForm.updateField("image", images)}
+									currentImages={
+										(activeForm.createForm.formData as CategoryFormData)
+											.image || ""
+									}
+									onImagesChange={(images) =>
+										activeForm.createForm.updateField("image", images)
+									}
 									folder="categories"
-									slug={(activeForm.createForm.formData as CategoryFormData).slug}
-									productName={(activeForm.createForm.formData as CategoryFormData).name}
+									slug={
+										(activeForm.createForm.formData as CategoryFormData).slug
+									}
+									productName={
+										(activeForm.createForm.formData as CategoryFormData).name
+									}
 								/>
 							)}
 
@@ -465,11 +474,18 @@ function RouteComponent() {
 
 							{categoryType === "product" && (
 								<ImageUpload
-									currentImages={(activeForm.editForm.formData as CategoryFormData).image || ""}
-									onImagesChange={(images) => activeForm.editForm.updateField("image", images)}
+									currentImages={
+										(activeForm.editForm.formData as CategoryFormData).image ||
+										""
+									}
+									onImagesChange={(images) =>
+										activeForm.editForm.updateField("image", images)
+									}
 									folder="categories"
 									slug={(activeForm.editForm.formData as CategoryFormData).slug}
-									productName={(activeForm.editForm.formData as CategoryFormData).name}
+									productName={
+										(activeForm.editForm.formData as CategoryFormData).name
+									}
 								/>
 							)}
 

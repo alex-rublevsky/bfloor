@@ -123,7 +123,7 @@ function generateClientEmailHtml(data: {
           
           <!-- Greeting -->
           <p style="color: #000; font-size: 14px; line-height: 1.4; margin: 0 0 8px 0;">
-            Greetings${data.Name && data.LastName ? `, ${data.Name} ${data.LastName}` : ''}!
+            Greetings${data.Name && data.LastName ? `, ${data.Name} ${data.LastName}` : ""}!
           </p>
           <p style="color: #000; font-size: 14px; line-height: 1.4; margin: 0 0 24px 0;">
             You will be contacted shortly regarding delivery and payment.
@@ -162,7 +162,7 @@ function generateClientEmailHtml(data: {
           <hr style="border: none; border-top: 1px solid #eaeaea; margin: 26px 0;" />
           
           <p style="color: #6b7280; font-size: 12px; line-height: 1.8; margin: 0;">
-            ${data.Name ? `This order confirmation was intended for <strong>${data.Name}</strong>.` : 'This order confirmation was sent to the provided email address.'} 
+            ${data.Name ? `This order confirmation was intended for <strong>${data.Name}</strong>.` : "This order confirmation was sent to the provided email address."} 
             This email was sent from <strong>Rublevsky Studio</strong> located in <strong>Ontario, Canada</strong>. 
             If you were not expecting this order confirmation, you can ignore this email. 
             If you are concerned about your account's safety, please reply to this email to get in touch with us.
@@ -254,10 +254,10 @@ function generateAdminEmailHtml(data: {
           
           <!-- Order Info -->
           <p style="color: #000; font-size: 14px; line-height: 1.4; margin: 0 0 8px 0;">
-            Order #${data.orderId} has been placed${data.Name && data.LastName ? ` by ${data.Name} ${data.LastName}` : ''}.
+            Order #${data.orderId} has been placed${data.Name && data.LastName ? ` by ${data.Name} ${data.LastName}` : ""}.
           </p>
           <p style="color: #000; font-size: 14px; line-height: 1.4; margin: 0 0 16px 0;">
-            ${data.email ? `Customer Email: ${data.email}` : 'Customer email not provided'}
+            ${data.email ? `Customer Email: ${data.email}` : "Customer email not provided"}
           </p>
           
           <hr style="border: none; border-top: 1px solid #eaeaea; margin: 16px 0;" />
@@ -269,14 +269,15 @@ function generateAdminEmailHtml(data: {
           </p>
           <div style="margin-bottom: 16px;">
             <p style="color: #000; font-size: 14px; line-height: 1.4; margin: 0;">
-              ${data.shippingAddress ? 
-                `${data.shippingAddress.firstName} ${data.shippingAddress.lastName}<br/>
+              ${
+								data.shippingAddress
+									? `${data.shippingAddress.firstName} ${data.shippingAddress.lastName}<br/>
                 ${data.shippingAddress.streetAddress}<br/>
                 ${data.shippingAddress.city}, ${data.shippingAddress.state} ${data.shippingAddress.zipCode}<br/>
                 ${data.shippingAddress.country}<br/>
-                Phone: ${data.shippingAddress.phone}` :
-                'Shipping address to be provided by customer'
-              }
+                Phone: ${data.shippingAddress.phone}`
+									: "Shipping address to be provided by customer"
+							}
             </p>
           </div>
           
@@ -438,7 +439,9 @@ export const sendOrderEmails = createServerFn({ method: "POST" })
 				console.error("Client email error:", clientEmailResponse.error);
 				emailWarnings.push("Failed to send customer confirmation email");
 			} else if (!data.customerInfo.shippingAddress?.email) {
-				emailWarnings.push("Customer email not provided - confirmation email not sent");
+				emailWarnings.push(
+					"Customer email not provided - confirmation email not sent",
+				);
 			}
 
 			if (adminEmailResponse.error) {

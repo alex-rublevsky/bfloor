@@ -21,6 +21,7 @@ import { Footer } from "~/components/ui/shared/Footer";
 import { NavBar } from "~/components/ui/shared/NavBar";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { CartProvider } from "~/lib/cartContext";
+import { ClientSearchProvider } from "~/lib/clientSearchContext";
 import { seo } from "~/utils/seo";
 import appCss from "../styles/app.css?url";
 
@@ -114,12 +115,14 @@ function RootComponent() {
 	return (
 		<QueryClientProvider client={queryClient}>
 			<CartProvider>
-				<CursorContextProvider>
-					{!isMobile && <CustomCursor />}
-					<RootDocument>
-						<Outlet />
-					</RootDocument>
-				</CursorContextProvider>
+				<ClientSearchProvider>
+					<CursorContextProvider>
+						{!isMobile && <CustomCursor />}
+						<RootDocument>
+							<Outlet />
+						</RootDocument>
+					</CursorContextProvider>
+				</ClientSearchProvider>
 			</CartProvider>
 		</QueryClientProvider>
 	);
@@ -128,7 +131,7 @@ function RootComponent() {
 function RootDocument({ children }: { children: React.ReactNode }) {
 	const router = useRouter();
 	const pathname = router.state.location.pathname;
-	
+
 	// Don't render NavBar on dashboard pages since dashboard has its own NavBar
 	const isDashboard = pathname.startsWith("/dashboard");
 

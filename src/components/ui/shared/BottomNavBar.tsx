@@ -1,8 +1,8 @@
-import { Link, useRouter, useNavigate } from "@tanstack/react-router";
-import { Plus, MoreVertical } from "lucide-react";
+import { Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { MoreVertical, Plus } from "lucide-react";
 import { useState } from "react";
-import { cn } from "~/utils/utils";
 import { signOut } from "~/utils/auth-client";
+import { cn } from "~/utils/utils";
 
 interface BottomNavBarProps {
 	className?: string;
@@ -21,7 +21,12 @@ interface BottomNavBarProps {
 	};
 }
 
-export function BottomNavBar({ className, isDashboard = false, actionButton, userData }: BottomNavBarProps) {
+export function BottomNavBar({
+	className,
+	isDashboard = false,
+	actionButton,
+	userData,
+}: BottomNavBarProps) {
 	const router = useRouter();
 	const navigate = useNavigate();
 	const pathname = router.state.location.pathname;
@@ -83,12 +88,10 @@ export function BottomNavBar({ className, isDashboard = false, actionButton, use
 										"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors min-w-0",
 										pathname === item.url
 											? "text-primary bg-primary/10"
-											: "text-muted-foreground hover:text-foreground hover:bg-muted"
+											: "text-muted-foreground hover:text-foreground hover:bg-muted",
 									)}
 								>
-									<span className="text-lg">
-										{item.icon}
-									</span>
+									<span className="text-lg">{item.icon}</span>
 									<span className="text-xs font-medium text-center leading-tight">
 										{item.name}
 									</span>
@@ -104,7 +107,7 @@ export function BottomNavBar({ className, isDashboard = false, actionButton, use
 										"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors",
 										isMenuOpen
 											? "text-primary bg-primary/10"
-											: "text-muted-foreground hover:text-foreground hover:bg-muted"
+											: "text-muted-foreground hover:text-foreground hover:bg-muted",
 									)}
 								>
 									<MoreVertical className="w-5 h-5" />
@@ -117,21 +120,21 @@ export function BottomNavBar({ className, isDashboard = false, actionButton, use
 										<div className="py-2">
 											{/* User Info */}
 											{userData && (
-												<>
-													<div className="flex items-center gap-2 px-4 py-2 border-b border-border">
-														<div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
-															{userData.userName ? userData.userName.charAt(0).toUpperCase() : "U"}
+												<div className="flex items-center gap-2 px-4 py-2 border-b border-border">
+													<div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
+														{userData.userName
+															? userData.userName.charAt(0).toUpperCase()
+															: "U"}
+													</div>
+													<div className="flex-1 min-w-0">
+														<div className="text-sm font-medium truncate">
+															{userData.userName || userData.userID}
 														</div>
-														<div className="flex-1 min-w-0">
-															<div className="text-sm font-medium truncate">
-																{userData.userName || userData.userID}
-															</div>
-															<div className="text-xs text-muted-foreground truncate">
-																{userData.userEmail}
-															</div>
+														<div className="text-xs text-muted-foreground truncate">
+															{userData.userEmail}
 														</div>
 													</div>
-												</>
+												</div>
 											)}
 
 											{/* Menu Items */}
@@ -177,7 +180,7 @@ export function BottomNavBar({ className, isDashboard = false, actionButton, use
 									"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors",
 									pathname === "/store"
 										? "text-primary bg-primary/10"
-										: "text-muted-foreground hover:text-foreground hover:bg-muted"
+										: "text-muted-foreground hover:text-foreground hover:bg-muted",
 								)}
 							>
 								<svg
@@ -206,7 +209,7 @@ export function BottomNavBar({ className, isDashboard = false, actionButton, use
 									"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors",
 									pathname === "/contact"
 										? "text-primary bg-primary/10"
-										: "text-muted-foreground hover:text-foreground hover:bg-muted"
+										: "text-muted-foreground hover:text-foreground hover:bg-muted",
 								)}
 							>
 								<svg

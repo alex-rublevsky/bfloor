@@ -349,7 +349,6 @@ function RouteComponent() {
 								</Select>
 							</div>
 
-
 							<div className="flex items-center gap-2">
 								<Switch
 									name="isActive"
@@ -426,7 +425,6 @@ function RouteComponent() {
 									</SelectContent>
 								</Select>
 							</div>
-
 
 							<div className="flex items-center gap-2">
 								<Switch

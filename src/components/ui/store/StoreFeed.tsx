@@ -38,7 +38,9 @@ export default function StoreFeed({
 	priceRange,
 	initialCategory,
 }: StoreFeedProps) {
-	const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory || null);
+	const [selectedCategory, setSelectedCategory] = useState<string | null>(
+		initialCategory || null,
+	);
 	const [sortBy, setSortBy] = useState<string>("relevant");
 
 	const { cart } = useCart();

@@ -19,8 +19,8 @@ interface CartItemProps {
 	enrichedItems: EnrichedCartItem[];
 }
 
-export function CartItem({ item, enrichedItems }: CartItemProps) {
-	const { updateQuantity, removeFromCart, cart } = useCart();
+export function CartItem({ item }: CartItemProps) {
+	const { updateQuantity, removeFromCart } = useCart();
 	const { data: attributes } = useProductAttributes();
 	const queryClient = useQueryClient();
 

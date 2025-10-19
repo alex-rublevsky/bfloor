@@ -18,9 +18,15 @@ export const createCollection = createServerFn({ method: "POST" })
 			const db = DB();
 			const collectionData = data.data;
 
-			if (!collectionData.name || !collectionData.slug || !collectionData.brandSlug) {
+			if (
+				!collectionData.name ||
+				!collectionData.slug ||
+				!collectionData.brandSlug
+			) {
 				setResponseStatus(400);
-				throw new Error("Missing required fields: name, slug, and brandSlug are required");
+				throw new Error(
+					"Missing required fields: name, slug, and brandSlug are required",
+				);
 			}
 
 			// Check for duplicate slug

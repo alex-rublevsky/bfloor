@@ -15,13 +15,28 @@ interface EmptyStateProps {
 	icon?: React.ReactNode;
 }
 
-const entityTranslations: Record<string, { singular: string; plural: string; genitive: string }> = {
+const entityTranslations: Record<
+	string,
+	{ singular: string; plural: string; genitive: string }
+> = {
 	brands: { singular: "бренд", plural: "бренды", genitive: "брендов" },
-	collections: { singular: "коллекция", plural: "коллекции", genitive: "коллекций" },
-	categories: { singular: "категория", plural: "категории", genitive: "категорий" },
+	collections: {
+		singular: "коллекция",
+		plural: "коллекции",
+		genitive: "коллекций",
+	},
+	categories: {
+		singular: "категория",
+		plural: "категории",
+		genitive: "категорий",
+	},
 	products: { singular: "товар", plural: "товары", genitive: "товаров" },
 	orders: { singular: "заказ", plural: "заказы", genitive: "заказов" },
-	attributes: { singular: "атрибут", plural: "атрибуты", genitive: "атрибутов" },
+	attributes: {
+		singular: "атрибут",
+		plural: "атрибуты",
+		genitive: "атрибутов",
+	},
 };
 
 export function EmptyState({
@@ -30,16 +45,20 @@ export function EmptyState({
 	actionButton,
 	icon,
 }: EmptyStateProps) {
-	const entity = entityTranslations[entityType] || { singular: entityType, plural: entityType, genitive: entityType };
-	
+	const entity = entityTranslations[entityType] || {
+		singular: entityType,
+		plural: entityType,
+		genitive: entityType,
+	};
+
 	const defaultIcon = isSearchResult ? (
 		<Search className="w-12 h-12 text-muted-foreground" />
 	) : (
 		<Plus className="w-12 h-12 text-muted-foreground" />
 	);
 
-	const title = isSearchResult 
-		? `Не найдено ${entity.genitive}` 
+	const title = isSearchResult
+		? `Не найдено ${entity.genitive}`
 		: `Пока нет ${entity.genitive}`;
 
 	return (
@@ -52,9 +71,7 @@ export function EmptyState({
 			</div>
 
 			{/* Title */}
-			<h3 className="text-xl font-semibold text-foreground mb-6">
-				{title}
-			</h3>
+			<h3 className="text-xl font-semibold text-foreground mb-6">{title}</h3>
 
 			{/* Action Button */}
 			{actionButton && (

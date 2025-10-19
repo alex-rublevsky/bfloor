@@ -31,7 +31,7 @@ export const getStoreData = createServerFn({ method: "GET" }).handler(
 				db.select().from(products).where(eq(products.isActive, true)),
 			]);
 
-            // Allow empty state for initial setup
+			// Allow empty state for initial setup
 
 			const [variationsResult, attributesResult] = await Promise.all([
 				db.select().from(productVariations),

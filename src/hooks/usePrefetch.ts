@@ -31,7 +31,6 @@ export function usePrefetch() {
 		queryClient.prefetchQuery(storeDataQueryOptions());
 	};
 
-
 	/**
 	 * Prefetch dashboard orders
 	 * Use on dashboard navigation link hover

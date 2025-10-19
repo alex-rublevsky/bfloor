@@ -251,7 +251,9 @@ function RouteComponent() {
 													/>
 												</div>
 											) : (
-												<span className="text-muted-foreground">Нет логотипа</span>
+												<span className="text-muted-foreground">
+													Нет логотипа
+												</span>
 											)}
 										</td>
 										<td className="px-6 py-4 whitespace-nowrap">
@@ -335,7 +337,9 @@ function RouteComponent() {
 							checked={createForm.formData.isActive}
 							onChange={createForm.handleChange}
 						/>
-						<label htmlFor={createIsActiveId} className="ml-2 text-sm">Активен</label>
+						<label htmlFor={createIsActiveId} className="ml-2 text-sm">
+							Активен
+						</label>
 					</div>
 				</form>
 			</DashboardFormDrawer>
@@ -392,7 +396,9 @@ function RouteComponent() {
 							checked={editForm.formData.isActive}
 							onChange={editForm.handleChange}
 						/>
-						<label htmlFor={editIsActiveId} className="ml-2 text-sm">Активен</label>
+						<label htmlFor={editIsActiveId} className="ml-2 text-sm">
+							Активен
+						</label>
 					</div>
 				</form>
 			</DashboardFormDrawer>

@@ -7,8 +7,8 @@ import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDial
 import { OrderCard } from "~/components/ui/dashboard/OrderCard";
 import { OrderDrawer } from "~/components/ui/dashboard/OrderDrawer";
 import { OrdersPageSkeleton } from "~/components/ui/dashboard/skeletons/OrdersPageSkeleton";
-import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { Button } from "~/components/ui/shared/Button";
+import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { useDashboardSearch } from "~/lib/dashboardSearchContext";
 import { dashboardOrdersQueryOptions } from "~/lib/queryOptions";
 import {
@@ -243,10 +243,7 @@ function OrderList() {
 	if (allOrders.length === 0) {
 		return (
 			<div className="h-full w-full flex justify-center items-center">
-				<EmptyState
-					entityType="orders"
-					isSearchResult={!!searchTerm}
-				/>
+				<EmptyState entityType="orders" isSearchResult={!!searchTerm} />
 			</div>
 		);
 	}
@@ -276,8 +273,7 @@ function OrderList() {
 	return (
 		<div className="space-y-6">
 			{/* Orders Stats */}
-			<div className="px-4">
-			</div>
+			<div className="px-4"></div>
 
 			{/* Selection Controls */}
 			<div className="flex items-center gap-2 px-4">
@@ -322,10 +318,7 @@ function OrderList() {
 
 			{/* Orders Groups */}
 			{filteredGroupedOrders.length === 0 ? (
-				<EmptyState
-					entityType="orders"
-					isSearchResult={!!searchTerm}
-				/>
+				<EmptyState entityType="orders" isSearchResult={!!searchTerm} />
 			) : (
 				<div className="space-y-8">
 					{/* Render each group from server */}

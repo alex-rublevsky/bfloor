@@ -107,6 +107,7 @@ export interface ProductFormData {
 	description: string;
 	price: string;
 	squareMetersPerPack?: string; // For flooring products: area coverage per pack
+	unitOfMeasurement: string; // Единица количества: погонный метр, квадратный метр, литр, штука, упаковка
 	categorySlug: string;
 	brandSlug: string | null;
 	collectionSlug?: string | null;
@@ -153,6 +154,7 @@ export interface BrandFormData {
 	name: string;
 	slug: string;
 	logo: string;
+	country?: string; // Country ID (e.g., "russia", "germany") - optional
 	isActive: boolean;
 }
 

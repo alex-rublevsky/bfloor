@@ -64,8 +64,7 @@ function SortableImageItem({ image, index, onRemove }: SortableImageItemProps) {
 					src={`${ASSETS_BASE_URL}/${image}`}
 					alt={`Product ${index + 1}`}
 					className="w-full h-full object-cover"
-					onLoad={() => {
-					}}
+					onLoad={() => {}}
 					onError={(e) => {
 						e.currentTarget.src =
 							"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23ddd' width='100' height='100'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-size='14'%3ENo Image%3C/text%3E%3C/svg%3E";
@@ -311,7 +310,7 @@ export function ImageUpload({
 								fileInputRef.current.value = "";
 							}
 						}
-					} catch (error) {
+					} catch (_error) {
 						toast.error(
 							error instanceof Error ? error.message : "Failed to upload image",
 						);
@@ -386,7 +385,7 @@ export function ImageUpload({
 						} else {
 							toast.error("Could not extract image from clipboard");
 						}
-					} catch (error) {
+					} catch (_error) {
 						toast.error("Failed to paste image from clipboard");
 					} finally {
 						setIsPasting(false);
@@ -438,7 +437,7 @@ export function ImageUpload({
 						} else {
 							toast.error("Could not extract image from clipboard");
 						}
-					} catch (error) {
+					} catch (_error) {
 						toast.error("Failed to paste image from clipboard");
 					} finally {
 						setIsPasting(false);

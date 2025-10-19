@@ -8,11 +8,11 @@ import { seo } from "~/utils/seo";
 // Simple search params validation for category filtering
 const validateSearch = (search: Record<string, unknown>) => {
 	const result: { category?: string } = {};
-	
+
 	if (typeof search.category === "string") {
 		result.category = search.category;
 	}
-	
+
 	return result;
 };
 

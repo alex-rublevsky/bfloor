@@ -64,7 +64,7 @@ function DashboardLayout() {
 
 	const router = useRouter();
 	const pathname = router.state.location.pathname;
-	
+
 	const { searchTerm, setSearchTerm } = useDashboardSearch();
 
 	// Only provide search functionality to pages that need it (not misc page)
