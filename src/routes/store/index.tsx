@@ -38,7 +38,7 @@ function StorePage() {
 	const search = Route.useSearch();
 	const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-	// Get store data directly from TanStack Query (with persist plugin)
+	// Get store data directly from TanStack Query
 	const { data: storeData } = useSuspenseQuery(storeDataQueryOptions());
 
 	// Sync URL category parameter with local state

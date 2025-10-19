@@ -1,7 +1,6 @@
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { Check, ChevronRight, Circle } from "lucide-react";
 import * as React from "react";
-import { useCursorHover } from "~/components/ui/shared/custom_cursor/CustomCursorContext";
 
 import { cn } from "~/lib/utils";
 
@@ -11,15 +10,12 @@ const DropdownMenuTrigger = React.forwardRef<
 	React.ElementRef<typeof DropdownMenuPrimitive.Trigger>,
 	React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Trigger>
 >(({ className, onMouseEnter, onMouseLeave, ...props }, ref) => {
-	const { handleMouseEnter, handleMouseLeave: handleMouseLeaveHook } =
-		useCursorHover("small");
-
 	return (
 		<DropdownMenuPrimitive.Trigger
 			ref={ref}
 			className={cn("cursor-pointer", className)}
-			onMouseEnter={handleMouseEnter(onMouseEnter)}
-			onMouseLeave={handleMouseLeaveHook(onMouseLeave)}
+			onMouseEnter={onMouseEnter}
+			onMouseLeave={onMouseLeave}
 			{...props}
 		/>
 	);
@@ -44,9 +40,6 @@ const DropdownMenuSubTrigger = React.forwardRef<
 		{ className, inset, children, onMouseEnter, onMouseLeave, ...props },
 		ref,
 	) => {
-		const { handleMouseEnter, handleMouseLeave: handleMouseLeaveHook } =
-			useCursorHover("small");
-
 		return (
 			<DropdownMenuPrimitive.SubTrigger
 				ref={ref}
@@ -55,8 +48,8 @@ const DropdownMenuSubTrigger = React.forwardRef<
 					inset && "pl-8",
 					className,
 				)}
-				onMouseEnter={handleMouseEnter(onMouseEnter)}
-				onMouseLeave={handleMouseLeaveHook(onMouseLeave)}
+				onMouseEnter={onMouseEnter}
+				onMouseLeave={onMouseLeave}
 				{...props}
 			>
 				{children}
@@ -108,9 +101,6 @@ const DropdownMenuItem = React.forwardRef<
 		inset?: boolean;
 	}
 >(({ className, inset, onMouseEnter, onMouseLeave, ...props }, ref) => {
-	const { handleMouseEnter, handleMouseLeave: handleMouseLeaveHook } =
-		useCursorHover("small");
-
 	return (
 		<DropdownMenuPrimitive.Item
 			ref={ref}
@@ -121,8 +111,8 @@ const DropdownMenuItem = React.forwardRef<
 				inset && "pl-8",
 				className,
 			)}
-			onMouseEnter={handleMouseEnter(onMouseEnter)}
-			onMouseLeave={handleMouseLeaveHook(onMouseLeave)}
+			onMouseEnter={onMouseEnter}
+			onMouseLeave={onMouseLeave}
 			{...props}
 		/>
 	);

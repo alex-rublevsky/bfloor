@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1760839994431,
-      "tag": "0000_medical_firelord",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1760849916977,
-      "tag": "0001_equal_thunderball",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1760884498693,
-      "tag": "0002_noisy_radioactive_man",
+      "when": 1760909622873,
+      "tag": "0000_fresh_white_queen",
       "breakpoints": true
     }
   ]

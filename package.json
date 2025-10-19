@@ -1,5 +1,5 @@
 {
-	"name": "Rublevsky Studio",
+	"name": "BeautyFloor",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -45,10 +45,8 @@
 		"@tabler/icons-react": "^3.33.0",
 		"@tailwindcss/postcss": "^4.1.6",
 		"@tailwindcss/vite": "^4.1.13",
-		"@tanstack/query-sync-storage-persister": "^5.90.5",
 		"@tanstack/react-query": "^5.90.3",
 		"@tanstack/react-query-devtools": "^5.90.2",
-		"@tanstack/react-query-persist-client": "^5.90.5",
 		"@tanstack/react-router": "^1.132.25",
 		"@tanstack/react-router-devtools": "^1.132.25",
 		"@tanstack/react-start": "^1.133.13",

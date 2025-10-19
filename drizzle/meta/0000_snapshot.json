@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "8f493bb1-501e-415c-b429-cd687a535bfc",
+  "id": "f88706d3-43a8-44a2-a6dd-8e48127e6c0b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -145,6 +145,13 @@
         },
         "image": {
           "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "country": {
+          "name": "country",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -802,6 +809,20 @@
           "notNull": false,
           "autoincrement": false
         },
+        "important_note": {
+          "name": "important_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tags": {
+          "name": "tags",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "price": {
           "name": "price",
           "type": "real",
@@ -816,6 +837,14 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "unit_of_measurement": {
+          "name": "unit_of_measurement",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'штука'"
         },
         "is_active": {
           "name": "is_active",

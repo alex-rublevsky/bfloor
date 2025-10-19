@@ -1,9 +1,7 @@
 /// <reference types="vite/client" />
 
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 //import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { persistQueryClient } from "@tanstack/react-query-persist-client";
 import {
 	createRootRoute,
 	HeadContent,
@@ -15,11 +13,8 @@ import type * as React from "react";
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import { NotFound } from "~/components/NotFound";
 
-import CustomCursor from "~/components/ui/shared/custom_cursor/CustomCursor";
-import { CursorContextProvider } from "~/components/ui/shared/custom_cursor/CustomCursorContext";
 import { Footer } from "~/components/ui/shared/Footer";
 import { NavBar } from "~/components/ui/shared/NavBar";
-import { useIsMobile } from "~/hooks/use-mobile";
 import { CartProvider } from "~/lib/cartContext";
 import { ClientSearchProvider } from "~/lib/clientSearchContext";
 import { seo } from "~/utils/seo";
@@ -35,20 +30,6 @@ const queryClient = new QueryClient({
 	},
 });
 
-// Configure persistence - only runs on client side and only in production
-if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
-	const persister = createSyncStoragePersister({
-		storage: window.localStorage,
-		key: "RUBLEVSKY_QUERY_CACHE",
-	});
-
-	persistQueryClient({
-		queryClient,
-		persister,
-		maxAge: 1000 * 60 * 60 * 24 * 1, // 1 day - persist for a day
-		buster: "v12",
-	});
-}
 
 export const Route = createRootRoute({
 	head: () => ({
@@ -97,12 +78,16 @@ export const Route = createRootRoute({
 	}),
 	errorComponent: (props) => {
 		return (
-			<RootDocument>
+			<RootDocument showNavBar={false}>
 				<DefaultCatchBoundary {...props} />
 			</RootDocument>
 		);
 	},
-	notFoundComponent: () => <NotFound />,
+	notFoundComponent: () => (
+		<RootDocument showNavBar={false}>
+			<NotFound />
+		</RootDocument>
+	),
 	component: RootComponent,
 	context: () => ({
 		queryClient,
@@ -110,25 +95,26 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
-	const isMobile = useIsMobile();
-
 	return (
 		<QueryClientProvider client={queryClient}>
 			<CartProvider>
 				<ClientSearchProvider>
-					<CursorContextProvider>
-						{!isMobile && <CustomCursor />}
-						<RootDocument>
-							<Outlet />
-						</RootDocument>
-					</CursorContextProvider>
+					<RootDocument>
+						<Outlet />
+					</RootDocument>
 				</ClientSearchProvider>
 			</CartProvider>
 		</QueryClientProvider>
 	);
 }
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootDocument({ 
+	children, 
+	showNavBar = true 
+}: { 
+	children: React.ReactNode;
+	showNavBar?: boolean;
+}) {
 	const router = useRouter();
 	const pathname = router.state.location.pathname;
 
@@ -145,7 +131,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body className="" suppressHydrationWarning>
-				{!isDashboard && <NavBar />}
+				{showNavBar && !isDashboard && <NavBar />}
 				{children}
 				<Footer />
 				{/* <TanStackRouterDevtools position="bottom-right" /> */}

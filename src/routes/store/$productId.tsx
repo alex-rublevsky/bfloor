@@ -16,13 +16,13 @@ import {
 	BreadcrumbSeparator,
 } from "~/components/ui/dashboard/breadcrumb";
 import { Button } from "~/components/ui/shared/Button";
+import ImageGallery from "~/components/ui/shared/ImageGallery";
 import {
 	markdownComponents,
 	rehypePlugins,
 } from "~/components/ui/shared/MarkdownComponents";
 import { ProductPageSkeleton } from "~/components/ui/store/skeletons/ProductPageSkeleton";
 import { VariationSelector } from "~/components/ui/store/VariationSelector";
-import { ASSETS_BASE_URL } from "~/constants/urls";
 import { useProductAttributes } from "~/hooks/useProductAttributes";
 import { useVariationSelection } from "~/hooks/useVariationSelection";
 import { useCart } from "~/lib/cartContext";
@@ -403,83 +403,55 @@ function ProductPage() {
 	}, [syncedProduct?.images]);
 
 	return (
-		<main className="min-h-screen bg-[#fafafa]">
+		<main className="min-h-screen bg-background">
 			<div className="max-w-7xl mx-auto px-4 py-8">
-				{/* Breadcrumb Navigation */}
-				<div className="mb-8">
-					<Breadcrumb>
-						<BreadcrumbList>
-							<BreadcrumbItem>
-								<BreadcrumbLink asChild>
-									<Link to="/" className="text-gray-400 hover:text-gray-600">
-										Главная
-									</Link>
-								</BreadcrumbLink>
-							</BreadcrumbItem>
-							<BreadcrumbSeparator />
-							<BreadcrumbItem>
-								<BreadcrumbLink asChild>
-									<Link
-										to="/store"
-										className="text-gray-400 hover:text-gray-600"
-									>
-										Ламинат
-									</Link>
-								</BreadcrumbLink>
-							</BreadcrumbItem>
-							<BreadcrumbSeparator />
-							<BreadcrumbItem>
-								<BreadcrumbPage className="text-gray-400">
-									{syncedProduct?.name}
-								</BreadcrumbPage>
-							</BreadcrumbItem>
-						</BreadcrumbList>
-					</Breadcrumb>
-				</div>
-
 				<div className="flex flex-col lg:flex-row gap-8">
 					{/* Left Section - Image Gallery (60% width) */}
 					<div className="w-full lg:w-3/5">
-						<div className="flex gap-4">
-							{/* Thumbnail Gallery */}
-							<div className="w-24 flex-shrink-0">
-								<div className="flex flex-col gap-2">
-									{productImages.map((image, index) => (
-										<button
-											type="button"
-											key={image}
-											className={`w-24 h-24 rounded-sm overflow-hidden border-2 transition-colors ${
-												index === 0
-													? "border-red-600"
-													: "border-transparent hover:border-gray-300"
-											}`}
-										>
-											<img
-												src={`${ASSETS_BASE_URL}/${image}`}
-												alt={`${syncedProduct?.name || "Product"} ${index + 1}`}
-												className="w-full h-full object-cover"
-											/>
-										</button>
-									))}
-								</div>
-							</div>
-
-							{/* Main Image */}
-							<div className="flex-1">
-								<div className="aspect-square bg-white rounded-lg overflow-hidden">
-									<img
-										src={`${ASSETS_BASE_URL}/${productImages[0]}`}
-										alt={syncedProduct?.name || "Product"}
-										className="w-full h-full object-contain"
-									/>
-								</div>
-							</div>
-						</div>
+						<ImageGallery
+							images={productImages}
+							alt={syncedProduct?.name || "Product"}
+							productSlug={syncedProduct?.slug}
+							size="default"
+							className="bg-white rounded-lg"
+						/>
 					</div>
 
 					{/* Right Section - Product Info (40% width) */}
 					<div className="w-full lg:w-2/5">
 						<div className="space-y-6">
+							{/* Breadcrumb Navigation */}
+							<div>
+								<Breadcrumb>
+									<BreadcrumbList>
+										<BreadcrumbItem>
+											<BreadcrumbLink asChild>
+												<Link to="/" className="text-gray-400 hover:text-gray-600">
+													Главная
+												</Link>
+											</BreadcrumbLink>
+										</BreadcrumbItem>
+										<BreadcrumbSeparator />
+										<BreadcrumbItem>
+											<BreadcrumbLink asChild>
+												<Link
+													to="/store"
+													className="text-gray-400 hover:text-gray-600"
+												>
+													Ламинат
+												</Link>
+											</BreadcrumbLink>
+										</BreadcrumbItem>
+										<BreadcrumbSeparator />
+										<BreadcrumbItem>
+											<BreadcrumbPage className="text-gray-400">
+												{syncedProduct?.name}
+											</BreadcrumbPage>
+										</BreadcrumbItem>
+									</BreadcrumbList>
+								</Breadcrumb>
+							</div>
+
 							{/* Product Title */}
 							<div>
 								<h1 className="text-3xl font-bold text-gray-800 mb-2">
@@ -498,7 +470,7 @@ function ProductPage() {
 							{/* Price and Quantity */}
 							<div className="flex items-center gap-4">
 								{/* Price Box */}
-								<div className="bg-[#f5f5f5] px-4 py-3 rounded-lg">
+								<div className="border border-muted px-4 py-3 rounded-lg">
 									<div className="text-sm text-gray-500 mb-1">Цена за м²</div>
 									<div className="text-2xl font-bold text-gray-800">
 										{currentPrice.toLocaleString()} ₽
@@ -516,7 +488,7 @@ function ProductPage() {
 								</div>
 
 								{/* Quantity Selector */}
-								<div className="bg-[#f5f5f5] px-4 py-3 rounded-lg">
+								<div className="border border-muted px-4 py-3 rounded-lg">
 									<div className="flex items-center gap-3">
 										<button
 											type="button"

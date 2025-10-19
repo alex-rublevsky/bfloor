@@ -74,14 +74,14 @@ function DashboardLayout() {
 
 	return (
 		<div className="min-h-screen bg-background">
-			<main className="pt-20 pb-8">
-				<Outlet />
-			</main>
 			<NavBar
 				userData={loaderData}
 				searchTerm={shouldProvideSearch ? searchTerm : undefined}
 				onSearchChange={shouldProvideSearch ? setSearchTerm : undefined}
 			/>
+			<main className="pb-8">
+				<Outlet />
+			</main>
 			<Toaster />
 		</div>
 	);

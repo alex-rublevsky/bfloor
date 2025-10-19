@@ -1,7 +1,6 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown } from "lucide-react";
 import * as React from "react";
-import { useCursorHover } from "~/components/ui/shared/custom_cursor/CustomCursorContext";
 
 import { cn } from "~/utils/utils";
 
@@ -34,9 +33,6 @@ const SelectTrigger = React.forwardRef<
 		},
 		ref,
 	) => {
-		const { handleMouseEnter, handleMouseLeave: handleMouseLeaveHook } =
-			useCursorHover("small");
-
 		return (
 			<SelectPrimitive.Trigger
 				ref={ref}
@@ -50,8 +46,8 @@ const SelectTrigger = React.forwardRef<
 					"cursor-pointer",
 					className,
 				)}
-				onMouseEnter={handleMouseEnter(onMouseEnter)}
-				onMouseLeave={handleMouseLeaveHook(onMouseLeave)}
+				onMouseEnter={onMouseEnter}
+				onMouseLeave={onMouseLeave}
 				{...props}
 			>
 				<span className="relative z-10 flex items-center justify-between w-full cursor-pointer px-2 md:px-4 py-1.5 md:py-2 text-sm md:text-sm font-medium text-foreground">
@@ -114,9 +110,6 @@ const SelectItem = React.forwardRef<
 	React.ElementRef<typeof SelectPrimitive.Item>,
 	React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
 >(({ className, children, onMouseEnter, onMouseLeave, ...props }, ref) => {
-	const { handleMouseEnter, handleMouseLeave: handleMouseLeaveHook } =
-		useCursorHover("small");
-
 	return (
 		<SelectPrimitive.Item
 			ref={ref}
@@ -126,8 +119,8 @@ const SelectItem = React.forwardRef<
 				"cursor-pointer",
 				className,
 			)}
-			onMouseEnter={handleMouseEnter(onMouseEnter)}
-			onMouseLeave={handleMouseLeaveHook(onMouseLeave)}
+			onMouseEnter={onMouseEnter}
+			onMouseLeave={onMouseLeave}
 			{...props}
 		>
 			<span className="absolute right-2 flex h-3.5 w-3.5 items-center justify-center">

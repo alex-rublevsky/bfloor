@@ -1,16 +1,10 @@
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { useMemo } from "react";
 import { CategoryTreeView } from "~/components/ui/dashboard/CategoryTreeView";
-import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
-import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
-import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
+import { DashboardEntityManager, type EntityFormFieldsProps, type EntityListProps } from "~/components/ui/dashboard/DashboardEntityManager";
 import { ImageUpload } from "~/components/ui/dashboard/ImageUpload";
-import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { CategoriesPageSkeleton } from "~/components/ui/dashboard/skeletons/CategoriesPageSkeleton";
-import { EmptyState } from "~/components/ui/shared/EmptyState";
-import { Input } from "~/components/ui/shared/input";
 import {
 	Select,
 	SelectContent,
@@ -18,15 +12,89 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "~/components/ui/shared/Select";
-import { Switch } from "~/components/ui/shared/Switch";
-import { useDashboardForm } from "~/hooks/useDashboardForm";
-import { generateSlug, useSlugGeneration } from "~/hooks/useSlugGeneration";
 import { buildCategoryTree } from "~/lib/categoryTree";
 import { createProductCategory } from "~/server_functions/dashboard/categories/createProductCategory";
 import { deleteProductCategory } from "~/server_functions/dashboard/categories/deleteProductCategory";
 import { getAllProductCategories } from "~/server_functions/dashboard/categories/getAllProductCategories";
 import { updateProductCategory } from "~/server_functions/dashboard/categories/updateProductCategory";
 import type { Category, CategoryFormData } from "~/types";
+
+// Category form fields component
+const CategoryFormFields = ({ 
+	formData, 
+	onFieldChange, 
+	idPrefix, 
+	entities = [], 
+	editingEntity 
+}: EntityFormFieldsProps<Category, CategoryFormData>) => {
+	const parentCategoryId = `${idPrefix}-parent-category`;
+	
+	return (
+		<>
+			{/* Parent Category Selector */}
+			<div>
+				<label
+					htmlFor={parentCategoryId}
+					className="block text-sm font-medium mb-1"
+				>
+					Родительская категория (опционально)
+				</label>
+				<Select
+					value={(formData as CategoryFormData).parentSlug || "none"}
+					onValueChange={(value: string) => {
+						onFieldChange("parentSlug", value === "none" ? null : value);
+					}}
+				>
+					<SelectTrigger id={parentCategoryId}>
+						<SelectValue placeholder="Нет (корневая категория)" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="none">
+							Нет (корневая категория)
+						</SelectItem>
+						{entities
+							.filter((cat) => 
+								cat.isActive && 
+								(!editingEntity || cat.slug !== editingEntity.slug)
+							)
+							.map((category) => (
+								<SelectItem key={category.slug} value={category.slug}>
+									{category.name}
+								</SelectItem>
+							))}
+					</SelectContent>
+				</Select>
+			</div>
+
+			{/* Image Upload */}
+			<ImageUpload
+				currentImages={(formData as CategoryFormData).image || ""}
+				onImagesChange={(images) => onFieldChange("image", images)}
+				folder="categories"
+				slug={(formData as CategoryFormData).slug}
+				productName={(formData as CategoryFormData).name}
+			/>
+		</>
+	);
+};
+
+// Category list component
+const CategoryList = ({ entities, onEdit, onDelete }: EntityListProps<Category>) => {
+	const categoryTree = useMemo(
+		() => buildCategoryTree(entities || []),
+		[entities],
+	);
+
+	return (
+		<div className="border rounded-lg p-4 bg-card">
+			<CategoryTreeView
+				tree={categoryTree}
+				onEdit={onEdit}
+				onDelete={onDelete}
+			/>
+		</div>
+	);
+};
 
 // Query options factories for reuse
 const productCategoriesQueryOptions = () => ({
@@ -47,471 +115,42 @@ export const Route = createFileRoute("/dashboard/categories")({
 });
 
 function RouteComponent() {
-	const queryClient = useQueryClient();
-	const createFormId = useId();
-	const editFormId = useId();
-	const createParentCategoryId = useId();
-	const editParentCategoryId = useId();
-
 	// Use suspense queries - data is guaranteed to be loaded by the loader
 	const { data: categoriesData } = useSuspenseQuery(
 		productCategoriesQueryOptions(),
 	);
 
-	// Build tree structure from flat categories
-	const categoryTree = useMemo(
-		() => buildCategoryTree(categoriesData || []),
-		[categoriesData],
-	);
-
-	// Category type state - only product categories are supported
-	const [categoryType, setCategoryType] = useState<"product">("product");
-
-	// Use our dashboard form hooks - one for each category type
-	const productCategoryForm = useDashboardForm<CategoryFormData>(
-		{
+	// Entity manager configuration
+	const entityManagerConfig = {
+		queryKey: ["bfloorDashboardCategories"],
+		queryFn: getAllProductCategories,
+		createFn: async (data: { data: CategoryFormData }) => {
+			await createProductCategory({ data: data.data });
+		},
+		updateFn: async (data: { id: number; data: CategoryFormData }) => {
+			await updateProductCategory({ data });
+		},
+		deleteFn: async (data: { id: number }) => {
+			await deleteProductCategory({ data });
+		},
+		entityName: "категория",
+		entityNamePlural: "категории",
+		emptyStateEntityType: "categories",
+		defaultFormData: {
 			name: "",
 			slug: "",
 			parentSlug: null,
 			image: "",
 			isActive: true,
-		},
-		{ listenToActionButton: true },
-	);
-
-	// Get the active form based on category type
-	const activeForm = productCategoryForm;
-
-	const [isCreateAutoSlug, setIsCreateAutoSlug] = useState(true);
-	const [isEditAutoSlug, setIsEditAutoSlug] = useState(false);
-	const [editingCategoryId, setEditingCategoryId] = useState<number | null>(
-		null,
-	);
-	const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
-		null,
-	);
-
-	// Stable callbacks for slug generation
-	const handleCreateSlugChange = useCallback(
-		(slug: string) => {
-			productCategoryForm.createForm.updateField("slug", slug);
-		},
-		[productCategoryForm.createForm.updateField],
-	);
-
-	const handleEditSlugChange = useCallback(
-		(slug: string) => {
-			productCategoryForm.editForm.updateField("slug", slug);
-		},
-		[productCategoryForm.editForm.updateField],
-	);
-
-	// Auto-slug generation hooks
-	useSlugGeneration(
-		activeForm.createForm.formData.name,
-		isCreateAutoSlug,
-		handleCreateSlugChange,
-	);
-	useSlugGeneration(
-		activeForm.editForm.formData.name,
-		isEditAutoSlug,
-		handleEditSlugChange,
-	);
-
-	// Listen for action button clicks from navbar
-	useEffect(() => {
-		const handleAction = () => {
-			setCategoryType("product");
-			productCategoryForm.crud.openCreateDrawer();
-		};
-
-		window.addEventListener("dashboardAction", handleAction);
-		return () => window.removeEventListener("dashboardAction", handleAction);
-	}, [productCategoryForm.crud.openCreateDrawer]);
-
-	// Submit handler for creating categories
-	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		activeForm.crud.startSubmitting();
-
-		try {
-			await createProductCategory({
-				data: productCategoryForm.createForm.formData as CategoryFormData,
-			});
-
-			toast.success("Категория добавлена успешно!");
-
-			// Refresh the relevant query
-			queryClient.invalidateQueries({
-				queryKey: ["bfloorDashboardCategories"],
-			});
-
-			closeCreateDrawer();
-		} catch (err) {
-			const errorMsg = err instanceof Error ? err.message : "An error occurred";
-			activeForm.crud.setError(errorMsg);
-			toast.error(errorMsg);
-		} finally {
-			activeForm.crud.stopSubmitting();
-		}
-	};
-
-	const closeCreateDrawer = () => {
-		activeForm.crud.closeCreateDrawer();
-		productCategoryForm.createForm.resetForm();
-		setIsCreateAutoSlug(true);
-	};
-
-	// Handler for editing product categories
-	const handleEditCategory = (category: Category) => {
-		setEditingCategoryId(category.id);
-
-		// Determine if slug is custom (doesn't match auto-generated)
-		const isCustomSlug = category.slug !== generateSlug(category.name);
-
-		productCategoryForm.editForm.setFormData({
-			name: category.name,
-			slug: category.slug,
-			parentSlug: category.parentSlug || null,
-			image: category.image || "",
-			isActive: category.isActive,
-		});
-		setIsEditAutoSlug(!isCustomSlug);
-		productCategoryForm.crud.openEditDrawer();
-	};
-
-	// Handler for editing categories
-
-	// Handler for updating categories
-	const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		if (!editingCategoryId) return;
-
-		activeForm.crud.startSubmitting();
-
-		try {
-			await updateProductCategory({
-				data: {
-					id: editingCategoryId,
-					data: productCategoryForm.editForm.formData as CategoryFormData,
-				},
-			});
-
-			toast.success("Категория обновлена успешно!");
-
-			// Refresh the relevant query
-			queryClient.invalidateQueries({
-				queryKey: ["bfloorDashboardCategories"],
-			});
-
-			closeEditModal();
-		} catch (err) {
-			const errorMsg = err instanceof Error ? err.message : "An error occurred";
-			activeForm.crud.setError(errorMsg);
-			toast.error(errorMsg);
-		} finally {
-			activeForm.crud.stopSubmitting();
-		}
-	};
-
-	const closeEditModal = () => {
-		activeForm.crud.closeEditDrawer();
-		setEditingCategoryId(null);
-		productCategoryForm.editForm.resetForm();
-		setIsEditAutoSlug(false);
-	};
-
-	// Handler for deleting product categories
-	const handleDeleteCategoryClick = (category: Category) => {
-		setDeletingCategoryId(category.id);
-		productCategoryForm.crud.openDeleteDialog();
-	};
-
-	// Handler for deleting categories
-
-	const handleDeleteConfirm = async () => {
-		if (!deletingCategoryId) return;
-
-		activeForm.crud.startDeleting();
-
-		try {
-			await deleteProductCategory({ data: { id: deletingCategoryId } });
-
-			toast.success("Категория удалена успешно!");
-
-			// Refresh the relevant query
-			queryClient.invalidateQueries({
-				queryKey: ["bfloorDashboardCategories"],
-			});
-
-			activeForm.crud.closeDeleteDialog();
-			setDeletingCategoryId(null);
-		} catch (err) {
-			const errorMsg = err instanceof Error ? err.message : "An error occurred";
-			activeForm.crud.setError(errorMsg);
-			toast.error(errorMsg);
-		} finally {
-			activeForm.crud.stopDeleting();
-		}
-	};
-
-	const handleDeleteCancel = () => {
-		activeForm.crud.closeDeleteDialog();
-		setDeletingCategoryId(null);
-		// no-op
+		} as CategoryFormData,
+		formFields: CategoryFormFields,
+		renderList: CategoryList,
 	};
 
 	return (
-		<div className="space-y-6 px-6">
-			{/* Product Categories Section */}
-			{categoryTree.length === 0 ? (
-				<EmptyState entityType="categories" />
-			) : (
-				<div className="space-y-4">
-					<div className="border rounded-lg p-4 bg-card">
-						<CategoryTreeView
-							tree={categoryTree}
-							onEdit={handleEditCategory}
-							onDelete={handleDeleteCategoryClick}
-						/>
-					</div>
-				</div>
-			)}
-
-			{/* Create Category Drawer */}
-			<DashboardFormDrawer
-				isOpen={activeForm.crud.showCreateDrawer}
-				onOpenChange={activeForm.crud.setShowCreateDrawer}
-				title={`Добавить новую категорию товаров`}
-				formId={createFormId}
-				isSubmitting={activeForm.crud.isSubmitting}
-				submitButtonText={`Создать категорию`}
-				submittingText="Создание..."
-				onCancel={closeCreateDrawer}
-				error={
-					activeForm.crud.error && !activeForm.crud.showEditDrawer
-						? activeForm.crud.error
-						: undefined
-				}
-				layout="single-column"
-			>
-				<form onSubmit={handleSubmit} id={createFormId} className="contents">
-					<DrawerSection maxWidth title={`Детали категории`}>
-						<div className="space-y-4">
-							<Input
-								label={`Название категории`}
-								type="text"
-								name="name"
-								value={activeForm.createForm.formData.name}
-								onChange={activeForm.createForm.handleChange}
-								required
-							/>
-
-							<SlugField
-								slug={activeForm.createForm.formData.slug}
-								name={activeForm.createForm.formData.name}
-								isAutoSlug={isCreateAutoSlug}
-								onSlugChange={(slug) => {
-									setIsCreateAutoSlug(false);
-									productCategoryForm.createForm.updateField("slug", slug);
-								}}
-								onAutoSlugChange={setIsCreateAutoSlug}
-								idPrefix="create"
-							/>
-
-							{/* Parent Category Selector */}
-							<div>
-								<label
-									htmlFor={createParentCategoryId}
-									className="block text-sm font-medium mb-1"
-								>
-									Родительская категория (опционально)
-								</label>
-								<Select
-									value={
-										(activeForm.createForm.formData as CategoryFormData)
-											.parentSlug || "none"
-									}
-									onValueChange={(value: string) => {
-										productCategoryForm.createForm.updateField(
-											"parentSlug",
-											value === "none" ? null : value,
-										);
-									}}
-								>
-									<SelectTrigger id={createParentCategoryId}>
-										<SelectValue placeholder="Нет (корневая категория)" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="none">
-											Нет (корневая категория)
-										</SelectItem>
-										{categoriesData
-											.filter((cat) => cat.isActive)
-											.map((category) => (
-												<SelectItem key={category.slug} value={category.slug}>
-													{category.name}
-												</SelectItem>
-											))}
-									</SelectContent>
-								</Select>
-							</div>
-
-							{categoryType === "product" && (
-								<ImageUpload
-									currentImages={
-										(activeForm.createForm.formData as CategoryFormData)
-											.image || ""
-									}
-									onImagesChange={(images) =>
-										activeForm.createForm.updateField("image", images)
-									}
-									folder="categories"
-									slug={
-										(activeForm.createForm.formData as CategoryFormData).slug
-									}
-									productName={
-										(activeForm.createForm.formData as CategoryFormData).name
-									}
-								/>
-							)}
-
-							<div className="flex items-center gap-2">
-								<Switch
-									name="isActive"
-									checked={activeForm.createForm.formData.isActive}
-									onChange={activeForm.createForm.handleChange}
-								/>
-								<span className="text-sm">Активна</span>
-							</div>
-						</div>
-					</DrawerSection>
-				</form>
-			</DashboardFormDrawer>
-
-			{/* Edit Category Drawer */}
-			<DashboardFormDrawer
-				isOpen={activeForm.crud.showEditDrawer}
-				onOpenChange={activeForm.crud.setShowEditDrawer}
-				title={`Редактировать категорию товаров`}
-				formId={editFormId}
-				isSubmitting={activeForm.crud.isSubmitting}
-				submitButtonText={`Обновить категорию`}
-				submittingText="Обновление..."
-				onCancel={closeEditModal}
-				error={
-					activeForm.crud.error && activeForm.crud.showEditDrawer
-						? activeForm.crud.error
-						: undefined
-				}
-				layout="single-column"
-			>
-				<form onSubmit={handleUpdate} id={editFormId} className="contents">
-					<DrawerSection maxWidth title={`Детали категории`}>
-						<div className="space-y-4">
-							<Input
-								label={`Название категории`}
-								type="text"
-								name="name"
-								value={activeForm.editForm.formData.name}
-								onChange={activeForm.editForm.handleChange}
-								required
-							/>
-
-							<SlugField
-								slug={activeForm.editForm.formData.slug}
-								name={activeForm.editForm.formData.name}
-								isAutoSlug={isEditAutoSlug}
-								onSlugChange={(slug) => {
-									setIsEditAutoSlug(false);
-									productCategoryForm.editForm.updateField("slug", slug);
-								}}
-								onAutoSlugChange={setIsEditAutoSlug}
-								idPrefix="edit"
-							/>
-
-							{/* Parent Category Selector */}
-							<div>
-								<label
-									htmlFor={editParentCategoryId}
-									className="block text-sm font-medium mb-1"
-								>
-									Родительская категория (опционально)
-								</label>
-								<Select
-									value={
-										(activeForm.editForm.formData as CategoryFormData)
-											.parentSlug || "none"
-									}
-									onValueChange={(value: string) => {
-										productCategoryForm.editForm.updateField(
-											"parentSlug",
-											value === "none" ? null : value,
-										);
-									}}
-								>
-									<SelectTrigger id={editParentCategoryId}>
-										<SelectValue placeholder="Нет (корневая категория)" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="none">
-											Нет (корневая категория)
-										</SelectItem>
-										{categoriesData
-											.filter(
-												(cat) =>
-													cat.isActive &&
-													cat.slug !== activeForm.editForm.formData.slug,
-											)
-											.map((category) => (
-												<SelectItem key={category.slug} value={category.slug}>
-													{category.name}
-												</SelectItem>
-											))}
-									</SelectContent>
-								</Select>
-							</div>
-
-							{categoryType === "product" && (
-								<ImageUpload
-									currentImages={
-										(activeForm.editForm.formData as CategoryFormData).image ||
-										""
-									}
-									onImagesChange={(images) =>
-										activeForm.editForm.updateField("image", images)
-									}
-									folder="categories"
-									slug={(activeForm.editForm.formData as CategoryFormData).slug}
-									productName={
-										(activeForm.editForm.formData as CategoryFormData).name
-									}
-								/>
-							)}
-
-							<div className="flex items-center gap-2">
-								<Switch
-									name="isActive"
-									checked={activeForm.editForm.formData.isActive}
-									onChange={activeForm.editForm.handleChange}
-								/>
-								<span className="text-sm">Активна</span>
-							</div>
-						</div>
-					</DrawerSection>
-				</form>
-			</DashboardFormDrawer>
-
-			{activeForm.crud.showDeleteDialog && (
-				<DeleteConfirmationDialog
-					isOpen={activeForm.crud.showDeleteDialog}
-					onClose={handleDeleteCancel}
-					onConfirm={handleDeleteConfirm}
-					title={`Удалить категорию`}
-					description={`Вы уверены, что хотите удалить эту категорию? Это действие нельзя отменить.`}
-					isDeleting={activeForm.crud.isDeleting}
-				/>
-			)}
-		</div>
+		<DashboardEntityManager
+			config={entityManagerConfig}
+			data={categoriesData || []}
+		/>
 	);
 }

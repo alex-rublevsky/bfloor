@@ -2,7 +2,6 @@ import { Slot } from "@radix-ui/react-slot";
 import { Link } from "@tanstack/react-router";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
-import { useCursorHover } from "~/components/ui/shared/custom_cursor/CustomCursorContext";
 
 import { cn } from "~/utils/utils";
 
@@ -58,16 +57,6 @@ export interface ButtonProps
 	asChild?: boolean;
 	description?: string;
 	centered?: boolean;
-	cursorType?:
-		| "default"
-		| "small"
-		| "enlarge"
-		| "link"
-		| "add"
-		| "block"
-		| "visitWebsite"
-		| "shrink"
-		| "hidden";
 	// Link props - automatically handles internal/external routing
 	to?: string;
 	href?: string;
@@ -90,7 +79,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 			asChild = false,
 			description,
 			centered = false,
-			cursorType = "small",
 			disabled = false,
 			onMouseEnter,
 			onMouseLeave,
@@ -109,11 +97,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 		},
 		ref,
 	) => {
-		// Determine effective cursor behavior - disabled buttons use "block" cursor
-		const effectiveCursorType = disabled ? "block" : cursorType;
-
-		const { handleMouseEnter, handleMouseLeave: handleMouseLeaveHook } =
-			useCursorHover(effectiveCursorType, disabled);
 
 		// Smart link detection logic
 		const isLink = Boolean(to || href);
@@ -188,16 +171,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 					}),
 					// Use cursor-not-allowed for disabled buttons, cursor-default for enabled buttons
 					disabled ? "cursor-not-allowed" : "cursor-pointer",
-					cursorType === "add" ? "cursor-none" : "cursor-pointer",
 					// Adjust button styling when description is present - must come after buttonVariants to override
 					hasDescription && "h-auto py-3 px-4 whitespace-normal",
 				)}
 				ref={ref}
 				disabled={disabled}
-				onMouseEnter={disabled ? onMouseEnter : handleMouseEnter(onMouseEnter)}
-				onMouseLeave={
-					disabled ? onMouseLeave : handleMouseLeaveHook(onMouseLeave)
-				}
+				onMouseEnter={onMouseEnter}
+				onMouseLeave={onMouseLeave}
 				{...linkProps}
 				{...props}
 			>

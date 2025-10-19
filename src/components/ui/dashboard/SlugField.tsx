@@ -61,7 +61,7 @@ export function SlugField({
 				<div className="flex items-center justify-between mb-1">
 					<div className="flex items-center gap-2">
 						<label htmlFor={slugId} className="block text-sm font-medium">
-							Идентификатор
+							ярлык
 						</label>
 						{isCustomSlug && (
 							<Badge className="" variant="default">
@@ -105,7 +105,7 @@ export function SlugField({
 	return (
 		<div className="flex items-end gap-2">
 			<Input
-				label="Идентификатор (автоматический)"
+				label="ярлык (автоматический)"
 				id={slugId}
 				type="text"
 				name="slug"

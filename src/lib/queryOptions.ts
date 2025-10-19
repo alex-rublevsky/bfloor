@@ -21,8 +21,8 @@ import { getProductBySlug } from "~/server_functions/store/getProductBySlug";
  * Store data query options
  * Used for: /store route and prefetching store data
  *
- * Cache Strategy: Maximum caching with persist plugin
- * - Data persists in localStorage for 7 days
+ * Cache Strategy: Maximum caching
+ * - Data cached in memory for 7 days
  * - Only refetches on manual invalidation or after 24 hours
  */
 export const storeDataQueryOptions = () =>
@@ -30,7 +30,7 @@ export const storeDataQueryOptions = () =>
 		queryKey: ["bfloorStoreData"],
 		queryFn: async () => getStoreData(),
 		staleTime: 1000 * 60 * 60 * 24, // 24 hours - data considered fresh (reduced from 24 hours)
-		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory/persist
+		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
 		retry: 3,
 		refetchOnWindowFocus: false, // Don't refetch on window focus
 		refetchOnMount: false, // Don't refetch on component mount if data is fresh
@@ -40,9 +40,9 @@ export const storeDataQueryOptions = () =>
  * Product by slug query options
  * Used for: /store/$productId route and prefetching individual products
  *
- * Cache Strategy: Long-lived caching with persist plugin
+ * Cache Strategy: Long-lived caching
  * - Individual products cached for 24 hours
- * - Persists across page refreshes
+ * - Cached in memory across page refreshes
  */
 export const productQueryOptions = (productId: string) =>
 	queryOptions({
@@ -59,7 +59,7 @@ export const productQueryOptions = (productId: string) =>
 		},
 		retry: false, // Don't retry on error - fail fast for 404s
 		staleTime: 1000 * 60 * 60 * 24, // 24 hours - data considered fresh
-		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory/persist
+		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
 	});

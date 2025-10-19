@@ -1,6 +1,5 @@
 import { cva } from "class-variance-authority";
 import useSound from "use-sound";
-import { useCursorHover } from "~/components/ui/shared/custom_cursor/CustomCursorContext";
 import { cn } from "~/utils/utils";
 
 interface FilterOption {
@@ -58,16 +57,8 @@ function FilterButton({
 			? "selected-disabled"
 			: "disabled"
 		: isSelected
-			? "selected"
-			: "unselected";
-
-	// Determine effective cursor behavior - disabled buttons use "block" cursor
-	const effectiveCursorType = isDisabled ? "block" : "small";
-
-	const { handleMouseEnter, handleMouseLeave } = useCursorHover(
-		effectiveCursorType,
-		isDisabled,
-	);
+		? "selected"
+		: "unselected";
 
 	return (
 		<button
@@ -84,12 +75,12 @@ function FilterButton({
 				className,
 			)}
 			title={title}
-			onMouseEnter={handleMouseEnter(() => {
+			onMouseEnter={() => {
 				if (!isDisabled) {
 					playHoverSound();
 				}
-			})}
-			onMouseLeave={handleMouseLeave()}
+			}}
+			onMouseLeave={() => {}}
 		>
 			{children}
 		</button>

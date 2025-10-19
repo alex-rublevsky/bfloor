@@ -2,7 +2,7 @@
  * Cart Context
  *
  * Manages shopping cart state and operations.
- * Products data is now managed by TanStack Query with persist plugin.
+ * Products data is now managed by TanStack Query.
  *
  * This context only handles:
  * - Cart items (stored in cookies)

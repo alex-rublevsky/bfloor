@@ -251,14 +251,14 @@ export function SelectWithCreate({
 			{/* Inline creation form */}
 			{isCreating && (
 				<div className="mt-4 p-4 border rounded-lg bg-muted/30 space-y-4">
-					<h4 className="font-medium text-sm">
+					<h5 className="font-medium text-xs text-muted-foreground">
 						Создать новый{" "}
 						{entityType === "category"
 							? "категорию"
 							: entityType === "brand"
 								? "бренд"
 								: "коллекцию"}
-					</h4>
+					</h5>
 
 					<div className="space-y-3">
 						<Input

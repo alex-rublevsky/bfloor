@@ -157,7 +157,7 @@ export default function ImageGallery({
 				{/* Main image container - same structure as multi-image gallery */}
 				<div className="flex items-center justify-center lg:items-start lg:justify-start order-1 grow relative">
 					<img
-						src={`https://assets.rublevsky.studio/${images[0]}`}
+						src={`${ASSETS_BASE_URL}/${images[0]}`}
 						alt={alt}
 						width={3000}
 						height={3000}
@@ -201,7 +201,7 @@ export default function ImageGallery({
 								<div
 									className={`
                     absolute inset-0 rounded-sm
-                    ${currentImageIndex === index ? "border-2 border-black" : "border border-transparent"}
+                    ${currentImageIndex === index ? "border-2 border-primary" : "border border-transparent"}
                     transition-colors duration-200 pointer-events-none z-10
                   `}
 								/>
@@ -220,7 +220,7 @@ export default function ImageGallery({
 			<div className="flex items-center justify-center lg:items-start lg:justify-start order-1 grow relative">
 				{/* Desktop: Single image display */}
 				<img
-					src={`https://assets.rublevsky.studio/${images[currentImageIndex]}`}
+					src={`${ASSETS_BASE_URL}/${images[currentImageIndex]}`}
 					alt={alt}
 					width={3000}
 					height={3000}

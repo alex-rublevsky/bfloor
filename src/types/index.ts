@@ -80,10 +80,10 @@ export type NewProductVariation = InferInsertModel<typeof productVariations>;
 // Variation Attributes
 export interface VariationAttribute {
 	id?: number;
-	productVariationId?: number;
+	productVariationId?: number | null;
 	attributeId: string;
 	value: string;
-	createdAt?: string;
+	createdAt?: Date;
 	updatedAt?: string;
 }
 
@@ -150,6 +150,7 @@ export interface CategoryFormData {
 	image: string;
 	isActive: boolean;
 	order?: number;
+	[key: string]: unknown; // Allow additional fields for EntityFormData compatibility
 }
 
 export interface BrandFormData {
@@ -158,6 +159,7 @@ export interface BrandFormData {
 	logo: string;
 	country?: string; // Country ID (e.g., "russia", "germany") - optional
 	isActive: boolean;
+	[key: string]: unknown; // Allow additional fields for EntityFormData compatibility
 }
 
 export interface CollectionFormData {

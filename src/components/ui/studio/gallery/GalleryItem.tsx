@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { Button } from "~/components/ui/shared/Button";
-import { useCursorHover } from "~/components/ui/shared/custom_cursor/CustomCursorContext";
 import { Image } from "~/components/ui/shared/Image";
 import type {
 	GalleryItem as GalleryItemType,
@@ -23,16 +22,12 @@ export default function GalleryItemComponent({
 	onOpenGallery,
 	galleryType: _galleryType,
 }: GalleryItemProps) {
-	const { handleMouseEnter, handleMouseLeave } = useCursorHover("enlarge");
-
 	return (
 		<motion.div
 			//shadow-[0_5px_6px_rgb(0,0,0,0.08)]
 			id={item.id}
-			className="relative group transform-gpu rounded-lg overflow-hidden cursor-pointer md:cursor-none mb-3"
+			className="relative group transform-gpu rounded-lg overflow-hidden cursor-pointer mb-3"
 			onClick={() => onOpenGallery(index)}
-			onMouseEnter={handleMouseEnter()}
-			onMouseLeave={handleMouseLeave()}
 			whileHover={{
 				scale: 1.025,
 			}}
