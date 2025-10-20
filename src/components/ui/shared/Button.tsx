@@ -13,7 +13,7 @@ type RouterSearch = Record<
 >;
 
 const buttonVariants = cva(
-	"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-300 ease-in-out focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-80 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+	"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[15px] text-sm font-medium transition-all duration-300 ease-in-out focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-80 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
 	{
 		variants: {
 			variant: {
@@ -34,8 +34,8 @@ const buttonVariants = cva(
 			},
 			size: {
 				default: "h-11 px-4 py-3",
-				sm: "h-9 rounded-md px-3 py-1 text-xs",
-				lg: "h-12 rounded-md px-4 py-3 text-md",
+				sm: "h-9 rounded-[15px] px-3 py-1 text-xs",
+				lg: "h-12 rounded-[15px] px-4 py-3 text-md",
 				icon: "h-11 w-11",
 			},
 			alignment: {
