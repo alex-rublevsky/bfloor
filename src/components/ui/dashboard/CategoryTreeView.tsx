@@ -1,6 +1,6 @@
+import { EntityCardGrid } from "~/components/ui/dashboard/EntityCardGrid";
 import { Badge } from "~/components/ui/shared/Badge";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
-import { EntityCardGrid } from "~/components/ui/dashboard/EntityCardGrid";
 import type { Category, CategoryTreeNode } from "~/types";
 
 interface CategoryTreeViewProps {
@@ -39,7 +39,9 @@ export function CategoryTreeView({
 			renderEntity={(category) => (
 				<div className="flex flex-col flex-1 min-w-0">
 					<div className="flex items-center gap-2">
-						<span className="text-sm font-medium truncate">{category.name}</span>
+						<span className="text-sm font-medium truncate">
+							{category.name}
+						</span>
 						{category.depth > 0 && (
 							<Badge variant="outline" className="text-xs flex-shrink-0">
 								Level {category.depth + 1}

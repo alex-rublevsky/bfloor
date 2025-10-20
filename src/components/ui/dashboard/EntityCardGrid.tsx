@@ -10,19 +10,24 @@ export interface EntityCardProps<T> {
 	children: React.ReactNode; // Entity-specific content
 }
 
-export function EntityCard<T>({ entity, onEdit, onDelete, children }: EntityCardProps<T>) {
+export function EntityCard<T>({
+	entity,
+	onEdit,
+	onDelete,
+	children,
+}: EntityCardProps<T>) {
 	return (
 		<div
 			className={cn(
 				"group flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer",
-				"border border-transparent hover:border-border"
+				"border border-transparent hover:border-border",
 			)}
 		>
 			{/* Action Buttons - Icon only - Always visible on mobile/tablet, hover on desktop */}
 			<div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
-				<Button 
-					size="sm" 
-					variant="outline" 
+				<Button
+					size="sm"
+					variant="outline"
 					onClick={(e) => {
 						e.stopPropagation();
 						onEdit(entity);
@@ -57,7 +62,12 @@ export interface EntityCardGridProps<T> {
 	renderEntity: (entity: T) => React.ReactNode;
 }
 
-export function EntityCardGrid<T>({ entities, onEdit, onDelete, renderEntity }: EntityCardGridProps<T>) {
+export function EntityCardGrid<T>({
+	entities,
+	onEdit,
+	onDelete,
+	renderEntity,
+}: EntityCardGridProps<T>) {
 	return (
 		<div className="border rounded-lg p-4 bg-card">
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

@@ -1,0 +1,138 @@
+.embla {
+	width: 100%;
+	margin: auto;
+	--slide-height: 19rem;
+	--slide-spacing: 0rem;
+	--slide-size: 100%;
+	overflow: hidden;
+}
+.embla__viewport {
+	overflow: hidden;
+	width: 100%;
+}
+.embla__container {
+	display: flex;
+	touch-action: pan-y pinch-zoom;
+	margin-left: calc(var(--slide-spacing) * -1);
+}
+.embla__slide {
+	transform: translate3d(0, 0, 0);
+	flex: 0 0 var(--slide-size);
+	min-width: 0;
+	position: relative;
+	max-width: 50ch;
+	padding-left: var(--slide-spacing);
+}
+.embla__slide__number {
+	box-shadow: inset 0 0 0 0.2rem var(--detail-medium-contrast);
+	border-radius: 1.8rem;
+	font-size: 4rem;
+	font-weight: 600;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: var(--slide-height);
+	user-select: none;
+}
+.embla__controls {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	justify-content: space-between;
+	gap: 1.2rem;
+	padding: 0 1rem;
+}
+@media (min-width: 640px) {
+	.embla__controls {
+		padding: 0 1.5rem;
+	}
+}
+.embla__buttons {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 0.6rem;
+	align-items: center;
+}
+.embla__button {
+	-webkit-tap-highlight-color: rgba(var(--text-high-contrast-rgb-value), 0.5);
+	-webkit-appearance: none;
+	appearance: none;
+	background-color: transparent;
+	touch-action: manipulation;
+	display: flex;
+	text-decoration: none;
+	cursor: pointer;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	/* box-shadow: inset 0 0 0 0.2rem var(--color-secondary); */
+	width: 3.6rem;
+	height: 3.6rem;
+	z-index: 1;
+	border-radius: 50%;
+	/* color: var(--color-foreground); */
+	align-items: center;
+	justify-content: center;
+	transition: all 0.3s ease;
+}
+.embla__button:disabled {
+	color: oklch(var(--muted));
+}
+.embla__button__svg {
+	width: 35%;
+	height: 35%;
+}
+.embla__dots {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	align-items: center;
+	margin-right: calc((2.6rem - 1.4rem) / 2 * -1);
+}
+.embla__dot {
+	-webkit-tap-highlight-color: oklch(var(--primary));
+	-webkit-appearance: none;
+	appearance: none;
+	background-color: transparent;
+	touch-action: manipulation;
+	display: flex;
+	text-decoration: none;
+	cursor: pointer;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	width: 2.6rem;
+	height: 2.6rem;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+}
+.embla__dot:after {
+	box-shadow: inset 0 0 0 0.2rem oklch(from oklch(var(--secondary)) l c h / 0.5);
+	width: 1.4rem;
+	height: 1.4rem;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	content: "";
+	transition: all 0.3s ease;
+}
+.embla__dot--selected:after {
+	box-shadow: inset 0 0 0 0.2rem oklch(var(--primary));
+}
+
+.testimonial-card {
+	background-color: hsl(var(--card));
+	border-radius: 16px;
+	padding: 1.5rem;
+}
+
+@media (max-width: 640px) {
+	.embla__dot {
+		width: 2rem;
+		height: 2rem;
+	}
+	.embla__dot:after {
+		width: 1.2rem;
+		height: 1.2rem;
+	}
+}

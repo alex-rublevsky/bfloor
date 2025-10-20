@@ -1,12 +1,16 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { DashboardEntityManager, type EntityFormFieldsProps, type EntityListProps } from "~/components/ui/dashboard/DashboardEntityManager";
+import {
+	DashboardEntityManager,
+	type EntityFormFieldsProps,
+	type EntityListProps,
+} from "~/components/ui/dashboard/DashboardEntityManager";
 import { EntityCardGrid } from "~/components/ui/dashboard/EntityCardGrid";
 import { ImageUpload } from "~/components/ui/dashboard/ImageUpload";
 import { BrandsPageSkeleton } from "~/components/ui/dashboard/skeletons/BrandsPageSkeleton";
-import { ASSETS_BASE_URL } from "~/constants/urls";
 import { Badge } from "~/components/ui/shared/Badge";
 import { Image } from "~/components/ui/shared/Image";
+import { ASSETS_BASE_URL } from "~/constants/urls";
 import { createBrand } from "~/server_functions/dashboard/brands/createBrand";
 import { deleteBrand } from "~/server_functions/dashboard/brands/deleteBrand";
 import { updateBrand } from "~/server_functions/dashboard/brands/updateBrand";
@@ -14,9 +18,9 @@ import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
 import type { Brand, BrandFormData } from "~/types";
 
 // Brand form fields component
-const BrandFormFields = ({ 
-	formData, 
-	onFieldChange 
+const BrandFormFields = ({
+	formData,
+	onFieldChange,
 }: EntityFormFieldsProps<Brand, BrandFormData>) => {
 	return (
 		<>
@@ -142,9 +146,6 @@ function RouteComponent() {
 	};
 
 	return (
-		<DashboardEntityManager
-			config={entityManagerConfig}
-			data={data || []}
-		/>
+		<DashboardEntityManager config={entityManagerConfig} data={data || []} />
 	);
 }

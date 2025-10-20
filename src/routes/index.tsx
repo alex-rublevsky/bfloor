@@ -2,6 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 //import { usePrefetch } from "~/hooks/usePrefetch";
 import "../styles/app.css";
 import { Banner } from "~/components/ui/Banner";
+import AboutSection from "~/components/ui/home/AboutSection";
+import BenefitsSection from "~/components/ui/home/BenefitsSection";
+import OurPartnersSection from "~/components/ui/home/OurPartnersSection";
+import TestimonialSliderSection from "~/components/ui/home/testimonial/TestimonialSection";
+import ProductSlider from "~/components/ui/shared/ProductSlider";
 import { seo } from "~/utils/seo";
 
 export const Route = createFileRoute("/")({
@@ -10,7 +15,7 @@ export const Route = createFileRoute("/")({
 		meta: [
 			...seo({
 				title: "BeautyFloor",
-				description: "Web Development, Graphic Design, Tea Reviews",
+				description: "Напольные покрытия во Владивостоке",
 			}),
 		],
 	}),
@@ -25,8 +30,11 @@ function App() {
 				<div className="w-full max-w-md space-y-6 text-center">
 					<section className="!p-0 !static">
 						<Banner />
-
-						{/*<TestimonialsSection/>*/}
+						<BenefitsSection />
+						<ProductSlider />
+						<OurPartnersSection />
+						<AboutSection />
+						<TestimonialSliderSection />
 					</section>
 				</div>
 			</main>

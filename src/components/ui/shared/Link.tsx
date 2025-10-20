@@ -9,13 +9,7 @@ export interface LinkProps
 
 const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
 	(
-		{
-			className,
-			onMouseEnter,
-			onMouseLeave,
-			blurOnHover = true,
-			...props
-		},
+		{ className, onMouseEnter, onMouseLeave, blurOnHover = true, ...props },
 		ref,
 	) => {
 		const handleKeyDown = (e: React.KeyboardEvent<HTMLAnchorElement>) => {

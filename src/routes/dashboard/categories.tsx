@@ -2,7 +2,11 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { CategoryTreeView } from "~/components/ui/dashboard/CategoryTreeView";
-import { DashboardEntityManager, type EntityFormFieldsProps, type EntityListProps } from "~/components/ui/dashboard/DashboardEntityManager";
+import {
+	DashboardEntityManager,
+	type EntityFormFieldsProps,
+	type EntityListProps,
+} from "~/components/ui/dashboard/DashboardEntityManager";
 import { ImageUpload } from "~/components/ui/dashboard/ImageUpload";
 import { CategoriesPageSkeleton } from "~/components/ui/dashboard/skeletons/CategoriesPageSkeleton";
 import {
@@ -20,15 +24,15 @@ import { updateProductCategory } from "~/server_functions/dashboard/categories/u
 import type { Category, CategoryFormData } from "~/types";
 
 // Category form fields component
-const CategoryFormFields = ({ 
-	formData, 
-	onFieldChange, 
-	idPrefix, 
-	entities = [], 
-	editingEntity 
+const CategoryFormFields = ({
+	formData,
+	onFieldChange,
+	idPrefix,
+	entities = [],
+	editingEntity,
 }: EntityFormFieldsProps<Category, CategoryFormData>) => {
 	const parentCategoryId = `${idPrefix}-parent-category`;
-	
+
 	return (
 		<>
 			{/* Parent Category Selector */}
@@ -49,13 +53,12 @@ const CategoryFormFields = ({
 						<SelectValue placeholder="Нет (корневая категория)" />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="none">
-							Нет (корневая категория)
-						</SelectItem>
+						<SelectItem value="none">Нет (корневая категория)</SelectItem>
 						{entities
-							.filter((cat) => 
-								cat.isActive && 
-								(!editingEntity || cat.slug !== editingEntity.slug)
+							.filter(
+								(cat) =>
+									cat.isActive &&
+									(!editingEntity || cat.slug !== editingEntity.slug),
 							)
 							.map((category) => (
 								<SelectItem key={category.slug} value={category.slug}>
@@ -79,7 +82,11 @@ const CategoryFormFields = ({
 };
 
 // Category list component
-const CategoryList = ({ entities, onEdit, onDelete }: EntityListProps<Category>) => {
+const CategoryList = ({
+	entities,
+	onEdit,
+	onDelete,
+}: EntityListProps<Category>) => {
 	const categoryTree = useMemo(
 		() => buildCategoryTree(entities || []),
 		[entities],

@@ -19,32 +19,43 @@ export interface EntityFormData {
 	[key: string]: unknown; // Allow additional fields
 }
 
-export interface EntityManagerConfig<TEntity, TFormData extends EntityFormData> {
+export interface EntityManagerConfig<
+	TEntity,
+	TFormData extends EntityFormData,
+> {
 	// Data fetching
 	queryKey: string[];
 	queryFn: () => Promise<TEntity[]>;
-	
+
 	// CRUD operations
 	createFn: (data: { data: TFormData }) => Promise<unknown>;
 	updateFn: (data: { id: number; data: TFormData }) => Promise<unknown>;
 	deleteFn: (data: { id: number }) => Promise<unknown>;
-	
+
 	// UI configuration
 	entityName: string;
 	entityNamePlural: string;
 	emptyStateEntityType: string;
-	
+
 	// Form configuration
 	defaultFormData: TFormData;
-	formFields: (props: EntityFormFieldsProps<TEntity, TFormData>) => React.ReactNode;
-	
+	formFields: (
+		props: EntityFormFieldsProps<TEntity, TFormData>,
+	) => React.ReactNode;
+
 	// List rendering
 	renderList: (props: EntityListProps<TEntity>) => React.ReactNode;
 }
 
-export interface EntityFormFieldsProps<TEntity, TFormData extends EntityFormData> {
+export interface EntityFormFieldsProps<
+	TEntity,
+	TFormData extends EntityFormData,
+> {
 	formData: TFormData;
-	onFieldChange: <K extends keyof TFormData>(field: K, value: TFormData[K]) => void;
+	onFieldChange: <K extends keyof TFormData>(
+		field: K,
+		value: TFormData[K],
+	) => void;
 	onSlugChange: (slug: string) => void;
 	isAutoSlug: boolean;
 	onAutoSlugChange: (isAuto: boolean) => void;
@@ -59,13 +70,19 @@ export interface EntityListProps<TEntity> {
 	onDelete: (entity: TEntity) => void;
 }
 
-interface DashboardEntityManagerProps<TEntity, TFormData extends EntityFormData> {
+interface DashboardEntityManagerProps<
+	TEntity,
+	TFormData extends EntityFormData,
+> {
 	config: EntityManagerConfig<TEntity, TFormData>;
 	data?: TEntity[];
 	isLoading?: boolean;
 }
 
-export function DashboardEntityManager<TEntity extends { id: number; name: string; slug: string }, TFormData extends EntityFormData>({
+export function DashboardEntityManager<
+	TEntity extends { id: number; name: string; slug: string },
+	TFormData extends EntityFormData,
+>({
 	config,
 	data = [],
 	isLoading = false,
@@ -75,10 +92,9 @@ export function DashboardEntityManager<TEntity extends { id: number; name: strin
 	const editFormId = useId();
 
 	// Form state management
-	const form = useDashboardForm<TFormData>(
-		config.defaultFormData,
-		{ listenToActionButton: true },
-	);
+	const form = useDashboardForm<TFormData>(config.defaultFormData, {
+		listenToActionButton: true,
+	});
 
 	const [isCreateAutoSlug, setIsCreateAutoSlug] = useState(true);
 	const [isEditAutoSlug, setIsEditAutoSlug] = useState(false);
@@ -132,7 +148,9 @@ export function DashboardEntityManager<TEntity extends { id: number; name: strin
 				data: form.createForm.formData as TFormData,
 			});
 
-			toast.success(`${config.entityName} добавлен${config.entityName.endsWith('а') ? 'а' : ''} успешно!`);
+			toast.success(
+				`${config.entityName} добавлен${config.entityName.endsWith("а") ? "а" : ""} успешно!`,
+			);
 
 			// Refresh the relevant query
 			queryClient.invalidateQueries({
@@ -185,7 +203,9 @@ export function DashboardEntityManager<TEntity extends { id: number; name: strin
 				data: form.editForm.formData as TFormData,
 			});
 
-			toast.success(`${config.entityName} обновлен${config.entityName.endsWith('а') ? 'а' : ''} успешно!`);
+			toast.success(
+				`${config.entityName} обновлен${config.entityName.endsWith("а") ? "а" : ""} успешно!`,
+			);
 
 			// Refresh the relevant query
 			queryClient.invalidateQueries({
@@ -223,7 +243,9 @@ export function DashboardEntityManager<TEntity extends { id: number; name: strin
 		try {
 			await config.deleteFn({ id: deletingEntityId });
 
-			toast.success(`${config.entityName} удален${config.entityName.endsWith('а') ? 'а' : ''} успешно!`);
+			toast.success(
+				`${config.entityName} удален${config.entityName.endsWith("а") ? "а" : ""} успешно!`,
+			);
 
 			// Refresh the relevant query
 			queryClient.invalidateQueries({
@@ -269,7 +291,7 @@ export function DashboardEntityManager<TEntity extends { id: number; name: strin
 			<DashboardFormDrawer
 				isOpen={form.crud.showCreateDrawer}
 				onOpenChange={form.crud.setShowCreateDrawer}
-				title={`Добавить новый${config.entityName.endsWith('а') ? 'у' : ''} ${config.entityName}`}
+				title={`Добавить новый${config.entityName.endsWith("а") ? "у" : ""} ${config.entityName}`}
 				formId={createFormId}
 				isSubmitting={form.crud.isSubmitting}
 				submitButtonText={`Создать ${config.entityName}`}
@@ -379,7 +401,8 @@ export function DashboardEntityManager<TEntity extends { id: number; name: strin
 								onAutoSlugChange: setIsEditAutoSlug,
 								idPrefix: "edit",
 								entities: data,
-								editingEntity: data.find(e => e.id === editingEntityId) || null,
+								editingEntity:
+									data.find((e) => e.id === editingEntityId) || null,
 							})}
 
 							<div className="flex items-center gap-2">
@@ -401,7 +424,7 @@ export function DashboardEntityManager<TEntity extends { id: number; name: strin
 					onClose={handleDeleteCancel}
 					onConfirm={handleDeleteConfirm}
 					title={`Удалить ${config.entityName}`}
-					description={`Вы уверены, что хотите удалить этот${config.entityName.endsWith('а') ? '' : ''} ${config.entityName}? Это действие нельзя отменить.`}
+					description={`Вы уверены, что хотите удалить этот${config.entityName.endsWith("а") ? "" : ""} ${config.entityName}? Это действие нельзя отменить.`}
 					isDeleting={form.crud.isDeleting}
 				/>
 			)}

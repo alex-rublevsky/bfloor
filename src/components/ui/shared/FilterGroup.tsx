@@ -57,8 +57,8 @@ function FilterButton({
 			? "selected-disabled"
 			: "disabled"
 		: isSelected
-		? "selected"
-		: "unselected";
+			? "selected"
+			: "unselected";
 
 	return (
 		<button

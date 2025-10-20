@@ -305,8 +305,13 @@ export function SelectWithCreate({
 									className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
 								>
 									{BRAND_COUNTRIES.map((countryCode) => (
-										<option key={countryCode} value={countryCode === "NONE" ? "" : countryCode}>
-											{getBrandCountryName(countryCode === "NONE" ? "" : countryCode)}
+										<option
+											key={countryCode}
+											value={countryCode === "NONE" ? "" : countryCode}
+										>
+											{getBrandCountryName(
+												countryCode === "NONE" ? "" : countryCode,
+											)}
 										</option>
 									))}
 								</select>

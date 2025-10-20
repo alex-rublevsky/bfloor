@@ -23,7 +23,7 @@ const buttonVariants = cva(
 				destructive:
 					"bg-backgorund text-destructive border border-destructive shadow-2xs hover:bg-destructive/90 hover:text-destructive-foreground active:bg-destructive/90 active:text-destructive-foreground",
 				green:
-				//TODO: update with hover and active styles. create the colors using oklch in css variables.
+					//TODO: update with hover and active styles. create the colors using oklch in css variables.
 					"bg-discount-badge text-discount-badge-foreground hover:bg-destructive/90",
 
 				outline:
@@ -97,7 +97,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 		},
 		ref,
 	) => {
-
 		// Smart link detection logic
 		const isLink = Boolean(to || href);
 		const isExternalLink = Boolean(

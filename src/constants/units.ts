@@ -12,10 +12,20 @@ export const UNITS_OF_MEASUREMENT = [
 export type UnitOfMeasurement = (typeof UNITS_OF_MEASUREMENT)[number];
 
 // Страны для брендов - только те, которые реально используются
-export const BRAND_COUNTRIES = ["NONE", "RU", "DE", "IT", "FR", "ES", "OTHER"] as const;
+export const BRAND_COUNTRIES = [
+	"NONE",
+	"RU",
+	"DE",
+	"IT",
+	"FR",
+	"ES",
+	"OTHER",
+] as const;
 export type BrandCountryCode = (typeof BRAND_COUNTRIES)[number];
 
-export const getBrandCountryName = (code: string | undefined | null): string => {
+export const getBrandCountryName = (
+	code: string | undefined | null,
+): string => {
 	switch (code) {
 		case "RU":
 			return "🇷🇺 Россия";

@@ -1,4 +1,7 @@
-import { CheckboxList, type CheckboxListItem } from "~/components/ui/shared/CheckboxList";
+import {
+	CheckboxList,
+	type CheckboxListItem,
+} from "~/components/ui/shared/CheckboxList";
 import type { StoreLocation } from "~/types";
 
 interface StoreLocationsSelectorProps {

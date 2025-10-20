@@ -16,10 +16,14 @@ import { SelectWithCreate } from "~/components/ui/dashboard/SelectWithCreate";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { StoreLocationsSelector } from "~/components/ui/dashboard/StoreLocationsSelector";
 import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
+import { CheckboxList } from "~/components/ui/shared/CheckboxList";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { Input } from "~/components/ui/shared/input";
-import { CheckboxList } from "~/components/ui/shared/CheckboxList";
-import { PRODUCT_TAGS, getProductTagName, UNITS_OF_MEASUREMENT } from "~/constants/units";
+import {
+	getProductTagName,
+	PRODUCT_TAGS,
+	UNITS_OF_MEASUREMENT,
+} from "~/constants/units";
 import {
 	generateVariationSKU,
 	useProductAttributes,
@@ -928,7 +932,6 @@ function RouteComponent() {
 							/>
 						</DrawerSection>
 
-
 						{/* Tags Block */}
 						<DrawerSection variant="default" title="Теги">
 							<CheckboxList
@@ -980,174 +983,172 @@ function RouteComponent() {
 									onChange={handleEditChange}
 									required
 								/>
-							<SlugField
-								slug={editFormData.slug}
-								name={editFormData.name}
-								isAutoSlug={isEditAutoSlug}
-								onSlugChange={(slug) => {
-									setIsEditAutoSlug(false);
-									setEditFormData((prev) => ({ ...prev, slug }));
-								}}
-								onAutoSlugChange={(isAuto) => {
-									setIsEditAutoSlug(isAuto);
-									if (isAuto && editFormData.name) {
-										const generated = generateSlug(editFormData.name);
-										setEditFormData((prev) => ({ ...prev, slug: generated }));
-									}
-								}}
-								idPrefix="edit"
-							/>
-
-							{/* Two column layout for basic information fields */}
-							<div className="grid grid-cols-2 gap-4">
-								{/* Column 1: Price, Category, Weight */}
-								<div>
-									<Input
-										id={editPriceId}
-										type="number"
-										name="price"
-										label="Цена р"
-										value={editFormData.price}
-										onChange={handleEditChange}
-										step="0.01"
-										required
-									/>
-								</div>
-
-								{/* Column 2: Stock */}
-								<div>
-									<Input
-										id={editStockId}
-										type="number"
-										name="stock"
-										label="Количество"
-										value={editFormData.stock}
-										onChange={handleEditChange}
-										required
-									/>
-								</div>
-
-								{/* Square Meters Per Pack (for flooring products) */}
-								<Input
-									label="Площадь упаковки (м²)"
-									type="number"
-									name="squareMetersPerPack"
-									value={editFormData.squareMetersPerPack || ""}
-									onChange={handleEditChange}
-									step="0.001"
-									min="0"
-									placeholder="Опционально - для напольных покрытий"
+								<SlugField
+									slug={editFormData.slug}
+									name={editFormData.name}
+									isAutoSlug={isEditAutoSlug}
+									onSlugChange={(slug) => {
+										setIsEditAutoSlug(false);
+										setEditFormData((prev) => ({ ...prev, slug }));
+									}}
+									onAutoSlugChange={(isAuto) => {
+										setIsEditAutoSlug(isAuto);
+										if (isAuto && editFormData.name) {
+											const generated = generateSlug(editFormData.name);
+											setEditFormData((prev) => ({ ...prev, slug: generated }));
+										}
+									}}
+									idPrefix="edit"
 								/>
 
-								{/* Unit of Measurement */}
-								<div>
-									<label
-										htmlFor={editUnitId}
-										className="block text-sm font-medium mb-1"
-									>
-										Единица количества
-									</label>
-									<select
-										id={editUnitId}
-										name="unitOfMeasurement"
-										value={editFormData.unitOfMeasurement}
+								{/* Two column layout for basic information fields */}
+								<div className="grid grid-cols-2 gap-4">
+									{/* Column 1: Price, Category, Weight */}
+									<div>
+										<Input
+											id={editPriceId}
+											type="number"
+											name="price"
+											label="Цена р"
+											value={editFormData.price}
+											onChange={handleEditChange}
+											step="0.01"
+											required
+										/>
+									</div>
+
+									{/* Column 2: Stock */}
+									<div>
+										<Input
+											id={editStockId}
+											type="number"
+											name="stock"
+											label="Количество"
+											value={editFormData.stock}
+											onChange={handleEditChange}
+											required
+										/>
+									</div>
+
+									{/* Square Meters Per Pack (for flooring products) */}
+									<Input
+										label="Площадь упаковки (м²)"
+										type="number"
+										name="squareMetersPerPack"
+										value={editFormData.squareMetersPerPack || ""}
 										onChange={handleEditChange}
-										className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-									>
-										{UNITS_OF_MEASUREMENT.map((unit) => (
-											<option key={unit} value={unit}>
-												{unit}
-											</option>
-										))}
-									</select>
-								</div>
-
-								{/* Column 1: Category */}
-								<div>
-									<SelectWithCreate
-										value={editFormData.categorySlug}
-										onValueChange={(value) => {
-											handleEditChange({
-												target: { name: "categorySlug", value: value || "" },
-											} as React.ChangeEvent<HTMLSelectElement>);
-										}}
-										placeholder="Выберите категорию"
-										label="Категория"
-										required
-										id={editCategoryId}
-										entityType="category"
-										options={categories}
-										onEntityCreated={handleEntityCreated}
+										step="0.001"
+										min="0"
+										placeholder="Опционально - для напольных покрытий"
 									/>
+
+									{/* Unit of Measurement */}
+									<div>
+										<label
+											htmlFor={editUnitId}
+											className="block text-sm font-medium mb-1"
+										>
+											Единица количества
+										</label>
+										<select
+											id={editUnitId}
+											name="unitOfMeasurement"
+											value={editFormData.unitOfMeasurement}
+											onChange={handleEditChange}
+											className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+										>
+											{UNITS_OF_MEASUREMENT.map((unit) => (
+												<option key={unit} value={unit}>
+													{unit}
+												</option>
+											))}
+										</select>
+									</div>
+
+									{/* Column 1: Category */}
+									<div>
+										<SelectWithCreate
+											value={editFormData.categorySlug}
+											onValueChange={(value) => {
+												handleEditChange({
+													target: { name: "categorySlug", value: value || "" },
+												} as React.ChangeEvent<HTMLSelectElement>);
+											}}
+											placeholder="Выберите категорию"
+											label="Категория"
+											required
+											id={editCategoryId}
+											entityType="category"
+											options={categories}
+											onEntityCreated={handleEntityCreated}
+										/>
+									</div>
+
+									{/* Column 2: Brand */}
+									<div>
+										<SelectWithCreate
+											value={editFormData.brandSlug}
+											onValueChange={(value) => {
+												handleEditChange({
+													target: { name: "brandSlug", value },
+												} as React.ChangeEvent<HTMLSelectElement>);
+											}}
+											placeholder="Выберите бренд (опционально)"
+											label="Бренд (опционально)"
+											id={editBrandId}
+											entityType="brand"
+											options={brands}
+											onEntityCreated={handleEntityCreated}
+										/>
+									</div>
+
+									{/* Column 1: Collection */}
+									<div>
+										<SelectWithCreate
+											value={editFormData.collectionSlug || null}
+											onValueChange={(value) => {
+												handleEditChange({
+													target: { name: "collectionSlug", value },
+												} as React.ChangeEvent<HTMLSelectElement>);
+											}}
+											placeholder="Выберите коллекцию (опционально)"
+											label="Коллекция (опционально)"
+											id={editCollectionId}
+											entityType="collection"
+											options={collections}
+											brands={brands}
+											onEntityCreated={handleEntityCreated}
+										/>
+									</div>
+
+									{/* Column 2: Empty for grid alignment */}
+									<div />
+
+									{/* Empty cells for grid alignment */}
+									<div />
+									<div />
 								</div>
 
-								{/* Column 2: Brand */}
-								<div>
-									<SelectWithCreate
-										value={editFormData.brandSlug}
-										onValueChange={(value) => {
-											handleEditChange({
-												target: { name: "brandSlug", value },
-											} as React.ChangeEvent<HTMLSelectElement>);
-										}}
-										placeholder="Выберите бренд (опционально)"
-										label="Бренд (опционально)"
-										id={editBrandId}
-										entityType="brand"
-										options={brands}
-										onEntityCreated={handleEntityCreated}
-									/>
-								</div>
+								{/* Description Field */}
+								<DescriptionField
+									name="description"
+									value={editFormData.description || ""}
+									onChange={handleEditChange}
+									placeholder="Добавьте описание товара..."
+									className="min-h-[4rem]"
+								/>
 
-								{/* Column 1: Collection */}
-								<div>
-									<SelectWithCreate
-										value={editFormData.collectionSlug || null}
-										onValueChange={(value) => {
-											handleEditChange({
-												target: { name: "collectionSlug", value },
-											} as React.ChangeEvent<HTMLSelectElement>);
-										}}
-										placeholder="Выберите коллекцию (опционально)"
-										label="Коллекция (опционально)"
-										id={editCollectionId}
-										entityType="collection"
-										options={collections}
-										brands={brands}
-										onEntityCreated={handleEntityCreated}
-									/>
-								</div>
-
-								{/* Column 2: Empty for grid alignment */}
-								<div />
-
-								{/* Empty cells for grid alignment */}
-								<div />
-								<div />
+								{/* Important Note Field */}
+								<DescriptionField
+									name="importantNote"
+									value={editFormData.importantNote || ""}
+									onChange={handleEditChange}
+									placeholder="Добавьте важную заметку с поддержкой Markdown..."
+									className="min-h-[4rem]"
+									label="Важная заметка"
+								/>
 							</div>
-
-							{/* Description Field */}
-							<DescriptionField
-								name="description"
-								value={editFormData.description || ""}
-								onChange={handleEditChange}
-								placeholder="Добавьте описание товара..."
-								className="min-h-[4rem]"
-							/>
-
-							{/* Important Note Field */}
-							<DescriptionField
-								name="importantNote"
-								value={editFormData.importantNote || ""}
-								onChange={handleEditChange}
-								placeholder="Добавьте важную заметку с поддержкой Markdown..."
-								className="min-h-[4rem]"
-								label="Важная заметка"
-							/>
-						</div>
 						</DrawerSection>
-
-
 					</div>
 
 					{/* Product Attributes Block */}
@@ -1231,7 +1232,6 @@ function RouteComponent() {
 							/>
 						</DrawerSection>
 
-
 						{/* Tags Block */}
 						<DrawerSection variant="default" title="Теги">
 							<CheckboxList
@@ -1286,177 +1286,175 @@ function RouteComponent() {
 										hasAttemptedSubmit && !formData.name ? "border-red-500" : ""
 									}
 								/>
-							<SlugField
-								slug={formData.slug}
-								name={formData.name}
-								isAutoSlug={isAutoSlug}
-								onSlugChange={(slug) => {
-									setIsAutoSlug(false);
-									setFormData((prev) => ({ ...prev, slug }));
-								}}
-								onAutoSlugChange={setIsAutoSlug}
-								className={
-									hasAttemptedSubmit && !formData.slug ? "border-red-500" : ""
-								}
-								idPrefix="create"
-							/>
+								<SlugField
+									slug={formData.slug}
+									name={formData.name}
+									isAutoSlug={isAutoSlug}
+									onSlugChange={(slug) => {
+										setIsAutoSlug(false);
+										setFormData((prev) => ({ ...prev, slug }));
+									}}
+									onAutoSlugChange={setIsAutoSlug}
+									className={
+										hasAttemptedSubmit && !formData.slug ? "border-red-500" : ""
+									}
+									idPrefix="create"
+								/>
 
-							{/* Two column layout for basic information fields */}
-							<div className="grid grid-cols-2 gap-4">
-								{/* Column 1: Price, Category, Weight */}
-								<div>
+								{/* Two column layout for basic information fields */}
+								<div className="grid grid-cols-2 gap-4">
+									{/* Column 1: Price, Category, Weight */}
+									<div>
+										<Input
+											id={addPriceId}
+											type="number"
+											name="price"
+											label="Цена р"
+											value={formData.price}
+											onChange={handleChange}
+											required
+											step="0.01"
+											min="0"
+											className={cn(
+												hasAttemptedSubmit && !formData.price
+													? "border-red-500"
+													: "",
+											)}
+										/>
+									</div>
+
+									{/* Column 2: Stock */}
 									<Input
-										id={addPriceId}
+										label="Количество"
 										type="number"
-										name="price"
-										label="Цена р"
-										value={formData.price}
+										name="stock"
+										value={formData.stock}
 										onChange={handleChange}
-										required
-										step="0.01"
 										min="0"
-										className={cn(
-											hasAttemptedSubmit && !formData.price
-												? "border-red-500"
-												: "",
-										)}
 									/>
-								</div>
 
-								{/* Column 2: Stock */}
-								<Input
-									label="Количество"
-									type="number"
-									name="stock"
-									value={formData.stock}
-									onChange={handleChange}
-									min="0"
-								/>
-
-								{/* Square Meters Per Pack (for flooring products) */}
-								<Input
-									label="Площадь упаковки (м²)"
-									type="number"
-									name="squareMetersPerPack"
-									value={formData.squareMetersPerPack || ""}
-									onChange={handleChange}
-									step="0.001"
-									min="0"
-									placeholder="Опционально - для напольных покрытий"
-								/>
-
-								{/* Unit of Measurement */}
-								<div>
-									<label
-										htmlFor={createUnitId}
-										className="block text-sm font-medium mb-1"
-									>
-										Единица количества
-									</label>
-									<select
-										id={createUnitId}
-										name="unitOfMeasurement"
-										value={formData.unitOfMeasurement}
+									{/* Square Meters Per Pack (for flooring products) */}
+									<Input
+										label="Площадь упаковки (м²)"
+										type="number"
+										name="squareMetersPerPack"
+										value={formData.squareMetersPerPack || ""}
 										onChange={handleChange}
-										className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-									>
-										{UNITS_OF_MEASUREMENT.map((unit) => (
-											<option key={unit} value={unit}>
-												{unit}
-											</option>
-										))}
-									</select>
-								</div>
-
-								{/* Column 1: Category */}
-								<div>
-									<SelectWithCreate
-										value={formData.categorySlug}
-										onValueChange={(value) => {
-											setFormData({
-												...formData,
-												categorySlug: value || "",
-											});
-										}}
-										placeholder="Выберите категорию"
-										label="Категория"
-										required
-										id={addCategoryId}
-										entityType="category"
-										options={categories}
-										onEntityCreated={handleEntityCreated}
+										step="0.001"
+										min="0"
+										placeholder="Опционально - для напольных покрытий"
 									/>
+
+									{/* Unit of Measurement */}
+									<div>
+										<label
+											htmlFor={createUnitId}
+											className="block text-sm font-medium mb-1"
+										>
+											Единица количества
+										</label>
+										<select
+											id={createUnitId}
+											name="unitOfMeasurement"
+											value={formData.unitOfMeasurement}
+											onChange={handleChange}
+											className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+										>
+											{UNITS_OF_MEASUREMENT.map((unit) => (
+												<option key={unit} value={unit}>
+													{unit}
+												</option>
+											))}
+										</select>
+									</div>
+
+									{/* Column 1: Category */}
+									<div>
+										<SelectWithCreate
+											value={formData.categorySlug}
+											onValueChange={(value) => {
+												setFormData({
+													...formData,
+													categorySlug: value || "",
+												});
+											}}
+											placeholder="Выберите категорию"
+											label="Категория"
+											required
+											id={addCategoryId}
+											entityType="category"
+											options={categories}
+											onEntityCreated={handleEntityCreated}
+										/>
+									</div>
+
+									{/* Column 2: Brand */}
+									<div>
+										<SelectWithCreate
+											value={formData.brandSlug}
+											onValueChange={(value) => {
+												setFormData({
+													...formData,
+													brandSlug: value,
+												});
+											}}
+											placeholder="Выберите бренд (опционально)"
+											label="Бренд (опционально)"
+											id={addBrandId}
+											entityType="brand"
+											options={brands}
+											onEntityCreated={handleEntityCreated}
+										/>
+									</div>
+
+									{/* Column 1: Collection */}
+									<div>
+										<SelectWithCreate
+											value={formData.collectionSlug || null}
+											onValueChange={(value) => {
+												setFormData({
+													...formData,
+													collectionSlug: value,
+												});
+											}}
+											placeholder="Выберите коллекцию (опционально)"
+											label="Коллекция (опционально)"
+											id={addCollectionId}
+											entityType="collection"
+											options={collections}
+											brands={brands}
+											onEntityCreated={handleEntityCreated}
+										/>
+									</div>
+
+									{/* Column 2: Empty for grid alignment */}
+									<div />
+
+									{/* Empty cells for grid alignment */}
+									<div />
+									<div />
 								</div>
 
-								{/* Column 2: Brand */}
-								<div>
-									<SelectWithCreate
-										value={formData.brandSlug}
-										onValueChange={(value) => {
-											setFormData({
-												...formData,
-												brandSlug: value,
-											});
-										}}
-										placeholder="Выберите бренд (опционально)"
-										label="Бренд (опционально)"
-										id={addBrandId}
-										entityType="brand"
-										options={brands}
-										onEntityCreated={handleEntityCreated}
-									/>
-								</div>
+								{/* Description Field */}
+								<DescriptionField
+									name="description"
+									value={formData.description || ""}
+									onChange={handleChange}
+									placeholder="Добавьте описание товара..."
+									className="min-h-[4rem]"
+								/>
 
-								{/* Column 1: Collection */}
-								<div>
-									<SelectWithCreate
-										value={formData.collectionSlug || null}
-										onValueChange={(value) => {
-											setFormData({
-												...formData,
-												collectionSlug: value,
-											});
-										}}
-										placeholder="Выберите коллекцию (опционально)"
-										label="Коллекция (опционально)"
-										id={addCollectionId}
-										entityType="collection"
-										options={collections}
-										brands={brands}
-										onEntityCreated={handleEntityCreated}
-									/>
-								</div>
-
-								{/* Column 2: Empty for grid alignment */}
-								<div />
-
-								{/* Empty cells for grid alignment */}
-								<div />
-								<div />
+								{/* Important Note Field */}
+								<DescriptionField
+									name="importantNote"
+									value={formData.importantNote || ""}
+									onChange={handleChange}
+									placeholder="Добавьте важную заметку с поддержкой Markdown..."
+									className="min-h-[4rem]"
+									label="Важная заметка"
+								/>
 							</div>
-
-							{/* Description Field */}
-							<DescriptionField
-								name="description"
-								value={formData.description || ""}
-								onChange={handleChange}
-								placeholder="Добавьте описание товара..."
-								className="min-h-[4rem]"
-							/>
-
-							{/* Important Note Field */}
-							<DescriptionField
-								name="importantNote"
-								value={formData.importantNote || ""}
-								onChange={handleChange}
-								placeholder="Добавьте важную заметку с поддержкой Markdown..."
-								className="min-h-[4rem]"
-								label="Важная заметка"
-							/>
-						</div>
 						</DrawerSection>
-
-
 					</div>
 
 					{/* Product Attributes Block */}

@@ -33,25 +33,28 @@ const Slider = React.forwardRef<
 		ref,
 	) => {
 		const [showTooltipState, setShowTooltipState] = React.useState(false);
-		const [isDragging, setIsDragging] = React.useState(false);
-		
-		// Use controlled value if provided, otherwise use internal state
-		const currentValue = props.value !== undefined ? props.value as number[] : 
-			(props.defaultValue as number[]) ?? [0];
+		const [internalValue, setInternalValue] = React.useState<number[]>(
+			(props.defaultValue as number[]) ?? (props.value as number[]) ?? [0],
+		);
+
+		React.useEffect(() => {
+			if (props.value !== undefined) {
+				setInternalValue(props.value as number[]);
+			}
+		}, [props.value]);
 
 		const handleValueChange = (newValue: number[]) => {
+			setInternalValue(newValue);
 			props.onValueChange?.(newValue);
 		};
 
 		const handlePointerDown = () => {
-			setIsDragging(true);
 			if (showTooltip) {
 				setShowTooltipState(true);
 			}
 		};
 
 		const handlePointerUp = React.useCallback(() => {
-			setIsDragging(false);
 			if (showTooltip) {
 				setShowTooltipState(false);
 			}
@@ -69,7 +72,7 @@ const Slider = React.forwardRef<
 		const renderThumb = (value: number) => {
 			const thumb = (
 				<SliderPrimitive.Thumb
-					className="block h-5 w-5 rounded-full border-2 border-primary bg-background transition-colors focus-visible:outline-[3px] focus-visible:outline-ring/40 data-disabled:cursor-not-allowed cursor-grab"
+					className="block h-5 w-5 rounded-full border-2 border-primary bg-background transition-colors focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-ring/40 data-disabled:cursor-not-allowed cursor-grab"
 					onPointerDown={handlePointerDown}
 				/>
 			);
@@ -78,7 +81,7 @@ const Slider = React.forwardRef<
 
 			return (
 				<TooltipProvider>
-					<Tooltip open={showTooltipState && isDragging}>
+					<Tooltip open={showTooltipState}>
 						<TooltipTrigger asChild>{thumb}</TooltipTrigger>
 						<TooltipContent
 							className="px-2 py-1 text-xs"
@@ -110,15 +113,14 @@ const Slider = React.forwardRef<
 					className={cn(
 						"relative flex pt-1.5 w-full touch-none select-none items-center data-[orientation=vertical]:h-full data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col data-disabled:opacity-50",
 					)}
-					value={currentValue}
 					onValueChange={handleValueChange}
 					{...props}
 				>
 					<SliderPrimitive.Track className="relative grow overflow-hidden rounded-full bg-secondary data-[orientation=horizontal]:h-0.5 data-[orientation=vertical]:h-full data-[orientation=horizontal]:w-full data-[orientation=vertical]:w-2">
 						<SliderPrimitive.Range className="absolute bg-primary data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full" />
 					</SliderPrimitive.Track>
-					{currentValue?.map((value) => (
-						<React.Fragment key={`thumb-${value}`}>{renderThumb(value)}</React.Fragment>
+					{internalValue?.map((value) => (
+						<React.Fragment key={value}>{renderThumb(value)}</React.Fragment>
 					))}
 				</SliderPrimitive.Root>
 			</div>

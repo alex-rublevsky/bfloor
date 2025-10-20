@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { DashboardEntityManager, type EntityListProps } from "~/components/ui/dashboard/DashboardEntityManager";
+import {
+	DashboardEntityManager,
+	type EntityListProps,
+} from "~/components/ui/dashboard/DashboardEntityManager";
 import { EntityCardGrid } from "~/components/ui/dashboard/EntityCardGrid";
 import { useProductAttributes } from "~/hooks/useProductAttributes";
 import { createProductAttribute } from "~/server_functions/dashboard/attributes/createProductAttribute";
@@ -14,7 +17,11 @@ const AttributeFormFields = () => {
 };
 
 // Attribute list component using the meta component
-const AttributeList = ({ entities, onEdit, onDelete }: EntityListProps<ProductAttribute>) => (
+const AttributeList = ({
+	entities,
+	onEdit,
+	onDelete,
+}: EntityListProps<ProductAttribute>) => (
 	<EntityCardGrid
 		entities={entities}
 		onEdit={onEdit}
@@ -43,15 +50,22 @@ function AttributesPage() {
 	const entityManagerConfig = {
 		queryKey: ["productAttributes"],
 		queryFn: async () => attributes || [],
-		createFn: async (data: { data: { name: string; slug: string; isActive: boolean } }) => {
-			await createProductAttribute({ data: { name: data.data.name, slug: data.data.slug } });
+		createFn: async (data: {
+			data: { name: string; slug: string; isActive: boolean };
+		}) => {
+			await createProductAttribute({
+				data: { name: data.data.name, slug: data.data.slug },
+			});
 		},
-		updateFn: async (data: { id: number; data: { name: string; slug: string; isActive: boolean } }) => {
-			await updateProductAttribute({ 
-				data: { 
-					id: data.id, 
-					data: { name: data.data.name, slug: data.data.slug } 
-				} 
+		updateFn: async (data: {
+			id: number;
+			data: { name: string; slug: string; isActive: boolean };
+		}) => {
+			await updateProductAttribute({
+				data: {
+					id: data.id,
+					data: { name: data.data.name, slug: data.data.slug },
+				},
 			});
 		},
 		deleteFn: async (data: { id: number }) => {

@@ -211,10 +211,7 @@ export function AdminProductCard({
 											Ships from:{" "}
 											{allShippingLocations
 												.filter((code) => code !== "" && code !== "NONE")
-												.map(
-													(countryCode) =>
-														getBrandCountryName(countryCode),
-												)
+												.map((countryCode) => getBrandCountryName(countryCode))
 												.join(" ")}
 										</span>
 									</div>

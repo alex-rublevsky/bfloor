@@ -5,12 +5,7 @@ import {
 	IconPackage,
 	IconTags,
 } from "@tabler/icons-react";
-import {
-	Link,
-	useNavigate,
-	useRouter,
-	useRouterState,
-} from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
 	ArrowLeftFromLine,
 	LogOutIcon,
@@ -228,16 +223,15 @@ export function NavBar({
 	searchTerm,
 	onSearchChange,
 }: Omit<NavBarProps, "items">) {
-	const router = useRouter();
 	const routerState = useRouterState();
-	const pathname = router.state.location.pathname;
+	const pathname = routerState.location.pathname;
 	const { prefetchDashboardOrders } = usePrefetch();
 	const dynamicPlaceholder = useSearchPlaceholderWithCount();
 
 	// Client-side search context
 	const clientSearch = useClientSearch();
 
-	const isDashboard = routerState.location.pathname.startsWith("/dashboard");
+	const isDashboard = pathname.startsWith("/dashboard");
 
 	// Handle action button clicks directly
 	const handleActionClick = () => {

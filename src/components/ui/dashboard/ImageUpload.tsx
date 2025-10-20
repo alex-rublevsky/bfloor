@@ -252,7 +252,9 @@ export function ImageUpload({
 				"image/webp",
 			];
 			if (!allowedTypes.includes(file.type)) {
-				toast.error("Недопустимый тип файла. Разрешены только JPEG, PNG и WebP.");
+				toast.error(
+					"Недопустимый тип файла. Разрешены только JPEG, PNG и WebP.",
+				);
 				return;
 			}
 
@@ -310,9 +312,11 @@ export function ImageUpload({
 								fileInputRef.current.value = "";
 							}
 						}
-					} catch (_error) {
+					} catch (error) {
 						toast.error(
-							error instanceof Error ? error.message : "Не удалось загрузить изображение",
+							error instanceof Error
+								? error.message
+								: "Не удалось загрузить изображение",
 						);
 					} finally {
 						setIsUploading(false);
@@ -327,7 +331,9 @@ export function ImageUpload({
 				reader.readAsDataURL(processed);
 			} catch (error) {
 				toast.error(
-					error instanceof Error ? error.message : "Не удалось загрузить изображение",
+					error instanceof Error
+						? error.message
+						: "Не удалось загрузить изображение",
 				);
 				setIsUploading(false);
 			}

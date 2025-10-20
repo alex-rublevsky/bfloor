@@ -7,7 +7,7 @@ import {
 	HeadContent,
 	Outlet,
 	Scripts,
-	useRouter,
+	useRouterState,
 } from "@tanstack/react-router";
 import type * as React from "react";
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
@@ -29,7 +29,6 @@ const queryClient = new QueryClient({
 		},
 	},
 });
-
 
 export const Route = createRootRoute({
 	head: () => ({
@@ -108,15 +107,15 @@ function RootComponent() {
 	);
 }
 
-function RootDocument({ 
-	children, 
-	showNavBar = true 
-}: { 
+function RootDocument({
+	children,
+	showNavBar = true,
+}: {
 	children: React.ReactNode;
 	showNavBar?: boolean;
 }) {
-	const router = useRouter();
-	const pathname = router.state.location.pathname;
+	const routerState = useRouterState();
+	const pathname = routerState.location.pathname;
 
 	// Don't render NavBar on dashboard pages since dashboard has its own NavBar
 	const isDashboard = pathname.startsWith("/dashboard");

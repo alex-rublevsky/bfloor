@@ -72,11 +72,7 @@ export function DashboardFormDrawer({
 
 				<DrawerFooter className="border-t border-border bg-background px-4 sm:px-6 lg:px-8">
 					<div className="flex justify-end space-x-2">
-						<Button
-							variant="secondary"
-							type="button"
-							onClick={onCancel}
-						>
+						<Button variant="secondary" type="button" onClick={onCancel}>
 							Отмена
 						</Button>
 						<Button

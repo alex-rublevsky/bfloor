@@ -25,8 +25,8 @@ export function CheckboxList({
 	showOnlyActive = false,
 }: CheckboxListProps) {
 	// Filter items if needed
-	const filteredItems = showOnlyActive 
-		? items.filter(item => item.isActive !== false)
+	const filteredItems = showOnlyActive
+		? items.filter((item) => item.isActive !== false)
 		: items;
 
 	// Determine grid columns
@@ -61,4 +61,3 @@ export function CheckboxList({
 		</div>
 	);
 }
-

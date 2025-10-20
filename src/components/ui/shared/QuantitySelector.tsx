@@ -69,14 +69,14 @@ export function QuantitySelector({
 	const sizeStyles = {
 		default: {
 			container: "space-x-4",
-			button: "w-10 h-10 rounded",
+			button: "w-10 h-10 rounded-[15px]",
 			text: "text-2xl",
 			quantityText: "text-xl font-medium",
 			iconSize: 20,
 		},
 		compact: {
 			container: "space-x-2",
-			button: "w-8 h-8 rounded",
+			button: "w-8 h-8 rounded-[15px]",
 			text: "text-sm",
 			quantityText: "text-sm",
 			iconSize: 14,
