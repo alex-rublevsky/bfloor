@@ -20,25 +20,11 @@ import {
 import { Switch } from "~/components/ui/shared/Switch";
 import { useDashboardForm } from "~/hooks/useDashboardForm";
 import { generateSlug, useSlugGeneration } from "~/hooks/useSlugGeneration";
+import { brandsQueryOptions, collectionsQueryOptions } from "~/lib/queryOptions";
 import { createCollection } from "~/server_functions/dashboard/collections/createCollection";
 import { deleteCollection } from "~/server_functions/dashboard/collections/deleteCollection";
-import { getAllCollections } from "~/server_functions/dashboard/collections/getAllCollections";
 import { updateCollection } from "~/server_functions/dashboard/collections/updateCollection";
-import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
 import type { Collection, CollectionFormData } from "~/types";
-
-// Query options factories
-const collectionsQueryOptions = () => ({
-	queryKey: ["bfloorDashboardCollections"],
-	queryFn: () => getAllCollections(),
-	staleTime: 1000 * 60 * 5,
-});
-
-const brandsQueryOptions = () => ({
-	queryKey: ["bfloorDashboardBrands"],
-	queryFn: () => getAllBrands(),
-	staleTime: 1000 * 60 * 5,
-});
 
 export const Route = createFileRoute("/dashboard/collections")({
 	component: RouteComponent,

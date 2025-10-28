@@ -1,4 +1,4 @@
-const ASSETS_URL = "https://assets.rublevsky.studio";
+const ASSETS_URL = "https://pub-aecfacef31684b0aa951c03db5f14d4e.r2.dev";
 
 export default function cloudflareLoader({ src, width, quality }) {
 	// If the source is already a full URL, use it as is

@@ -182,6 +182,7 @@ export function DashboardEntityManager<
 
 		form.editForm.setFormData({
 			...config.defaultFormData,
+			...entity, // Copy all entity fields to preserve custom fields like parentSlug
 			name: entity.name,
 			slug: entity.slug,
 			isActive: (entity as { isActive?: boolean }).isActive ?? true,
@@ -273,19 +274,20 @@ export function DashboardEntityManager<
 	}
 
 	return (
-		<div className="space-y-6 px-6">
-			{/* Entity List */}
-			{data.length === 0 ? (
-				<EmptyState entityType={config.emptyStateEntityType} />
-			) : (
-				<div className="space-y-4">
-					{config.renderList({
-						entities: data,
-						onEdit: handleEditEntity,
-						onDelete: handleDeleteEntityClick,
-					})}
-				</div>
-			)}
+		<div className="h-full overflow-auto">
+			<div className="space-y-6 px-6 py-6">
+				{/* Entity List */}
+				{data.length === 0 ? (
+					<EmptyState entityType={config.emptyStateEntityType} />
+				) : (
+					<div className="space-y-4">
+						{config.renderList({
+							entities: data,
+							onEdit: handleEditEntity,
+							onDelete: handleDeleteEntityClick,
+						})}
+					</div>
+				)}
 
 			{/* Create Entity Drawer */}
 			<DashboardFormDrawer
@@ -423,11 +425,12 @@ export function DashboardEntityManager<
 					isOpen={form.crud.showDeleteDialog}
 					onClose={handleDeleteCancel}
 					onConfirm={handleDeleteConfirm}
-					title={`Удалить ${config.entityName}`}
-					description={`Вы уверены, что хотите удалить этот${config.entityName.endsWith("а") ? "" : ""} ${config.entityName}? Это действие нельзя отменить.`}
-					isDeleting={form.crud.isDeleting}
-				/>
-			)}
+				title={`Удалить ${config.entityName}`}
+				description={`Вы уверены, что хотите удалить этот${config.entityName.endsWith("а") ? "" : ""} ${config.entityName}? Это действие нельзя отменить.`}
+				isDeleting={form.crud.isDeleting}
+			/>
+		)}
 		</div>
+	</div>
 	);
 }

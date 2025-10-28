@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Input } from "~/components/ui/shared/input";
 import { useProductAttributes } from "~/hooks/useProductAttributes";
 import type { ProductAttributeFormData } from "~/types";
@@ -12,30 +11,43 @@ export default function ProductAttributesForm({
 	attributes,
 	onChange,
 }: ProductAttributesFormProps) {
-	const { data: availableAttributes } = useProductAttributes();
-
-	// Ensure all available attributes are always present
-	useEffect(() => {
-		if (availableAttributes && availableAttributes.length > 0) {
-			const currentAttributeIds = (attributes || []).map(
-				(attr) => attr.attributeId,
-			);
-			const missingAttributes = availableAttributes
-				.filter((attr) => !currentAttributeIds.includes(attr.id.toString()))
-				.map((attr) => ({ attributeId: attr.id.toString(), value: "" }));
-
-			if (missingAttributes.length > 0) {
-				onChange([...(attributes || []), ...missingAttributes]);
-			}
-		}
-	}, [availableAttributes, attributes, onChange]);
+	const { data: availableAttributes, isLoading, error } = useProductAttributes();
 
 	const handleUpdateAttributeValue = (attributeId: string, value: string) => {
-		const newAttributes = (attributes || []).map((attr) =>
-			attr.attributeId === attributeId ? { ...attr, value } : attr,
+		const currentAttributes = attributes || [];
+		const existingAttributeIndex = currentAttributes.findIndex(
+			(attr) => attr.attributeId === attributeId,
 		);
+
+		let newAttributes: ProductAttributeFormData[];
+		if (existingAttributeIndex >= 0) {
+			// Update existing attribute
+			newAttributes = currentAttributes.map((attr) =>
+				attr.attributeId === attributeId ? { ...attr, value } : attr,
+			);
+		} else {
+			// Add new attribute
+			newAttributes = [...currentAttributes, { attributeId, value }];
+		}
+
 		onChange(newAttributes);
 	};
+
+	if (isLoading) {
+		return (
+			<div className="p-4 text-center text-muted-foreground">
+				<p>Загрузка атрибутов...</p>
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className="p-4 text-center text-destructive">
+				<p>Ошибка загрузки атрибутов</p>
+			</div>
+		);
+	}
 
 	if (!availableAttributes || availableAttributes.length === 0) {
 		return (
@@ -53,27 +65,29 @@ export default function ProductAttributesForm({
 			</h3>
 
 			<div className="grid grid-cols-2 gap-3">
-				{(attributes || []).map((attr) => {
-					const attributeInfo = availableAttributes.find(
-						(a) => a.id.toString() === attr.attributeId,
+				{availableAttributes.map((attributeInfo) => {
+					// Find the current value for this attribute
+					const currentAttribute = (attributes || []).find(
+						(attr) => attr.attributeId === attributeInfo.id.toString(),
 					);
-					if (!attributeInfo) return null;
+					const currentValue = currentAttribute?.value || "";
 
 					return (
-						<div key={attr.attributeId} className="space-y-1">
+						<div key={attributeInfo.id} className="space-y-1">
 							<label
-								htmlFor={`attr-${attr.attributeId}`}
+								htmlFor={`attr-${attributeInfo.id}`}
 								className="block text-sm font-medium text-foreground"
 							>
 								{attributeInfo.name}
 							</label>
 							<Input
-								id={`attr-${attr.attributeId}`}
-								value={attr.value}
+								id={`attr-${attributeInfo.id}`}
+								value={currentValue}
 								onChange={(e) =>
-									handleUpdateAttributeValue(attr.attributeId, e.target.value)
+									handleUpdateAttributeValue(attributeInfo.id.toString(), e.target.value)
 								}
 								className="text-sm"
+								placeholder="Введите значение"
 							/>
 						</div>
 					);

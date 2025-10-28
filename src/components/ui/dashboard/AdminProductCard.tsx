@@ -2,9 +2,8 @@ import { Edit, Trash2 } from "lucide-react";
 import { Badge } from "~/components/ui/shared/Badge";
 import { getBrandCountryName } from "~/constants/units";
 import { ASSETS_BASE_URL } from "~/constants/urls";
-import { cn } from "~/lib/utils";
+import { usePrefetch } from "~/hooks/usePrefetch";
 import type { ProductWithVariations } from "~/types";
-import { getStockDisplayText, isProductAvailable } from "~/utils/validateStock";
 import styles from "../store/productCard.module.css";
 
 interface AdminProductCardProps {
@@ -20,6 +19,7 @@ export function AdminProductCard({
 	onDelete,
 	formatPrice: _formatPrice,
 }: AdminProductCardProps) {
+	const { prefetchDashboardProduct } = usePrefetch();
 	const imageArray = (() => {
 		if (!product.images) return [];
 		try {
@@ -33,8 +33,6 @@ export function AdminProductCard({
 		}
 	})();
 	const primaryImage = imageArray[0];
-	const hasAnyStock = isProductAvailable(product);
-	const stockDisplayText = getStockDisplayText(product);
 
 	// Calculate the display price - use highest variation price if variations exist, otherwise base price
 	const displayPrice = (() => {
@@ -69,8 +67,16 @@ export function AdminProductCard({
 
 	const allShippingLocations = getAllShippingLocations();
 
+	// Prefetch on hover
+	const handleMouseEnter = () => {
+		prefetchDashboardProduct(product.id);
+	};
+
 	return (
-		<div className="block h-full relative">
+		<article 
+			className="block h-full relative"
+			onMouseEnter={handleMouseEnter}
+		>
 			<div
 				className="w-full product-card overflow-hidden group"
 				id={styles.productCard}
@@ -89,10 +95,6 @@ export function AdminProductCard({
 											alt={product.name}
 											loading="eager"
 											className="absolute inset-0 w-full h-full object-cover object-center"
-											style={{
-												filter: !hasAnyStock ? "grayscale(100%)" : "none",
-												opacity: !hasAnyStock ? 0.6 : 1,
-											}}
 										/>
 										{/* Secondary Image (if exists) - Only on desktop devices with hover capability */}
 										{imageArray.length > 1 && (
@@ -101,9 +103,6 @@ export function AdminProductCard({
 												alt={product.name}
 												loading="eager"
 												className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-500 ease-in-out opacity-0 group-hover:opacity-100 hidden md:block"
-												style={{
-													filter: !hasAnyStock ? "grayscale(100%)" : "none",
-												}}
 											/>
 										)}
 									</div>
@@ -128,6 +127,7 @@ export function AdminProductCard({
 								type="button"
 								onClick={(e) => {
 									e.stopPropagation();
+									console.log('🔍 EDIT: Desktop Edit button clicked for:', product.id, product.name);
 									onEdit(product);
 								}}
 								className="flex-1 flex items-center justify-center space-x-2 bg-muted/70 backdrop-blur-xs text-foreground hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-all duration-500 py-2 cursor-pointer outline-none border-none"
@@ -188,18 +188,6 @@ export function AdminProductCard({
 
 							{/* Metadata */}
 							<div className="space-y-1 text-sm">
-								{/* Stock */}
-								<div>
-									<span
-										className={cn(
-											"text-xs",
-											hasAnyStock ? "text-muted-foreground" : "text-red-600",
-										)}
-									>
-										Stock: {stockDisplayText}
-									</span>
-								</div>
-
 								{/* Empty space for layout */}
 
 								{/* Shipping */}
@@ -225,6 +213,7 @@ export function AdminProductCard({
 								type="button"
 								onClick={(e) => {
 									e.stopPropagation();
+									console.log('🔍 EDIT: Mobile Edit button clicked for:', product.id, product.name);
 									onEdit(product);
 								}}
 								className="flex-1 cursor-pointer flex items-center justify-center space-x-2 bg-muted backdrop-blur-xs text-foreground hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-all duration-500 py-2 px-4 outline-none border-none"
@@ -248,6 +237,6 @@ export function AdminProductCard({
 					</div>
 				</div>
 			</div>
-		</div>
+		</article>
 	);
 }

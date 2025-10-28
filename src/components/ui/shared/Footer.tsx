@@ -1,9 +1,9 @@
 export function Footer() {
 	return (
-		<footer className="flex flex-col items-center justify-center">
+		<footer className="flex flex-col items-center justify-center py-4">
 			{/* TODO: set the year to a reactive value */}
 			<div className="flex gap-2">
-				<p className=""> © Все права защищены ООО “BeautyFloor” 2025</p>
+				<p className=""> © Все права защищены ООО "BeautyFloor" 2025</p>
 				{/* TODO: add link www.rublevsky.studio */}
 				<p className="">
 					Сайт создан <span className="">Rublevsky Studio</span>

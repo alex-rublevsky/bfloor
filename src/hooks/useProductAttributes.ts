@@ -1,9 +1,9 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getAllProductAttributes } from "~/server_functions/dashboard/attributes/getAllProductAttributes";
 import type { ProductAttribute } from "~/types";
 
 export function useProductAttributes() {
-	return useSuspenseQuery({
+	return useQuery({
 		queryKey: ["productAttributes"],
 		queryFn: () => getAllProductAttributes(),
 		staleTime: 1000 * 60 * 5, // Cache for 5 minutes

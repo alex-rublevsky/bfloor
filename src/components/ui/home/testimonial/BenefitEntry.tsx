@@ -1,3 +1,5 @@
+import React from "react";
+
 export default function BenefitEntry({
 	title,
 	description,
@@ -5,16 +7,16 @@ export default function BenefitEntry({
 }: {
 	title: string;
 	description: string;
-	icon: string;
+	icon: React.ReactNode;
 }) {
 	return (
-		<div className="flex items-center text-center gap-4 w-full py-6">
-			<div className="w-16 h-16 flex items-center justify-center">
+		<div className="flex flex-col items-center text-center gap-2 md:gap-4 py-3 md:py-6 w-fit max-w-[200px] md:max-w-[240px]">
+			<div className="h-16 md:h-24 w-fit flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full">
 				{icon}
 			</div>
-			<div className="flex flex-col gap-2">
-				<h5 className="font-medium">{title}</h5>
-				<p className="text-sm text-muted-foreground">{description}</p>
+			<div className="flex flex-col gap-1 md:gap-2 w-fit">
+				<h5 className="font-medium text-sm md:text-base">{title}</h5>
+				<p className="text-xs md:text-sm text-muted-foreground">{description}</p>
 			</div>
 		</div>
 	);

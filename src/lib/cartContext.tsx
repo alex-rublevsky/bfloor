@@ -15,7 +15,6 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getCookie, setCookie } from "~/lib/cookies";
 import type { Product, ProductVariation, ProductWithVariations } from "~/types";
-import { validateStock } from "~/utils/validateStock";
 
 // Types
 /**
@@ -214,34 +213,8 @@ export function CartProvider({ children }: CartProviderProps) {
 			}
 
 			// Check if item already exists in cart to determine proper validation
-			const existingCartItem = cart.items.find(
-				(item) =>
-					item.productId === product.id &&
-					item.variationId === selectedVariation?.id,
-			);
-
-			// If item exists, validate the new total quantity (existing + new)
-			const totalQuantityAfterAdd = existingCartItem
-				? existingCartItem.quantity + quantity
-				: quantity;
-
-			// Validate stock using client-side validation
-			const result = validateStock(
-				products || [],
-				cart.items,
-				product.id,
-				totalQuantityAfterAdd,
-				selectedVariation?.id,
-				!!existingCartItem, // Exclude existing item from calculation if it exists
-			);
-
-			if (!result.isAvailable && !result.unlimitedStock) {
-				toast.error(`Only ${result.availableStock} items available`);
-				return false;
-			}
-
-			// Create minimal cart item - just IDs and quantity
-			// All other data will be looked up from TanStack Query cache when needed
+		// Create minimal cart item - just IDs and quantity
+		// All other data will be looked up from TanStack Query cache when needed
 			const cartItem: CartItem = {
 				productId: product.id,
 				variationId: selectedVariation?.id,
@@ -279,26 +252,10 @@ export function CartProvider({ children }: CartProviderProps) {
 		productId: number,
 		quantity: number,
 		variationId?: number,
-		products: ProductWithVariations[] = [], // Products passed for validation
 	) => {
 		// If quantity is 0 or less, remove the item
 		if (quantity <= 0) {
 			removeFromCart(productId, variationId);
-			return;
-		}
-
-		// Validate stock using client-side validation
-		const result = validateStock(
-			products,
-			cart.items,
-			productId,
-			quantity,
-			variationId,
-			true, // Existing cart item
-		);
-
-		if (!result.isAvailable && !result.unlimitedStock) {
-			toast.error("Requested quantity is not available");
 			return;
 		}
 

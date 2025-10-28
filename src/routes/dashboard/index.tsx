@@ -1,11 +1,12 @@
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { AdminProductCard } from "~/components/ui/dashboard/AdminProductCard";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
-import { DescriptionField } from "~/components/ui/dashboard/DescriptionField";
+import { EnhancedDescriptionField } from "~/components/ui/dashboard/EnhancedDescriptionField";
 import { ImageUpload } from "~/components/ui/dashboard/ImageUpload";
 import ProductAttributesForm from "~/components/ui/dashboard/ProductAttributesForm";
 import { DrawerSection } from "~/components/ui/dashboard/ProductFormSection";
@@ -20,6 +21,13 @@ import { CheckboxList } from "~/components/ui/shared/CheckboxList";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { Input } from "~/components/ui/shared/input";
 import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "~/components/ui/shared/Select";
+import {
 	getProductTagName,
 	PRODUCT_TAGS,
 	UNITS_OF_MEASUREMENT,
@@ -30,19 +38,19 @@ import {
 } from "~/hooks/useProductAttributes";
 import { generateSlug, useSlugGeneration } from "~/hooks/useSlugGeneration";
 import { useDashboardSearch } from "~/lib/dashboardSearchContext";
-import { storeDataQueryOptions } from "~/lib/queryOptions";
+import { 
+	productsInfiniteQueryOptions, 
+	brandsQueryOptions, 
+	collectionsQueryOptions, 
+	categoriesQueryOptions,
+	storeLocationsQueryOptions 
+} from "~/lib/queryOptions";
 import { cn } from "~/lib/utils";
 import { createProduct } from "~/server_functions/dashboard/store/createProduct";
 import { deleteProduct } from "~/server_functions/dashboard/store/deleteProduct";
 import { deleteProductImage } from "~/server_functions/dashboard/store/deleteProductImage";
-import { getAllProducts } from "~/server_functions/dashboard/store/getAllProducts";
 import { getProductBySlug } from "~/server_functions/dashboard/store/getProductBySlug";
-import {
-	getProductStoreLocations,
-	updateProductStoreLocations,
-} from "~/server_functions/dashboard/store/productStoreLocations";
 import { updateProduct } from "~/server_functions/dashboard/store/updateProduct";
-import { getAllStoreLocations } from "~/server_functions/dashboard/storeLocations/getAllStoreLocations";
 import type {
 	ProductAttributeFormData,
 	ProductFormData,
@@ -54,42 +62,81 @@ interface Variation {
 	id: string;
 	sku: string;
 	price: number;
-	stock: number;
 	discount?: number | null;
 	sort: number;
 	attributeValues: Record<string, string>; // attributeId -> value mapping
 }
 
-// Query options factory for reuse
-const productsQueryOptions = () => ({
-	queryKey: ["bfloorDashboardProducts"],
-	queryFn: () => getAllProducts(),
-	staleTime: 0, // No cache - force fresh data
-});
+
 
 export const Route = createFileRoute("/dashboard/")({
 	component: RouteComponent,
 	pendingComponent: ProductsPageSkeleton,
-
-	// Loader prefetches data before component renders
-	loader: async ({ context: { queryClient } }) => {
-		// Ensure data is loaded before component renders
-		await queryClient.ensureQueryData(productsQueryOptions());
-	},
 });
+
+// Hook to get responsive columns per row based on screen size
+function useResponsiveColumns() {
+	const [columnsPerRow, setColumnsPerRow] = useState(6);
+
+	useEffect(() => {
+		const updateColumns = () => {
+			const width = window.innerWidth;
+			if (width >= 1536) {
+				setColumnsPerRow(6); // 2xl
+			} else if (width >= 1280) {
+				setColumnsPerRow(5); // xl
+			} else if (width >= 1024) {
+				setColumnsPerRow(4); // lg
+			} else if (width >= 768) {
+				setColumnsPerRow(3); // md
+			} else {
+				setColumnsPerRow(2); // sm and below
+			}
+		};
+
+		// Set initial value
+		updateColumns();
+
+		// Update on resize
+		window.addEventListener('resize', updateColumns);
+		return () => window.removeEventListener('resize', updateColumns);
+	}, []);
+
+	return columnsPerRow;
+}
 
 function RouteComponent() {
 	const queryClient = useQueryClient();
 	const { searchTerm } = useDashboardSearch();
+	const parentRef = useRef<HTMLDivElement>(null);
+	const columnsPerRow = useResponsiveColumns();
 
-	// Use suspense query - data is guaranteed to be loaded by the loader
-	const { data: productsData } = useSuspenseQuery(productsQueryOptions());
+	// Use infinite query to track loading state
+	const { 
+		data: productsData, 
+		isLoading, 
+		fetchNextPage, 
+		hasNextPage, 
+		isFetchingNextPage 
+	} = useInfiniteQuery({
+		...productsInfiniteQueryOptions(),
+	});
 
-	// Store locations query
-	const { data: storeLocations } = useSuspenseQuery({
-		queryKey: ["bfloorDashboardStoreLocations"],
-		queryFn: () => getAllStoreLocations(),
-		staleTime: 1000 * 60 * 5,
+	// Fetch all reference data separately with aggressive caching (3-day stale time)
+	const { data: storeLocations = [] } = useQuery({
+		...storeLocationsQueryOptions(),
+	});
+
+	const { data: brands = [] } = useQuery({
+		...brandsQueryOptions(),
+	});
+
+	const { data: collections = [] } = useQuery({
+		...collectionsQueryOptions(),
+	});
+
+	const { data: categories = [] } = useQuery({
+		...categoriesQueryOptions(),
 	});
 
 	// Product attributes query
@@ -97,14 +144,14 @@ function RouteComponent() {
 
 	// Function to refetch data using query invalidation
 	const refetch = () => {
-		// Invalidate dashboard products cache
+		// Invalidate dashboard products infinite query
 		queryClient.invalidateQueries({
-			queryKey: ["bfloorDashboardProducts"],
+			queryKey: ["bfloorDashboardProductsInfinite"],
 		});
 
 		// Remove store data cache completely - forces fresh fetch on all clients
 		queryClient.removeQueries({
-			queryKey: storeDataQueryOptions().queryKey,
+			queryKey: ["bfloorStoreDataInfinite"],
 		});
 	};
 
@@ -116,7 +163,7 @@ function RouteComponent() {
 	) => {
 		// Remove store data cache completely - forces fresh fetch on all clients
 		queryClient.removeQueries({
-			queryKey: storeDataQueryOptions().queryKey,
+			queryKey: ["bfloorStoreDataInfinite"],
 		});
 
 		// If slug changed, remove both old and new product pages
@@ -138,7 +185,6 @@ function RouteComponent() {
 	};
 
 	// Generate unique IDs for form elements
-	const editStockId = useId();
 	const editCategoryId = useId();
 	const editBrandId = useId();
 	const editCollectionId = useId();
@@ -156,6 +202,7 @@ function RouteComponent() {
 	const defaultFormData = {
 		name: "",
 		slug: "",
+		sku: "",
 		description: "",
 		importantNote: "",
 		tags: [],
@@ -165,7 +212,6 @@ function RouteComponent() {
 		categorySlug: "",
 		brandSlug: "",
 		collectionSlug: "",
-		stock: "0",
 		isActive: true,
 		isFeatured: false,
 		discount: null,
@@ -232,7 +278,6 @@ function RouteComponent() {
 				id: v.id.startsWith("temp-") ? undefined : parseInt(v.id, 10),
 				sku: v.sku,
 				price: v.price.toString(),
-				stock: v.stock.toString(),
 				sort: v.sort,
 				attributes: Object.entries(v.attributeValues).map(
 					([attributeId, value]) => ({
@@ -251,7 +296,6 @@ function RouteComponent() {
 				id: v.id.startsWith("temp-") ? undefined : parseInt(v.id, 10),
 				sku: v.sku,
 				price: v.price.toString(),
-				stock: v.stock.toString(),
 				sort: v.sort,
 				attributes: Object.entries(v.attributeValues).map(
 					([attributeId, value]) => ({
@@ -355,27 +399,93 @@ function RouteComponent() {
 		}).format(numericPrice);
 	};
 
-	const { groupedProducts, categories, brands, collections } = productsData;
+	// Merge products from all pages
+	const products = productsData?.pages?.flatMap((page) => page?.products ?? [])?.filter(Boolean) ?? [];
+	
+	// Debug logging
+	console.log('Dashboard State:', {
+		totalPages: productsData?.pages?.length,
+		totalProducts: products.length,
+		hasNextPage,
+		isFetchingNextPage,
+		lastPageInfo: productsData?.pages?.[productsData.pages.length - 1]?.pagination,
+	});
 
-	// Flatten all products from groups into a single array
-	const allProducts = groupedProducts.flatMap((group) => group.products);
+	// Use merged products directly
+	const allProducts = products;
 
 	// Handlers for refreshing data when new entities are created
 	const handleEntityCreated = () => {
-		// Invalidate dashboard products cache to refresh categories, brands, collections
+		// Invalidate reference data caches
 		queryClient.invalidateQueries({
-			queryKey: ["bfloorDashboardProducts"],
+			queryKey: ["bfloorBrands"],
+		});
+		queryClient.invalidateQueries({
+			queryKey: ["bfloorCollections"],
+		});
+		queryClient.invalidateQueries({
+			queryKey: ["bfloorCategories"],
 		});
 	};
 
 	// Filter products based on search
 	const displayProducts = searchTerm
 		? allProducts.filter(
-				(product) =>
+				(product: ProductWithVariations) =>
 					product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
 					product.slug.toLowerCase().includes(searchTerm.toLowerCase()),
 			)
 		: allProducts;
+
+	// Virtualizer configuration - responsive columns handled by useResponsiveColumns hook
+	const itemHeight = 365;
+	const rowCount = Math.ceil(displayProducts.length / columnsPerRow);
+
+	const virtualizer = useVirtualizer({
+		count: rowCount,
+		getScrollElement: () => parentRef.current,
+		estimateSize: () => itemHeight,
+		overscan: 5, // Render 5 extra rows for smooth scrolling
+		// Enable dynamic sizing to handle height variations
+		measureElement: (element) => {
+			// Measure the actual height of the rendered row
+			const height = element?.getBoundingClientRect().height ?? itemHeight;
+			return height;
+		},
+	});
+
+
+	// Helper function to get products for a specific row
+	const getProductsForRow = (rowIndex: number) => {
+		const startIndex = rowIndex * columnsPerRow;
+		const endIndex = Math.min(startIndex + columnsPerRow, displayProducts.length);
+		return displayProducts.slice(startIndex, endIndex);
+	};
+
+	// Infinite scroll - load more products when user scrolls near the end
+	const virtualItems = virtualizer.getVirtualItems();
+	useEffect(() => {
+		const lastItem = virtualItems[virtualItems.length - 1];
+		
+		// Don't fetch if already fetching, no next page, or no items rendered
+		if (!lastItem || !hasNextPage || isFetchingNextPage) return;
+		
+		// Fetch next page when user scrolls near the end
+		// lastItem.index is the row index, rowCount is total rows
+		// Trigger when within 5 rows of the end (less aggressive - more scrolling before fetch)
+		const threshold = rowCount - 1;
+		
+		if (lastItem.index >= threshold) {
+			console.log('Fetching next page...', { 
+				lastRowIndex: lastItem.index, 
+				totalRows: rowCount,
+				threshold,
+				currentProducts: products.length,
+				hasNextPage,
+			});
+			fetchNextPage();
+		}
+	}, [virtualItems, hasNextPage, isFetchingNextPage, rowCount, fetchNextPage, products.length]);
 
 	const handleChange = (
 		e: React.ChangeEvent<
@@ -412,7 +522,6 @@ function RouteComponent() {
 				id: `temp-${Date.now()}`,
 				sku: generateVariationSKU(updatedFormData.slug, [], attributes || []),
 				price: updatedFormData.price ? parseFloat(updatedFormData.price) : 0,
-				stock: updatedFormData.stock ? parseInt(updatedFormData.stock, 10) : 0,
 				sort: 0,
 				attributeValues: {},
 			};
@@ -457,7 +566,6 @@ function RouteComponent() {
 				id: `temp-${Date.now()}`,
 				sku: generateVariationSKU(updatedFormData.slug, [], attributes || []), // Generate proper SKU
 				price: updatedFormData.price ? parseFloat(updatedFormData.price) : 0,
-				stock: updatedFormData.stock ? parseInt(updatedFormData.stock, 10) : 0,
 				sort: 0,
 				attributeValues: {}, // Empty attribute values initially
 			};
@@ -493,7 +601,6 @@ function RouteComponent() {
 					: parseInt(variation.id, 10),
 				sku: variation.sku,
 				price: variation.price.toString(),
-				stock: variation.stock.toString(),
 				sort: variation.sort,
 				attributes: Object.entries(variation.attributeValues).map(
 					([attributeId, value]) => ({
@@ -506,19 +613,10 @@ function RouteComponent() {
 			const submissionData = {
 				...formData,
 				variations: formattedVariations,
+				storeLocationIds: selectedStoreLocationIds,
 			};
 
-			const result = await createProduct({ data: submissionData });
-
-			// Update store locations
-			if (selectedStoreLocationIds.length > 0) {
-				await updateProductStoreLocations({
-					data: {
-						productId: result.product.id,
-						storeLocationIds: selectedStoreLocationIds,
-					},
-				});
-			}
+			await createProduct({ data: submissionData });
 
 			toast.success("Product added successfully!");
 
@@ -568,7 +666,6 @@ function RouteComponent() {
 						: parseInt(variation.id, 10),
 					sku: variation.sku,
 					price: variation.price.toString(),
-					stock: variation.stock.toString(),
 					sort: variation.sort,
 					attributes: Object.entries(variation.attributeValues).map(
 						([attributeId, value]) => ({
@@ -582,18 +679,11 @@ function RouteComponent() {
 			const submissionData = {
 				...editFormData,
 				variations: formattedVariations,
+				storeLocationIds: editSelectedStoreLocationIds,
 			};
 
 			await updateProduct({
 				data: { id: editingProductId, data: submissionData },
-			});
-
-			// Update store locations
-			await updateProductStoreLocations({
-				data: {
-					productId: editingProductId,
-					storeLocationIds: editSelectedStoreLocationIds,
-				},
 			});
 
 			toast.success("Product updated successfully!");
@@ -660,10 +750,14 @@ function RouteComponent() {
 		setIsEditMode(true);
 
 		try {
+			console.log('🔍 EDIT: Loading product data for:', product.id, product.name);
 			// Fetch complete product data including variations and categories
 			const productWithDetails = await getProductBySlug({
 				data: { id: product.id },
 			});
+			console.log('🔍 EDIT: Product loaded - Tags:', productWithDetails.tags, 'Store Location ID:', productWithDetails.storeLocationId, 'Store Location IDs:', productWithDetails.storeLocationIds);
+			console.log('🔍 EDIT: SKU field:', productWithDetails.sku);
+			console.log('🔍 EDIT: All product fields:', Object.keys(productWithDetails));
 
 			// Convert variations to the new frontend format
 			const formattedVariations =
@@ -679,7 +773,6 @@ function RouteComponent() {
 							id: variation.id.toString(),
 							sku: variation.sku,
 							price: variation.price,
-							stock: variation.stock,
 							discount: variation.discount,
 							sort: variation.sort ?? 0,
 							attributeValues,
@@ -734,16 +827,19 @@ function RouteComponent() {
 				}
 			}
 
-			// Parse product attributes from JSON
+			// Parse product attributes - already converted to array by getProductBySlug
 			let parsedAttributes: ProductAttributeFormData[] = [];
 			if (productWithDetails.productAttributes) {
-				try {
-					parsedAttributes = JSON.parse(
-						productWithDetails.productAttributes,
-					) as ProductAttributeFormData[];
-				} catch (error) {
-					console.error("Error parsing product attributes:", error);
-					parsedAttributes = [];
+				if (Array.isArray(productWithDetails.productAttributes)) {
+					parsedAttributes = productWithDetails.productAttributes;
+				} else if (typeof productWithDetails.productAttributes === 'string') {
+					try {
+						const parsed = JSON.parse(productWithDetails.productAttributes);
+						parsedAttributes = Array.isArray(parsed) ? parsed : [];
+					} catch (error) {
+						console.error("Error parsing product attributes:", error);
+						parsedAttributes = [];
+					}
 				}
 			}
 
@@ -761,6 +857,7 @@ function RouteComponent() {
 			setEditFormData({
 				name: productWithDetails.name,
 				slug: productWithDetails.slug,
+				sku: productWithDetails.sku || "",
 				description: productWithDetails.description || "",
 				importantNote: productWithDetails.importantNote || "",
 				tags: parsedTags,
@@ -771,7 +868,6 @@ function RouteComponent() {
 				categorySlug: productWithDetails.categorySlug || "",
 				brandSlug: productWithDetails.brandSlug || "",
 				collectionSlug: productWithDetails.collectionSlug || "",
-				stock: productWithDetails.stock.toString(),
 				isActive: productWithDetails.isActive,
 				isFeatured: productWithDetails.isFeatured,
 				discount: productWithDetails.discount,
@@ -782,14 +878,9 @@ function RouteComponent() {
 			});
 
 			// Load existing store locations for this product
-			const existingStoreLocations = await getProductStoreLocations({
-				data: { id: product.id },
-			});
-			setEditSelectedStoreLocationIds(
-				existingStoreLocations
-					.map((location) => location.storeLocationId)
-					.filter((id): id is number => id !== null),
-			);
+			const storeLocationIds = (productWithDetails.storeLocationIds || []).filter((id): id is number => id !== null);
+			console.log('🔍 EDIT: Store locations from product data:', storeLocationIds);
+			setEditSelectedStoreLocationIds(storeLocationIds);
 
 			// Set auto-slug state based on whether slug is custom
 			setIsEditAutoSlug(!isCustomSlug);
@@ -840,6 +931,7 @@ function RouteComponent() {
 			setEditFormData({
 				name: product.name,
 				slug: product.slug,
+				sku: product.sku || "",
 				description: product.description || "",
 				importantNote: product.importantNote || "",
 				tags: [],
@@ -849,7 +941,6 @@ function RouteComponent() {
 				categorySlug: product.categorySlug || "",
 				brandSlug: product.brandSlug || "",
 				collectionSlug: product.collectionSlug || "",
-				stock: product.stock.toString(),
 				isActive: product.isActive,
 				isFeatured: product.isFeatured,
 				discount: product.discount,
@@ -862,29 +953,60 @@ function RouteComponent() {
 		}
 	};
 
+	// Show skeleton only on initial load (not when fetching next pages)
+	if (isLoading || !productsData) {
+		return <ProductsPageSkeleton />;
+	}
+
 	return (
-		<div>
-			{/* Products List */}
-			<div className="space-y-6">
-				{displayProducts.length === 0 ? (
-					<EmptyState entityType="products" isSearchResult={!!searchTerm} />
-				) : (
-					<div className="px-4">
-						{/* Products Grid */}
-						<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
-							{displayProducts.map((product) => (
-								<AdminProductCard
-									key={product.id}
-									product={product}
-									onEdit={handleEdit}
-									onDelete={handleDeleteClick}
-									formatPrice={formatPrice}
-								/>
-							))}
-						</div>
+		<>
+			{/* Products List - Virtualized for performance */}
+			{displayProducts.length === 0 ? (
+				<EmptyState entityType="products" isSearchResult={!!searchTerm} />
+			) : (
+				<div ref={parentRef} className="overflow-auto px-4 py-4 h-full">
+					<div
+						className="relative"
+						style={{
+							height: `${virtualizer.getTotalSize()}px`,
+						}}
+					>
+						{virtualizer.getVirtualItems().map((virtualRow) => {
+							const rowProducts = getProductsForRow(virtualRow.index);
+							return (
+								<div
+									key={virtualRow.key}
+									data-index={virtualRow.index}
+									ref={virtualizer.measureElement}
+									className="absolute top-0 left-0 w-full"
+									style={{
+										height: `${virtualRow.size}px`,
+										transform: `translateY(${virtualRow.start}px)`,
+									}}
+								>
+									<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
+										{rowProducts.map((product: ProductWithVariations) => (
+											<AdminProductCard
+												key={product.id}
+												product={product}
+												onEdit={handleEdit}
+												onDelete={handleDeleteClick}
+												formatPrice={formatPrice}
+											/>
+										))}
+									</div>
+								</div>
+							);
+						})}
+						{/* Loading indicator for next page */}
+						{isFetchingNextPage && (
+							<div className="absolute top-0 left-0 w-full flex items-center justify-center p-8">
+								<p className="text-muted-foreground">Загрузка...</p>
+							</div>
+						)}
 					</div>
-				)}
-			</div>
+				</div>
+			)}
 
 			{/* Replace Edit Modal with Drawer */}
 			<DashboardFormDrawer
@@ -904,7 +1026,7 @@ function RouteComponent() {
 					id={editProductFormId}
 					className="contents"
 				>
-					{/* Left Column - Images, Settings, Tags, Store Locations */}
+					{/* Left Column - Images, Tags, Store Locations */}
 					<div className="space-y-4 flex flex-col">
 						{/* Product Images Block */}
 						<DrawerSection variant="default">
@@ -914,21 +1036,6 @@ function RouteComponent() {
 								slug={editFormData.slug}
 								categorySlug={editFormData.categorySlug}
 								productName={editFormData.name}
-							/>
-						</DrawerSection>
-
-						{/* Settings Block */}
-						<DrawerSection variant="default" title="Настройки">
-							<ProductSettingsFields
-								isActive={editFormData.isActive}
-								isFeatured={editFormData.isFeatured}
-								discount={editFormData.discount}
-								hasVariations={editFormData.hasVariations}
-								onIsActiveChange={handleEditChange}
-								onIsFeaturedChange={handleEditChange}
-								onDiscountChange={handleEditChange}
-								onHasVariationsChange={handleEditChange}
-								idPrefix="edit"
 							/>
 						</DrawerSection>
 
@@ -1001,6 +1108,28 @@ function RouteComponent() {
 									idPrefix="edit"
 								/>
 
+								<Input
+									label="Артикул (SKU)"
+									type="text"
+									name="sku"
+									value={editFormData.sku || ""}
+									onChange={handleEditChange}
+									placeholder="Опционально - уникальный артикул товара"
+								/>
+
+								{/* Settings Fields */}
+								<ProductSettingsFields
+									isActive={editFormData.isActive}
+									isFeatured={editFormData.isFeatured}
+									discount={editFormData.discount}
+									hasVariations={editFormData.hasVariations}
+									onIsActiveChange={handleEditChange}
+									onIsFeaturedChange={handleEditChange}
+									onDiscountChange={handleEditChange}
+									onHasVariationsChange={handleEditChange}
+									idPrefix="edit"
+								/>
+
 								{/* Two column layout for basic information fields */}
 								<div className="grid grid-cols-2 gap-4">
 									{/* Column 1: Price, Category, Weight */}
@@ -1017,18 +1146,8 @@ function RouteComponent() {
 										/>
 									</div>
 
-									{/* Column 2: Stock */}
-									<div>
-										<Input
-											id={editStockId}
-											type="number"
-											name="stock"
-											label="Количество"
-											value={editFormData.stock}
-											onChange={handleEditChange}
-											required
-										/>
-									</div>
+									{/* Column 2: Empty for grid alignment */}
+									<div />
 
 									{/* Square Meters Per Pack (for flooring products) */}
 									<Input
@@ -1039,7 +1158,7 @@ function RouteComponent() {
 										onChange={handleEditChange}
 										step="0.001"
 										min="0"
-										placeholder="Опционально - для напольных покрытий"
+										placeholder="Опционально"
 									/>
 
 									{/* Unit of Measurement */}
@@ -1050,19 +1169,25 @@ function RouteComponent() {
 										>
 											Единица количества
 										</label>
-										<select
-											id={editUnitId}
-											name="unitOfMeasurement"
+										<Select
 											value={editFormData.unitOfMeasurement}
-											onChange={handleEditChange}
-											className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+											onValueChange={(value) => {
+												handleEditChange({
+													target: { name: "unitOfMeasurement", value },
+												} as React.ChangeEvent<HTMLSelectElement>);
+											}}
 										>
-											{UNITS_OF_MEASUREMENT.map((unit) => (
-												<option key={unit} value={unit}>
-													{unit}
-												</option>
-											))}
-										</select>
+											<SelectTrigger id={editUnitId}>
+												<SelectValue placeholder="Выберите единицу" />
+											</SelectTrigger>
+											<SelectContent>
+												{UNITS_OF_MEASUREMENT.map((unit) => (
+													<SelectItem key={unit} value={unit}>
+														{unit}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
 									</div>
 
 									{/* Column 1: Category */}
@@ -1130,22 +1255,27 @@ function RouteComponent() {
 								</div>
 
 								{/* Description Field */}
-								<DescriptionField
+								<EnhancedDescriptionField
 									name="description"
 									value={editFormData.description || ""}
 									onChange={handleEditChange}
 									placeholder="Добавьте описание товара..."
 									className="min-h-[4rem]"
+									showPreview={true}
+									showHelp={true}
+									autoClean={false}
 								/>
 
 								{/* Important Note Field */}
-								<DescriptionField
+								<EnhancedDescriptionField
 									name="importantNote"
 									value={editFormData.importantNote || ""}
 									onChange={handleEditChange}
 									placeholder="Добавьте важную заметку с поддержкой Markdown..."
 									className="min-h-[4rem]"
 									label="Важная заметка"
+									showPreview={true}
+									showHelp={true}
 								/>
 							</div>
 						</DrawerSection>
@@ -1204,7 +1334,7 @@ function RouteComponent() {
 					id={createProductFormId}
 					className="contents"
 				>
-					{/* Left Column - Images, Settings, Tags, Store Locations */}
+					{/* Left Column - Images, Tags, Store Locations */}
 					<div className="space-y-4 flex flex-col">
 						{/* Product Images Block */}
 						<DrawerSection variant="default">
@@ -1214,21 +1344,6 @@ function RouteComponent() {
 								slug={formData.slug}
 								categorySlug={formData.categorySlug}
 								productName={formData.name}
-							/>
-						</DrawerSection>
-
-						{/* Settings Block */}
-						<DrawerSection variant="default" title="Настройки">
-							<ProductSettingsFields
-								isActive={formData.isActive}
-								isFeatured={formData.isFeatured}
-								discount={formData.discount}
-								hasVariations={formData.hasVariations}
-								onIsActiveChange={handleChange}
-								onIsFeaturedChange={handleChange}
-								onDiscountChange={handleChange}
-								onHasVariationsChange={handleChange}
-								idPrefix="add"
 							/>
 						</DrawerSection>
 
@@ -1301,6 +1416,28 @@ function RouteComponent() {
 									idPrefix="create"
 								/>
 
+								<Input
+									label="Артикул (SKU)"
+									type="text"
+									name="sku"
+									value={formData.sku || ""}
+									onChange={handleChange}
+									placeholder="Опционально - уникальный артикул товара"
+								/>
+
+								{/* Settings Fields */}
+								<ProductSettingsFields
+									isActive={formData.isActive}
+									isFeatured={formData.isFeatured}
+									discount={formData.discount}
+									hasVariations={formData.hasVariations}
+									onIsActiveChange={handleChange}
+									onIsFeaturedChange={handleChange}
+									onDiscountChange={handleChange}
+									onHasVariationsChange={handleChange}
+									idPrefix="add"
+								/>
+
 								{/* Two column layout for basic information fields */}
 								<div className="grid grid-cols-2 gap-4">
 									{/* Column 1: Price, Category, Weight */}
@@ -1323,15 +1460,8 @@ function RouteComponent() {
 										/>
 									</div>
 
-									{/* Column 2: Stock */}
-									<Input
-										label="Количество"
-										type="number"
-										name="stock"
-										value={formData.stock}
-										onChange={handleChange}
-										min="0"
-									/>
+									{/* Column 2: Empty for grid alignment */}
+									<div />
 
 									{/* Square Meters Per Pack (for flooring products) */}
 									<Input
@@ -1342,7 +1472,7 @@ function RouteComponent() {
 										onChange={handleChange}
 										step="0.001"
 										min="0"
-										placeholder="Опционально - для напольных покрытий"
+										placeholder="Опционально"
 									/>
 
 									{/* Unit of Measurement */}
@@ -1353,19 +1483,25 @@ function RouteComponent() {
 										>
 											Единица количества
 										</label>
-										<select
-											id={createUnitId}
-											name="unitOfMeasurement"
+										<Select
 											value={formData.unitOfMeasurement}
-											onChange={handleChange}
-											className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+											onValueChange={(value) => {
+												handleChange({
+													target: { name: "unitOfMeasurement", value },
+												} as React.ChangeEvent<HTMLSelectElement>);
+											}}
 										>
-											{UNITS_OF_MEASUREMENT.map((unit) => (
-												<option key={unit} value={unit}>
-													{unit}
-												</option>
-											))}
-										</select>
+											<SelectTrigger id={createUnitId}>
+												<SelectValue placeholder="Выберите единицу" />
+											</SelectTrigger>
+											<SelectContent>
+												{UNITS_OF_MEASUREMENT.map((unit) => (
+													<SelectItem key={unit} value={unit}>
+														{unit}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
 									</div>
 
 									{/* Column 1: Category */}
@@ -1436,22 +1572,27 @@ function RouteComponent() {
 								</div>
 
 								{/* Description Field */}
-								<DescriptionField
+								<EnhancedDescriptionField
 									name="description"
 									value={formData.description || ""}
 									onChange={handleChange}
 									placeholder="Добавьте описание товара..."
 									className="min-h-[4rem]"
+									showPreview={true}
+									showHelp={true}
+									autoClean={false}
 								/>
 
 								{/* Important Note Field */}
-								<DescriptionField
+								<EnhancedDescriptionField
 									name="importantNote"
 									value={formData.importantNote || ""}
 									onChange={handleChange}
 									placeholder="Добавьте важную заметку с поддержкой Markdown..."
 									className="min-h-[4rem]"
 									label="Важная заметка"
+									showPreview={true}
+									showHelp={true}
 								/>
 							</div>
 						</DrawerSection>
@@ -1503,6 +1644,6 @@ function RouteComponent() {
 					isDeleting={isDeleting}
 				/>
 			)}
-		</div>
+		</>
 	);
 }

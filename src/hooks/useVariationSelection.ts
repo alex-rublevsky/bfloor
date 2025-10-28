@@ -11,7 +11,6 @@ import type {
 	ProductWithVariations,
 	VariationAttribute,
 } from "~/types";
-import { getAvailableQuantityForVariation } from "~/utils/validateStock";
 
 interface UseVariationSelectionProps {
 	product: ProductWithVariations | null;
@@ -32,7 +31,7 @@ interface UseVariationSelectionReturn {
 
 export function useVariationSelection({
 	product,
-	cartItems,
+	cartItems: _cartItems,
 	search,
 	onVariationChange,
 	attributes = [],
@@ -83,13 +82,6 @@ export function useVariationSelection({
 		if (Object.keys(localSelectedAttributes).length > 0) return;
 
 		const sortedVariations = [...product.variations].sort((a, b) => {
-			if (product.unlimitedStock) return (b.sort ?? 0) - (a.sort ?? 0);
-
-			const aStock = getAvailableQuantityForVariation(product, a.id, cartItems);
-			const bStock = getAvailableQuantityForVariation(product, b.id, cartItems);
-
-			if (aStock > 0 && bStock === 0) return -1;
-			if (bStock > 0 && aStock === 0) return 1;
 			return (b.sort ?? 0) - (a.sort ?? 0);
 		});
 
@@ -101,7 +93,7 @@ export function useVariationSelection({
 			});
 			setLocalSelectedAttributes(autoAttributes);
 		}
-	}, [useUrlState, product, cartItems, localSelectedAttributes]);
+	}, [useUrlState, product, localSelectedAttributes]);
 
 	// Get all unique attribute IDs
 	const allAttributeIds = useMemo(() => {
@@ -166,17 +158,10 @@ export function useVariationSelection({
 					),
 				);
 
-				if (!matches) return false;
-
-				const availableQuantity = getAvailableQuantityForVariation(
-					product,
-					variation.id,
-					cartItems,
-				);
-				return product.unlimitedStock || availableQuantity > 0;
+				return matches;
 			});
 		},
-		[product, selectedAttributes, cartItems],
+		[product, selectedAttributes],
 	);
 
 	// Select variation - handles both URL and local state

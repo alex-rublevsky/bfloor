@@ -7,91 +7,71 @@ import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 
-export default defineConfig({
-	server: {
-		port: 3000,
-		watch: {
-			ignored: [
-				"**/src/routeTree.gen.ts",
-				"**/.tanstack/**",
-				"**/node_modules/**",
-			],
-		},
-		proxy: {
-			// Always proxy server function calls to production to ensure consistent database usage
-			// This ensures both development and production use the same remote database (bfloor-db)
-			"/_serverFn": {
-				target: "https://bfloor.alexander-rublevskii.workers.dev",
-				changeOrigin: true,
-				secure: true,
+export default defineConfig(() => {
+	return {
+		server: {
+			port: 3000,
+			watch: {
+				ignored: [
+					"**/src/routeTree.gen.ts",
+					"**/.tanstack/**",
+					"**/node_modules/**",
+				],
 			},
 		},
-	},
-	plugins: [
-		tsConfigPaths({
-			projects: ["./tsconfig.json"],
-		}),
-		cloudflare({
-			viteEnvironment: { name: "ssr" },
-			configPath: "./wrangler.jsonc",
-		}),
-		tanstackStart(),
-		tanstackRouter({
-			target: "react",
-			autoCodeSplitting: true,
-			generatedRouteTree: "./src/routeTree.gen.ts",
-		}),
-		viteReact(),
-		tailwindcss(),
-	],
-	resolve: {
-		alias: {
-			"@": resolve(__dirname, "./src"),
-		},
-	},
-	optimizeDeps: {
-		exclude: [
-			"sqlite",
-			//"blake3-wasm"
+		plugins: [
+			tsConfigPaths({
+				projects: ["./tsconfig.json"],
+			}),
+			// Use Cloudflare plugin to connect to production D1 database
+			cloudflare({
+				viteEnvironment: { name: "ssr" },
+				configPath: "./wrangler.jsonc",
+				// Configure for development mode
+				//persist: false, // Don't persist data locally
+			}),
+			tanstackStart({
+				// Configure client base URL to use production for server functions
+				client: {
+					base: "https://bfloor.romavg.workers.dev",
+				},
+			}),
+			tanstackRouter({
+				target: "react",
+				autoCodeSplitting: true,
+				generatedRouteTree: "./src/routeTree.gen.ts",
+			}),
+			viteReact(),
+			tailwindcss(),
 		],
-	},
-	// build: {
-	//   rollupOptions: {
-	//      external: ['sqlite'],
-	//     output: {
-	//       hoistTransitiveImports: false,
-	//     },
-	//     treeshake: false,
-	//   },
-	//   // Disable tree-shaking for problematic packages
-	//   commonjsOptions: {
-	//     include: [/node_modules/],
-	//   },
-	//   },
-
-	//TODO: is this needed? can remove?
-	// define: {
-	//   global: 'globalThis',
-	// },
-	esbuild: {
-		// Preserve function/class names for better stack traces
-		keepNames: true,
-	},
-	// server: {
-	//   proxy: {
-	//     '/api': {
-	//       target: 'http://localhost:8787',
-	//       changeOrigin: true,
-	//     },
-	//   },
-	// },
-
-	build: {
-		rollupOptions: {
-			external: ["tsr:routes-manifest", "sqlite", "blake3-wasm"],
-			// treeshake: {
-			//   moduleSideEffects: 'no-external',
-			// },
+		resolve: {
+			alias: {
+				"@": resolve(__dirname, "./src"),
+			},
 		},
-	},
+		optimizeDeps: {
+			exclude: [
+				"sqlite",
+				//"blake3-wasm"
+			],
+		},
+		esbuild: {
+			// Preserve function/class names for better stack traces
+			keepNames: true,
+		},
+		define: {
+			// Force server functions to use production URL
+			"process.env.TANSTACK_START_SERVER_FN_BASE_URL": JSON.stringify(
+				"https://bfloor.romavg.workers.dev",
+			),
+			"import.meta.env.VITE_SERVER_FN_BASE_URL": JSON.stringify(
+				"https://bfloor.romavg.workers.dev",
+			),
+		},
+		build: {
+			rollupOptions: {
+				external: ["tsr:routes-manifest", "sqlite", "blake3-wasm"],
+			},
+		},
+	};
 });

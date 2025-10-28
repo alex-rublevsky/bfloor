@@ -72,6 +72,62 @@ const dashboardSecondaryItems: NavItem[] = [
 	{ name: "Назад на сайт", url: "/", icon: ArrowLeftFromLine },
 ];
 
+// Reusable dashboard navigation component
+const DashboardNavLinks = ({ className = "", dashboardNavItems, pathname, prefetchDashboardOrders }: { 
+	className?: string;
+	dashboardNavItems: NavItem[];
+	pathname: string;
+	prefetchDashboardOrders: () => void;
+}) => (
+	<div 
+		className={cn("flex  rounded-full border  border-border bg-background p-[0.3rem]", className)}
+	>
+		{dashboardNavItems.map((item) => (
+			<Link
+				key={item.url}
+				to={item.url}
+				onMouseEnter={() => {
+					// Prefetch orders data on hover
+					if (item.url === "/dashboard/orders") {
+						prefetchDashboardOrders();
+					}
+				}}
+				className={cn(
+					"relative z-10 block cursor-pointer px-3 py-1.5 text-xs text-foreground rounded-full transition-colors hover:bg-primary/20 whitespace-nowrap flex-shrink-0",
+					pathname === item.url &&
+						"bg-primary text-primary-foreground mix-blend-normal hover:bg-primary",
+				)}
+			>
+				{item.name}
+			</Link>
+		))}
+	</div>
+);
+
+// Reusable action button component
+const ActionButton = ({ actionButton, className = "" }: { 
+	actionButton: { label: string; onClick: () => void } | null;
+	className?: string;
+}) => {
+	if (!actionButton) return null;
+	
+	return (
+		<button
+			type="button"
+			onClick={actionButton.onClick}
+			className={cn(
+				"relative flex rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground transition-all duration-300 p-[0.3rem] focus:outline-hidden focus:ring-1 focus:ring-ring whitespace-nowrap min-w-fit",
+				className
+			)}
+		>
+			<span className="relative z-10 flex items-center gap-1.5 cursor-pointer px-3 py-1.5 text-xs">
+				<Plus className="w-4 h-4" />
+				{actionButton.label}
+			</span>
+		</button>
+	);
+};
+
 const DropdownNavMenu = ({
 	items,
 	showUserInfo = false,
@@ -283,100 +339,16 @@ export function NavBar({
 			<>
 				<nav className={cn("sticky top-0 z-[40]", className)}>
 					<div className="px-4 py-3">
-						{/* Desktop layout - Extra large screens and above */}
-						<div className="hidden xl:flex items-center gap-4">
+						{/* Desktop layout - Large screens and above */}
+						<div className="hidden lg:flex items-center gap-4">
 							{/* Pages navigation - fixed width */}
 							<div className="flex-shrink-0">
-								<div className="flex rounded-full border border-primary bg-background p-[0.3rem]">
-									{dashboardNavItems.map((item) => (
-										<Link
-											key={item.url}
-											to={item.url}
-											onMouseEnter={() => {
-												// Prefetch orders data on hover
-												if (item.url === "/dashboard/orders") {
-													prefetchDashboardOrders();
-												}
-											}}
-											className={cn(
-												"relative z-10 block cursor-pointer px-3 py-1.5 text-xs text-foreground rounded-full transition-colors hover:bg-primary/20 whitespace-nowrap flex-shrink-0",
-												pathname === item.url &&
-													"bg-primary text-primary-foreground mix-blend-normal hover:bg-primary",
-											)}
-										>
-											{item.name}
-										</Link>
-									))}
-								</div>
-							</div>
-
-							{/* Search - takes all available space */}
-							{searchTerm !== undefined && onSearchChange && (
-								<div className="flex-1 min-w-0">
-									<SearchInput
-										placeholder={dynamicPlaceholder}
-										value={searchTerm}
-										onChange={onSearchChange}
-										className="w-full"
-									/>
-								</div>
-							)}
-
-							{/* Action button - fixed width */}
-							{actionButton && (
-								<div className="flex-shrink-0">
-									<button
-										type="button"
-										onClick={actionButton.onClick}
-										className="relative flex rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground transition-all duration-300 p-[0.3rem] focus:outline-hidden focus:ring-1 focus:ring-ring whitespace-nowrap min-w-fit"
-									>
-										<span className="relative z-10 flex items-center gap-1.5 cursor-pointer px-3 py-1.5 text-xs">
-											<Plus className="w-4 h-4" />
-											{actionButton.label}
-										</span>
-									</button>
-								</div>
-							)}
-
-							{/* Menu dropdown - fixed width */}
-							<div className="flex-shrink-0">
-								<DropdownNavMenu
-									items={dashboardSecondaryItems}
-									showUserInfo={true}
-									userData={userData}
+								<DashboardNavLinks 
+									dashboardNavItems={dashboardNavItems}
+									pathname={pathname}
+									prefetchDashboardOrders={prefetchDashboardOrders}
 								/>
 							</div>
-						</div>
-
-						{/* Desktop layout - Large screens (compact) */}
-						<div className="hidden lg:flex xl:hidden items-center gap-2">
-							{/* Pages navigation - fixed width */}
-							<div className="flex-shrink-0">
-								<div
-									className="flex rounded-full border border-primary bg-background p-[0.3rem]"
-									data-layout="lg"
-								>
-									{dashboardNavItems.map((item) => (
-										<Link
-											key={item.url}
-											to={item.url}
-											onMouseEnter={() => {
-												// Prefetch orders data on hover
-												if (item.url === "/dashboard/orders") {
-													prefetchDashboardOrders();
-												}
-											}}
-											className={cn(
-												"relative z-10 block cursor-pointer px-2 py-1.5 text-xs text-foreground rounded-full transition-colors hover:bg-primary/20 whitespace-nowrap flex-shrink-0",
-												pathname === item.url &&
-													"bg-primary text-primary-foreground mix-blend-normal hover:bg-primary",
-											)}
-										>
-											{item.name}
-										</Link>
-									))}
-								</div>
-							</div>
 
 							{/* Search - takes all available space */}
 							{searchTerm !== undefined && onSearchChange && (
@@ -391,22 +363,9 @@ export function NavBar({
 							)}
 
 							{/* Action button - fixed width */}
-							{actionButton && (
-								<div className="flex-shrink-0">
-									<button
-										type="button"
-										onClick={actionButton.onClick}
-										className="relative flex rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground transition-all duration-300 p-[0.3rem] focus:outline-hidden focus:ring-1 focus:ring-ring whitespace-nowrap min-w-fit"
-									>
-										<span className="relative z-10 flex items-center gap-1 cursor-pointer px-2 py-1.5 text-xs">
-											<Plus className="w-3 h-3" />
-											<span className="hidden sm:inline">
-												{actionButton.label}
-											</span>
-										</span>
-									</button>
-								</div>
-							)}
+							<div className="flex-shrink-0">
+								<ActionButton actionButton={actionButton} />
+							</div>
 
 							{/* Menu dropdown - fixed width */}
 							<div className="flex-shrink-0">
@@ -419,33 +378,14 @@ export function NavBar({
 						</div>
 
 						{/* Tablet layout - Medium screens */}
-						<div className="hidden md:flex lg:hidden xl:hidden flex-col gap-3">
+						<div className="hidden md:flex lg:hidden flex-col gap-3">
 							{/* First row: Pages navigation */}
 							<div className="flex-shrink-0">
-								<div
-									className="flex rounded-full border border-primary bg-background p-[0.3rem]"
-									data-layout="md"
-								>
-									{dashboardNavItems.map((item) => (
-										<Link
-											key={item.url}
-											to={item.url}
-											onMouseEnter={() => {
-												// Prefetch orders data on hover
-												if (item.url === "/dashboard/orders") {
-													prefetchDashboardOrders();
-												}
-											}}
-											className={cn(
-												"relative z-10 block cursor-pointer px-2 py-1.5 text-xs text-foreground rounded-full transition-colors hover:bg-primary/20 whitespace-nowrap flex-shrink-0",
-												pathname === item.url &&
-													"bg-primary text-primary-foreground mix-blend-normal hover:bg-primary",
-											)}
-										>
-											{item.name}
-										</Link>
-									))}
-								</div>
+								<DashboardNavLinks 
+									dashboardNavItems={dashboardNavItems}
+									pathname={pathname}
+									prefetchDashboardOrders={prefetchDashboardOrders}
+								/>
 							</div>
 
 							{/* Second row: Search + Action + Menu */}
@@ -463,20 +403,9 @@ export function NavBar({
 								)}
 
 								{/* Action button - fixed width */}
-								{actionButton && (
-									<div className="flex-shrink-0">
-										<button
-											type="button"
-											onClick={actionButton.onClick}
-											className="relative flex rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground transition-all duration-300 p-[0.3rem] focus:outline-hidden focus:ring-1 focus:ring-ring whitespace-nowrap min-w-fit"
-										>
-											<span className="relative z-10 flex items-center gap-1.5 cursor-pointer px-3 py-1.5 text-xs">
-												<Plus className="w-4 h-4" />
-												{actionButton.label}
-											</span>
-										</button>
-									</div>
-								)}
+								<div className="flex-shrink-0">
+									<ActionButton actionButton={actionButton} />
+								</div>
 
 								{/* Menu dropdown - fixed width */}
 								<div className="flex-shrink-0">
@@ -489,7 +418,7 @@ export function NavBar({
 							</div>
 						</div>
 
-						{/* Mobile layout - Small screens - Always show on mobile */}
+						{/* Mobile layout - Small screens */}
 						<div className="md:hidden w-full">
 							{/* Search - takes full available space */}
 							{searchTerm !== undefined && onSearchChange && (
@@ -525,41 +454,64 @@ export function NavBar({
 			>
 				<div className="px-4 py-3">
 					{/* Desktop layout - Large screens and above */}
-					<div className="hidden lg:flex items-center gap-4">
-						{/* Logo - fixed width */}
-						<div className="flex-shrink-0">
-							<Link to="/" className="hover:opacity-80 transition-opacity">
-								<Logo className="h-8 w-auto" />
-							</Link>
+					<div className="hidden lg:flex flex-col gap-3">
+						{/* First row: Navigation Links */}
+						<div className="flex items-center justify-between gap-3 text-sm flex-wrap">
+							
+							<a href="/contacts" className="text-foreground hover:text-primary transition-colors whitespace-nowrap">
+								Владивосток, ул. Русская, д. 78
+							</a>
+							<a href="tel:+79025559405" className="text-foreground hover:text-primary transition-colors whitespace-nowrap">
+								8 902 555 9405
+							</a>
+							<div className="flex items-center gap-3"><a href="/delivery" className="text-foreground hover:text-primary transition-colors whitespace-nowrap">
+								Доставка и оплата
+							</a>
+							<a href="/contacts" className="text-foreground hover:text-primary transition-colors whitespace-nowrap">
+								Контакты и адреса
+							</a>
+							<a href="/about" className="text-foreground hover:text-primary transition-colors whitespace-nowrap">
+								О компании
+							</a></div>
 						</div>
 
-						{/* Catalog button - fixed width */}
-						<div className="flex-shrink-0">
-							<Button to="/store" variant="default" size="sm">
-								Каталог
-							</Button>
-						</div>
+						{/* Second row: Logo, Catalog, Search, Cart, Dashboard */}
+						<div className="flex items-center gap-4">
+							{/* Logo - fixed width */}
+							<div className="flex-shrink-0">
+								<Link to="/" className="hover:opacity-80 transition-opacity">
+									<Logo className="h-8 w-auto" />
+								</Link>
+							</div>
 
-						{/* Search - takes all available space */}
-						<div className="flex-1 min-w-0">
-							<SearchInput
-								placeholder={dynamicPlaceholder || "Поиск..."}
-								value={clientSearch.searchTerm}
-								onChange={clientSearch.setSearchTerm}
-								className="w-full"
-							/>
-						</div>
+							{/* Catalog button - fixed width */}
+							<div className="flex-shrink-0">
+								<Button to="/store" variant="accent" size="sm">
+									Каталог
+								</Button>
+							</div>
 
-						{/* Cart button - fixed width */}
-						<div className="flex-shrink-0">
-							<CartButton />
-						</div>
+							{/* Search - takes all available space */}
+							<div className="flex-1 min-w-0">
+								<SearchInput
+									placeholder={dynamicPlaceholder || "Поиск..."}
+									value={clientSearch.searchTerm}
+									onChange={clientSearch.setSearchTerm}
+									className="w-full"
+								/>
+							</div>
 
-						{/* Dashboard button - fixed width */}
-						<div className="flex-shrink-0">
-							<Button to="/dashboard" variant="outline" size="sm">
-								Панель управления
-							</Button>
+							{/* Cart button - fixed width */}
+							<div className="flex-shrink-0">
+								<CartButton />
+							</div>
+
+							{/* Dashboard button - fixed width */}
+							<div className="flex-shrink-0">
+								<Button to="/dashboard" variant="outline" size="sm">
+									Панель управления
+								</Button>
+							</div>
 						</div>
 					</div>
 
@@ -573,7 +525,7 @@ export function NavBar({
 								</Link>
 							</div>
 							<div className="flex-shrink-0">
-								<Button to="/store" variant="default" size="sm">
+								<Button to="/store" variant="accent" size="sm">
 									Каталог
 								</Button>
 							</div>

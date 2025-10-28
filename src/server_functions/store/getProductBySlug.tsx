@@ -1,15 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { DB } from "~/db";
 import {
 	brands,
 	categories,
+	collections,
 	products,
+	productStoreLocations,
 	productVariations,
+	storeLocations,
 	variationAttributes,
 } from "~/schema";
-import type { ProductWithDetails } from "~/types";
 
 // Type for the complex query result
 type QueryResult = {
@@ -46,25 +48,54 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 		const firstRow = result[0];
 		const baseProduct = firstRow.products;
 
+		// Fetch additional data in parallel
+		const [storeLocationsData, collectionData] = await Promise.all([
+			// Fetch store locations for this product
+			db
+				.select()
+				.from(productStoreLocations)
+				.where(eq(productStoreLocations.productId, baseProduct.id))
+				.all()
+				.then(async (relations) => {
+					if (relations.length === 0) return [];
+					const locationIds = relations.map((r) => r.storeLocationId).filter((id): id is number => id !== null);
+					if (locationIds.length === 0) return [];
+					return db
+						.select()
+						.from(storeLocations)
+						.where(inArray(storeLocations.id, locationIds))
+						.all()
+						.catch(() => []);
+				}),
+			// Fetch collection if exists
+			baseProduct.collectionSlug
+				? db
+						.select()
+						.from(collections)
+						.where(eq(collections.slug, baseProduct.collectionSlug))
+						.limit(1)
+						.then((rows) => rows[0] || null)
+				: Promise.resolve(null),
+		]);
+
 		const variationsMap = new Map();
 
 		result.forEach((row: QueryResult) => {
 			if (!row.product_variations) return;
 
 			const variationId = row.product_variations.id;
-			if (!variationsMap.has(variationId)) {
-				variationsMap.set(variationId, {
-					id: variationId,
-					productId: row.product_variations.productId,
-					sku: row.product_variations.sku,
-					price: row.product_variations.price,
-					stock: row.product_variations.stock,
-					sort: row.product_variations.sort || 0,
-					discount: row.product_variations.discount,
-					createdAt: row.product_variations.createdAt,
-					attributes: [],
-				});
-			}
+		if (!variationsMap.has(variationId)) {
+			variationsMap.set(variationId, {
+				id: variationId,
+				productId: row.product_variations.productId,
+				sku: row.product_variations.sku,
+				price: row.product_variations.price,
+				sort: row.product_variations.sort || 0,
+				discount: row.product_variations.discount,
+				createdAt: row.product_variations.createdAt,
+				attributes: [],
+			});
+		}
 
 			if (row.variation_attributes) {
 				variationsMap.get(variationId)?.attributes.push({
@@ -77,22 +108,78 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 			}
 		});
 
-		const productWithDetails: ProductWithDetails = {
-			...baseProduct,
-			category: firstRow.categories
-				? {
-						name: firstRow.categories.name,
-						slug: firstRow.categories.slug,
-					}
-				: null,
-			brand: firstRow.brands
-				? {
-						name: firstRow.brands.name,
-						slug: firstRow.brands.slug,
-					}
-				: null,
-			variations: Array.from(variationsMap.values()),
-		};
+	// Process images - parse JSON string or comma-separated string to array for frontend
+	let imagesArray: string[] = [];
+	if (baseProduct.images) {
+		try {
+			// First, try parsing as JSON array string
+			imagesArray = JSON.parse(baseProduct.images) as string[];
+		} catch {
+			// If JSON parsing fails, try comma-separated string
+			try {
+				// Split by comma and trim whitespace
+				imagesArray = baseProduct.images.split(',').map(img => img.trim()).filter(Boolean);
+			} catch {
+				// If both fail, return empty array
+				console.error("Failed to parse images for product:", baseProduct.slug);
+				imagesArray = [];
+			}
+		}
+	}
 
-		return productWithDetails;
+	// Process productAttributes - convert JSON string to array
+	let productAttributesArray: { attributeId: string; value: string }[] = [];
+	if (baseProduct.productAttributes) {
+		try {
+			const parsed = JSON.parse(baseProduct.productAttributes);
+			// Convert object to array format expected by frontend
+			if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+				// Convert object to array of {attributeId, value} pairs
+				productAttributesArray = Object.entries(parsed).map(([key, value]) => ({
+					attributeId: key,
+					value: String(value)
+				}));
+			} else if (Array.isArray(parsed)) {
+				productAttributesArray = parsed;
+			}
+		} catch {
+			// If parsing fails, use empty array
+			productAttributesArray = [];
+		}
+	}
+
+	const productWithDetails = {
+		...baseProduct,
+		images: imagesArray, // Return as array - TanStack will serialize/deserialize automatically
+		productAttributes: productAttributesArray,
+		category: firstRow.categories
+			? {
+					name: firstRow.categories.name,
+					slug: firstRow.categories.slug,
+				}
+			: null,
+		brand: firstRow.brands
+			? {
+					name: firstRow.brands.name,
+					slug: firstRow.brands.slug,
+					image: firstRow.brands.image,
+					country: firstRow.brands.country,
+				}
+			: null,
+		collection: collectionData
+			? {
+					name: collectionData.name,
+					slug: collectionData.slug,
+				}
+			: null,
+		storeLocations: storeLocationsData.map((loc) => ({
+			id: loc.id,
+			address: loc.address,
+			description: loc.description,
+			openingHours: loc.openingHours,
+		})),
+		variations: Array.from(variationsMap.values()),
+	};
+
+	return productWithDetails;
 	});

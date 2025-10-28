@@ -15,7 +15,7 @@ export function Logo({ className, width = 377, height = 41 }: LogoProps) {
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
 			className={cn("transition-colors duration-200", className)}
-			style={{ color: "oklch(var(--primary))" }}
+			style={{ color: "var(--primary)" }}
 			role="img"
 			aria-label="Company Logo"
 		>

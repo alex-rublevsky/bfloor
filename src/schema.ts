@@ -17,6 +17,7 @@ export const products = sqliteTable("products", {
 	storeLocationId: integer("store_location_id"),
 	name: text("name").notNull(),
 	slug: text("slug").notNull().unique(),
+	sku: text("sku"), // Product SKU/Article number - optional
 	images: text("images"), // JSON stored as text
 	description: text("description"),
 	importantNote: text("important_note"), // Важная заметка с поддержкой Markdown - опционально
@@ -32,10 +33,6 @@ export const products = sqliteTable("products", {
 	hasVariations: integer("has_variations", { mode: "boolean" })
 		.notNull()
 		.default(false),
-	stock: integer("stock").notNull().default(0),
-	unlimitedStock: integer("unlimited_stock", { mode: "boolean" })
-		.notNull()
-		.default(false),
 	productAttributes: text("product_attributes"), // JSON stored as text
 	createdAt: integer("created_at", { mode: "timestamp" }),
 });
@@ -47,7 +44,6 @@ export const productVariations = sqliteTable("product_variations", {
 	}),
 	sku: text("sku").notNull().unique(),
 	price: real("price").notNull(), // Using real for decimal in SQLite
-	stock: integer("stock").notNull().default(0),
 	discount: integer("discount"), // Discount percentage for this variation
 	sort: integer("sort"),
 	createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),

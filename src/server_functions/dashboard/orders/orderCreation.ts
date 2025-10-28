@@ -5,7 +5,6 @@ import { DB } from "~/db";
 import type * as schema from "~/schema";
 import { orderItems, orders } from "~/schema";
 import type { ProductWithVariations } from "~/types";
-import { validateStock, validateVariation } from "~/utils/validateStock";
 
 // TypeScript interfaces
 interface CartItem {
@@ -109,12 +108,20 @@ async function createOrderInternal(
 			}
 
 			// 2. Validate variation and price
-			const variationValidation = validateVariation(product, item.variationId);
-			if (!variationValidation.isValid) {
-				throw new Error(
-					variationValidation.error ||
-						`Invalid variation for product: ${item.productName}`,
-				);
+			if (product.hasVariations && !item.variationId) {
+				throw new Error(`Variation required for product: ${item.productName}`);
+			}
+
+			if (!product.hasVariations && item.variationId) {
+				throw new Error(`Product does not support variations: ${item.productName}`);
+			}
+
+			// If variation is required, validate it exists
+			if (item.variationId) {
+				const variation = product.variations?.find((v) => v.id === item.variationId);
+				if (!variation) {
+					throw new Error(`Variation not found for product: ${item.productName}`);
+				}
 			}
 
 			// 3. Validate price
@@ -129,24 +136,7 @@ async function createOrderInternal(
 				);
 			}
 
-			// 4. Validate stock
-			const stockValidation = validateStock(
-				products,
-				cartItems,
-				item.productId,
-				item.quantity,
-				item.variationId,
-				true, // This item is already in the cart
-			);
-
-			if (!stockValidation.isAvailable && !stockValidation.unlimitedStock) {
-				throw new Error(
-					stockValidation.error ||
-						`Insufficient stock for ${item.productName}. Available: ${stockValidation.availableStock}, Requested: ${item.quantity}`,
-				);
-			}
-
-			// 5. Calculate amounts
+			// 4. Calculate amounts
 			if (item.price < 0 || item.quantity <= 0) {
 				throw new Error(`Invalid price or quantity for ${item.productName}`);
 			}

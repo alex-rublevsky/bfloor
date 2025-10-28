@@ -19,7 +19,7 @@ export function EntityCard<T>({
 	return (
 		<div
 			className={cn(
-				"group flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer",
+				"group flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-colors cursor-pointer",
 				"border border-transparent hover:border-border",
 			)}
 		>
@@ -69,7 +69,7 @@ export function EntityCardGrid<T>({
 	renderEntity,
 }: EntityCardGridProps<T>) {
 	return (
-		<div className="border rounded-lg p-4 bg-card">
+		<div className="border border-border rounded-lg p-4 bg-transparent">
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
 				{entities.map((entity) => (
 					<EntityCard

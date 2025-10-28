@@ -5,9 +5,6 @@ import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import type * as schema from "~/schema";
 import {
-	brands,
-	categories,
-	collections,
 	products,
 	productVariations,
 	variationAttributes,
@@ -25,18 +22,25 @@ type JoinedQueryResult = {
 };
 
 export const getAllProducts = createServerFn({ method: "GET" })
-	.inputValidator(() => ({}))
-	.handler(async () => {
+	.inputValidator((data: { page?: number; limit?: number } = {}) => data)
+	.handler(async ({ data = {} }) => {
 		try {
 			const db: DrizzleD1Database<typeof schema> = DB();
+			const { page, limit: pageLimit } = data;
 
-			// Fetch all base data
-			const categoriesResult = await db.select().from(categories).all();
-			const brandsResult = await db.select().from(brands).all();
-			const collectionsResult = await db.select().from(collections).all();
+		// Calculate pagination if provided
+		const hasPagination = typeof page === 'number' && typeof pageLimit === 'number';
+		const offsetValue = hasPagination ? (page - 1) * pageLimit : 0;
 
-			// Fetch products with variations in a single complex query
-			const rows: JoinedQueryResult[] = await db
+		// Get total count for pagination info
+			const totalCountResult = await db
+				.select({ count: products.id })
+				.from(products)
+				.all();
+			const totalCount = totalCountResult.length;
+
+			// Build the products query with conditional pagination
+			const baseQuery = db
 				.select()
 				.from(products)
 				.leftJoin(
@@ -46,8 +50,12 @@ export const getAllProducts = createServerFn({ method: "GET" })
 				.leftJoin(
 					variationAttributes,
 					eq(variationAttributes.productVariationId, productVariations.id),
-				)
-				.all();
+				);
+
+			// Apply pagination if provided
+			const rows: JoinedQueryResult[] = hasPagination
+				? await baseQuery.limit(pageLimit).offset(offsetValue).all()
+				: await baseQuery.all();
 
 			// Allow empty state: don't error when there are no products yet
 
@@ -74,9 +82,46 @@ export const getAllProducts = createServerFn({ method: "GET" })
 						}
 					}
 
+					// Process productAttributes - convert JSON string to array
+					let productAttributesArray: { attributeId: string; value: string }[] = [];
+					if (product.productAttributes) {
+						try {
+							const parsed = JSON.parse(product.productAttributes);
+							// Convert object to array format expected by frontend
+							if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+								// Convert object to array of {attributeId, value} pairs
+								productAttributesArray = Object.entries(parsed).map(([key, value]) => ({
+									attributeId: key,
+									value: String(value)
+								}));
+							} else if (Array.isArray(parsed)) {
+								productAttributesArray = parsed;
+							}
+						} catch {
+							// If parsing fails, use empty array
+							productAttributesArray = [];
+						}
+					}
+
+					// Process tags - convert JSON string to array
+					let tagsArray: string[] = [];
+					if (product.tags) {
+						try {
+							const parsed = JSON.parse(product.tags);
+							if (Array.isArray(parsed)) {
+								tagsArray = parsed;
+							}
+						} catch {
+							// If parsing fails, use empty array
+							tagsArray = [];
+						}
+					}
+
 					productMap.set(product.id, {
 						...product,
 						images: imagesString,
+						productAttributes: JSON.stringify(productAttributesArray),
+						tags: JSON.stringify(tagsArray),
 						variations: [],
 					});
 				}
@@ -95,7 +140,6 @@ export const getAllProducts = createServerFn({ method: "GET" })
 							productId: variation.productId,
 							sku: variation.sku,
 							price: variation.price,
-							stock: variation.stock,
 							sort: variation.sort,
 							discount: variation.discount,
 							createdAt: variation.createdAt,
@@ -142,129 +186,55 @@ export const getAllProducts = createServerFn({ method: "GET" })
 				product.variations?.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
 			}
 
-			// Convert to array
-			const productsArray = Array.from(productMap.values());
+		// Convert to array and sort alphabetically
+		const productsArray = Array.from(productMap.values()).sort((a, b) =>
+			a.name.localeCompare(b.name)
+		);
 
-			// Group products by category and inactive status
-			interface ProductGroup {
-				title: string;
-				products: ProductWithVariations[];
-				categorySlug?: string;
+		const result = {
+			products: productsArray,
+		};
+
+			// Add pagination info if pagination was used
+			if (hasPagination && page !== undefined && pageLimit !== undefined) {
+				const hasNextPage = offsetValue + pageLimit < totalCount;
+				const hasPreviousPage = page > 1;
+				
+				return {
+					...result,
+					pagination: {
+						page,
+						limit: pageLimit,
+						totalCount,
+						totalPages: Math.ceil(totalCount / pageLimit),
+						hasNextPage,
+						hasPreviousPage,
+					},
+				};
 			}
 
-			const groupedProducts: ProductGroup[] = [];
-			const categoryOrder = ["products", ""]; // TODO: what is this for? update
-
-			// Group active products by category
-			const categoriesBySlug = new Map(
-				categoriesResult.map((cat) => [cat.slug, cat]),
-			);
-
-			const productsByCategory = new Map<string, ProductWithVariations[]>();
-			const inactive: ProductWithVariations[] = [];
-
-			// Single pass through products to categorize them
-			for (const product of productsArray) {
-				if (!product.isActive) {
-					inactive.push(product);
-				} else if (product.categorySlug) {
-					const categoryProducts =
-						productsByCategory.get(product.categorySlug) || [];
-					categoryProducts.push(product);
-					productsByCategory.set(product.categorySlug, categoryProducts);
-				}
-			}
-
-			// Add category groups in specified order
-			const allCategorySlugs = Array.from(productsByCategory.keys());
-			const sortedCategorySlugs = allCategorySlugs.sort((a, b) => {
-				const indexA = categoryOrder.indexOf(a);
-				const indexB = categoryOrder.indexOf(b);
-				if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-				if (indexA !== -1) return -1;
-				if (indexB !== -1) return 1;
-				return a.localeCompare(b);
-			});
-
-			// Helper function to check if product is available (server-side, no cart context)
-			const isProductAvailableServerSide = (
-				product: ProductWithVariations,
-			): boolean => {
-				// Sticker category products are always available
-				if (product.categorySlug === "stickers") {
-					return true;
-				}
-
-				// Unlimited stock products are always available
-				if (product.unlimitedStock) {
-					return true;
-				}
-
-				// Check if product has variations
-				if (
-					product.hasVariations &&
-					product.variations &&
-					product.variations.length > 0
-				) {
-					// For regular variation products, check if ANY variation has stock > 0
-					return product.variations.some((variation) => variation.stock > 0);
-				}
-
-				// For regular products without variations, check base stock
-				return product.stock > 0;
+			return {
+				...result,
+				pagination: {
+					page: 1,
+					limit: totalCount,
+					totalCount,
+					totalPages: 1,
+					hasNextPage: false,
+					hasPreviousPage: false,
+				},
 			};
-
-			// Sort products within each category: available first, then alphabetically
-			const sortProductsByAvailability = (
-				products: ProductWithVariations[],
-			): ProductWithVariations[] => {
-				return [...products].sort((a, b) => {
-					const aAvailable = isProductAvailableServerSide(a);
-					const bAvailable = isProductAvailableServerSide(b);
-
-					// Available products first, unavailable last
-					if (aAvailable !== bAvailable) {
-						return aAvailable ? -1 : 1;
-					}
-
-					// Within same availability group, sort alphabetically
-					return a.name.localeCompare(b.name);
-				});
-			};
-
-			for (const slug of sortedCategorySlugs) {
-				const products = productsByCategory.get(slug);
-				if (!products) continue; // Skip if products not found
-				const category = categoriesBySlug.get(slug);
-				groupedProducts.push({
-					title: category?.name || slug,
-					products: sortProductsByAvailability(products),
-					categorySlug: slug,
-				});
-			}
-
-			// Add inactive group (also sorted)
-			if (inactive.length > 0) {
-				groupedProducts.push({
-					title: "Inactive",
-					products: sortProductsByAvailability(inactive),
-				});
-			}
-
-			const result = {
-				groupedProducts,
-				categories: categoriesResult,
-				brands: brandsResult,
-				collections: collectionsResult,
-			};
-			return result;
 		} catch (error) {
 			console.error("Error fetching dashboard data:", error);
 			console.error(
 				"Error stack:",
 				error instanceof Error ? error.stack : "No stack trace",
 			);
+			console.error("Error details:", {
+				message: error instanceof Error ? error.message : String(error),
+				name: error instanceof Error ? error.name : "Unknown",
+			});
 			setResponseStatus(500);
-			throw new Error("Failed to fetch dashboard data");
+			throw new Error(`Failed to fetch dashboard data: ${error instanceof Error ? error.message : String(error)}`);
 		}
 	});

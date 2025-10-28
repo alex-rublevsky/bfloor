@@ -13,6 +13,7 @@ import {
 } from "~/lib/dashboardSearchContext";
 // import { getUserData } from "~/utils/auth-server-func";
 
+
 export const Route = createFileRoute("/dashboard")({
 	// beforeLoad temporarily disabled for local development access
 	// beforeLoad: async () => {
@@ -73,16 +74,16 @@ function DashboardLayout() {
 	const shouldProvideSearch = !isMiscPage;
 
 	return (
-		<div className="min-h-screen bg-background">
+		<div className="h-screen bg-background flex flex-col">
 			<NavBar
 				userData={loaderData}
 				searchTerm={shouldProvideSearch ? searchTerm : undefined}
 				onSearchChange={shouldProvideSearch ? setSearchTerm : undefined}
 			/>
-			<main className="pb-8">
+			<main className="flex-1 overflow-hidden">
 				<Outlet />
 			</main>
-			<Toaster />
+			<Toaster className="fixed top-4 right-4 z-50" />
 		</div>
 	);
 }

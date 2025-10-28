@@ -139,7 +139,7 @@ export default function ProductSelector({
 	return (
 		<div className="relative" ref={componentRef}>
 			{selectedProduct ? (
-				<div className="flex items-center space-x-2 p-2 border border-input rounded bg-card">
+				<div className="flex items-center space-x-2 p-2 border border-input rounded bg-card hover:border-primary transition-colors duration-200">
 					<div className="w-10 h-10 relative shrink-0">
 						{(() => {
 							const productImage = getProductImage(selectedProduct);
@@ -176,7 +176,7 @@ export default function ProductSelector({
 						value={searchTerm}
 						onChange={(e) => setSearchTerm(e.target.value)}
 						onFocus={openDropdown}
-						className="w-full px-3 py-2 bg-muted border border-input rounded"
+						className="w-full px-3 py-2 bg-muted border border-input rounded hover:border-primary focus:border-primary transition-colors duration-200"
 						ref={searchInputRef}
 					/>
 					<button

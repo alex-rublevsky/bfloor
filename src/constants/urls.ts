@@ -1,2 +1,2 @@
 export const ASSETS_BASE_URL =
-	"https://pub-c6f071dbbee54360957ec92c1d6d0e3d.r2.dev";
+	"https://pub-aecfacef31684b0aa951c03db5f14d4e.r2.dev";

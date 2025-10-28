@@ -4,8 +4,8 @@ import { eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import type * as schema from "~/schema";
-import { products, productVariations, variationAttributes } from "~/schema";
-import type { ProductFormData } from "~/types";
+import { products, productVariations, variationAttributes, productStoreLocations } from "~/schema";
+import type { ProductFormData } from "~/types"; // Updated interface
 
 export const updateProduct = createServerFn({ method: "POST" })
 	.inputValidator((data: { id: number; data: ProductFormData }) => data)
@@ -26,14 +26,21 @@ export const updateProduct = createServerFn({ method: "POST" })
 				);
 			}
 
-			// Fetch existing product and check for duplicate slug
-			const [existingProduct, duplicateSlug] = await Promise.all([
+			// Fetch existing product and check for duplicate slug and SKU
+			const [existingProduct, duplicateSlug, duplicateSku] = await Promise.all([
 				db.select().from(products).where(eq(products.id, productId)).limit(1),
 				db
 					.select()
 					.from(products)
 					.where(eq(products.slug, productData.slug))
 					.limit(1),
+				productData.sku
+					? db
+							.select()
+							.from(products)
+							.where(eq(products.sku, productData.sku))
+							.limit(1)
+					: Promise.resolve([]),
 			]);
 
 			if (!existingProduct[0]) {
@@ -44,6 +51,11 @@ export const updateProduct = createServerFn({ method: "POST" })
 			if (duplicateSlug[0] && duplicateSlug[0].id !== productId) {
 				setResponseStatus(400);
 				throw new Error("A product with this slug already exists");
+			}
+
+			if (duplicateSku[0] && duplicateSku[0].id !== productId) {
+				setResponseStatus(400);
+				throw new Error("A product with this SKU already exists");
 			}
 
 			// Process images - convert comma-separated string to JSON array
@@ -58,6 +70,19 @@ export const updateProduct = createServerFn({ method: "POST" })
 			const imagesJson =
 				imagesArray.length > 0 ? JSON.stringify(imagesArray) : "";
 
+			// Convert attributes array back to object format for database storage
+			let attributesJson = null;
+			if (productData.attributes?.length) {
+				// Convert array of {attributeId, value} to object format
+				const attributesObject: Record<string, string> = {};
+				productData.attributes.forEach(attr => {
+					if (attr.value && attr.value.trim() !== '') {
+						attributesObject[attr.attributeId] = attr.value;
+					}
+				});
+				attributesJson = Object.keys(attributesObject).length > 0 ? JSON.stringify(attributesObject) : null;
+			}
+
 			// Update product and related data
 			await Promise.all([
 				// Update main product
@@ -66,6 +91,7 @@ export const updateProduct = createServerFn({ method: "POST" })
 					.set({
 						name: productData.name,
 						slug: productData.slug,
+						sku: productData.sku || null,
 						description: productData.description || null,
 						importantNote: productData.importantNote || null,
 						tags: productData.tags?.length
@@ -78,15 +104,13 @@ export const updateProduct = createServerFn({ method: "POST" })
 						categorySlug: productData.categorySlug || null,
 						brandSlug: productData.brandSlug || null,
 						collectionSlug: productData.collectionSlug || null,
-						stock: parseInt(productData.stock, 10),
+						storeLocationId: productData.storeLocationId || null,
 						isActive: productData.isActive,
 						isFeatured: productData.isFeatured,
 						discount: productData.discount || null,
 						hasVariations: productData.hasVariations,
 						images: imagesJson,
-						productAttributes: productData.attributes?.length
-							? JSON.stringify(productData.attributes)
-							: null,
+						productAttributes: attributesJson,
 					})
 					.where(eq(products.id, productId)),
 
@@ -124,7 +148,6 @@ export const updateProduct = createServerFn({ method: "POST" })
 									productId: productId,
 									sku: v.sku,
 									price: parseFloat(v.price.toString()),
-									stock: parseInt(v.stock.toString(), 10),
 									sort: v.sort || 0,
 									discount: v.discount
 										? parseInt(v.discount.toString(), 10)
@@ -173,6 +196,25 @@ export const updateProduct = createServerFn({ method: "POST" })
 								.delete(productVariations)
 								.where(eq(productVariations.productId, productId));
 						}
+					}
+				})(),
+
+				// Handle store location connections
+				(async () => {
+					// Delete existing store location connections
+					await db
+						.delete(productStoreLocations)
+						.where(eq(productStoreLocations.productId, productId));
+
+					// Add new store location connections if provided
+					if (productData.storeLocationIds && productData.storeLocationIds.length > 0) {
+						await db.insert(productStoreLocations).values(
+							productData.storeLocationIds.map((locationId: number) => ({
+								productId: productId,
+								storeLocationId: locationId,
+								createdAt: new Date(),
+							}))
+						);
 					}
 				})(),
 			]);

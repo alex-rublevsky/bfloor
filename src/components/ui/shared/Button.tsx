@@ -19,7 +19,7 @@ const buttonVariants = cva(
 			variant: {
 				default: "bg-primary text-primary-foreground hover:bg-primary-hover",
 				secondary:
-					"text-primary border border-black hover:bg-[oklch(from_theme(colors.primary)_calc(l_+_0.1)_c_h)] hover:text-primary-foreground active:bg-[oklch(from_theme(colors.primary)_calc(l_+_0.1)_c_h)] active:text-primary-foreground",
+					"bg-secondary text-secondary-foreground hover:bg-secondary-hover active:bg-secondary-active",
 				destructive:
 					"bg-backgorund text-destructive border border-destructive shadow-2xs hover:bg-destructive/90 hover:text-destructive-foreground active:bg-destructive/90 active:text-destructive-foreground",
 				green:
@@ -29,7 +29,7 @@ const buttonVariants = cva(
 				outline:
 					"bg-transparent text-foreground border border-black hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground",
 				accent:
-					"bg-primary text-foreground border border-black hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground",
+					"bg-accent text-accent-foreground hover:bg-accent-hover",
 				link: "text-primary underline-offset-4 hover:underline active:underline",
 			},
 			size: {

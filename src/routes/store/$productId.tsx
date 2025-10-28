@@ -1,4 +1,4 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import {
 	createFileRoute,
@@ -16,6 +16,7 @@ import {
 	BreadcrumbSeparator,
 } from "~/components/ui/dashboard/breadcrumb";
 import { Button } from "~/components/ui/shared/Button";
+import { Icon } from "~/components/ui/shared/Icon";
 import ImageGallery from "~/components/ui/shared/ImageGallery";
 import {
 	markdownComponents,
@@ -26,14 +27,14 @@ import { VariationSelector } from "~/components/ui/store/VariationSelector";
 import { useProductAttributes } from "~/hooks/useProductAttributes";
 import { useVariationSelection } from "~/hooks/useVariationSelection";
 import { useCart } from "~/lib/cartContext";
-import { productQueryOptions, storeDataQueryOptions } from "~/lib/queryOptions";
+import { productQueryOptions } from "~/lib/queryOptions";
 import type {
-	ProductWithDetails,
 	ProductWithVariations,
 	VariationAttribute,
+	Product,
+	ProductWithDetails,
 } from "~/types";
 import { seo } from "~/utils/seo";
-import { getAvailableQuantityForVariation } from "~/utils/validateStock";
 
 // Simple search params - no Zod needed for basic optional strings
 const validateSearch = (search: Record<string, unknown>) => {
@@ -116,31 +117,16 @@ export const Route = createFileRoute("/store/$productId")({
 	component: ProductPage,
 	errorComponent: ProductErrorComponent,
 	notFoundComponent: ProductNotFoundComponent,
-	pendingComponent: ProductPageSkeleton, // Show skeleton while loader is running
+	pendingComponent: ProductPageSkeleton,
 
-	// Loader prefetches data before component renders
-	loader: async ({ context: { queryClient }, params: { productId } }) => {
-		// Ensure both product and store data are loaded before component renders
-		await Promise.all([
-			queryClient.ensureQueryData(productQueryOptions(productId)),
-			queryClient.ensureQueryData(storeDataQueryOptions()),
-		]);
-	},
-
-	head: ({ loaderData }) => {
-		const product = loaderData as ProductWithDetails | undefined;
-
-		return {
-			meta: [
-				...seo({
-					title: `${product?.name || "Product"} - Rublevsky Studio`,
-					description:
-						product?.description ||
-						"Discover premium products at Rublevsky Studio store.",
-				}),
-			],
-		};
-	},
+	head: () => ({
+		meta: [
+			...seo({
+				title: "Product - Rublevsky Studio",
+				description: "Discover premium products at Rublevsky Studio store.",
+			}),
+		],
+	}),
 
 	validateSearch,
 	// Strip undefined values from URL to keep it clean
@@ -158,17 +144,20 @@ function ProductPage() {
 	const { addProductToCart, cart } = useCart();
 	const { data: attributes } = useProductAttributes();
 
-	// Use suspense query - data is guaranteed to be loaded by the loader
-	const { data: product } = useSuspenseQuery(productQueryOptions(productId));
+	// Use query to track loading state
+	const { data: product, isLoading: isLoadingProduct, isFetching: isFetchingProduct } = useQuery({
+		...productQueryOptions(productId),
+		refetchOnMount: true,
+	});
+	
+	// Type assertion for product with all details
+	const productWithDetails = product as ProductWithDetails | undefined;
 
-	// Get store data for products array (needed for cart operations)
-	const { data: storeData } = useSuspenseQuery(storeDataQueryOptions());
-	const products = storeData.products;
 
 	// Auto-select first variation if no search params and product has variations
 	// This runs once when product loads and no search params exist
 	useEffect(() => {
-		if (!product?.hasVariations || !product.variations?.length) return;
+		if (!productWithDetails?.hasVariations || !productWithDetails.variations?.length) return;
 
 		// Check if any search params are set
 		const hasAnySearchParams = Object.values(search).some(
@@ -176,29 +165,8 @@ function ProductPage() {
 		);
 		if (hasAnySearchParams) return;
 
-		// Find first available variation
-		const sortedVariations = [...product.variations].sort((a, b) => {
-			if (product.unlimitedStock) {
-				return (b.sort ?? 0) - (a.sort ?? 0);
-			}
-
-			// Calculate actual available stock considering cart items
-			const aStock = getAvailableQuantityForVariation(
-				product,
-				a.id,
-				cart.items,
-			);
-			const bStock = getAvailableQuantityForVariation(
-				product,
-				b.id,
-				cart.items,
-			);
-
-			// Prioritize variations with stock > 0
-			if (aStock > 0 && bStock === 0) return -1;
-			if (bStock > 0 && aStock === 0) return 1;
-
-			// If both have stock or both are out of stock, sort by sort order
+		// Find first variation by sort order
+		const sortedVariations = [...productWithDetails.variations].sort((a, b) => {
 			return (b.sort ?? 0) - (a.sort ?? 0);
 		});
 
@@ -221,27 +189,11 @@ function ProductPage() {
 				replace: true,
 			});
 		}
-	}, [product, search, navigate, cart.items, attributes]);
-
-	// Sync product data with cart context for stock info
-	const syncedProduct = useMemo(() => {
-		// Find the product in the cart context cache
-		const cachedProduct = products.find((p) => p.id === product.id);
-		if (cachedProduct) {
-			// Merge loader data with cached stock info
-			return {
-				...product,
-				stock: cachedProduct.stock,
-				unlimitedStock: cachedProduct.unlimitedStock,
-				variations: cachedProduct.variations,
-			};
-		}
-		return product;
-	}, [product, products]);
+	}, [productWithDetails, search, navigate, attributes]);
 
 	// Use variation selection hook with URL state for product page
 	const { selectedVariation, selectedAttributes } = useVariationSelection({
-		product: syncedProduct as ProductWithVariations | null,
+		product: productWithDetails as unknown as ProductWithVariations | null,
 		cartItems: cart.items,
 		search, // Providing search enables URL state mode
 		onVariationChange: () => setQuantity(1), // Reset quantity when variation changes
@@ -251,8 +203,8 @@ function ProductPage() {
 	// Find variation for pricing (regardless of stock status)
 	const variationForPricing = useMemo(() => {
 		if (
-			!syncedProduct?.hasVariations ||
-			!syncedProduct.variations ||
+			!productWithDetails?.hasVariations ||
+			!productWithDetails.variations ||
 			!selectedAttributes
 		) {
 			return null;
@@ -260,38 +212,38 @@ function ProductPage() {
 
 		// Find variation that matches all selected attributes, regardless of stock
 		return (
-			syncedProduct.variations.find((variation) => {
+			productWithDetails.variations.find((variation) => {
 				return Object.entries(selectedAttributes).every(([attrId, value]) =>
 					variation.attributes.some(
-						(attr) => attr.attributeId === attrId && attr.value === value,
+						(attr: VariationAttribute) => attr.attributeId === attrId && attr.value === value,
 					),
 				);
 			}) || null
 		);
-	}, [syncedProduct, selectedAttributes]);
+	}, [productWithDetails, selectedAttributes]);
 
 	// Calculate current price based on selected variation
 	const currentPrice = useMemo(() => {
+		if (!productWithDetails) return 0;
 		// If product has variations, always use variation price
-		if (syncedProduct?.hasVariations) {
+		if (productWithDetails.hasVariations) {
 			// Use selectedVariation for available stock, or variationForPricing for out-of-stock items
 			const relevantVariation = selectedVariation || variationForPricing;
 			return relevantVariation?.price || 0;
 		}
 		// If product price is zero, use variation price (if available)
 		if (
-			syncedProduct?.price === 0 &&
+			productWithDetails.price === 0 &&
 			(selectedVariation || variationForPricing)
 		) {
 			const relevantVariation = selectedVariation || variationForPricing;
 			return relevantVariation?.price || 0;
 		}
-		return syncedProduct?.price || 0;
+		return productWithDetails.price || 0;
 	}, [
 		selectedVariation,
 		variationForPricing,
-		syncedProduct?.price,
-		syncedProduct?.hasVariations,
+		productWithDetails,
 	]);
 
 	// Calculate current discount based on selected variation
@@ -301,38 +253,28 @@ function ProductPage() {
 		if (relevantVariation?.discount) {
 			return relevantVariation.discount;
 		}
-		return syncedProduct?.discount || null;
-	}, [selectedVariation, variationForPricing, syncedProduct?.discount]);
+		return productWithDetails?.discount || null;
+	}, [selectedVariation, variationForPricing, productWithDetails?.discount]);
 
-	// Calculate effective stock based on selected variation
-	const effectiveStock = useMemo(() => {
-		if (!syncedProduct) return 0;
-
-		if (syncedProduct.unlimitedStock) {
-			return Number.MAX_SAFE_INTEGER;
+	// Calculate original price (before discount)
+	const originalPrice = useMemo(() => {
+		if (currentDiscount && currentDiscount > 0) {
+			return currentPrice / (1 - currentDiscount / 100);
 		}
-
-		return getAvailableQuantityForVariation(
-			syncedProduct as ProductWithVariations,
-			selectedVariation?.id,
-			cart.items,
-		);
-	}, [syncedProduct, selectedVariation, cart.items]);
+		return null;
+	}, [currentPrice, currentDiscount]);
 
 	// Check if product can be added to cart
 	const canAddToCart = useMemo(() => {
-		if (!syncedProduct?.isActive) return false;
-		if (syncedProduct.hasVariations && !selectedVariation) return false;
-		if (!syncedProduct.unlimitedStock && effectiveStock <= 0) return false;
+		if (!productWithDetails?.isActive) return false;
+		if (productWithDetails.hasVariations && !selectedVariation) return false;
 		return true;
-	}, [syncedProduct, selectedVariation, effectiveStock]);
+	}, [productWithDetails, selectedVariation]);
 
 	// Define all callbacks before any conditional returns
 	const incrementQuantity = useCallback(() => {
-		if (syncedProduct?.unlimitedStock || quantity < effectiveStock) {
-			setQuantity((prev) => prev + 1);
-		}
-	}, [quantity, effectiveStock, syncedProduct?.unlimitedStock]);
+		setQuantity((prev) => prev + 1);
+	}, []);
 
 	const decrementQuantity = useCallback(() => {
 		if (quantity > 1) {
@@ -368,10 +310,10 @@ function ProductPage() {
 	);
 
 	const handleAddToCart = useCallback(async () => {
-		if (!syncedProduct || !canAddToCart) return;
+		if (!productWithDetails || !canAddToCart) return;
 
 		const success = await addProductToCart(
-			syncedProduct,
+			productWithDetails as unknown as Product,
 			quantity,
 			selectedVariation,
 			selectedAttributes,
@@ -381,7 +323,7 @@ function ProductPage() {
 			setQuantity(1); // Reset quantity after successful add
 		}
 	}, [
-		syncedProduct,
+		productWithDetails,
 		quantity,
 		selectedVariation,
 		selectedAttributes,
@@ -392,28 +334,45 @@ function ProductPage() {
 	// Calculate total price for display
 	const totalPrice = currentPrice * quantity;
 
-	// Parse images from JSON string
+	// Get images array - should already be an array from server
 	const productImages = useMemo(() => {
-		if (!syncedProduct?.images) return [];
-		try {
-			return JSON.parse(syncedProduct.images) as string[];
-		} catch {
-			return [];
+		if (!productWithDetails?.images) return [];
+		
+		// Images should already be an array from the server
+		if (Array.isArray(productWithDetails.images)) {
+			return productWithDetails.images;
 		}
-	}, [syncedProduct?.images]);
+		
+		// Fallback: try parsing if it's somehow a string (backward compatibility)
+		if (typeof productWithDetails.images === 'string') {
+			try {
+				return JSON.parse(productWithDetails.images) as string[];
+			} catch {
+				return [];
+			}
+		}
+		
+		return [];
+	}, [productWithDetails?.images]);
+
+	// Show skeleton while loading
+	if (isLoadingProduct || isFetchingProduct || !productWithDetails) {
+		return <ProductPageSkeleton />;
+	}
 
 	return (
 		<main className="min-h-screen bg-background">
+			{/* First Section - Product Info */}
 			<div className="max-w-7xl mx-auto px-4 py-8">
 				<div className="flex flex-col lg:flex-row gap-8">
 					{/* Left Section - Image Gallery (60% width) */}
 					<div className="w-full lg:w-3/5">
 						<ImageGallery
 							images={productImages}
-							alt={syncedProduct?.name || "Product"}
-							productSlug={syncedProduct?.slug}
+							alt={productWithDetails?.name || "Product"}
+							productSlug={productWithDetails?.slug}
 							size="default"
-							className="bg-white rounded-lg"
+							className="rounded-lg"
 						/>
 					</div>
 
@@ -426,7 +385,10 @@ function ProductPage() {
 									<BreadcrumbList>
 										<BreadcrumbItem>
 											<BreadcrumbLink asChild>
-												<Link to="/" className="text-gray-400 hover:text-gray-600">
+												<Link
+													to="/"
+													className="text-gray-400 hover:text-gray-600"
+												>
 													Главная
 												</Link>
 											</BreadcrumbLink>
@@ -445,7 +407,7 @@ function ProductPage() {
 										<BreadcrumbSeparator />
 										<BreadcrumbItem>
 											<BreadcrumbPage className="text-gray-400">
-												{syncedProduct?.name}
+												{productWithDetails?.name}
 											</BreadcrumbPage>
 										</BreadcrumbItem>
 									</BreadcrumbList>
@@ -454,126 +416,289 @@ function ProductPage() {
 
 							{/* Product Title */}
 							<div>
-								<h1 className="text-3xl font-bold text-gray-800 mb-2">
-									{syncedProduct?.name || "Product"}
-								</h1>
-								<div className="flex items-center gap-4 text-gray-600">
-									{syncedProduct?.brand && (
-										<span className="text-lg font-medium">
-											{syncedProduct.brand.name}
-										</span>
+								<h1 className="">{productWithDetails?.name || "Product"}</h1>
+								<div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600">
+									{/* Brand Logo/Name */}
+									{productWithDetails?.brand && (
+										<div className="flex items-center gap-2">
+											{productWithDetails.brand.image ? (
+												<img
+													src={productWithDetails.brand.image}
+													alt={productWithDetails.brand.name}
+													className="h-6 w-auto"
+												/>
+											) : (
+												<span className="font-medium">
+													{productWithDetails.brand.name}
+												</span>
+											)}
+										</div>
+									)}
+
+									{/* SKU */}
+									{productWithDetails?.sku && (
+										<div className="flex items-center gap-1">
+											<span className="text-gray-500">Артикул:</span>
+											<span className="font-semibold">{productWithDetails.sku}</span>
+										</div>
+									)}
+
+									{/* Country */}
+									{productWithDetails?.brand?.country && (
+										<div className="flex items-center gap-1">
+											<span className="text-gray-500">Страна:</span>
+											<span className="font-semibold">{productWithDetails.brand.country}</span>
+										</div>
+									)}
+
+									{/* Collection */}
+									{productWithDetails?.collection && (
+										<div className="flex items-center gap-1">
+											<span className="text-gray-500">Коллекция:</span>
+											<span className="font-semibold">{productWithDetails.collection.name}</span>
+										</div>
 									)}
 								</div>
-								<div className="flex items-center gap-4 mt-2 text-sm text-gray-400"></div>
 							</div>
 
-							{/* Price and Quantity */}
-							<div className="flex items-center gap-4">
-								{/* Price Box */}
-								<div className="border border-muted px-4 py-3 rounded-lg">
-									<div className="text-sm text-gray-500 mb-1">Цена за м²</div>
-									<div className="text-2xl font-bold text-gray-800">
-										{currentPrice.toLocaleString()} ₽
+							{/* Store Locations */}
+							{productWithDetails?.storeLocations && productWithDetails.storeLocations.length > 0 && (
+								<div className="space-y-2">
+									<span className="text-gray-600 font-medium text-sm block">Доступно в магазинах:</span>
+									<div className="space-y-1">
+										{productWithDetails.storeLocations.map((location) => (
+											<div key={location.id} className="text-gray-800 text-sm">
+												<span className="font-semibold">{location.address}</span>
+											</div>
+										))}
 									</div>
-									{syncedProduct?.squareMetersPerPack && (
-										<div className="text-sm text-gray-500 mt-1">
-											{syncedProduct.squareMetersPerPack} м² в упаковке
-										</div>
-									)}
-									{currentDiscount && (
-										<div className="text-sm text-green-600 font-medium">
-											Скидка: {currentDiscount}%
-										</div>
-									)}
 								</div>
+							)}
 
-								{/* Quantity Selector */}
-								<div className="border border-muted px-4 py-3 rounded-lg">
-									<div className="flex items-center gap-3">
+							{/* Wrapper for Price, Quantity, and Add to Cart */}
+							<div className="border border-border rounded-lg p-4 space-y-4">
+								{/* Price and Quantity */}
+								<div className="flex items-center gap-4">
+									{/* Price Box */}
+									<div className="bg-muted px-4 py-3 rounded-lg">
+										<div className="text-sm text-gray-500 mb-1">Цена за м²</div>
+										<div className="text-2xl font-bold text-gray-800">
+											{currentPrice.toLocaleString()} р
+										</div>
+									
+									</div>
+
+									{/* Quantity Selector */}
+									<div className=" px-4 py-3">
+										<div className="flex gap-1 items-center">
 										<button
 											type="button"
 											onClick={decrementQuantity}
 											disabled={quantity <= 1}
-											className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+											className="aspect-square w-[60px] flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex-shrink-0"
 										>
-											-
+											<Icon name="minus" size={20} />
 										</button>
-										<div className="text-center">
-											<div className="font-medium text-gray-800">
-												{quantity} уп
-											</div>
-											{syncedProduct?.squareMetersPerPack && (
-												<div className="text-xs text-gray-500">
-													{(
-														quantity * syncedProduct.squareMetersPerPack
-													).toFixed(1)}{" "}
-													м²
+										<div className="text-center bg-muted rounded-lg p-2 flex items-center justify-center flex-grow">
+											<div className="space-y-1">
+												{productWithDetails?.squareMetersPerPack && (
+													<div className="flex items-baseline gap-1 flex-wrap justify-center">
+														<div className="text-sm font-normal">Площадь</div>
+														<div className="text-2xl font-normal">
+															{quantity * productWithDetails.squareMetersPerPack} м²
+														</div>
+													</div>
+												)}
+												<div className="flex items-baseline gap-1 flex-wrap justify-center">
+													<div className="text-sm  font-normal">Упаковок</div>
+													<div className="text-2xl font-normal">
+														{quantity}
+													</div>
 												</div>
-											)}
-											{/* Weight removed */}
+											</div>
 										</div>
 										<button
 											type="button"
 											onClick={incrementQuantity}
-											disabled={
-												!syncedProduct?.unlimitedStock &&
-												quantity >= effectiveStock
-											}
-											className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+											className="aspect-square w-[60px] flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] cursor-pointer flex-shrink-0"
 										>
-											+
+											<Icon name="plus" size={20} />
 										</button>
+										</div>
 									</div>
 								</div>
+
+								{/* Variation Selector */}
+								{product?.hasVariations && (
+									<VariationSelector
+										product={product as unknown as ProductWithVariations}
+										selectedAttributes={selectedAttributes}
+										search={search}
+										onAttributeChange={handleAttributeChange}
+									/>
+								)}
+
+								{/* Price and Add to Cart */}
+								<div className="bg-muted rounded-lg p-4 flex flex-col md:flex-row gap-4 md:items-stretch">
+								{/* Price Display */}
+								<div className="flex flex-col gap-2 md:min-w-0">
+									{/* Discount Row */}
+									{currentDiscount && originalPrice && (
+										<div className="flex items-baseline justify-between gap-6">
+											<div className="text-left">Скидка</div>
+											<div className="flex items-baseline gap-3 text-right">
+												<span className="text-lg line-through ">
+													{originalPrice.toLocaleString()} р
+												</span>
+												<span className="px-2 py-1 bg-accent text-accent-foreground text-sm font-semibold rounded-[5px]">
+													{currentDiscount}%
+												</span>
+											</div>
+										</div>
+									)}
+									
+									{/* Total Row */}
+									<div className="flex items-baseline justify-between gap-6">
+										<div className="text-left">Итого</div>
+										<span className="text-3xl font-bold text-right">
+											{totalPrice.toLocaleString()} р
+										</span>
+									</div>
+								</div>
+								
+								{/* Add to Cart Button */}
+								<div className="flex-shrink-0 md:w-[200px]">
+									<Button
+										onClick={handleAddToCart}
+										disabled={!canAddToCart}
+										size="lg"
+										className="w-full h-full"
+									>
+										{!canAddToCart ? "Недоступно" : "В корзину"}
+									</Button>
+								</div>
 							</div>
+						</div>
 
-							{/* Variation Selector */}
-							{syncedProduct?.hasVariations && (
-								<VariationSelector
-									product={syncedProduct as ProductWithVariations}
-									selectedAttributes={selectedAttributes}
-									search={search}
-									onAttributeChange={handleAttributeChange}
-								/>
-							)}
-
-							{/* Add to Cart Button */}
-							<Button
-								onClick={handleAddToCart}
-								disabled={!canAddToCart}
-								className=""
-								size="lg"
-							>
-								<span className="text-xl font-thin">
-									{totalPrice.toLocaleString()} ₽
-								</span>
-								<span className="text-lg">
-									{!canAddToCart ? "Недоступно" : "В корзину"}
-								</span>
-							</Button>
-
-							{/* Stock Info */}
-							{!syncedProduct?.unlimitedStock && (
-								<div className="text-sm text-gray-500">
-									В наличии: {effectiveStock} шт
+							{/* Important Note */}
+							{product?.importantNote && (
+								<div className="prose prose-sm max-w-none">
+									<ReactMarkdown
+										components={markdownComponents}
+										rehypePlugins={rehypePlugins}
+									>
+										{productWithDetails?.importantNote?.replace(/\\n/g, '\n') ?? ''}
+									</ReactMarkdown>
 								</div>
 							)}
 
-							{/* Product Description */}
-							{syncedProduct?.description && (
+							
+						</div>
+					</div>
+				</div>
+			</div>
+
+			{/* Second Section - Description and Characteristics */}
+			{(product?.description || product?.hasVariations || (product?.productAttributes && Array.isArray(productWithDetails.productAttributes) && productWithDetails.productAttributes.length > 0)) && (
+				<div className="max-w-7xl mx-auto px-4 py-8">
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+						{/* Left Column - Characteristics */}
+						{(product?.hasVariations || (product?.productAttributes && Array.isArray(productWithDetails.productAttributes) && productWithDetails.productAttributes.length > 0)) && (
+							<div className="space-y-4">
+								<h2>Характеристики</h2>
+								<div>
+									{/* Product-level attributes */}
+									{Array.isArray(product?.productAttributes) && productWithDetails?.productAttributes?.map((attr: { attributeId: string; value: string }) => {
+										const attribute = attributes?.find(
+											(a) => a.slug === attr.attributeId || a.name === attr.attributeId,
+										);
+										const displayName = attribute
+											? attribute.name
+											: attr.attributeId;
+
+											return (
+												<div
+													key={attr.attributeId}
+													className="flex justify-between items-center py-2"
+												>
+													<span className="text-foreground-muted">
+														{displayName}
+													</span>
+													<span >
+														{attr.value}
+													</span>
+												</div>
+											);
+										})}
+
+										{/* Variation attributes */}
+										{product?.hasVariations && (() => {
+											// Find the variation with attributes that matches the selected variation
+											const productWithVariations =
+												product as unknown as ProductWithVariations;
+											let variationToShow = null;
+
+											if (selectedVariation) {
+												// Find the variation with attributes that matches the selected variation ID
+												variationToShow =
+													productWithVariations.variations?.find(
+														(v) => v.id === selectedVariation.id,
+													);
+											}
+
+											// Fallback to first variation if no match found
+											if (!variationToShow) {
+												variationToShow = productWithVariations.variations?.[0];
+											}
+
+											if (!variationToShow?.attributes) return null;
+
+											return variationToShow.attributes.map(
+												(attr: VariationAttribute) => {
+													const attribute = attributes?.find(
+														(a) => a.name === attr.attributeId,
+													);
+													const displayName = attribute
+														? attribute.name
+														: attr.attributeId;
+
+													return (
+														<div
+															key={attr.attributeId}
+															className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
+														>
+															<span className="text-gray-600 font-medium">
+																{displayName}
+															</span>
+															<span className="text-gray-800 font-semibold">
+																{attr.value}
+															</span>
+														</div>
+													);
+												},
+											);
+										})()}
+									</div>
+							</div>
+						)}
+
+						{/* Right Column - Description */}
+						{product?.description && (
+							<div className="space-y-4">
+								<h2 >Описание</h2>
 								<div className="prose max-w-none">
 									<ReactMarkdown
 										components={markdownComponents}
 										rehypePlugins={rehypePlugins}
 									>
-										{syncedProduct.description}
+										{productWithDetails?.description?.replace(/\\n/g, '\n') ?? ''}
 									</ReactMarkdown>
 								</div>
-							)}
-						</div>
+							</div>
+						)}
 					</div>
 				</div>
-			</div>
+			)}
 		</main>
 	);
 }

@@ -35,15 +35,13 @@
 	user-select: none;
 }
 .embla__controls {
-	display: grid;
-	grid-template-columns: auto 1fr;
-	justify-content: space-between;
-	gap: 1.2rem;
-	padding: 0 1rem;
+	display: flex;
+	justify-content: flex-end;
+	padding: 0 1rem 1rem 1rem;
 }
 @media (min-width: 640px) {
 	.embla__controls {
-		padding: 0 1.5rem;
+		padding: 0 1.5rem 1rem 1.5rem;
 	}
 }
 .embla__buttons {
@@ -81,12 +79,18 @@
 	width: 35%;
 	height: 35%;
 }
+.embla__dots-container {
+	display: flex;
+	justify-content: center;
+	padding: 1rem 0;
+}
+
 .embla__dots {
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: flex-end;
+	justify-content: center;
 	align-items: center;
-	margin-right: calc((2.6rem - 1.4rem) / 2 * -1);
+	gap: 0.5rem;
 }
 .embla__dot {
 	-webkit-tap-highlight-color: oklch(var(--primary));
@@ -134,5 +138,16 @@
 	.embla__dot:after {
 		width: 1.2rem;
 		height: 1.2rem;
+	}
+	
+	/* Smaller buttons on mobile for better touch targets */
+	.embla__button {
+		width: 3rem;
+		height: 3rem;
+	}
+	
+	/* Adjust spacing for mobile */
+	.embla__buttons {
+		gap: 0.4rem;
 	}
 }

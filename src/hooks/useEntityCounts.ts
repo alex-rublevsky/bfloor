@@ -1,41 +1,33 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getAllProductAttributes } from "~/server_functions/dashboard/attributes/getAllProductAttributes";
-import { getAllProductCategories } from "~/server_functions/dashboard/categories/getAllProductCategories";
-import { getAllCollections } from "~/server_functions/dashboard/collections/getAllCollections";
-import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
 import { getAllOrders } from "~/server_functions/dashboard/orders/getAllOrders";
 import { getAllProducts } from "~/server_functions/dashboard/store/getAllProducts";
-import { getAllStoreLocations } from "~/server_functions/dashboard/storeLocations/getAllStoreLocations";
+import { brandsQueryOptions, categoriesQueryOptions, collectionsQueryOptions, storeLocationsQueryOptions } from "~/lib/queryOptions";
 
 /**
  * Hook to get products count
  */
 export function useProductsCount() {
-	const { data: productsData } = useSuspenseQuery({
+	const { data: productsData } = useQuery({
 		queryKey: ["bfloorDashboardProducts"],
 		queryFn: () => getAllProducts(),
 		staleTime: 1000 * 60 * 5,
 	});
 
-	// Calculate total products from grouped products
-	let totalProducts = 0;
-	if (productsData?.groupedProducts) {
-		for (const category of productsData.groupedProducts) {
-			totalProducts += category.products.length;
-		}
+	// Return total products count from pagination info or products array length
+	if (productsData?.pagination?.totalCount) {
+		return productsData.pagination.totalCount;
 	}
-
-	return totalProducts;
+	
+	return productsData?.products?.length || 0;
 }
 
 /**
  * Hook to get categories count
  */
 export function useCategoriesCount() {
-	const { data: categories } = useSuspenseQuery({
-		queryKey: ["bfloorDashboardCategories"],
-		queryFn: () => getAllProductCategories(),
-		staleTime: 1000 * 60 * 5,
+	const { data: categories } = useQuery({
+		...categoriesQueryOptions(),
 	});
 
 	return categories?.length || 0;
@@ -45,10 +37,8 @@ export function useCategoriesCount() {
  * Hook to get brands count
  */
 export function useBrandsCount() {
-	const { data: brands } = useSuspenseQuery({
-		queryKey: ["bfloorDashboardBrands"],
-		queryFn: () => getAllBrands(),
-		staleTime: 1000 * 60 * 5,
+	const { data: brands } = useQuery({
+		...brandsQueryOptions(),
 	});
 
 	return brands?.length || 0;
@@ -58,10 +48,8 @@ export function useBrandsCount() {
  * Hook to get collections count
  */
 export function useCollectionsCount() {
-	const { data: collections } = useSuspenseQuery({
-		queryKey: ["bfloorDashboardCollections"],
-		queryFn: () => getAllCollections(),
-		staleTime: 1000 * 60 * 5,
+	const { data: collections } = useQuery({
+		...collectionsQueryOptions(),
 	});
 
 	return collections?.length || 0;
@@ -71,7 +59,7 @@ export function useCollectionsCount() {
  * Hook to get orders count
  */
 export function useOrdersCount() {
-	const { data: ordersData } = useSuspenseQuery({
+	const { data: ordersData } = useQuery({
 		queryKey: ["bfloorDashboardOrders"],
 		queryFn: () => getAllOrders(),
 		staleTime: 1000 * 60 * 5,
@@ -92,7 +80,7 @@ export function useOrdersCount() {
  * Hook to get attributes count
  */
 export function useAttributesCount() {
-	const { data: attributes } = useSuspenseQuery({
+	const { data: attributes } = useQuery({
 		queryKey: ["productAttributes"],
 		queryFn: () => getAllProductAttributes(),
 		staleTime: 1000 * 60 * 5,
@@ -105,10 +93,8 @@ export function useAttributesCount() {
  * Hook to get store locations count
  */
 export function useStoreLocationsCount() {
-	const { data: storeLocations } = useSuspenseQuery({
-		queryKey: ["bfloorDashboardStoreLocations"],
-		queryFn: () => getAllStoreLocations(),
-		staleTime: 1000 * 60 * 5,
+	const { data: storeLocations } = useQuery({
+		...storeLocationsQueryOptions(),
 	});
 
 	return storeLocations?.length || 0;

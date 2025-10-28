@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import type * as schema from "~/schema";
-import { products, productVariations, variationAttributes } from "~/schema";
+import { products, productVariations, variationAttributes, productStoreLocations, productAttributes } from "~/schema";
 
 export const getProductBySlug = createServerFn({ method: "GET" })
 	.inputValidator((data: { id: number }) => data)
@@ -19,14 +19,13 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 			}
 
 			// Fetch product with all its data
-			const [productResult, variationsResult] = await Promise.all([
+			const [productResult, variationsResult, storeLocationsResult] = await Promise.all([
 				db.select().from(products).where(eq(products.id, productId)).limit(1),
 				db
 					.select({
 						id: productVariations.id,
 						sku: productVariations.sku,
 						price: productVariations.price,
-						stock: productVariations.stock,
 						sort: productVariations.sort,
 						discount: productVariations.discount,
 						attributeId: variationAttributes.attributeId,
@@ -38,6 +37,7 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 						eq(variationAttributes.productVariationId, productVariations.id),
 					)
 					.where(eq(productVariations.productId, productId)),
+				db.select().from(productStoreLocations).where(eq(productStoreLocations.productId, productId)),
 			]);
 
 			if (!productResult[0]) {
@@ -55,7 +55,6 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 						id: row.id.toString(),
 						sku: row.sku,
 						price: row.price,
-						stock: row.stock,
 						sort: row.sort,
 						discount: row.discount,
 						attributes: [],
@@ -72,9 +71,63 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 
 			const variations = Array.from(variationsMap.values());
 
+			// Process productAttributes - convert JSON string to array
+			let productAttributesArray: { attributeId: string; value: string }[] = [];
+			if (product.productAttributes) {
+				try {
+					const parsed = JSON.parse(product.productAttributes);
+					// Convert object to array format expected by frontend
+					if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+						// Fetch all available attributes to create dynamic mapping
+						const allAttributes = await db.select().from(productAttributes);
+						
+						// Create mapping from attribute slugs to IDs
+						const slugToIdMap: Record<string, string> = {};
+						allAttributes.forEach(attr => {
+							slugToIdMap[attr.slug] = attr.id.toString();
+						});
+						
+						// Convert object to array of {attributeId, value} pairs
+						productAttributesArray = Object.entries(parsed).map(([key, value]) => ({
+							attributeId: slugToIdMap[key] || key, // Use mapped ID or fallback to key
+							value: String(value)
+						}));
+					} else if (Array.isArray(parsed)) {
+						productAttributesArray = parsed;
+					}
+				} catch (error) {
+					console.error('Error parsing product attributes:', error);
+					productAttributesArray = [];
+				}
+			}
+
+			// Process store locations
+			const storeLocationIds = storeLocationsResult.map(location => location.storeLocationId);
+
 			const productWithDetails = {
-				...product,
+				id: product.id,
+				name: product.name,
+				slug: product.slug,
+				sku: product.sku,
+				images: product.images,
+				description: product.description,
+				importantNote: product.importantNote,
+				tags: product.tags,
+				price: product.price,
+				squareMetersPerPack: product.squareMetersPerPack,
+				unitOfMeasurement: product.unitOfMeasurement,
+				isActive: product.isActive,
+				isFeatured: product.isFeatured,
+				discount: product.discount,
+				hasVariations: product.hasVariations,
+				categorySlug: product.categorySlug,
+				brandSlug: product.brandSlug,
+				collectionSlug: product.collectionSlug,
+				storeLocationId: product.storeLocationId,
+				createdAt: product.createdAt,
+				productAttributes: productAttributesArray,
 				variations,
+				storeLocationIds, // Add store location IDs for convenience
 			};
 
 			return productWithDetails;

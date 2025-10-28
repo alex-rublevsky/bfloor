@@ -76,17 +76,9 @@ export const Route = createRootRoute({
 		],
 	}),
 	errorComponent: (props) => {
-		return (
-			<RootDocument showNavBar={false}>
-				<DefaultCatchBoundary {...props} />
-			</RootDocument>
-		);
+		return <DefaultCatchBoundary {...props} />;
 	},
-	notFoundComponent: () => (
-		<RootDocument showNavBar={false}>
-			<NotFound />
-		</RootDocument>
-	),
+	notFoundComponent: () => <NotFound />,
 	component: RootComponent,
 	context: () => ({
 		queryClient,
@@ -107,18 +99,12 @@ function RootComponent() {
 	);
 }
 
-function RootDocument({
-	children,
-	showNavBar = true,
-}: {
-	children: React.ReactNode;
-	showNavBar?: boolean;
-}) {
+function RootDocument({ children }: { children: React.ReactNode }) {
 	const routerState = useRouterState();
 	const pathname = routerState.location.pathname;
 
-	// Don't render NavBar on dashboard pages since dashboard has its own NavBar
 	const isDashboard = pathname.startsWith("/dashboard");
+	const isStore = pathname.startsWith("/store");
 
 	return (
 		<html
@@ -129,10 +115,10 @@ function RootDocument({
 			<head>
 				<HeadContent />
 			</head>
-			<body className="" suppressHydrationWarning>
-				{showNavBar && !isDashboard && <NavBar />}
+			<body className="h-screen flex flex-col" suppressHydrationWarning>
+				{!isDashboard && <NavBar />}
 				{children}
-				<Footer />
+				{!isDashboard && !isStore && <Footer />}
 				{/* <TanStackRouterDevtools position="bottom-right" /> */}
 				<Scripts />
 			</body>

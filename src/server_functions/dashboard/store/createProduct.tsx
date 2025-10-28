@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
 import { DB } from "~/db";
-import { products, productVariations, variationAttributes } from "~/schema";
+import { products, productVariations, variationAttributes, productStoreLocations } from "~/schema";
 import type { ProductFormData } from "~/types";
 
 export const createProduct = createServerFn({ method: "POST" })
@@ -19,16 +19,30 @@ export const createProduct = createServerFn({ method: "POST" })
 				);
 			}
 
-			// Check for duplicate slug
-			const duplicateSlug = await db
-				.select()
-				.from(products)
-				.where(eq(products.slug, productData.slug))
-				.limit(1);
+			// Check for duplicate slug and SKU
+			const [duplicateSlug, duplicateSku] = await Promise.all([
+				db
+					.select()
+					.from(products)
+					.where(eq(products.slug, productData.slug))
+					.limit(1),
+				productData.sku
+					? db
+							.select()
+							.from(products)
+							.where(eq(products.sku, productData.sku))
+							.limit(1)
+					: Promise.resolve([]),
+			]);
 
 			if (duplicateSlug[0]) {
 				setResponseStatus(400);
 				throw new Error("A product with this slug already exists");
+			}
+
+			if (duplicateSku[0]) {
+				setResponseStatus(400);
+				throw new Error("A product with this SKU already exists");
 			}
 
 			// Process images - convert comma-separated string to JSON array
@@ -42,12 +56,26 @@ export const createProduct = createServerFn({ method: "POST" })
 			const imagesJson =
 				imagesArray.length > 0 ? JSON.stringify(imagesArray) : "";
 
+			// Convert attributes array back to object format for database storage
+			let attributesJson = null;
+			if (productData.attributes?.length) {
+				// Convert array of {attributeId, value} to object format
+				const attributesObject: Record<string, string> = {};
+				productData.attributes.forEach(attr => {
+					if (attr.value && attr.value.trim() !== '') {
+						attributesObject[attr.attributeId] = attr.value;
+					}
+				});
+				attributesJson = Object.keys(attributesObject).length > 0 ? JSON.stringify(attributesObject) : null;
+			}
+
 			// Insert main product
 			const insertedProducts = await db
 				.insert(products)
 				.values({
 					name: productData.name,
 					slug: productData.slug,
+					sku: productData.sku || null,
 					description: productData.description || null,
 					importantNote: productData.importantNote || null,
 					tags: productData.tags?.length
@@ -61,15 +89,13 @@ export const createProduct = createServerFn({ method: "POST" })
 					categorySlug: productData.categorySlug || null,
 					brandSlug: productData.brandSlug || null,
 					collectionSlug: productData.collectionSlug || null,
-					stock: parseInt(productData.stock, 10),
+					storeLocationId: productData.storeLocationId || null,
 					isActive: productData.isActive,
 					isFeatured: productData.isFeatured,
 					discount: productData.discount || null,
 					hasVariations: productData.hasVariations,
 					images: imagesJson,
-					productAttributes: productData.attributes?.length
-						? JSON.stringify(productData.attributes)
-						: null,
+					productAttributes: attributesJson,
 					createdAt: new Date(),
 				})
 				.returning();
@@ -83,11 +109,10 @@ export const createProduct = createServerFn({ method: "POST" })
 					.insert(productVariations)
 					.values(
 						productData.variations.map((v) => ({
-							productId: newProduct.id,
-							sku: v.sku,
-							price: parseFloat(v.price.toString()),
-							stock: parseInt(v.stock.toString(), 10),
-							sort: v.sort || 0,
+						productId: newProduct.id,
+						sku: v.sku,
+						price: parseFloat(v.price.toString()),
+						sort: v.sort || 0,
 							discount: v.discount ? parseInt(v.discount.toString(), 10) : null,
 							createdAt: new Date(),
 						})),
@@ -112,6 +137,17 @@ export const createProduct = createServerFn({ method: "POST" })
 				if (attributesToInsert.length > 0) {
 					await db.insert(variationAttributes).values(attributesToInsert);
 				}
+			}
+
+			// Handle store location connections
+			if (productData.storeLocationIds && productData.storeLocationIds.length > 0) {
+				await db.insert(productStoreLocations).values(
+					productData.storeLocationIds.map((locationId: number) => ({
+						productId: newProduct.id,
+						storeLocationId: locationId,
+						createdAt: new Date(),
+					}))
+				);
 			}
 
 			return {

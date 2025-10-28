@@ -11,7 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RedirectRouteImport } from './routes/redirect'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DeliveryRouteImport } from './routes/delivery'
+import { Route as ContactsRouteImport } from './routes/contacts'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as StoreRouteRouteImport } from './routes/store/route'
 import { Route as ProductRouteRouteImport } from './routes/product/route'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
@@ -39,9 +42,24 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DeliveryRoute = DeliveryRouteImport.update({
+  id: '/delivery',
+  path: '/delivery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactsRoute = ContactsRouteImport.update({
+  id: '/contacts',
+  path: '/contacts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StoreRouteRoute = StoreRouteRouteImport.update({
@@ -130,7 +148,10 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/product': typeof ProductRouteRoute
   '/store': typeof StoreRouteRouteWithChildren
+  '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
+  '/contacts': typeof ContactsRoute
+  '/delivery': typeof DeliveryRoute
   '/login': typeof LoginRoute
   '/redirect': typeof RedirectRoute
   '/dashboard/attributes': typeof DashboardAttributesRoute
@@ -149,7 +170,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/product': typeof ProductRouteRoute
+  '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
+  '/contacts': typeof ContactsRoute
+  '/delivery': typeof DeliveryRoute
   '/login': typeof LoginRoute
   '/redirect': typeof RedirectRoute
   '/dashboard/attributes': typeof DashboardAttributesRoute
@@ -171,7 +195,10 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/product': typeof ProductRouteRoute
   '/store': typeof StoreRouteRouteWithChildren
+  '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
+  '/contacts': typeof ContactsRoute
+  '/delivery': typeof DeliveryRoute
   '/login': typeof LoginRoute
   '/redirect': typeof RedirectRoute
   '/dashboard/attributes': typeof DashboardAttributesRoute
@@ -194,7 +221,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/product'
     | '/store'
+    | '/about'
     | '/contact'
+    | '/contacts'
+    | '/delivery'
     | '/login'
     | '/redirect'
     | '/dashboard/attributes'
@@ -213,7 +243,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/product'
+    | '/about'
     | '/contact'
+    | '/contacts'
+    | '/delivery'
     | '/login'
     | '/redirect'
     | '/dashboard/attributes'
@@ -234,7 +267,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/product'
     | '/store'
+    | '/about'
     | '/contact'
+    | '/contacts'
+    | '/delivery'
     | '/login'
     | '/redirect'
     | '/dashboard/attributes'
@@ -256,7 +292,10 @@ export interface RootRouteChildren {
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
   ProductRouteRoute: typeof ProductRouteRoute
   StoreRouteRoute: typeof StoreRouteRouteWithChildren
+  AboutRoute: typeof AboutRoute
   ContactRoute: typeof ContactRoute
+  ContactsRoute: typeof ContactsRoute
+  DeliveryRoute: typeof DeliveryRoute
   LoginRoute: typeof LoginRoute
   RedirectRoute: typeof RedirectRoute
   OrderOrderIdRoute: typeof OrderOrderIdRoute
@@ -279,11 +318,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/delivery': {
+      id: '/delivery'
+      path: '/delivery'
+      fullPath: '/delivery'
+      preLoaderRoute: typeof DeliveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contacts': {
+      id: '/contacts'
+      path: '/contacts'
+      fullPath: '/contacts'
+      preLoaderRoute: typeof ContactsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contact': {
       id: '/contact'
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/store': {
@@ -446,7 +506,10 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
   ProductRouteRoute: ProductRouteRoute,
   StoreRouteRoute: StoreRouteRouteWithChildren,
+  AboutRoute: AboutRoute,
   ContactRoute: ContactRoute,
+  ContactsRoute: ContactsRoute,
+  DeliveryRoute: DeliveryRoute,
   LoginRoute: LoginRoute,
   RedirectRoute: RedirectRoute,
   OrderOrderIdRoute: OrderOrderIdRoute,

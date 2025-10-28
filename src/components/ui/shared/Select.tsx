@@ -37,11 +37,8 @@ const SelectTrigger = React.forwardRef<
 			<SelectPrimitive.Trigger
 				ref={ref}
 				className={cn(
-					"relative flex rounded-full border border-border bg-background hover:border-black hover:bg-primary/5 active:border-black active:bg-primary/5 transition-all duration-200",
+					"relative flex rounded-full border border-input bg-background hover:border-primary hover:bg-primary/5 active:border-primary active:bg-primary/5 transition-all duration-200 field-sizing-content",
 					"focus:outline-hidden focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-					// Responsive width - larger for default (Sort By), smaller for navbar (Other)
-					"w-[18ch]",
-					variant === "navbar" && "w-[10ch]",
 					// Custom cursor styles - always cursor-pointer
 					"cursor-pointer",
 					className,

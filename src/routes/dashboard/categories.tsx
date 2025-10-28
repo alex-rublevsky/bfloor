@@ -17,6 +17,7 @@ import {
 	SelectValue,
 } from "~/components/ui/shared/Select";
 import { buildCategoryTree } from "~/lib/categoryTree";
+import { categoriesQueryOptions } from "~/lib/queryOptions";
 import { createProductCategory } from "~/server_functions/dashboard/categories/createProductCategory";
 import { deleteProductCategory } from "~/server_functions/dashboard/categories/deleteProductCategory";
 import { getAllProductCategories } from "~/server_functions/dashboard/categories/getAllProductCategories";
@@ -93,7 +94,7 @@ const CategoryList = ({
 	);
 
 	return (
-		<div className="border rounded-lg p-4 bg-card">
+		<div className="border border-muted rounded-lg p-4 bg-card">
 			<CategoryTreeView
 				tree={categoryTree}
 				onEdit={onEdit}
@@ -103,13 +104,6 @@ const CategoryList = ({
 	);
 };
 
-// Query options factories for reuse
-const productCategoriesQueryOptions = () => ({
-	queryKey: ["bfloorDashboardCategories"],
-	queryFn: () => getAllProductCategories(),
-	staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-});
-
 export const Route = createFileRoute("/dashboard/categories")({
 	component: RouteComponent,
 	pendingComponent: CategoriesPageSkeleton,
@@ -117,19 +111,19 @@ export const Route = createFileRoute("/dashboard/categories")({
 	// Loader prefetches data before component renders
 	loader: async ({ context: { queryClient } }) => {
 		// Ensure data is loaded before component renders
-		await queryClient.ensureQueryData(productCategoriesQueryOptions());
+		await queryClient.ensureQueryData(categoriesQueryOptions());
 	},
 });
 
 function RouteComponent() {
 	// Use suspense queries - data is guaranteed to be loaded by the loader
 	const { data: categoriesData } = useSuspenseQuery(
-		productCategoriesQueryOptions(),
+		categoriesQueryOptions(),
 	);
 
 	// Entity manager configuration
 	const entityManagerConfig = {
-		queryKey: ["bfloorDashboardCategories"],
+		queryKey: ["bfloorCategories"],
 		queryFn: getAllProductCategories,
 		createFn: async (data: { data: CategoryFormData }) => {
 			await createProductCategory({ data: data.data });

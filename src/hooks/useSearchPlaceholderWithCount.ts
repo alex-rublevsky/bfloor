@@ -40,6 +40,9 @@ export function useSearchPlaceholderWithCount() {
 			return `искать среди ${ordersCount} заказов`;
 		case "/dashboard/misc":
 			return `искать среди ${storeLocationsCount} адресов`;
+		case "/store":
+			// Store page uses the same products as dashboard
+			return `искать среди ${productsCount} товаров`;
 		default:
 			return "искать...";
 	}

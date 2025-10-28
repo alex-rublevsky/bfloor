@@ -1,6 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
-import { useMemo } from "react";
 import { Badge } from "~/components/ui/shared/Badge";
 import { Image } from "~/components/ui/shared/Image";
 import { Link } from "~/components/ui/shared/Link";
@@ -12,7 +10,6 @@ import {
 	useProductAttributes,
 } from "~/hooks/useProductAttributes";
 import { useCart } from "~/lib/cartContext";
-import { storeDataQueryOptions } from "~/lib/queryOptions";
 
 interface CartItemProps {
 	item: EnrichedCartItem;
@@ -22,45 +19,21 @@ interface CartItemProps {
 export function CartItem({ item }: CartItemProps) {
 	const { updateQuantity, removeFromCart } = useCart();
 	const { data: attributes } = useProductAttributes();
-	const queryClient = useQueryClient();
-
-	// Calculate effective max quantity based on stock
-	const effectiveMaxQuantity = useMemo(() => {
-		if (item.unlimitedStock) return undefined;
-		return item.maxStock;
-	}, [item.unlimitedStock, item.maxStock]);
 
 	const handleIncrement = () => {
-		if (
-			item.unlimitedStock ||
-			(effectiveMaxQuantity && item.quantity < effectiveMaxQuantity)
-		) {
-			// Get products from cache for validation
-			const storeData = queryClient.getQueryData(
-				storeDataQueryOptions().queryKey,
-			);
-			const products = storeData?.products || [];
-			updateQuantity(
-				item.productId,
-				item.quantity + 1,
-				item.variationId,
-				products,
-			);
-		}
+		updateQuantity(
+			item.productId,
+			item.quantity + 1,
+			item.variationId,
+		);
 	};
 
 	const handleDecrement = () => {
 		if (item.quantity > 1) {
-			// Get products from cache for validation
-			const storeData = queryClient.getQueryData(
-				storeDataQueryOptions().queryKey,
-			);
-			const products = storeData?.products || [];
 			updateQuantity(
 				item.productId,
 				item.quantity - 1,
 				item.variationId,
-				products,
 			);
 		}
 	};

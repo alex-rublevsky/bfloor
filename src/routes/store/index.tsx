@@ -1,8 +1,11 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import StoreFeed from "~/components/ui/store/StoreFeed";
-import { storeDataQueryOptions } from "~/lib/queryOptions.ts";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { useEffect, useMemo, useRef, useState } from "react";
+import ProductCard from "~/components/ui/store/ProductCard";
+import { StorePageSkeleton } from "~/components/ui/store/skeletons/StorePageSkeleton";
+import { useClientSearch } from "~/lib/clientSearchContext";
+import { storeDataInfiniteQueryOptions } from "~/lib/queryOptions.ts";
 import { seo } from "~/utils/seo";
 
 // Simple search params validation for category filtering
@@ -34,25 +37,189 @@ export const Route = createFileRoute("/store/")({
 	}),
 });
 
-function StorePage() {
-	const search = Route.useSearch();
-	const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+// Hook to get responsive columns per row based on screen size
+function useResponsiveColumns() {
+	const [columnsPerRow, setColumnsPerRow] = useState(6);
 
-	// Get store data directly from TanStack Query
-	const { data: storeData } = useSuspenseQuery(storeDataQueryOptions());
-
-	// Sync URL category parameter with local state
 	useEffect(() => {
-		setSelectedCategory(search.category || null);
-	}, [search.category]);
+		const updateColumns = () => {
+			const width = window.innerWidth;
+			if (width >= 1536) {
+				setColumnsPerRow(6); // 2xl
+			} else if (width >= 1280) {
+				setColumnsPerRow(5); // xl
+			} else if (width >= 1024) {
+				setColumnsPerRow(4); // lg
+			} else if (width >= 768) {
+				setColumnsPerRow(3); // md
+			} else {
+				setColumnsPerRow(2); // sm and below
+			}
+		};
+
+		// Set initial value
+		updateColumns();
+
+		// Update on resize
+		window.addEventListener('resize', updateColumns);
+		return () => window.removeEventListener('resize', updateColumns);
+	}, []);
+
+	return columnsPerRow;
+}
+
+function StorePage() {
+	const parentRef = useRef<HTMLDivElement>(null);
+	const columnsPerRow = useResponsiveColumns();
+	
+	// Get search term from context
+	const clientSearch = useClientSearch();
+	
+	// Get store data with infinite query (products only)
+	const { 
+		data: storeData, 
+		isLoading: isLoadingProducts, 
+		fetchNextPage, 
+		hasNextPage, 
+		isFetchingNextPage 
+	} = useInfiniteQuery({
+		...storeDataInfiniteQueryOptions(),
+	});
+
+	// Merge products from all pages (same as dashboard)
+	const allProducts = storeData?.pages?.flatMap((page) => page?.products ?? [])?.filter(Boolean) ?? [];
+	
+	// Apply search filtering
+	const filteredProducts = useMemo(() => {
+		if (!clientSearch.searchTerm.trim()) {
+			return allProducts;
+		}
+		
+		const searchTerm = clientSearch.searchTerm.toLowerCase().trim();
+		return allProducts.filter((product) => {
+			const nameMatch = product.name.toLowerCase().includes(searchTerm);
+			const skuMatch = product.sku?.toLowerCase().includes(searchTerm);
+			const descriptionMatch = product.description?.toLowerCase().includes(searchTerm);
+			return nameMatch || skuMatch || descriptionMatch;
+		});
+	}, [allProducts, clientSearch.searchTerm]);
+	
+	// Apply sorting (same logic as StoreFeed had)
+	const sortedProducts = useMemo(() => {
+		if (!filteredProducts.length) return [];
+		
+		return [...filteredProducts].sort((a, b) => {
+			const categoryOrder = {
+				tea: 1,
+				apparel: 2,
+				posters: 3,
+				stickers: 4,
+				produce: 5,
+			};
+
+			const aCategoryOrder =
+				categoryOrder[a.categorySlug as keyof typeof categoryOrder] || 999;
+			const bCategoryOrder =
+				categoryOrder[b.categorySlug as keyof typeof categoryOrder] || 999;
+
+			if (aCategoryOrder !== bCategoryOrder) {
+				return aCategoryOrder - bCategoryOrder;
+			}
+
+			// Final fallback: Sort alphabetically by name
+			return a.name.localeCompare(b.name);
+		});
+	}, [filteredProducts]);
+
+	// Virtualizer configuration - responsive columns based on screen size
+	const itemHeight = 365;
+	const rowCount = Math.ceil(sortedProducts.length / columnsPerRow);
+
+	// Use container scroll (same as dashboard)
+	const virtualizer = useVirtualizer({
+		count: rowCount,
+		getScrollElement: () => parentRef.current,
+		estimateSize: () => itemHeight,
+		overscan: 5, // Render 5 extra rows for smooth scrolling (same as dashboard)
+		// Enable dynamic sizing to handle height variations
+		measureElement: (element) => {
+			// Measure the actual height of the rendered row
+			const height = element?.getBoundingClientRect().height ?? itemHeight;
+			return height;
+		},
+	});
+
+	// Infinite scroll - load more products when user scrolls near the end (IDENTICAL to dashboard)
+	const virtualItems = virtualizer.getVirtualItems();
+	useEffect(() => {
+		const lastItem = virtualItems[virtualItems.length - 1];
+		
+		// Don't fetch if already fetching, no next page, or no items rendered
+		if (!lastItem || !hasNextPage || isFetchingNextPage) return;
+		
+		// Fetch next page when user scrolls near the end
+		// lastItem.index is the row index, rowCount is total rows
+		// Trigger when within 5 rows of the end (less aggressive - more scrolling before fetch)
+		const threshold = rowCount - 1;
+		
+		if (lastItem.index >= threshold) {
+			console.log('Store: Fetching next page...', { 
+				lastRowIndex: lastItem.index, 
+				totalRows: rowCount,
+				threshold,
+				currentProducts: sortedProducts.length,
+				hasNextPage,
+			});
+			fetchNextPage();
+		}
+	}, [virtualItems, hasNextPage, isFetchingNextPage, rowCount, fetchNextPage, sortedProducts.length]);
+
+	// Helper function to get products for a specific row
+	const getProductsForRow = (rowIndex: number) => {
+		const startIndex = rowIndex * columnsPerRow;
+		const endIndex = Math.min(startIndex + columnsPerRow, sortedProducts.length);
+		return sortedProducts.slice(startIndex, endIndex);
+	};
+	
+	// Show skeleton only on initial load (not when fetching next pages)
+	if (isLoadingProducts || !storeData) {
+		return <StorePageSkeleton />;
+	}
 
 	return (
-		<main>
-			<StoreFeed
-				products={storeData.products}
-				categories={storeData.categories}
-				initialCategory={selectedCategory}
-			/>
-		</main>
+		<div className="h-screen bg-background flex flex-col">
+			<main className="flex-1 overflow-hidden">
+				<div ref={parentRef} className="overflow-auto px-4 py-4 h-full">
+					<div className="relative" style={{ height: `${virtualizer.getTotalSize()}px` }}>
+						{virtualizer.getVirtualItems().map((virtualRow) => {
+							const rowProducts = getProductsForRow(virtualRow.index);
+							return (
+								<div
+									key={virtualRow.key}
+									data-index={virtualRow.index}
+									ref={virtualizer.measureElement}
+									className="absolute top-0 left-0 w-full"
+									style={{
+										transform: `translateY(${virtualRow.start}px)`,
+									}}
+								>
+									<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
+										{rowProducts.map((product) => (
+											<ProductCard key={product.id} product={product} />
+										))}
+									</div>
+								</div>
+							);
+						})}
+						{/* Loading indicator for next page */}
+						{isFetchingNextPage && (
+							<div className="w-full flex items-center justify-center p-8" style={{ transform: `translateY(${virtualizer.getTotalSize()}px)` }}>
+								<p className="text-muted-foreground">Загрузка...</p>
+							</div>
+						)}
+					</div>
+				</div>
+			</main>
+		</div>
 	);
 }

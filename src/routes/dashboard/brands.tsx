@@ -11,6 +11,7 @@ import { BrandsPageSkeleton } from "~/components/ui/dashboard/skeletons/BrandsPa
 import { Badge } from "~/components/ui/shared/Badge";
 import { Image } from "~/components/ui/shared/Image";
 import { ASSETS_BASE_URL } from "~/constants/urls";
+import { brandsQueryOptions } from "~/lib/queryOptions";
 import { createBrand } from "~/server_functions/dashboard/brands/createBrand";
 import { deleteBrand } from "~/server_functions/dashboard/brands/deleteBrand";
 import { updateBrand } from "~/server_functions/dashboard/brands/updateBrand";
@@ -80,13 +81,6 @@ const BrandList = ({ entities, onEdit, onDelete }: EntityListProps<Brand>) => (
 	/>
 );
 
-// Query options factory for reuse
-const brandsQueryOptions = () => ({
-	queryKey: ["bfloorDashboardBrands"],
-	queryFn: () => getAllBrands(),
-	staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-});
-
 export const Route = createFileRoute("/dashboard/brands")({
 	component: RouteComponent,
 	pendingComponent: BrandsPageSkeleton,
@@ -104,7 +98,7 @@ function RouteComponent() {
 
 	// Entity manager configuration
 	const entityManagerConfig = {
-		queryKey: ["bfloorDashboardBrands"],
+		queryKey: ["bfloorBrands"],
 		queryFn: getAllBrands,
 		createFn: async (data: { data: BrandFormData }) => {
 			await createBrand({

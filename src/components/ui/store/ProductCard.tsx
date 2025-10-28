@@ -16,10 +16,6 @@ import type {
 	ProductVariation,
 	VariationAttribute,
 } from "~/types";
-import {
-	getAvailableQuantityForVariation,
-	isProductAvailable,
-} from "~/utils/validateStock";
 import { FilterGroup } from "../shared/FilterGroup";
 import styles from "./productCard.module.css";
 
@@ -87,22 +83,11 @@ const calculateAttributeNames = (
 // Helper function to get default variation for a product
 const getDefaultVariation = (
 	product: ProductWithVariations,
-	cartItems: CartItem[],
 ): ProductVariationWithAttributes | null => {
 	if (!product?.variations || !product.hasVariations) return null;
 
-	// Find the first available variation (preferably with stock)
+	// Find the first variation by sort order
 	const sortedVariations = [...product.variations].sort((a, b) => {
-		const aStock = getAvailableQuantityForVariation(product, a.id, cartItems);
-		const bStock = getAvailableQuantityForVariation(product, b.id, cartItems);
-
-		// Prioritize variations with stock, then by sort order
-		if (product.unlimitedStock) {
-			return (b.sort ?? 0) - (a.sort ?? 0);
-		}
-
-		if (aStock > 0 && bStock <= 0) return -1;
-		if (bStock > 0 && aStock <= 0) return 1;
 		return (b.sort ?? 0) - (a.sort ?? 0);
 	});
 
@@ -144,8 +129,8 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 
 	// Calculate default variation and search params for the Link
 	const defaultVariation = useMemo(
-		() => getDefaultVariation(product, cart.items),
-		[product, cart.items],
+		() => getDefaultVariation(product),
+		[product],
 	);
 
 	const linkSearchParams = useMemo(
@@ -167,28 +152,10 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 		[product.variations],
 	);
 
-	// Calculate effective stock by subtracting cart quantities
-	const getEffectiveStock = useMemo(() => {
-		if (!product) return 0;
-
-		return getAvailableQuantityForVariation(
-			product,
-			selectedVariation?.id,
-			cart.items,
-		);
-	}, [product, selectedVariation, cart.items]);
-
 	// Calculate if the product is available to add to cart
 	const isAvailable = useMemo(() => {
-		return (
-			product.isActive && (product.unlimitedStock || getEffectiveStock > 0)
-		);
-	}, [product.isActive, product.unlimitedStock, getEffectiveStock]);
-
-	// Check if ANY variation has stock (for image graying out)
-	const hasAnyStock = useMemo(() => {
-		return isProductAvailable(product, cart.items);
-	}, [product, cart.items]);
+		return product.isActive;
+	}, [product.isActive]);
 
 	// Calculate current price based on selected variation
 	const currentPrice = useMemo(() => {
@@ -283,8 +250,6 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 											//sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 											style={{
 												viewTransitionName: `product-image-${product.slug}`,
-												filter: !hasAnyStock ? "grayscale(100%)" : "none",
-												opacity: !hasAnyStock ? 0.6 : 1,
 											}}
 										/>
 										{/* Secondary Image (if exists) - Only on desktop devices with hover capability */}
@@ -294,9 +259,6 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 												alt={product.name}
 												loading="eager"
 												className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-500 ease-in-out opacity-0 group-hover:opacity-100 hidden md:block"
-												style={{
-													filter: !hasAnyStock ? "grayscale(100%)" : "none",
-												}}
 											/>
 										)}
 									</div>
@@ -343,11 +305,7 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 							</svg>
 							{!isAddingToCart ? (
 								<span>
-									{!isAvailable
-										? "Out of Stock"
-										: isComingSoon
-											? "Pre-order"
-											: "Add to Cart"}
+									{isComingSoon ? "Pre-order" : "Add to Cart"}
 								</span>
 							) : (
 								<span>{isComingSoon ? "Pre-ordering..." : "Adding..."}</span>
@@ -503,11 +461,7 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 									</svg>
 									{!isAddingToCart ? (
 										<span>
-											{!isAvailable
-												? "Out of Stock"
-												: isComingSoon
-													? "Pre-order"
-													: "Add to Cart"}
+											{isComingSoon ? "Pre-order" : "Add to Cart"}
 										</span>
 									) : (
 										<span>

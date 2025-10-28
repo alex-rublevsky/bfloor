@@ -104,6 +104,7 @@ export type NewOrderItem = InferInsertModel<typeof orderItems>;
 export interface ProductFormData {
 	name: string;
 	slug: string;
+	sku?: string; // Article number/SKU - optional
 	description: string;
 	importantNote?: string; // Важная заметка с поддержкой Markdown - опционально
 	tags?: string[]; // Теги для категоризации товаров - опционально
@@ -113,7 +114,8 @@ export interface ProductFormData {
 	categorySlug: string;
 	brandSlug: string | null;
 	collectionSlug?: string | null;
-	stock: string;
+	storeLocationId?: number | null; // Primary store location
+	storeLocationIds?: number[]; // Multiple store location connections - updated
 	isActive: boolean;
 	isFeatured: boolean;
 	discount: number | null;
@@ -127,7 +129,6 @@ export interface ProductVariationFormData {
 	id?: number;
 	sku: string; // Auto-generated SKU
 	price: string;
-	stock: string;
 	discount?: number | null; // Add discount field
 	sort: number;
 	attributes: VariationAttributeFormData[];
@@ -228,7 +229,7 @@ export interface CartItem {
 	addedAt: number; // Timestamp for sorting/debugging
 }
 
-export interface ProductWithDetails extends Product {
+export interface ProductWithDetails extends Omit<Product, 'productAttributes'> {
 	category?: {
 		name: string;
 		slug: string;
@@ -236,9 +237,22 @@ export interface ProductWithDetails extends Product {
 	brand?: {
 		name: string;
 		slug: string;
+		image?: string | null;
+		country?: string | null;
 	} | null;
+	collection?: {
+		name: string;
+		slug: string;
+	} | null;
+	storeLocations?: Array<{
+		id: number;
+		address: string;
+		description?: string | null;
+		openingHours?: string | null;
+	}>;
 	storeLocation?: {
 		address: string;
 	} | null;
 	variations?: ProductVariationWithAttributes[];
+	productAttributes?: { attributeId: string; value: string }[];
 }

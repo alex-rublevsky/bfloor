@@ -28,7 +28,6 @@ interface Variation {
 	id: string;
 	sku: string; // Auto-generated SKU
 	price: number;
-	stock: number;
 	discount?: number | null;
 	sort: number;
 	attributeValues: Record<string, string>; // attributeId -> value mapping
@@ -134,8 +133,8 @@ function SortableVariationItem({
 				</Button>
 			</div>
 
-			{/* Second row: Price, Discount, Stock */}
-			<div className="grid grid-cols-3 gap-2">
+			{/* Second row: Price, Discount */}
+			<div className="grid grid-cols-2 gap-2">
 				<div>
 					<Input
 						id={`price-${variation.id}`}
@@ -162,20 +161,6 @@ function SortableVariationItem({
 								"discount",
 								e.target.value ? parseFloat(e.target.value) : null,
 							)
-						}
-						onPointerDown={(e) => e.stopPropagation()}
-						placeholder="0"
-						className="text-sm"
-					/>
-				</div>
-				<div>
-					<Input
-						id={`stock-${variation.id}`}
-						type="number"
-						label="Остаток"
-						value={variation.stock}
-						onChange={(e) =>
-							onUpdate(variation.id, "stock", parseInt(e.target.value, 10) || 0)
 						}
 						onPointerDown={(e) => e.stopPropagation()}
 						placeholder="0"
@@ -265,7 +250,6 @@ export default function ProductVariationForm({
 			id: `temp-${Date.now()}`,
 			sku: generateVariationSKU(productSlug, attributeArray, attributes || []),
 			price: 0,
-			stock: 0,
 			discount: null,
 			sort: variations.length,
 			attributeValues: {}, // Empty attribute values initially
