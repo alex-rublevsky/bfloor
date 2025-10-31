@@ -13,6 +13,7 @@ import {
 	Plus,
 } from "lucide-react";
 import type React from "react";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -142,7 +143,7 @@ const DropdownNavMenu = ({
 		userAvatar: string;
 	};
 }) => {
-	const navigate = useNavigate();
+    const navigate = useNavigate();
 
 	const userID = userData?.userID || "";
 	const userName = userData?.userName || "";
@@ -242,7 +243,7 @@ const CartButton = () => {
 				<button
 					type="button"
 					onClick={() => setCartOpen(true)}
-					className="relative flex items-center justify-center w-10 h-10 rounded-full border border-black bg-background hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-all duration-300"
+					className="relative flex items-center justify-center w-10 h-10 rounded-full border border-black bg-background hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-all duration-300 cursor-pointer"
 				>
 					{/* Cart SVG Icon */}
 					<svg
@@ -288,6 +289,40 @@ export function NavBar({
 	const clientSearch = useClientSearch();
 
 	const isDashboard = pathname.startsWith("/dashboard");
+    const isMiscPage = pathname === "/dashboard/misc";
+
+	// Dashboard search state (self-managed when not provided by props)
+    const currentSearchParam = (routerState.location.search as unknown as Record<string, unknown>)?.search;
+    const [typedDashboardSearch, setTypedDashboardSearch] = useState(
+		typeof currentSearchParam === "string" ? currentSearchParam : "",
+	);
+
+	// Keep internal input in sync with URL changes
+    useEffect(() => {
+		if (!isDashboard) return;
+		setTypedDashboardSearch(typeof currentSearchParam === "string" ? currentSearchParam : "");
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isDashboard, currentSearchParam]);
+
+	// Debounce URL update when using internal dashboard search
+    useEffect(() => {
+		if (!isDashboard || isMiscPage) return;
+		// If parent provides controlled search, do nothing here
+		if (searchTerm !== undefined && onSearchChange) return;
+		const normalized = typedDashboardSearch.trim().replace(/\s+/g, " ");
+		const applied = normalized.length >= 2 ? normalized : undefined;
+        const handle = setTimeout(() => {
+            const url = new URL(window.location.href);
+            if (applied) {
+                url.searchParams.set("search", applied);
+            } else {
+                url.searchParams.delete("search");
+            }
+            window.history.replaceState(null, "", url.toString());
+        }, 400);
+		return () => clearTimeout(handle);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isDashboard, isMiscPage, typedDashboardSearch, searchTerm, onSearchChange]);
 
 	// Handle action button clicks directly
 	const handleActionClick = () => {
@@ -337,7 +372,7 @@ export function NavBar({
 	if (isDashboard) {
 		return (
 			<>
-				<nav className={cn("sticky top-0 z-[40]", className)}>
+				<nav className={cn("fixed top-0 left-0 right-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border", className)}>
 					<div className="px-4 py-3">
 						{/* Desktop layout - Large screens and above */}
 						<div className="hidden lg:flex items-center gap-4">
@@ -350,17 +385,17 @@ export function NavBar({
 								/>
 							</div>
 
-							{/* Search - takes all available space */}
-							{searchTerm !== undefined && onSearchChange && (
-								<div className="flex-1 min-w-0">
-									<SearchInput
-										placeholder={dynamicPlaceholder}
-										value={searchTerm}
-										onChange={onSearchChange}
-										className="w-full"
-									/>
-								</div>
-							)}
+					{/* Search - takes all available space (dashboard) */}
+					{!isMiscPage && (
+						<div className="flex-1 min-w-0">
+							<SearchInput
+								placeholder={dynamicPlaceholder}
+								value={searchTerm !== undefined && onSearchChange ? searchTerm : typedDashboardSearch}
+								onChange={searchTerm !== undefined && onSearchChange ? onSearchChange : setTypedDashboardSearch}
+								className="w-full"
+							/>
+						</div>
+					)}
 
 							{/* Action button - fixed width */}
 							<div className="flex-shrink-0">
@@ -388,19 +423,19 @@ export function NavBar({
 								/>
 							</div>
 
-							{/* Second row: Search + Action + Menu */}
+						{/* Second row: Search + Action + Menu */}
 							<div className="flex items-center gap-3">
-								{/* Search - takes available space */}
-								{searchTerm !== undefined && onSearchChange && (
-									<div className="flex-1 min-w-0">
-										<SearchInput
-											placeholder={dynamicPlaceholder}
-											value={searchTerm}
-											onChange={onSearchChange}
-											className="w-full"
-										/>
-									</div>
-								)}
+							{/* Search - takes available space (dashboard) */}
+							{!isMiscPage && (
+								<div className="flex-1 min-w-0">
+									<SearchInput
+										placeholder={dynamicPlaceholder}
+										value={searchTerm !== undefined && onSearchChange ? searchTerm : typedDashboardSearch}
+										onChange={searchTerm !== undefined && onSearchChange ? onSearchChange : setTypedDashboardSearch}
+										className="w-full"
+									/>
+								</div>
+							)}
 
 								{/* Action button - fixed width */}
 								<div className="flex-shrink-0">
@@ -420,15 +455,15 @@ export function NavBar({
 
 						{/* Mobile layout - Small screens */}
 						<div className="md:hidden w-full">
-							{/* Search - takes full available space */}
-							{searchTerm !== undefined && onSearchChange && (
-								<SearchInput
-									placeholder={dynamicPlaceholder}
-									value={searchTerm}
-									onChange={onSearchChange}
-									className="w-full"
-								/>
-							)}
+					{/* Search - takes full available space (dashboard) */}
+					{!isMiscPage && (
+						<SearchInput
+							placeholder={dynamicPlaceholder}
+							value={searchTerm !== undefined && onSearchChange ? searchTerm : typedDashboardSearch}
+							onChange={searchTerm !== undefined && onSearchChange ? onSearchChange : setTypedDashboardSearch}
+							className="w-full"
+						/>
+					)}
 						</div>
 					</div>
 				</nav>
@@ -448,7 +483,7 @@ export function NavBar({
 		<>
 			<nav
 				className={cn(
-					"sticky top-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border",
+					"fixed top-0 left-0 right-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border",
 					className,
 				)}
 			>

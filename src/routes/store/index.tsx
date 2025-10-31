@@ -140,14 +140,24 @@ function StorePage() {
 		count: rowCount,
 		getScrollElement: () => parentRef.current,
 		estimateSize: () => itemHeight,
-		overscan: 5, // Render 5 extra rows for smooth scrolling (same as dashboard)
-		// Enable dynamic sizing to handle height variations
-		measureElement: (element) => {
-			// Measure the actual height of the rendered row
-			const height = element?.getBoundingClientRect().height ?? itemHeight;
-			return height;
-		},
+		overscan: 8, // Render extra rows for smooth scrolling and pre-fetching
 	});
+
+	// Re-measure rows when the number of columns changes
+	useEffect(() => {
+		virtualizer.measure();
+	}, [columnsPerRow, virtualizer]);
+
+	// Re-measure on container width changes
+	useEffect(() => {
+		const el = parentRef.current;
+		if (!el || typeof ResizeObserver === 'undefined') return;
+		const ro = new ResizeObserver(() => {
+			virtualizer.measure();
+		});
+		ro.observe(el);
+		return () => ro.disconnect();
+	}, [virtualizer]);
 
 	// Infinite scroll - load more products when user scrolls near the end (IDENTICAL to dashboard)
 	const virtualItems = virtualizer.getVirtualItems();
@@ -159,8 +169,8 @@ function StorePage() {
 		
 		// Fetch next page when user scrolls near the end
 		// lastItem.index is the row index, rowCount is total rows
-		// Trigger when within 5 rows of the end (less aggressive - more scrolling before fetch)
-		const threshold = rowCount - 1;
+		// Trigger when within 15 rows of the end (prefetch for smooth scrolling)
+		const threshold = rowCount - 8;
 		
 		if (lastItem.index >= threshold) {
 			console.log('Store: Fetching next page...', { 
@@ -189,7 +199,7 @@ function StorePage() {
 	return (
 		<div className="h-screen bg-background flex flex-col">
 			<main className="flex-1 overflow-hidden">
-				<div ref={parentRef} className="overflow-auto px-4 py-4 h-full">
+				<div id="store-scroll" ref={parentRef} className="overflow-auto overscroll-contain px-0 py-4 h-full">
 					<div className="relative" style={{ height: `${virtualizer.getTotalSize()}px` }}>
 						{virtualizer.getVirtualItems().map((virtualRow) => {
 							const rowProducts = getProductsForRow(virtualRow.index);
@@ -199,9 +209,11 @@ function StorePage() {
 									data-index={virtualRow.index}
 									ref={virtualizer.measureElement}
 									className="absolute top-0 left-0 w-full"
-									style={{
-										transform: `translateY(${virtualRow.start}px)`,
-									}}
+								style={{
+									transform: `translate3d(0, ${virtualRow.start}px, 0)`,
+									willChange: 'transform',
+									contain: 'layout paint size',
+								}}
 								>
 									<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
 										{rowProducts.map((product) => (

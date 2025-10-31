@@ -16,7 +16,7 @@ const Switch = React.forwardRef<
 				"before:block before:h-[1.7em] before:w-[1.6em] before:cursor-pointer",
 				"before:rounded-full before:border before:border-solid before:border-stone-400",
 				"before:bg-white before:transition-all before:duration-300 before:content-['']",
-				"checked:bg-orange-600 checked:before:translate-x-full checked:before:border-orange-500",
+				"checked:bg-primary checked:before:translate-x-full checked:before:border-primary",
 				"hover:before:shadow-[0_0_0px_8px_rgba(0,0,0,0.15)]",
 				"checked:hover:before:shadow-[0_0_0px_8px_rgba(236,72,72,0.15)]",
 				className,

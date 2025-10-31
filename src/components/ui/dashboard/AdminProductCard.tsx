@@ -3,8 +3,11 @@ import { Badge } from "~/components/ui/shared/Badge";
 import { getBrandCountryName } from "~/constants/units";
 import { ASSETS_BASE_URL } from "~/constants/urls";
 import { usePrefetch } from "~/hooks/usePrefetch";
+import { useProductAttributes } from "~/hooks/useProductAttributes";
 import type { ProductWithVariations } from "~/types";
 import styles from "../store/productCard.module.css";
+import { Icon } from "~/components/ui/shared/Icon";
+import { Skeleton } from "~/components/ui/dashboard/skeleton";
 
 interface AdminProductCardProps {
 	product: ProductWithVariations;
@@ -20,6 +23,7 @@ export function AdminProductCard({
 	formatPrice: _formatPrice,
 }: AdminProductCardProps) {
 	const { prefetchDashboardProduct } = usePrefetch();
+    const { data: availableAttributes } = useProductAttributes();
 	const imageArray = (() => {
 		if (!product.images) return [];
 		try {
@@ -67,6 +71,22 @@ export function AdminProductCard({
 
 	const allShippingLocations = getAllShippingLocations();
 
+    // Detect if product has any out-of-scope product-level attributes
+    const hasOutOfScopeAttributes = (() => {
+        try {
+            if (!product.productAttributes) return false;
+            const parsed = JSON.parse(product.productAttributes);
+            const attributesArray: Array<{ attributeId: string; value: string }> = Array.isArray(parsed)
+                ? parsed
+                : [];
+            if (!attributesArray.length || !availableAttributes?.length) return false;
+            const availableIds = new Set(availableAttributes.map((a) => a.id.toString()));
+            return attributesArray.some((attr) => !availableIds.has(attr.attributeId));
+        } catch {
+            return false;
+        }
+    })();
+
 	// Prefetch on hover
 	const handleMouseEnter = () => {
 		prefetchDashboardProduct(product.id);
@@ -85,16 +105,41 @@ export function AdminProductCard({
 					{/* Image Section */}
 					<div className="relative aspect-square overflow-hidden">
 						<div>
-							{/* Primary Image */}
+                    {/* Primary Image */}
 							<div className="relative aspect-square flex items-center justify-center overflow-hidden">
-								{primaryImage ? (
+										{primaryImage ? (
 									<div className="relative w-full h-full">
-										{/* Primary Image */}
-										<img
+											{/* Loading skeleton, initially visible */}
+											<div className="absolute inset-0 w-full h-full bfloor-img-skeleton">
+												<Skeleton className="absolute inset-0 w-full h-full rounded-none" />
+											</div>
+
+											{/* Broken overlay, initially hidden */}
+											<div className="absolute inset-0 hidden items-center justify-center flex-col text-muted-foreground select-none bfloor-img-fallback">
+												<Icon name="image" className="w-12 h-12" />
+												<span className="mt-2 text-xs">Картинка сломана</span>
+											</div>
+
+											{/* Primary Image */}
+											<img
 											src={`${ASSETS_BASE_URL}/${primaryImage}`}
 											alt={product.name}
 											loading="eager"
 											className="absolute inset-0 w-full h-full object-cover object-center"
+												onLoad={(e) => {
+													const parent = e.currentTarget.parentElement;
+													const sk = parent?.querySelector<HTMLDivElement>(".bfloor-img-skeleton");
+													if (sk) sk.style.display = "none";
+												}}
+												onError={(e) => {
+													const img = e.currentTarget;
+													const parent = img.parentElement;
+													img.style.display = "none";
+													const sk = parent?.querySelector<HTMLDivElement>(".bfloor-img-skeleton");
+													if (sk) sk.style.display = "none";
+													const fb = parent?.querySelector<HTMLDivElement>(".bfloor-img-fallback");
+													if (fb) fb.style.display = "flex";
+												}}
 										/>
 										{/* Secondary Image (if exists) - Only on desktop devices with hover capability */}
 										{imageArray.length > 1 && (
@@ -103,13 +148,41 @@ export function AdminProductCard({
 												alt={product.name}
 												loading="eager"
 												className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-500 ease-in-out opacity-0 group-hover:opacity-100 hidden md:block"
+												onError={(e) => {
+													const t = e.currentTarget;
+													t.style.display = "none";
+												}}
 											/>
 										)}
+                                {/* Out-of-scope attributes indicator */}
+                                {hasOutOfScopeAttributes && (
+                                    <div className="absolute top-2 left-2 flex items-center justify-center">
+                                        <svg
+                                            width="48"
+                                            height="48"
+                                            viewBox="0 0 24 24"
+                                            aria-hidden="true"
+                                        >
+                                            {/* Filled yellow triangle background with subtly rounded corners via stroke */}
+                                            <polygon
+                                                points="12,2 22,20 2,20"
+                                                fill="#FACC15"
+                                                stroke="#FACC15"
+                                                strokeWidth="1.5"
+                                                strokeLinejoin="round"
+                                            />
+                                            {/* Slightly smaller black exclamation mark */}
+                                            <rect x="11.2" y="8.5" width="1.6" height="5" fill="#111827" rx="0.5" />
+                                            <circle cx="12" cy="16.8" r="1.2" fill="#111827" />
+                                        </svg>
+                                    </div>
+                                )}
 									</div>
 								) : (
-									<div className="absolute inset-0 bg-muted flex items-center justify-center">
-										<span className="text-muted-foreground">No image</span>
-									</div>
+										<div className="absolute inset-0 bg-muted flex flex-col items-center justify-center text-muted-foreground select-none">
+											<Icon name="image" className="w-12 h-12" />
+											<span className="mt-2 text-xs">Нет картинки</span>
+										</div>
 								)}
 							</div>
 						</div>
@@ -125,16 +198,17 @@ export function AdminProductCard({
 						<div className="absolute bottom-0 left-0 right-0 hidden md:flex opacity-0 group-hover:opacity-100 transition-all duration-500">
 							<button
 								type="button"
+							onMouseEnter={() => prefetchDashboardProduct(product.id)}
+							onFocus={() => prefetchDashboardProduct(product.id)}
 								onClick={(e) => {
 									e.stopPropagation();
-									console.log('🔍 EDIT: Desktop Edit button clicked for:', product.id, product.name);
 									onEdit(product);
 								}}
 								className="flex-1 flex items-center justify-center space-x-2 bg-muted/70 backdrop-blur-xs text-foreground hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-all duration-500 py-2 cursor-pointer outline-none border-none"
 								style={{ margin: 0, padding: "0.5rem 0" }}
 							>
 								<Edit className="w-4 h-4" />
-								<span>Edit</span>
+								<span>Изменить</span>
 							</button>
 							<button
 								type="button"
@@ -211,6 +285,8 @@ export function AdminProductCard({
 						<div className="md:hidden mt-auto flex">
 							<button
 								type="button"
+							onMouseEnter={() => prefetchDashboardProduct(product.id)}
+							onFocus={() => prefetchDashboardProduct(product.id)}
 								onClick={(e) => {
 									e.stopPropagation();
 									console.log('🔍 EDIT: Mobile Edit button clicked for:', product.id, product.name);

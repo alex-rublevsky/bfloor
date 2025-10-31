@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { cn } from "~/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/dashboard/tabs";
-import { Button } from "~/components/ui/shared/Button";
 import ReactMarkdown from "react-markdown";
 import { markdownComponents, rehypePlugins } from "~/components/ui/shared/MarkdownComponents";
 import { 
 	formatContentForDisplay, 
 	formatContentForEditing, 
-	validateContent,
-	removeHTMLStructure
+	validateContent
 } from "~/utils/contentUtils";
 
 interface EnhancedDescriptionFieldProps
@@ -82,41 +80,19 @@ export const EnhancedDescriptionField = React.forwardRef<
 		onChange?.(e);
 	};
 
-	// Handle manual content cleaning
-	const handleCleanContent = () => {
-		if (value && typeof value === 'string') {
-			const cleanedValue = removeHTMLStructure(value);
-			onChange?.({
-				target: { name: props.name, value: cleanedValue }
-			} as React.ChangeEvent<HTMLTextAreaElement>);
-		}
-	};
-
 	// Formatting help content
 	const formattingHelp = (
 		<div className="text-xs text-muted-foreground space-y-1">
-			<div><strong>Markdown:</strong> **bold**, *italic*, [link](url)</div>
-			<div><strong>HTML:</strong> &lt;div&gt;, &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;</div>
-			<div><strong>Lists:</strong> - item or 1. item</div>
-			
-			{/* Clean Content Button */}
-			{value && typeof value === 'string' && (
-				<div className="mt-2">
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={handleCleanContent}
-						className="text-xs h-6 px-2"
-					>
-						🧹 Clean HTML Structure
-					</Button>
-				</div>
-			)}
+			<div className="space-y-1">
+				<div><strong>Markdown:</strong> **жирный**, *курсив*, [ссылка](url)</div>
+				<div><strong>HTML:</strong> &lt;div&gt;, &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;</div>
+				<div><strong>Списки:</strong> - элемент или 1. элемент</div>
+				<div><strong>Перенос строки:</strong> \n\n для нового абзаца</div>
+			</div>
 			
 			{validation.issues.length > 0 && (
 				<div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
-					<div className="font-medium">Issues found:</div>
+					<div className="font-medium">Проблемы:</div>
 					<ul className="list-disc list-inside mt-1">
 						{validation.issues.map((issue) => (
 							<li key={issue}>{issue}</li>
@@ -126,7 +102,7 @@ export const EnhancedDescriptionField = React.forwardRef<
 			)}
 			{validation.suggestions.length > 0 && (
 				<div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-blue-800">
-					<div className="font-medium">Suggestions:</div>
+					<div className="font-medium">Предложения:</div>
 					<ul className="list-disc list-inside mt-1">
 						{validation.suggestions.map((suggestion) => (
 							<li key={suggestion}>{suggestion}</li>

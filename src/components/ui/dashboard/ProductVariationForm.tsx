@@ -47,16 +47,22 @@ function SortableVariationItem({
 	onUpdate,
 	selectedAttributes,
 	productAttributes,
+	productSlug,
+	variations,
+	onChange,
 }: {
 	variation: Variation;
 	onRemove: (id: string) => void;
 	onUpdate: (
 		id: string,
 		field: keyof Variation,
-		value: string | number | null,
+		value: string | number | null | Record<string, string>,
 	) => void;
 	selectedAttributes: string[];
 	productAttributes: ProductAttribute[];
+	productSlug: string;
+	variations: Variation[];
+	onChange: (variations: Variation[]) => void;
 }) {
 	const {
 		attributes,
@@ -90,8 +96,18 @@ function SortableVariationItem({
 			productAttributes,
 		);
 
-		onUpdate(variation.id, "attributeValues", newAttributeValues);
-		onUpdate(variation.id, "sku", newSKU);
+		// Update the variation with both new values atomically
+		onChange(
+			variations.map((v) =>
+				v.id === variation.id
+					? {
+							...v,
+							attributeValues: newAttributeValues,
+							sku: newSKU,
+					  }
+					: v,
+			),
+		);
 	};
 
 	return (
@@ -178,7 +194,7 @@ function SortableVariationItem({
 					<div className="grid grid-cols-2 gap-2">
 						{selectedAttributes.map((attributeId) => {
 							const attribute = productAttributes.find(
-								(attr) => attr.id === attributeId,
+								(attr) => attr.id.toString() === attributeId,
 							);
 							if (!attribute) return null;
 
@@ -189,10 +205,12 @@ function SortableVariationItem({
 										type="text"
 										label={attribute.name}
 										value={variation.attributeValues[attributeId] || ""}
-										onChange={(e) =>
-											handleAttributeValueChange(attributeId, e.target.value)
-										}
+										onChange={(e) => {
+											e.stopPropagation();
+											handleAttributeValueChange(attributeId, e.target.value);
+										}}
 										onPointerDown={(e) => e.stopPropagation()}
+										onClick={(e) => e.stopPropagation()}
 										placeholder="Значение"
 										className="text-sm"
 									/>
@@ -264,7 +282,7 @@ export default function ProductVariationForm({
 	const handleUpdateVariation = (
 		id: string,
 		field: keyof Variation,
-		value: string | number | null,
+		value: string | number | null | Record<string, string>,
 	) => {
 		onChange(
 			variations.map((variation) =>
@@ -320,6 +338,9 @@ export default function ProductVariationForm({
 									onUpdate={handleUpdateVariation}
 									selectedAttributes={selectedAttributes}
 									productAttributes={attributes || []}
+									productSlug={productSlug}
+									variations={variations}
+									onChange={onChange}
 								/>
 							))}
 						</div>

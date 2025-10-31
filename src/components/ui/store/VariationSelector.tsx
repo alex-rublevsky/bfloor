@@ -55,8 +55,8 @@ export function VariationSelector({
 	}
 
 	return (
-		<div className="space-y-4">
-			<h3 className="text-lg font-medium text-gray-800">Выберите параметры:</h3>
+		<>
+			
 			{productAttributes.map(({ attributeId, displayName, values }) => (
 				<div key={attributeId} className="space-y-2">
 					<div className="text-sm font-medium text-gray-700">{displayName}</div>
@@ -81,6 +81,6 @@ export function VariationSelector({
 					</div>
 				</div>
 			))}
-		</div>
+		</>
 	);
 }

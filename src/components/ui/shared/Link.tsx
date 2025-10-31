@@ -3,13 +3,12 @@ import { cn } from "~/utils/utils";
 
 export interface LinkProps
 	extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
-	blurOnHover?: boolean;
 	href: string; // Make href required to ensure proper link behavior
 }
 
 const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
 	(
-		{ className, onMouseEnter, onMouseLeave, blurOnHover = true, ...props },
+		{ className, onMouseEnter, onMouseLeave, ...props },
 		ref,
 	) => {
 		const handleKeyDown = (e: React.KeyboardEvent<HTMLAnchorElement>) => {
@@ -29,8 +28,8 @@ const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
 				onMouseLeave={onMouseLeave}
 				onKeyDown={handleKeyDown}
 				className={cn(
-					"cursor-pointer",
-					blurOnHover ? "blurLink" : undefined,
+					"cursor-pointer hover:underline",
+					
 					className,
 				)}
 				tabIndex={0}

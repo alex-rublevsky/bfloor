@@ -38,8 +38,10 @@ function App() {
 					<BenefitsSection />
 					<ProductSlider />
 					<OurPartnersSection />
-					<AboutSection />
+					
+					
 					<TestimonialSliderSection />
+					<AboutSection />
 				</div>
 			</main>
 		</div>

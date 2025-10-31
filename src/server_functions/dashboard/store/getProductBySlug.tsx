@@ -49,6 +49,14 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 
 			// Group variations with their attributes
 			const variationsMap = new Map();
+			
+			// Fetch all available attributes to create slug-to-ID mapping
+			const allAttributes = await db.select().from(productAttributes);
+			const slugToIdMap: Record<string, string> = {};
+			allAttributes.forEach(attr => {
+				slugToIdMap[attr.slug] = attr.id.toString();
+			});
+			
 			for (const row of variationsResult) {
 				if (!variationsMap.has(row.id)) {
 					variationsMap.set(row.id, {
@@ -62,8 +70,10 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 				}
 
 				if (row.attributeId && row.attributeValue) {
+					// Map slug to ID for consistency with productAttributes
+					const attributeId = slugToIdMap[row.attributeId] || row.attributeId;
 					variationsMap.get(row.id).attributes.push({
-						attributeId: row.attributeId,
+						attributeId: attributeId,
 						value: row.attributeValue,
 					});
 				}

@@ -7,6 +7,7 @@ import {
 	categories,
 	collections,
 	products,
+	productAttributes,
 	productStoreLocations,
 	productVariations,
 	storeLocations,
@@ -107,6 +108,23 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 				});
 			}
 		});
+
+	// Fetch all attributes to create slug-to-ID mapping
+	const allAttributes = await db.select().from(productAttributes);
+	const slugToIdMap: Record<string, string> = {};
+	allAttributes.forEach(attr => {
+		slugToIdMap[attr.slug] = attr.id.toString();
+	});
+
+	// Map variation attributes from slugs to IDs
+	for (const variation of variationsMap.values()) {
+		if (variation.attributes && variation.attributes.length > 0) {
+			variation.attributes = variation.attributes.map((attr: { attributeId: string; value: string }) => ({
+				...attr,
+				attributeId: slugToIdMap[attr.attributeId] || attr.attributeId
+			}));
+		}
+	}
 
 	// Process images - parse JSON string or comma-separated string to array for frontend
 	let imagesArray: string[] = [];

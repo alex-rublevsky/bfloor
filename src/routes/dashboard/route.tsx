@@ -5,14 +5,17 @@ import {
 	useLoaderData,
 	useRouter,
 } from "@tanstack/react-router";
-import { NavBar } from "~/components/ui/shared/NavBar";
 import { Toaster } from "~/components/ui/shared/sonner";
-import {
-	DashboardSearchProvider,
-	useDashboardSearch,
-} from "~/lib/dashboardSearchContext";
 // import { getUserData } from "~/utils/auth-server-func";
 
+
+const validateSearch = (search: Record<string, unknown>) => {
+    const result: { search?: string } = {};
+    if (typeof search.search === "string") {
+        result.search = search.search;
+    }
+    return result;
+};
 
 export const Route = createFileRoute("/dashboard")({
 	// beforeLoad temporarily disabled for local development access
@@ -50,37 +53,25 @@ export const Route = createFileRoute("/dashboard")({
 			userAvatar: "",
 		};
 	},
-	component: RouteComponent,
+    component: RouteComponent,
+    validateSearch,
 });
 
 function DashboardLayout() {
-	const loaderData = useLoaderData({ from: "/dashboard" }) as
-		| {
-				userID: string;
-				userName: string;
-				userEmail: string;
-				userAvatar: string;
-		  }
-		| undefined;
+    const _loaderData = useLoaderData({ from: "/dashboard" }) as
+        | {
+                userID: string;
+                userName: string;
+                userEmail: string;
+                userAvatar: string;
+          }
+        | undefined;
 
-	const router = useRouter();
-	const pathname = router.state.location.pathname;
-
-	const { searchTerm, setSearchTerm } = useDashboardSearch();
-
-	// Only provide search functionality to pages that need it (not misc page)
-	// Check if we're on the misc page specifically
-	const isMiscPage = pathname === "/dashboard/misc";
-	const shouldProvideSearch = !isMiscPage;
+    const _router = useRouter();
 
 	return (
 		<div className="h-screen bg-background flex flex-col">
-			<NavBar
-				userData={loaderData}
-				searchTerm={shouldProvideSearch ? searchTerm : undefined}
-				onSearchChange={shouldProvideSearch ? setSearchTerm : undefined}
-			/>
-			<main className="flex-1 overflow-hidden">
+			<main className="flex-1">
 				<Outlet />
 			</main>
 			<Toaster className="fixed top-4 right-4 z-50" />
@@ -89,9 +80,7 @@ function DashboardLayout() {
 }
 
 function RouteComponent() {
-	return (
-		<DashboardSearchProvider>
-			<DashboardLayout />
-		</DashboardSearchProvider>
-	);
+    return (
+        <DashboardLayout />
+    );
 }

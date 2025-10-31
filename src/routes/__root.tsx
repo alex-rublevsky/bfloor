@@ -103,22 +103,23 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 	const routerState = useRouterState();
 	const pathname = routerState.location.pathname;
 
-	const isDashboard = pathname.startsWith("/dashboard");
 	const isStore = pathname.startsWith("/store");
 
 	return (
 		<html
 			lang="en"
-			className={`${pathname === "/" ? "scroll-smooth" : ""} bg-background overscroll-none`}
+			className={`${pathname === "/" ? "scroll-smooth" : ""} bg-background`}
 			suppressHydrationWarning
 		>
 			<head>
 				<HeadContent />
 			</head>
-			<body className="h-screen flex flex-col" suppressHydrationWarning>
-				{!isDashboard && <NavBar />}
+			<body className={`h-screen flex flex-col ${isStore ? "overflow-hidden" : ""}`} suppressHydrationWarning>
+				<NavBar />
+				{/* Spacer to offset fixed navbar height across breakpoints */}
+				<div className="h-16 md:h-20 lg:h-28" />
 				{children}
-				{!isDashboard && !isStore && <Footer />}
+				{!isStore && <Footer />}
 				{/* <TanStackRouterDevtools position="bottom-right" /> */}
 				<Scripts />
 			</body>

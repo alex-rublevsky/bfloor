@@ -20,13 +20,13 @@ const buttonVariants = cva("transition-all duration-200 border", {
 	variants: {
 		variant: {
 			default:
-				"px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full",
-			product: "px-2 py-1 text-xs rounded-full",
+				"text-xs px-1.5 md:px-2 py-1 md:py-1.5 rounded-full",
+			product: "px-1.5 py-0.5 rounded-full",
 		},
 		state: {
-			selected: "border-black bg-primary text-primary-foreground",
+			selected: "border-primary bg-primary text-primary-foreground",
 			unselected:
-				"border-border bg-background/80 hover:border-black hover:bg-primary/5 active:border-black active:bg-primary/5 active:scale-95",
+				"border-border bg-background/80 hover:border-primary hover:bg-primary/5 active:border-primary active:bg-primary/5 active:scale-95",
 			disabled:
 				"border-border bg-muted hover:border-black active:border-black text-muted-foreground",
 			"selected-disabled":
@@ -61,7 +61,7 @@ function FilterButton({
 			: "unselected";
 
 	return (
-		<button
+        <button
 			type="button"
 			onClick={(e) => {
 				e.stopPropagation();
@@ -70,7 +70,7 @@ function FilterButton({
 			}}
 			className={cn(
 				// Use cursor-not-allowed for disabled buttons, cursor-pointer for enabled buttons
-				"cursor-pointer",
+                "cursor-pointer shrink-0 whitespace-nowrap",
 				buttonVariants({ variant, state }),
 				className,
 			)}
@@ -98,6 +98,16 @@ interface FilterGroupProps {
 	variant?: "default" | "product";
 	getOptionAvailability?: (option: string) => boolean;
 	titleClassName?: string;
+    /**
+     * Layout control for options container. Default is flex-wrap.
+     * - "wrap": traditional multi-line wrapping
+     * - "horizontalGrid": 3-row grid flowing by columns, horizontally scrollable
+     */
+    layout?: "wrap" | "horizontalGrid";
+    /**
+     * Force a single row with no wrapping (used for mobile multi-row scroller rows)
+     */
+    noWrap?: boolean;
 }
 
 export function FilterGroup({
@@ -107,10 +117,12 @@ export function FilterGroup({
 	onOptionChange,
 	className,
 	showAllOption = true,
-	allOptionLabel = "All",
+		allOptionLabel = "Все",
 	variant = "default",
 	getOptionAvailability,
 	titleClassName,
+    layout = "wrap",
+    noWrap = false,
 }: FilterGroupProps) {
 	const handleOptionClick = (optionSlug: string) => {
 		onOptionChange(optionSlug === selectedOptions ? null : optionSlug);
@@ -128,7 +140,13 @@ export function FilterGroup({
 		return typeof option === "string" ? option : option.slug;
 	};
 
-	return (
+    const containerBase = noWrap
+        ? "flex gap-1 flex-nowrap"
+        : layout === "horizontalGrid"
+            ? "flex flex-col flex-wrap h-24 gap-1 overflow-x-auto overflow-y-hidden"
+            : "flex flex-wrap gap-1";
+
+    return (
 		<div className="space-y-2">
 			{title && (
 				<div
@@ -142,7 +160,7 @@ export function FilterGroup({
 					{title}
 				</div>
 			)}
-			<div className={cn("flex flex-wrap gap-1", className)}>
+            <div className={cn(containerBase, className)}>
 				{showAllOption && (
 					<FilterButton
 						onClick={() => onOptionChange(null)}

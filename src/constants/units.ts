@@ -47,16 +47,13 @@ export const getBrandCountryName = (
 };
 
 // Теги для товаров - категоризация по назначению
+// Только теги, которые реально используются в базе данных
 export const PRODUCT_TAGS = [
 	"kitchen", // Кухня
 	"living-room", // Гостиная
 	"bedroom", // Спальня
-	"bathroom", // Ванная
-	"hallway", // Прихожая
-	"balcony", // Балкон
 	"commercial", // Коммерческие помещения
 	"outdoor", // Уличное использование
-	"waterproof", // Водостойкие
 ] as const;
 
 export type ProductTag = (typeof PRODUCT_TAGS)[number];
@@ -69,18 +66,10 @@ export const getProductTagName = (tag: string): string => {
 			return "🛋️ Гостиная";
 		case "bedroom":
 			return "🛏️ Спальня";
-		case "bathroom":
-			return "🚿 Ванная";
-		case "hallway":
-			return "🚪 Прихожая";
-		case "balcony":
-			return "🌿 Балкон";
 		case "commercial":
 			return "🏢 Коммерческие помещения";
 		case "outdoor":
 			return "🌳 Уличное использование";
-		case "waterproof":
-			return "💧 Водостойкие";
 		default:
 			return tag;
 	}

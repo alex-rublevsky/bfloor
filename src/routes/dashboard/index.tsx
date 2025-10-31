@@ -2,7 +2,7 @@ import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-quer
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { AdminProductCard } from "~/components/ui/dashboard/AdminProductCard";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
@@ -20,6 +20,7 @@ import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/Produc
 import { CheckboxList } from "~/components/ui/shared/CheckboxList";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { Input } from "~/components/ui/shared/input";
+import ProductFilters from "~/components/ui/store/ProductFilters";
 import {
 	Select,
 	SelectContent,
@@ -37,7 +38,6 @@ import {
 	useProductAttributes,
 } from "~/hooks/useProductAttributes";
 import { generateSlug, useSlugGeneration } from "~/hooks/useSlugGeneration";
-import { useDashboardSearch } from "~/lib/dashboardSearchContext";
 import { 
 	productsInfiniteQueryOptions, 
 	brandsQueryOptions, 
@@ -69,9 +69,19 @@ interface Variation {
 
 
 
+// Support optional search param in URL
+const validateSearch = (search: Record<string, unknown>) => {
+    const result: { search?: string } = {};
+    if (typeof search.search === "string") {
+        result.search = search.search;
+    }
+    return result;
+};
+
 export const Route = createFileRoute("/dashboard/")({
-	component: RouteComponent,
-	pendingComponent: ProductsPageSkeleton,
+    component: RouteComponent,
+    pendingComponent: ProductsPageSkeleton,
+    validateSearch,
 });
 
 // Hook to get responsive columns per row based on screen size
@@ -107,20 +117,49 @@ function useResponsiveColumns() {
 
 function RouteComponent() {
 	const queryClient = useQueryClient();
-	const { searchTerm } = useDashboardSearch();
-	const parentRef = useRef<HTMLDivElement>(null);
+    const searchParams = Route.useSearch();
+    const normalizedSearch = (() => {
+        const value = typeof searchParams.search === 'string' ? searchParams.search : '';
+        const trimmed = value.trim().replace(/\s+/g, ' ');
+        return trimmed.length >= 2 ? trimmed : undefined;
+    })();
+const containerRef = useRef<HTMLDivElement>(null);
 	const columnsPerRow = useResponsiveColumns();
+
+// Dashboard filters state
+const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
+const [sortBy, setSortBy] = useState<"relevant" | "name" | "price-asc" | "price-desc" | "newest" | "oldest">("relevant");
+const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0, 1000000]);
+
+	const isValidSort = (v: string): v is typeof sortBy => {
+		return (
+			v === "relevant" ||
+			v === "name" ||
+			v === "price-asc" ||
+			v === "price-desc" ||
+			v === "newest" ||
+			v === "oldest"
+		);
+	};
 
 	// Use infinite query to track loading state
 	const { 
 		data: productsData, 
 		isLoading, 
+        isFetching,
 		fetchNextPage, 
 		hasNextPage, 
 		isFetchingNextPage 
 	} = useInfiniteQuery({
-		...productsInfiniteQueryOptions(),
-	});
+		...productsInfiniteQueryOptions(normalizedSearch, {
+			categorySlug: selectedCategory ?? undefined,
+			sort: sortBy,
+		}),
+        // Preserve previous data while new search loads
+        placeholderData: (prev) => prev,
+    });
 
 	// Fetch all reference data separately with aggressive caching (3-day stale time)
 	const { data: storeLocations = [] } = useQuery({
@@ -198,6 +237,8 @@ function RouteComponent() {
 	const editProductFormId = useId();
 	const createProductFormId = useId();
 	const editPriceId = useId();
+	const editDiscountId = useId();
+	const addDiscountId = useId();
 
 	const defaultFormData = {
 		name: "",
@@ -248,6 +289,7 @@ function RouteComponent() {
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [_deletedImages, setDeletedImages] = useState<string[]>([]);
 	const [editDeletedImages, setEditDeletedImages] = useState<string[]>([]);
+	const [originalEditImages, setOriginalEditImages] = useState<string>("");
 
 	// Store locations state
 	const [selectedStoreLocationIds, setSelectedStoreLocationIds] = useState<
@@ -386,6 +428,7 @@ function RouteComponent() {
 		setEditVariations([]);
 		setEditSelectedStoreLocationIds([]);
 		setEditDeletedImages([]);
+		setOriginalEditImages("");
 		setIsEditAutoSlug(false);
 		setError("");
 	};
@@ -411,8 +454,8 @@ function RouteComponent() {
 		lastPageInfo: productsData?.pages?.[productsData.pages.length - 1]?.pagination,
 	});
 
-	// Use merged products directly
-	const allProducts = products;
+    // Use merged products directly (search is applied server-side)
+    const allProducts = products;
 
 	// Handlers for refreshing data when new entities are created
 	const handleEntityCreated = () => {
@@ -428,31 +471,35 @@ function RouteComponent() {
 		});
 	};
 
-	// Filter products based on search
-	const displayProducts = searchTerm
-		? allProducts.filter(
-				(product: ProductWithVariations) =>
-					product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-					product.slug.toLowerCase().includes(searchTerm.toLowerCase()),
-			)
-		: allProducts;
+    // Server-side filtered list
+    const displayProducts = allProducts;
 
-	// Virtualizer configuration - responsive columns handled by useResponsiveColumns hook
-	const itemHeight = 365;
-	const rowCount = Math.ceil(displayProducts.length / columnsPerRow);
+// Virtualizer configuration - responsive columns handled by useResponsiveColumns hook
+const itemHeight = 365;
+const rowCount = Math.ceil(displayProducts.length / columnsPerRow);
 
-	const virtualizer = useVirtualizer({
-		count: rowCount,
-		getScrollElement: () => parentRef.current,
-		estimateSize: () => itemHeight,
-		overscan: 5, // Render 5 extra rows for smooth scrolling
-		// Enable dynamic sizing to handle height variations
-		measureElement: (element) => {
-			// Measure the actual height of the rendered row
-			const height = element?.getBoundingClientRect().height ?? itemHeight;
-			return height;
-		},
-	});
+const virtualizer = useWindowVirtualizer({
+    count: rowCount,
+    estimateSize: () => itemHeight,
+    overscan: 8, // Render extra rows for smooth scrolling and pre-fetching
+});
+
+	// Re-measure rows when the number of columns changes (grid layout changes row heights)
+	// biome-ignore lint/correctness/useExhaustiveDependencies: We intentionally re-measure when columns/grid change and the instance is stable
+	useEffect(() => {
+		virtualizer.measure();
+	}, [columnsPerRow, virtualizer]);
+
+// Re-measure on container width changes to account for responsive grid/gaps
+useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => {
+        virtualizer.measure();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+}, [virtualizer]);
 
 
 	// Helper function to get products for a specific row
@@ -472,8 +519,8 @@ function RouteComponent() {
 		
 		// Fetch next page when user scrolls near the end
 		// lastItem.index is the row index, rowCount is total rows
-		// Trigger when within 5 rows of the end (less aggressive - more scrolling before fetch)
-		const threshold = rowCount - 1;
+		// Trigger when within 15 rows of the end (prefetch for smooth scrolling)
+		const threshold = rowCount - 8;
 		
 		if (lastItem.index >= threshold) {
 			console.log('Fetching next page...', { 
@@ -645,18 +692,32 @@ function RouteComponent() {
 		setError("");
 
 		try {
-			// Delete images from R2 first
-			if (editDeletedImages.length > 0) {
-				const deletePromises = editDeletedImages.map((filename) =>
+			// Parse original and new images to compare
+			const originalImages = originalEditImages
+				? originalEditImages.split(",").map(img => img.trim()).filter(Boolean)
+				: [];
+			const newImages = editFormData.images
+				? editFormData.images.split(",").map(img => img.trim()).filter(Boolean)
+				: [];
+
+			// Find images that were removed (in original but not in new)
+			const removedImages = originalImages.filter(img => !newImages.includes(img));
+			
+			// Combine explicitly deleted images with automatically detected removed images
+			const allImagesToDelete = [...new Set([...editDeletedImages, ...removedImages])];
+
+			// Delete images from R2
+			if (allImagesToDelete.length > 0) {
+				const deletePromises = allImagesToDelete.map((filename) =>
 					deleteProductImage({ data: { filename } }).catch((error) => {
 						console.error(`Failed to delete ${filename}:`, error);
 						// Don't fail the whole update if one image deletion fails
 					}),
 				);
 				await Promise.all(deletePromises);
-				toast.success(
-					`Deleted ${editDeletedImages.length} image(s) from storage`,
-				);
+				if (allImagesToDelete.length > 0) {
+					console.log(`Deleted ${allImagesToDelete.length} image(s) from storage`);
+				}
 			}
 
 			const formattedVariations = editVariations.map(
@@ -751,9 +812,11 @@ function RouteComponent() {
 
 		try {
 			console.log('🔍 EDIT: Loading product data for:', product.id, product.name);
-			// Fetch complete product data including variations and categories
-			const productWithDetails = await getProductBySlug({
-				data: { id: product.id },
+			// Fetch complete product data using the React Query cache (benefits from prefetch on hover)
+			const productWithDetails = await queryClient.fetchQuery({
+				queryKey: ["bfloorDashboardProduct", product.id],
+				queryFn: () => getProductBySlug({ data: { id: product.id } }),
+				staleTime: 1000 * 60 * 5,
 			});
 			console.log('🔍 EDIT: Product loaded - Tags:', productWithDetails.tags, 'Store Location ID:', productWithDetails.storeLocationId, 'Store Location IDs:', productWithDetails.storeLocationIds);
 			console.log('🔍 EDIT: SKU field:', productWithDetails.sku);
@@ -877,6 +940,9 @@ function RouteComponent() {
 				variations: [],
 			});
 
+			// Store the original images for comparison during update
+			setOriginalEditImages(imagesString);
+
 			// Load existing store locations for this product
 			const storeLocationIds = (productWithDetails.storeLocationIds || []).filter((id): id is number => id !== null);
 			console.log('🔍 EDIT: Store locations from product data:', storeLocationIds);
@@ -949,24 +1015,43 @@ function RouteComponent() {
 				attributes: [],
 				variations: [],
 			});
+			// Store the original images for comparison during update
+			setOriginalEditImages(fallbackImagesString);
 			setEditVariations([]);
 		}
 	};
 
-	// Show skeleton only on initial load (not when fetching next pages)
-	if (isLoading || !productsData) {
+    // Show skeleton only on very first load with no data
+    if (!productsData && (isLoading || isFetching)) {
 		return <ProductsPageSkeleton />;
 	}
 
 	return (
 		<>
-			{/* Products List - Virtualized for performance */}
-			{displayProducts.length === 0 ? (
-				<EmptyState entityType="products" isSearchResult={!!searchTerm} />
-			) : (
-				<div ref={parentRef} className="overflow-auto px-4 py-4 h-full">
+            {/* Filters bar (reusing store ProductFilters for hide-on-scroll behavior) */}
+            <div ref={containerRef}>
+                <ProductFilters
+                    categories={categories.map((c: any) => ({ ...c, count: (c as any).count ?? 0 }))}
+                    selectedCategory={selectedCategory}
+                    onCategoryChange={setSelectedCategory}
+                    brands={brands.map((b: any) => ({ slug: b.slug, name: b.name }))}
+                    selectedBrand={selectedBrand}
+                    onBrandChange={setSelectedBrand}
+                    collections={collections.map((co: any) => ({ slug: co.slug, name: co.name }))}
+                    selectedCollection={selectedCollection}
+                    onCollectionChange={setSelectedCollection}
+                    priceRange={{ min: 0, max: 1000000 }}
+                    currentPriceRange={currentPriceRange}
+                    onPriceRangeChange={setCurrentPriceRange}
+                    sortBy={sortBy}
+                    onSortChange={(v) => { if (isValidSort(v)) setSortBy(v as any); }}
+                />
+                {/* Products List - Virtualized for performance */}
+				{displayProducts.length === 0 && !isFetching ? (
+					<EmptyState entityType="products" isSearchResult={!!normalizedSearch} />
+				) : (
 					<div
-						className="relative"
+						className="relative px-4 py-4"
 						style={{
 							height: `${virtualizer.getTotalSize()}px`,
 						}}
@@ -981,7 +1066,9 @@ function RouteComponent() {
 									className="absolute top-0 left-0 w-full"
 									style={{
 										height: `${virtualRow.size}px`,
-										transform: `translateY(${virtualRow.start}px)`,
+										transform: `translate3d(0, ${virtualRow.start}px, 0)`,
+										willChange: 'transform',
+										contain: 'layout paint size',
 									}}
 								>
 									<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
@@ -996,7 +1083,7 @@ function RouteComponent() {
 										))}
 									</div>
 								</div>
-							);
+						);
 						})}
 						{/* Loading indicator for next page */}
 						{isFetchingNextPage && (
@@ -1005,9 +1092,8 @@ function RouteComponent() {
 							</div>
 						)}
 					</div>
-				</div>
-			)}
-
+				)}
+			</div>
 			{/* Replace Edit Modal with Drawer */}
 			<DashboardFormDrawer
 				isOpen={showEditModal}
@@ -1066,21 +1152,36 @@ function RouteComponent() {
 							/>
 						</DrawerSection>
 
-						{/* Store Locations Block */}
-						<DrawerSection variant="default" title="Местоположения магазинов">
-							<StoreLocationsSelector
-								storeLocations={storeLocations}
-								selectedLocationIds={editSelectedStoreLocationIds}
-								onLocationChange={handleEditStoreLocationChange}
-								idPrefix="edit"
-							/>
-						</DrawerSection>
-					</div>
+					{/* Store Locations Block */}
+					<DrawerSection variant="default" title="Местоположения магазинов">
+						<StoreLocationsSelector
+							storeLocations={storeLocations}
+							selectedLocationIds={editSelectedStoreLocationIds}
+							onLocationChange={handleEditStoreLocationChange}
+							idPrefix="edit"
+						/>
+					</DrawerSection>
 
-					{/* Right Column - Basic Information */}
-					<div className="space-y-4 flex flex-col">
-						{/* Basic Info */}
-						<DrawerSection variant="default" title="Базовая информация">
+					{/* Description Field - Moved to left column */}
+					<DrawerSection variant="default" title="Описание">
+						<EnhancedDescriptionField
+							name="description"
+							value={editFormData.description || ""}
+							onChange={handleEditChange}
+							placeholder="Добавьте описание товара..."
+							className="min-h-[4rem]"
+							showPreview={true}
+							showHelp={true}
+							autoClean={false}
+							label="" // Remove label to use only the DrawerSection title
+						/>
+					</DrawerSection>
+				</div>
+
+				{/* Right Column - Basic Information */}
+				<div className="space-y-4 flex flex-col">
+					{/* Basic Info */}
+					<DrawerSection variant="default" title="Базовая информация">
 							<div className="grid grid-cols-1 gap-4">
 								<Input
 									label="Название"
@@ -1117,37 +1218,47 @@ function RouteComponent() {
 									placeholder="Опционально - уникальный артикул товара"
 								/>
 
-								{/* Settings Fields */}
-								<ProductSettingsFields
-									isActive={editFormData.isActive}
-									isFeatured={editFormData.isFeatured}
-									discount={editFormData.discount}
-									hasVariations={editFormData.hasVariations}
-									onIsActiveChange={handleEditChange}
-									onIsFeaturedChange={handleEditChange}
-									onDiscountChange={handleEditChange}
-									onHasVariationsChange={handleEditChange}
-									idPrefix="edit"
-								/>
+							{/* Settings Fields */}
+							<ProductSettingsFields
+								isActive={editFormData.isActive}
+								isFeatured={editFormData.isFeatured}
+								hasVariations={editFormData.hasVariations}
+								onIsActiveChange={handleEditChange}
+								onIsFeaturedChange={handleEditChange}
+								onHasVariationsChange={handleEditChange}
+								idPrefix="edit"
+							/>
 
-								{/* Two column layout for basic information fields */}
-								<div className="grid grid-cols-2 gap-4">
-									{/* Column 1: Price, Category, Weight */}
-									<div>
-										<Input
-											id={editPriceId}
-											type="number"
-											name="price"
-											label="Цена р"
-											value={editFormData.price}
-											onChange={handleEditChange}
-											step="0.01"
-											required
-										/>
-									</div>
+							{/* Two column layout for basic information fields */}
+							<div className="grid grid-cols-2 gap-4">
+								{/* Column 1: Price */}
+								<div>
+									<Input
+										id={editPriceId}
+										type="number"
+										name="price"
+										label="Цена р"
+										value={editFormData.price}
+										onChange={handleEditChange}
+										step="0.01"
+										required
+									/>
+								</div>
 
-									{/* Column 2: Empty for grid alignment */}
-									<div />
+								{/* Column 2: Discount */}
+								<div>
+									<Input
+										id={editDiscountId}
+										type="number"
+										name="discount"
+										label="Скидка %"
+										value={editFormData.discount || ""}
+										onChange={handleEditChange}
+										min="0"
+										max="100"
+										placeholder="Опционально"
+									/>
+								</div>
 
 									{/* Square Meters Per Pack (for flooring products) */}
 									<Input
@@ -1190,98 +1301,84 @@ function RouteComponent() {
 										</Select>
 									</div>
 
-									{/* Column 1: Category */}
-									<div>
-										<SelectWithCreate
-											value={editFormData.categorySlug}
-											onValueChange={(value) => {
-												handleEditChange({
-													target: { name: "categorySlug", value: value || "" },
-												} as React.ChangeEvent<HTMLSelectElement>);
-											}}
-											placeholder="Выберите категорию"
-											label="Категория"
-											required
-											id={editCategoryId}
-											entityType="category"
-											options={categories}
-											onEntityCreated={handleEntityCreated}
-										/>
-									</div>
-
-									{/* Column 2: Brand */}
-									<div>
-										<SelectWithCreate
-											value={editFormData.brandSlug}
-											onValueChange={(value) => {
-												handleEditChange({
-													target: { name: "brandSlug", value },
-												} as React.ChangeEvent<HTMLSelectElement>);
-											}}
-											placeholder="Выберите бренд (опционально)"
-											label="Бренд (опционально)"
-											id={editBrandId}
-											entityType="brand"
-											options={brands}
-											onEntityCreated={handleEntityCreated}
-										/>
-									</div>
-
-									{/* Column 1: Collection */}
-									<div>
-										<SelectWithCreate
-											value={editFormData.collectionSlug || null}
-											onValueChange={(value) => {
-												handleEditChange({
-													target: { name: "collectionSlug", value },
-												} as React.ChangeEvent<HTMLSelectElement>);
-											}}
-											placeholder="Выберите коллекцию (опционально)"
-											label="Коллекция (опционально)"
-											id={editCollectionId}
-											entityType="collection"
-											options={collections}
-											brands={brands}
-											onEntityCreated={handleEntityCreated}
-										/>
-									</div>
-
-									{/* Column 2: Empty for grid alignment */}
-									<div />
-
-									{/* Empty cells for grid alignment */}
-									<div />
-									<div />
+							{/* Category, Brand, and Collection in one row */}
+							<div className="col-span-2 flex flex-wrap gap-4">
+								{/* Category */}
+								<div className="flex-1 min-w-[150px]">
+									<SelectWithCreate
+										value={editFormData.categorySlug}
+										onValueChange={(value) => {
+											handleEditChange({
+												target: { name: "categorySlug", value: value || "" },
+											} as React.ChangeEvent<HTMLSelectElement>);
+										}}
+										placeholder="Выберите категорию"
+										label="Категория"
+										required
+										id={editCategoryId}
+										entityType="category"
+										options={categories}
+										onEntityCreated={handleEntityCreated}
+									/>
 								</div>
 
-								{/* Description Field */}
-								<EnhancedDescriptionField
-									name="description"
-									value={editFormData.description || ""}
-									onChange={handleEditChange}
-									placeholder="Добавьте описание товара..."
-									className="min-h-[4rem]"
-									showPreview={true}
-									showHelp={true}
-									autoClean={false}
-								/>
+								{/* Brand */}
+								<div className="flex-1 min-w-[150px]">
+									<SelectWithCreate
+										value={editFormData.brandSlug}
+										onValueChange={(value) => {
+											handleEditChange({
+												target: { name: "brandSlug", value },
+											} as React.ChangeEvent<HTMLSelectElement>);
+										}}
+										placeholder="Выберите бренд"
+										label="Бренд"
+										id={editBrandId}
+										entityType="brand"
+										options={brands}
+										onEntityCreated={handleEntityCreated}
+									/>
+								</div>
 
-								{/* Important Note Field */}
-								<EnhancedDescriptionField
-									name="importantNote"
-									value={editFormData.importantNote || ""}
-									onChange={handleEditChange}
-									placeholder="Добавьте важную заметку с поддержкой Markdown..."
-									className="min-h-[4rem]"
-									label="Важная заметка"
-									showPreview={true}
-									showHelp={true}
-								/>
+								{/* Collection */}
+								<div className="flex-1 min-w-[150px]">
+									<SelectWithCreate
+										value={editFormData.collectionSlug || null}
+										onValueChange={(value) => {
+											handleEditChange({
+												target: { name: "collectionSlug", value },
+											} as React.ChangeEvent<HTMLSelectElement>);
+										}}
+										placeholder="Выберите коллекцию"
+										label="Коллекция"
+										id={editCollectionId}
+										entityType="collection"
+										options={collections}
+										brands={brands}
+										onEntityCreated={handleEntityCreated}
+									/>
+								</div>
 							</div>
-						</DrawerSection>
-					</div>
+							</div>
+						</div> {/* Close grid-cols-1 gap-4 */}
+					</DrawerSection>
 
-					{/* Product Attributes Block */}
+					{/* Important Note Field - Separated into its own section */}
+					<DrawerSection variant="default" title="Важная заметка">
+						<EnhancedDescriptionField
+							name="importantNote"
+							value={editFormData.importantNote || ""}
+							onChange={handleEditChange}
+							placeholder="Добавьте важную заметку с поддержкой Markdown..."
+							className="min-h-[4rem]"
+							label="" // Remove label to use only the DrawerSection title
+							showPreview={true}
+							showHelp={true}
+						/>
+					</DrawerSection>
+				</div>
+
+				{/* Product Attributes Block */}
 					<DrawerSection variant="default" className="lg:col-span-2">
 						<ProductAttributesForm
 							attributes={editFormData.attributes || []}
@@ -1374,21 +1471,36 @@ function RouteComponent() {
 							/>
 						</DrawerSection>
 
-						{/* Store Locations Block */}
-						<DrawerSection variant="default" title="Местоположения магазинов">
-							<StoreLocationsSelector
-								storeLocations={storeLocations}
-								selectedLocationIds={selectedStoreLocationIds}
-								onLocationChange={handleStoreLocationChange}
-								idPrefix="create"
-							/>
-						</DrawerSection>
-					</div>
+					{/* Store Locations Block */}
+					<DrawerSection variant="default" title="Местоположения магазинов">
+						<StoreLocationsSelector
+							storeLocations={storeLocations}
+							selectedLocationIds={selectedStoreLocationIds}
+							onLocationChange={handleStoreLocationChange}
+							idPrefix="create"
+						/>
+					</DrawerSection>
 
-					{/* Right Column - Basic Information */}
-					<div className="space-y-4 flex flex-col">
-						{/* Basic Info */}
-						<DrawerSection variant="default" title="Базовая информация">
+					{/* Description Field - Moved to left column */}
+					<DrawerSection variant="default" title="Описание">
+						<EnhancedDescriptionField
+							name="description"
+							value={formData.description || ""}
+							onChange={handleChange}
+							placeholder="Добавьте описание товара..."
+							className="min-h-[4rem]"
+							showPreview={true}
+							showHelp={true}
+							autoClean={false}
+							label="" // Remove label to use only the DrawerSection title
+						/>
+					</DrawerSection>
+				</div>
+
+				{/* Right Column - Basic Information */}
+				<div className="space-y-4 flex flex-col">
+					{/* Basic Info */}
+					<DrawerSection variant="default" title="Базовая информация">
 							<div className="grid grid-cols-1 gap-4">
 								<Input
 									label="Название товара"
@@ -1425,43 +1537,53 @@ function RouteComponent() {
 									placeholder="Опционально - уникальный артикул товара"
 								/>
 
-								{/* Settings Fields */}
-								<ProductSettingsFields
-									isActive={formData.isActive}
-									isFeatured={formData.isFeatured}
-									discount={formData.discount}
-									hasVariations={formData.hasVariations}
-									onIsActiveChange={handleChange}
-									onIsFeaturedChange={handleChange}
-									onDiscountChange={handleChange}
-									onHasVariationsChange={handleChange}
-									idPrefix="add"
-								/>
+							{/* Settings Fields */}
+							<ProductSettingsFields
+								isActive={formData.isActive}
+								isFeatured={formData.isFeatured}
+								hasVariations={formData.hasVariations}
+								onIsActiveChange={handleChange}
+								onIsFeaturedChange={handleChange}
+								onHasVariationsChange={handleChange}
+								idPrefix="add"
+							/>
 
-								{/* Two column layout for basic information fields */}
-								<div className="grid grid-cols-2 gap-4">
-									{/* Column 1: Price, Category, Weight */}
-									<div>
-										<Input
-											id={addPriceId}
-											type="number"
-											name="price"
-											label="Цена р"
-											value={formData.price}
-											onChange={handleChange}
-											required
-											step="0.01"
-											min="0"
-											className={cn(
-												hasAttemptedSubmit && !formData.price
-													? "border-red-500"
-													: "",
-											)}
-										/>
-									</div>
+							{/* Two column layout for basic information fields */}
+							<div className="grid grid-cols-2 gap-4">
+								{/* Column 1: Price */}
+								<div>
+									<Input
+										id={addPriceId}
+										type="number"
+										name="price"
+										label="Цена р"
+										value={formData.price}
+										onChange={handleChange}
+										required
+										step="0.01"
+										min="0"
+										className={cn(
+											hasAttemptedSubmit && !formData.price
+												? "border-red-500"
+												: "",
+										)}
+									/>
+								</div>
 
-									{/* Column 2: Empty for grid alignment */}
-									<div />
+								{/* Column 2: Discount */}
+								<div>
+									<Input
+										id={addDiscountId}
+										type="number"
+										name="discount"
+										label="Скидка %"
+										value={formData.discount || ""}
+										onChange={handleChange}
+										min="0"
+										max="100"
+										placeholder="Опционально"
+									/>
+								</div>
 
 									{/* Square Meters Per Pack (for flooring products) */}
 									<Input
@@ -1504,104 +1626,90 @@ function RouteComponent() {
 										</Select>
 									</div>
 
-									{/* Column 1: Category */}
-									<div>
-										<SelectWithCreate
-											value={formData.categorySlug}
-											onValueChange={(value) => {
-												setFormData({
-													...formData,
-													categorySlug: value || "",
-												});
-											}}
-											placeholder="Выберите категорию"
-											label="Категория"
-											required
-											id={addCategoryId}
-											entityType="category"
-											options={categories}
-											onEntityCreated={handleEntityCreated}
-										/>
-									</div>
-
-									{/* Column 2: Brand */}
-									<div>
-										<SelectWithCreate
-											value={formData.brandSlug}
-											onValueChange={(value) => {
-												setFormData({
-													...formData,
-													brandSlug: value,
-												});
-											}}
-											placeholder="Выберите бренд (опционально)"
-											label="Бренд (опционально)"
-											id={addBrandId}
-											entityType="brand"
-											options={brands}
-											onEntityCreated={handleEntityCreated}
-										/>
-									</div>
-
-									{/* Column 1: Collection */}
-									<div>
-										<SelectWithCreate
-											value={formData.collectionSlug || null}
-											onValueChange={(value) => {
-												setFormData({
-													...formData,
-													collectionSlug: value,
-												});
-											}}
-											placeholder="Выберите коллекцию (опционально)"
-											label="Коллекция (опционально)"
-											id={addCollectionId}
-											entityType="collection"
-											options={collections}
-											brands={brands}
-											onEntityCreated={handleEntityCreated}
-										/>
-									</div>
-
-									{/* Column 2: Empty for grid alignment */}
-									<div />
-
-									{/* Empty cells for grid alignment */}
-									<div />
-									<div />
+							{/* Category, Brand, and Collection in one row */}
+							<div className="col-span-2 flex flex-wrap gap-4">
+								{/* Category */}
+								<div className="flex-1 min-w-[150px]">
+									<SelectWithCreate
+										value={formData.categorySlug}
+										onValueChange={(value) => {
+											setFormData({
+												...formData,
+												categorySlug: value || "",
+											});
+										}}
+										placeholder="Выберите категорию"
+										label="Категория"
+										required
+										id={addCategoryId}
+										entityType="category"
+										options={categories}
+										onEntityCreated={handleEntityCreated}
+									/>
 								</div>
 
-								{/* Description Field */}
-								<EnhancedDescriptionField
-									name="description"
-									value={formData.description || ""}
-									onChange={handleChange}
-									placeholder="Добавьте описание товара..."
-									className="min-h-[4rem]"
-									showPreview={true}
-									showHelp={true}
-									autoClean={false}
-								/>
+								{/* Brand */}
+								<div className="flex-1 min-w-[150px]">
+									<SelectWithCreate
+										value={formData.brandSlug}
+										onValueChange={(value) => {
+											setFormData({
+												...formData,
+												brandSlug: value,
+											});
+										}}
+										placeholder="Выберите бренд"
+										label="Бренд"
+										id={addBrandId}
+										entityType="brand"
+										options={brands}
+										onEntityCreated={handleEntityCreated}
+									/>
+								</div>
 
-								{/* Important Note Field */}
-								<EnhancedDescriptionField
-									name="importantNote"
-									value={formData.importantNote || ""}
-									onChange={handleChange}
-									placeholder="Добавьте важную заметку с поддержкой Markdown..."
-									className="min-h-[4rem]"
-									label="Важная заметка"
-									showPreview={true}
-									showHelp={true}
-								/>
+								{/* Collection */}
+								<div className="flex-1 min-w-[150px]">
+									<SelectWithCreate
+										value={formData.collectionSlug || null}
+										onValueChange={(value) => {
+											setFormData({
+												...formData,
+												collectionSlug: value,
+											});
+										}}
+										placeholder="Выберите коллекцию"
+										label="Коллекция"
+										id={addCollectionId}
+										entityType="collection"
+										options={collections}
+										brands={brands}
+										onEntityCreated={handleEntityCreated}
+									/>
+								</div>
 							</div>
-						</DrawerSection>
-					</div>
+							</div>
+						</div> {/* Close grid-cols-1 gap-4 */}
+					</DrawerSection>
 
-					{/* Product Attributes Block */}
-					<DrawerSection variant="default" className="lg:col-span-2">
-						<ProductAttributesForm
-							attributes={formData.attributes || []}
+					{/* Important Note Field - Separated into its own section */}
+					<DrawerSection variant="default" title="Важная заметка">
+						<EnhancedDescriptionField
+							name="importantNote"
+							value={formData.importantNote || ""}
+							onChange={handleChange}
+							placeholder="Добавьте важную заметку с поддержкой Markdown..."
+							className="min-h-[4rem]"
+							label="" // Remove label to use only the DrawerSection title
+							showPreview={true}
+							showHelp={true}
+						/>
+					</DrawerSection>
+				</div>
+
+			{/* Product Attributes Block */}
+				<DrawerSection variant="default" className="lg:col-span-2">
+					<ProductAttributesForm
+						attributes={formData.attributes || []}
 							onChange={(attributes) =>
 								setFormData({ ...formData, attributes })
 							}

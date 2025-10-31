@@ -178,7 +178,7 @@ function SortableVariationItem({
 					<div className="grid grid-cols-2 gap-2">
 						{selectedAttributes.map((attributeId) => {
 							const attribute = productAttributes.find(
-								(attr) => attr.id === attributeId,
+								(attr) => attr.id.toString() === attributeId,
 							);
 							if (!attribute) return null;
 

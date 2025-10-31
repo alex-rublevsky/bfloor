@@ -1,231 +1,345 @@
-import { motion, useMotionValueEvent, useScroll } from "motion/react";
-import { memo, useCallback, useId, useRef, useState } from "react";
-import { AnimatedGroup } from "~/components/motion_primitives/AnimatedGroup";
+import { memo, useCallback, useId, useState } from "react";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "~/components/ui/shared/Select";
 import { Slider } from "~/components/ui/shared/Slider";
 import { useDeviceType } from "~/hooks/use-mobile";
-import { useCart } from "~/lib/cartContext";
 import type { CategoryWithCount } from "~/types";
 import { FilterGroup } from "../shared/FilterGroup";
-import styles from "./ProductFilters.module.css";
+// styles removed for current implementation
+import { Drawer, DrawerBody, DrawerContent } from "~/components/ui/shared/Drawer";
+import { Button } from "~/components/ui/shared/Button";
 
 interface ProductFiltersProps {
-	categories: CategoryWithCount[];
-	selectedCategory: string | null;
-	onCategoryChange: (category: string | null) => void;
-	priceRange: {
-		min: number;
-		max: number;
-	};
-	currentPriceRange: [number, number];
-	onPriceRangeChange?: (range: [number, number]) => void;
-	sortBy?: string;
-	onSortChange?: (sort: string) => void;
+    categories: CategoryWithCount[];
+    selectedCategory: string | null;
+    onCategoryChange: (category: string | null) => void;
+    brands?: { slug: string; name: string }[];
+    selectedBrand?: string | null;
+    onBrandChange?: (brand: string | null) => void;
+    collections?: { slug: string; name: string }[];
+    selectedCollection?: string | null;
+    onCollectionChange?: (collection: string | null) => void;
+    priceRange: {
+        min: number;
+        max: number;
+    };
+    currentPriceRange: [number, number];
+    onPriceRangeChange?: (range: [number, number]) => void;
+    sortBy?: string;
+    onSortChange?: (sort: string) => void;
 }
 
 const ProductFilters = memo(function ProductFilters({
-	categories,
-	selectedCategory,
-	onCategoryChange,
-	priceRange,
-	currentPriceRange,
-	onPriceRangeChange,
-	sortBy = "relevant",
-	onSortChange,
+    categories,
+    selectedCategory,
+    onCategoryChange,
+    brands = [],
+    selectedBrand = null,
+    onBrandChange,
+    collections = [],
+    selectedCollection = null,
+    onCollectionChange,
+    priceRange,
+    currentPriceRange,
+    onPriceRangeChange,
+    sortBy = "relevant",
+    onSortChange,
 }: ProductFiltersProps) {
-	const { isMobileOrTablet } = useDeviceType();
-	const { cartOpen } = useCart();
-	const maskId = useId();
-	const mobileSortId = useId();
-	const desktopSortId = useId();
+    useDeviceType();
+    // no masked backdrop needed in current layout
+    const desktopSortId = useId();
 
-	const handlePriceRangeChange = useCallback(
-		(newValue: number[]) => {
-			const range: [number, number] = [newValue[0], newValue[1]];
-			onPriceRangeChange?.(range);
-		},
-		[onPriceRangeChange],
-	);
+    const handlePriceRangeChange = useCallback(
+        (newValue: number[]) => {
+            const range: [number, number] = [newValue[0], newValue[1]];
+            onPriceRangeChange?.(range);
+        },
+        [onPriceRangeChange],
+    );
 
-	const handleMainCategoryChange = useCallback(
-		(category: string | null) => {
-			onCategoryChange(category);
-		},
-		[onCategoryChange],
-	);
+    const handleMainCategoryChange = useCallback(
+        (category: string | null) => {
+            onCategoryChange(category);
+        },
+        [onCategoryChange],
+    );
 
-	const [isHidden, setIsHidden] = useState(false);
-	const { scrollY } = useScroll();
-	const lastYRef = useRef(0);
+    const handleBrandChange = useCallback(
+        (brand: string | null) => {
+            onBrandChange?.(brand);
+        },
+        [onBrandChange],
+    );
 
-	useMotionValueEvent(scrollY, "change", (y) => {
-		const difference = y - lastYRef.current;
-		// Don't hide filters when cart is open or when scrolling is minimal
-		if (Math.abs(difference) > 50 && !cartOpen) {
-			setIsHidden(difference > 0);
-			lastYRef.current = y;
-		}
-	});
+    const handleCollectionChange = useCallback(
+        (collection: string | null) => {
+            onCollectionChange?.(collection);
+        },
+        [onCollectionChange],
+    );
 
-	return (
-		<motion.div
-			animate={isHidden ? "hidden" : "visible"}
-			whileHover="visible"
-			onClick={() => setIsHidden(false)}
-			onFocusCapture={() => setIsHidden(false)}
-			transition={{
-				duration: 0.5,
-				ease: [0.215, 0.61, 0.355, 1],
-			}}
-			variants={{
-				hidden: isMobileOrTablet ? { y: "-91%" } : { y: "-86%" },
-				visible: { y: "0%" },
-			}}
-			className={`sticky overflow-hidden top-3 mt-0 pt-2 z-10 w-full ${isMobileOrTablet ? "px-2" : ""}`}
-		>
-			<div
-				className={`relative ${isMobileOrTablet ? "w-full max-w-screen-sm mx-auto" : "w-max mx-auto"}`}
-				style={{ "--mask-image": `url(#${maskId})` } as React.CSSProperties}
-			>
-				<div className={`${styles.backdrop} bg-background/50 rounded-3xl`} />
+    const splitIntoRows = <T,>(items: T[], rows: number) => {
+        const buckets: T[][] = Array.from({ length: rows }, () => []);
+        items.forEach((item, idx) => {
+            buckets[idx % rows].push(item);
+        });
+        return buckets;
+    };
 
-				<svg
-					className="absolute inset-0"
-					width="100%"
-					height="100%"
-					preserveAspectRatio="none"
-					aria-hidden="true"
-				>
-					<mask id={maskId}>
-						<rect width="100%" height="100%" fill="white" rx="24" ry="24" />
-					</mask>
-				</svg>
-				<div
-					className={`relative flex flex-col gap-3 ${isMobileOrTablet ? "px-4 sm:px-6" : "px-6"} py-3`}
-				>
-					{isMobileOrTablet ? (
-						/* Mobile Layout */
-						<AnimatedGroup delay={0.1} staggerChildren={0.1}>
-							{/* First Row: Categories and Sort By */}
-							<div className="flex gap-4 items-start">
-								{/* Categories section - takes most space with proper wrapping */}
-								<div className="flex-1 min-w-0 overflow-hidden">
-									<FilterGroup
-										title="Категории"
-										options={categories}
-										selectedOptions={selectedCategory}
-										onOptionChange={handleMainCategoryChange}
-										className="flex-wrap"
-									/>
-								</div>
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const hasAnyActiveFilters =
+        (selectedCategory && selectedCategory.length > 0) ||
+        (selectedBrand && selectedBrand.length > 0) ||
+        (selectedCollection && selectedCollection.length > 0) ||
+        currentPriceRange[0] !== priceRange.min ||
+        currentPriceRange[1] !== priceRange.max;
 
-								{/* Sort By Filter - Right side, compact */}
-								<div className="flex flex-col gap-2 flex-shrink-0">
-									<label
-										htmlFor={mobileSortId}
-										className="text-sm font-medium text-foreground"
-									>
-										Sort By
-									</label>
-									<Select value={sortBy} onValueChange={onSortChange}>
-										<SelectTrigger id={mobileSortId} className="w-[15ch]">
-											<SelectValue placeholder="Sort by..." />
-										</SelectTrigger>
-										<SelectContent className="bg-background">
-											<SelectItem value="relevant">Relevant</SelectItem>
-											<SelectItem value="price-asc">Low to Hig $</SelectItem>
-											<SelectItem value="price-desc">High to Low $</SelectItem>
-											<SelectItem value="newest">Newest First</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
-							</div>
+    const resetAll = () => {
+        onCategoryChange(null);
+        onBrandChange?.(null);
+        onCollectionChange?.(null);
+        onPriceRangeChange?.([priceRange.min, priceRange.max]);
+    };
 
-							{/* Price Range Filter - Full width */}
-							<Slider
-								className="pt-3 pb-5 lg:pt-0"
-								value={currentPriceRange}
-								min={priceRange.min}
-								max={priceRange.max}
-								step={1}
-								onValueChange={handlePriceRangeChange}
-								showTooltip
-								tooltipContent={(value) => `$${value}`}
-								label="Цена"
-								valueDisplay={
-									<output className="text-sm font-medium tabular-nums">
-										${currentPriceRange[0]} - ${currentPriceRange[1]}
-									</output>
-								}
-							/>
-						</AnimatedGroup>
-					) : (
-						/* Desktop Layout*/
-						<div className="flex flex-col gap-3">
-							<AnimatedGroup
-								delay={0.1}
-								staggerChildren={0.1}
-								className="flex gap-10"
-							>
-								{/* Main Categories */}
-								<FilterGroup
-									title="Категории"
-									options={categories}
-									selectedOptions={selectedCategory}
-									onOptionChange={handleMainCategoryChange}
-								/>
+    // Left-side drawer panel (column layout), no scroll-based behavior
+    return (
+        <>
+        <div className="hidden md:block fixed left-0 right-0 bottom-0 z-[35] group pointer-events-none">
+            {/* Handle - bottom center, disappears on hover */}
+            <button
+                type="button"
+                aria-label="Фильтры"
+                className="pointer-events-auto absolute left-1/2 -translate-x-1/2 bottom-0 mb-2 inline-flex items-center gap-2 rounded-full border border-border bg-primary text-primary-foreground px-3 py-2 text-xs shadow-md transition-opacity duration-200 group-hover:opacity-0 group-hover:pointer-events-none"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4" aria-hidden="true" role="img">
+                    <path fillRule="evenodd" d="M3 5.25A.75.75 0 0 1 3.75 4.5h16.5a.75.75 0 0 1 .53 1.28l-6.03 6.03v4.94a.75.75 0 0 1-1.06.67l-3-1.5a.75.75 0 0 1-.41-.67v-3.44L3.22 5.78A.75.75 0 0 1 3 5.25Z" clipRule="evenodd" />
+                </svg>
+                Фильтры
+            </button>
 
-								{/* Price Range Filter */}
-								<Slider
-									value={currentPriceRange}
-									min={priceRange.min}
-									max={priceRange.max}
-									step={1}
-									onValueChange={handlePriceRangeChange}
-									showTooltip
-									tooltipContent={(value) => `$${value}`}
-									label="Диапазон цен"
-									valueDisplay={
-										<output className="text-sm font-medium tabular-nums">
-											${currentPriceRange[0]} - ${currentPriceRange[1]}
-										</output>
-									}
-								/>
+            {/* Panel - bottom sheet style on desktop hover */}
+            <div className="pointer-events-auto transform-gpu translate-y-[75%] group-hover:translate-y-0 transition-transform duration-300 ease-[cubic-bezier(0.215,0.61,0.355,1)]">
+                <div className="border-t border-border bg-background/95 backdrop-blur-sm shadow-2xl">
+                    <div className="mx-auto w-full max-w-[1600px] px-4 py-4">
+                        {hasAnyActiveFilters && (
+                            <div className="mb-3">
+                                <Button type="button" variant="accent" size="sm" onClick={resetAll}>
+                                    Сбросить все фильтры
+                                </Button>
+                            </div>
+                        )}
+                        <div className="grid grid-cols-2 gap-6">
+                            {/* Categories - horizontal 3-row scroller */}
+                            <div>
+                                <div className="text-sm font-medium mb-2">Категории</div>
+                                <div className="overflow-x-auto overflow-y-hidden pr-1">
+                                    <div className="h-24 space-y-1 w-max">
+                                        {splitIntoRows(categories, 3).map((row, i) => (
+                                            <div key={`d-cat-row-${i}-${row.length}`}>
+                                                <FilterGroup title={undefined} options={row} selectedOptions={selectedCategory} onOptionChange={handleMainCategoryChange} noWrap showAllOption={false} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
 
-								{/* Sort By Filter */}
-								<div className="flex flex-col gap-2 self-start">
-									<label
-										htmlFor={desktopSortId}
-										className="text-sm font-medium text-foreground"
-									>
-										Sort By
-									</label>
-									<Select value={sortBy} onValueChange={onSortChange}>
-										<SelectTrigger id={desktopSortId} className="w-[15ch]">
-											<SelectValue placeholder="Sort by..." />
-										</SelectTrigger>
-										<SelectContent className="bg-background">
-											<SelectItem value="relevant">Relevant</SelectItem>
-											<SelectItem value="price-asc">Low to High $</SelectItem>
-											<SelectItem value="price-desc">High to Low $</SelectItem>
-											<SelectItem value="newest">Newest First</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
-							</AnimatedGroup>
-						</div>
-					)}
-					<div className="mx-auto h-1.5 w-[5rem] rounded-full bg-secondary shrink-0" />
-				</div>
-			</div>
-		</motion.div>
-	);
+                            {/* Brands - horizontal 3-row scroller */}
+                            <div>
+                                <div className="text-sm font-medium mb-2">Бренды</div>
+                                <div className="overflow-x-auto overflow-y-hidden pr-1">
+                                    <div className="h-24 space-y-1 w-max">
+                                        {splitIntoRows(brands, 3).map((row, i) => (
+                                            <div key={`d-brand-row-${i}-${row.length}`}>
+                                                <FilterGroup title={undefined} options={row} selectedOptions={selectedBrand} onOptionChange={handleBrandChange} noWrap showAllOption={false} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Collections - horizontal 3-row scroller */}
+                            <div>
+                                <div className="text-sm font-medium mb-2">Коллекции</div>
+                                <div className="overflow-x-auto overflow-y-hidden pr-1">
+                                    <div className="h-24 space-y-1 w-max">
+                                        {splitIntoRows(collections, 3).map((row, i) => (
+                                            <div key={`d-col-row-${i}-${row.length}`}>
+                                                <FilterGroup title={undefined} options={row} selectedOptions={selectedCollection} onOptionChange={handleCollectionChange} noWrap showAllOption={false} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Sort and Price stacked */}
+                            <div className="flex flex-col gap-4 min-w-0">
+                                <div>
+                                    <div className="text-sm font-medium mb-2">Сортировка</div>
+                                    <Select value={sortBy} onValueChange={onSortChange}>
+                                        <SelectTrigger id={desktopSortId} className="text-xs font-normal">
+                                            <SelectValue placeholder="Выберите сортировку" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-background text-xs font-normal">
+                                            <SelectItem className="text-xs font-normal" value="relevant">По релевантности</SelectItem>
+                                            <SelectItem className="text-xs font-normal" value="price-asc">Сначала дешёвые</SelectItem>
+                                            <SelectItem className="text-xs font-normal" value="price-desc">Сначала дорогие</SelectItem>
+                                            <SelectItem className="text-xs font-normal" value="newest">Сначала новые</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Slider
+                                        value={currentPriceRange}
+                                        min={priceRange.min}
+                                        max={priceRange.max}
+                                        step={1}
+                                        onValueChange={handlePriceRangeChange}
+                                        showTooltip
+                                        tooltipContent={(value) => `${value} р`}
+                                        label="Диапазон цен"
+                                        valueDisplay={<output className="text-sm font-medium tabular-nums">{`${currentPriceRange[0]} р - ${currentPriceRange[1]} р`}</output>}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* Mobile bottom sheet */}
+        <div className="md:hidden">
+            <button
+                type="button"
+                onClick={() => setMobileOpen(true)}
+                className="fixed left-4 bottom-20 z-[45] inline-flex items-center gap-2 rounded-full border border-border bg-primary text-primary-foreground px-3 py-2 text-xs shadow-md"
+                aria-label="Открыть фильтры"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4" aria-hidden="true" role="img">
+                    <path fillRule="evenodd" d="M3 5.25A.75.75 0 0 1 3.75 4.5h16.5a.75.75 0 0 1 .53 1.28l-6.03 6.03v4.94a.75.75 0 0 1-1.06.67l-3-1.5a.75.75 0 0 1-.41-.67v-3.44L3.22 5.78A.75.75 0 0 1 3 5.25Z" clipRule="evenodd" />
+                </svg>
+                Фильтры
+            </button>
+
+            <Drawer open={mobileOpen} onOpenChange={setMobileOpen}>
+                <DrawerContent className="max-h-[95dvh]">
+                    <DrawerBody className="p-4">
+                        {/* Same content but full-width on mobile */}
+                        <div className="space-y-4">
+                            {/* Global reset (mobile) */}
+                            {hasAnyActiveFilters && (
+                                <div>
+                                    <Button type="button" variant="accent" size="sm" onClick={resetAll}>
+                                        Сбросить все фильтры
+                                    </Button>
+                                </div>
+                            )}
+                            {/* Categories */}
+                            <div className="space-y-2">
+                                <div className="text-sm font-medium">Категории</div>
+                                <div className="overflow-x-auto overflow-y-hidden pr-1">
+                                    <div className="h-24 space-y-1 w-max">
+                                        {splitIntoRows(categories, 3).map((row, i) => (
+                                            <div key={`cat-row-${i}-${row.length}`} className="">
+                                                <FilterGroup
+                                                    title={undefined}
+                                                    options={row}
+                                                    selectedOptions={selectedCategory}
+                                                    onOptionChange={handleMainCategoryChange}
+                                                    noWrap
+                                                    showAllOption={false}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Brands */}
+                            {brands.length > 0 && (
+                                <div className="space-y-2">
+                                    <div className="text-sm font-medium">Бренды</div>
+                                    <div className="overflow-x-auto overflow-y-hidden pr-1">
+                                        <div className="h-24 space-y-1 w-max">
+                                            {splitIntoRows(brands, 3).map((row, i) => (
+                                                <div key={`brand-row-${i}-${row.length}`}>
+                                                    <FilterGroup
+                                                        title={undefined}
+                                                        options={row}
+                                                        selectedOptions={selectedBrand}
+                                                        onOptionChange={handleBrandChange}
+                                                        noWrap
+                                                        showAllOption={false}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Collections */}
+                            {collections.length > 0 && (
+                                <div className="space-y-2">
+                                    <div className="text-sm font-medium">Коллекции</div>
+                                    <div className="overflow-x-auto overflow-y-hidden pr-1">
+                                        <div className="h-24 space-y-1 w-max">
+                                            {splitIntoRows(collections, 3).map((row, i) => (
+                                                <div key={`col-row-${i}-${row.length}`}>
+                                                    <FilterGroup
+                                                        title={undefined}
+                                                        options={row}
+                                                        selectedOptions={selectedCollection}
+                                                        onOptionChange={handleCollectionChange}
+                                                        noWrap
+                                                        showAllOption={false}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Price and Sort */}
+                            <Slider
+                                value={currentPriceRange}
+                                min={priceRange.min}
+                                max={priceRange.max}
+                                step={1}
+                                onValueChange={handlePriceRangeChange}
+                                showTooltip
+                                tooltipContent={(value) => `${value} р`}
+                                label="Диапазон цен"
+                                valueDisplay={<output className="text-sm font-medium tabular-nums">{`${currentPriceRange[0]} р - ${currentPriceRange[1]} р`}</output>}
+                            />
+
+                            <div className="flex flex-col gap-2">
+                                <label htmlFor={desktopSortId} className="text-sm font-medium text-foreground">Сортировка</label>
+                                <Select value={sortBy} onValueChange={onSortChange}>
+                                    <SelectTrigger id={desktopSortId} className="text-xs font-normal">
+                                        <SelectValue placeholder="Выберите сортировку" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-background text-xs font-normal">
+                                        <SelectItem className="text-xs font-normal" value="relevant">По релевантности</SelectItem>
+                                        <SelectItem className="text-xs font-normal" value="price-asc">Сначала дешёвые</SelectItem>
+                                        <SelectItem className="text-xs font-normal" value="price-desc">Сначала дорогие</SelectItem>
+                                        <SelectItem className="text-xs font-normal" value="newest">Сначала новые</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    </DrawerBody>
+                </DrawerContent>
+            </Drawer>
+        </div>
+        </>
+    );
 });
 
 export default ProductFilters;

@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { cn } from "~/lib/utils";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { Button } from "~/components/ui/shared/Button";
 import { Input } from "~/components/ui/shared/input";
@@ -222,8 +223,8 @@ export function SelectWithCreate({
 					}
 				}}
 				required={required}
-			>
-				<SelectTrigger id={id} className={className}>
+            >
+                <SelectTrigger id={id} className={cn("w-full", className)}>
 					<SelectValue placeholder={placeholder} />
 				</SelectTrigger>
 				<SelectContent>

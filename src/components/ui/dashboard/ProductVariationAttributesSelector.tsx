@@ -42,9 +42,10 @@ export default function ProductVariationAttributesSelector({
 				</p>
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
 				{availableAttributes.map((attribute) => {
-					const isSelected = selectedAttributes.includes(attribute.id);
+					const attributeIdStr = attribute.id.toString();
+					const isSelected = selectedAttributes.includes(attributeIdStr);
 
 					return (
 						<div
@@ -54,7 +55,7 @@ export default function ProductVariationAttributesSelector({
 							<Switch
 								id={`attr-${attribute.id}`}
 								checked={isSelected}
-								onChange={() => handleAttributeToggle(attribute.id)}
+								onChange={() => handleAttributeToggle(attributeIdStr)}
 							/>
 							<label
 								htmlFor={`attr-${attribute.id}`}

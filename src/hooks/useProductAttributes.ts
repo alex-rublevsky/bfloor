@@ -66,7 +66,7 @@ export function getAttributeDisplayName(
 	attributeId: string,
 	attributes: ProductAttribute[],
 ): string {
-	const attribute = attributes.find((attr) => attr.name === attributeId);
+	const attribute = attributes.find((attr) => attr.id.toString() === attributeId);
 	return attribute ? attribute.name : attributeId;
 }
 

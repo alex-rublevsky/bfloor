@@ -128,9 +128,37 @@ export const dashboardOrdersQueryOptions = () =>
  * - Perfect for virtualizer implementation
  * - Background refetching for fresh data
  */
-export const productsInfiniteQueryOptions = () => infiniteQueryOptions({
-	queryKey: ["bfloorDashboardProductsInfinite"],
-	queryFn: ({ pageParam = 1 }) => getAllProducts({ data: { page: pageParam as number, limit: 50 } }),
+export const productsInfiniteQueryOptions = (
+    search?: string,
+    filters?: {
+        categorySlug?: string | null;
+        brandSlug?: string | null;
+        collectionSlug?: string | null;
+        sort?: "relevant" | "name" | "price-asc" | "price-desc" | "newest" | "oldest";
+    }
+) => infiniteQueryOptions({
+    queryKey: [
+        "bfloorDashboardProductsInfinite",
+        {
+            search: search ?? "",
+            categorySlug: filters?.categorySlug ?? null,
+            brandSlug: filters?.brandSlug ?? null,
+            collectionSlug: filters?.collectionSlug ?? null,
+            sort: filters?.sort ?? "relevant",
+        },
+    ],
+    queryFn: ({ pageParam = 1 }) =>
+        getAllProducts({
+            data: {
+                page: pageParam as number,
+                limit: 50,
+                search,
+                categorySlug: filters?.categorySlug ?? undefined,
+                brandSlug: filters?.brandSlug ?? undefined,
+                collectionSlug: filters?.collectionSlug ?? undefined,
+                sort: filters?.sort ?? undefined,
+            },
+        }),
 	staleTime: 0, // No cache - force fresh data for dashboard
 	initialPageParam: 1,
 	getNextPageParam: (lastPage: any) => {

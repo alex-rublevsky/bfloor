@@ -414,9 +414,16 @@ function ProductPage() {
 								</Breadcrumb>
 							</div>
 
-							{/* Product Title */}
-							<div>
-								<h1 className="">{productWithDetails?.name || "Product"}</h1>
+                            {/* Product Title */}
+                            <div>
+                                <h1
+                                    className=""
+                                    style={{
+                                        viewTransitionName: `product-name-${productWithDetails?.slug}`,
+                                    }}
+                                >
+                                    {productWithDetails?.name || "Product"}
+                                </h1>
 								<div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600">
 									{/* Brand Logo/Name */}
 									{productWithDetails?.brand && (
@@ -461,46 +468,45 @@ function ProductPage() {
 								</div>
 							</div>
 
-							{/* Store Locations */}
-							{productWithDetails?.storeLocations && productWithDetails.storeLocations.length > 0 && (
-								<div className="space-y-2">
-									<span className="text-gray-600 font-medium text-sm block">Доступно в магазинах:</span>
-									<div className="space-y-1">
-										{productWithDetails.storeLocations.map((location) => (
-											<div key={location.id} className="text-gray-800 text-sm">
-												<span className="font-semibold">{location.address}</span>
-											</div>
-										))}
-									</div>
-								</div>
-							)}
-
 							{/* Wrapper for Price, Quantity, and Add to Cart */}
-							<div className="border border-border rounded-lg p-4 space-y-4">
+							<div className="border border-border rounded-lg p-2 space-y-4">
 								{/* Price and Quantity */}
-								<div className="flex items-center gap-4">
-									{/* Price Box */}
-									<div className="bg-muted px-4 py-3 rounded-lg">
-										<div className="text-sm text-gray-500 mb-1">Цена за м²</div>
-										<div className="text-2xl font-bold text-gray-800">
-											{currentPrice.toLocaleString()} р
-										</div>
-									
-									</div>
+								<div className="flex items-stretch gap-0">
+                                {/* Price Box */}
+                                <div className="bg-muted px-4 py-3 rounded-lg">
+                                    <div className="text-sm text-gray-500 mb-1">Цена за м²</div>
+                                    <div
+                                        className="text-2xl font-bold text-gray-800"
+                                        style={{
+                                            viewTransitionName: `product-price-${productWithDetails?.slug}`,
+                                        }}
+                                    >
+                                        {currentPrice.toLocaleString()} р
+                                    </div>
+                                </div>
 
-									{/* Quantity Selector */}
-									<div className=" px-4 py-3">
-										<div className="flex gap-1 items-center">
-										<button
-											type="button"
-											onClick={decrementQuantity}
-											disabled={quantity <= 1}
-											className="aspect-square w-[60px] flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex-shrink-0"
-										>
-											<Icon name="minus" size={20} />
-										</button>
-										<div className="text-center bg-muted rounded-lg p-2 flex items-center justify-center flex-grow">
-											<div className="space-y-1">
+								{/* Icon divider */}
+								<div className="flex-shrink-0 mx-2 flex items-center">
+									<Icon 
+										name="plus" 
+										size={28} 
+										className="text-foreground-muted rotate-45"
+									/>
+								</div>
+
+								{/* Quantity Selector */}
+								<div className="flex-1 flex flex-col">
+									<div className="flex gap-1 items-stretch flex-1">
+									<button
+										type="button"
+										onClick={decrementQuantity}
+										disabled={quantity <= 1}
+										className="aspect-square flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex-shrink-0 h-full"
+									>
+										<Icon name="minus" size={20} />
+									</button>
+									<div className="text-center bg-muted rounded-lg p-2 flex items-center justify-center flex-grow h-full">
+										<div className="space-y-1">
 												{productWithDetails?.squareMetersPerPack && (
 													<div className="flex items-baseline gap-1 flex-wrap justify-center">
 														<div className="text-sm font-normal">Площадь</div>
@@ -517,13 +523,13 @@ function ProductPage() {
 												</div>
 											</div>
 										</div>
-										<button
-											type="button"
-											onClick={incrementQuantity}
-											className="aspect-square w-[60px] flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] cursor-pointer flex-shrink-0"
-										>
-											<Icon name="plus" size={20} />
-										</button>
+									<button
+										type="button"
+										onClick={incrementQuantity}
+										className="aspect-square flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] cursor-pointer flex-shrink-0 h-full"
+									>
+										<Icon name="plus" size={20} />
+									</button>
 										</div>
 									</div>
 								</div>
@@ -538,46 +544,66 @@ function ProductPage() {
 									/>
 								)}
 
-								{/* Price and Add to Cart */}
-								<div className="bg-muted rounded-lg p-4 flex flex-col md:flex-row gap-4 md:items-stretch">
-								{/* Price Display */}
-								<div className="flex flex-col gap-2 md:min-w-0">
-									{/* Discount Row */}
-									{currentDiscount && originalPrice && (
-										<div className="flex items-baseline justify-between gap-6">
-											<div className="text-left">Скидка</div>
-											<div className="flex items-baseline gap-3 text-right">
-												<span className="text-lg line-through ">
-													{originalPrice.toLocaleString()} р
-												</span>
-												<span className="px-2 py-1 bg-accent text-accent-foreground text-sm font-semibold rounded-[5px]">
-													{currentDiscount}%
-												</span>
-											</div>
-										</div>
-									)}
-									
-									{/* Total Row */}
+							{/* Price and Add to Cart */}
+							<div className="bg-muted rounded-lg p-2 flex flex-col md:flex-row gap-4 md:items-stretch">
+							{/* Price Display */}
+							<div className="flex flex-col gap-2">
+								{/* Discount Row */}
+								{currentDiscount && originalPrice && (
 									<div className="flex items-baseline justify-between gap-6">
-										<div className="text-left">Итого</div>
-										<span className="text-3xl font-bold text-right">
-											{totalPrice.toLocaleString()} р
-										</span>
+										<div className="text-left">Скидка</div>
+										<div className="flex items-baseline gap-3 text-right">
+											<span className="text-lg line-through ">
+												{originalPrice.toLocaleString()} р
+											</span>
+											<span className="px-2 py-1 bg-accent text-accent-foreground text-sm font-semibold rounded-[5px]">
+												{currentDiscount}%
+											</span>
+										</div>
 									</div>
-								</div>
+								)}
 								
-								{/* Add to Cart Button */}
-								<div className="flex-shrink-0 md:w-[200px]">
-									<Button
-										onClick={handleAddToCart}
-										disabled={!canAddToCart}
-										size="lg"
-										className="w-full h-full"
-									>
-										{!canAddToCart ? "Недоступно" : "В корзину"}
-									</Button>
+								{/* Total Row */}
+								<div className="flex items-baseline justify-between gap-6">
+									<div className="text-left">Итого</div>
+									<span className="text-3xl font-bold text-right">
+										{totalPrice.toLocaleString()} р
+									</span>
 								</div>
 							</div>
+							
+							{/* Add to Cart Button */}
+							<div className="flex-1 flex">
+								<Button
+									onClick={handleAddToCart}
+									disabled={!canAddToCart}
+									size="lg"
+									className="w-full h-full"
+								>
+									{!canAddToCart ? "Недоступно" : "В корзину"}
+								</Button>
+							</div>
+						</div>
+							
+							{/* Store Locations */}
+							{productWithDetails?.storeLocations && productWithDetails.storeLocations.length > 0 && (
+								<div className="text-sm">
+									<span className="text-foreground-muted">Доступно в магазинах: </span>
+									<span className="text-foreground">
+										{productWithDetails.storeLocations?.map((location, index) => (
+											<span key={location.id}>
+												<Link 
+													to="/contacts"
+													className="text-accent hover:underline"
+												>
+													{location.address}
+												</Link>
+												{index < (productWithDetails.storeLocations?.length ?? 0) - 1 && ", "}
+											</span>
+										))}
+									</span>
+								</div>
+							)}
 						</div>
 
 							{/* Important Note */}
@@ -610,7 +636,7 @@ function ProductPage() {
 									{/* Product-level attributes */}
 									{Array.isArray(product?.productAttributes) && productWithDetails?.productAttributes?.map((attr: { attributeId: string; value: string }) => {
 										const attribute = attributes?.find(
-											(a) => a.slug === attr.attributeId || a.name === attr.attributeId,
+											(a) => a.id.toString() === attr.attributeId || a.slug === attr.attributeId || a.name === attr.attributeId,
 										);
 										const displayName = attribute
 											? attribute.name
@@ -656,7 +682,7 @@ function ProductPage() {
 											return variationToShow.attributes.map(
 												(attr: VariationAttribute) => {
 													const attribute = attributes?.find(
-														(a) => a.name === attr.attributeId,
+														(a) => a.id.toString() === attr.attributeId,
 													);
 													const displayName = attribute
 														? attribute.name
@@ -665,12 +691,12 @@ function ProductPage() {
 													return (
 														<div
 															key={attr.attributeId}
-															className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
+															className="flex justify-between items-center py-2"
 														>
-															<span className="text-gray-600 font-medium">
+															<span className="text-foreground-muted font-normal">
 																{displayName}
 															</span>
-															<span className="text-gray-800 font-semibold">
+															<span className="text-foreground font-normal">
 																{attr.value}
 															</span>
 														</div>
