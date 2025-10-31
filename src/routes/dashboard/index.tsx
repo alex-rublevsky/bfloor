@@ -155,6 +155,8 @@ const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0,
 	} = useInfiniteQuery({
 		...productsInfiniteQueryOptions(normalizedSearch, {
 			categorySlug: selectedCategory ?? undefined,
+			brandSlug: selectedBrand ?? undefined,
+			collectionSlug: selectedCollection ?? undefined,
 			sort: sortBy,
 		}),
         // Preserve previous data while new search loads
@@ -445,14 +447,7 @@ const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0,
 	// Merge products from all pages
 	const products = productsData?.pages?.flatMap((page) => page?.products ?? [])?.filter(Boolean) ?? [];
 	
-	// Debug logging
-	console.log('Dashboard State:', {
-		totalPages: productsData?.pages?.length,
-		totalProducts: products.length,
-		hasNextPage,
-		isFetchingNextPage,
-		lastPageInfo: productsData?.pages?.[productsData.pages.length - 1]?.pagination,
-	});
+	// Debug logging removed
 
     // Use merged products directly (search is applied server-side)
     const allProducts = products;
@@ -523,16 +518,9 @@ useEffect(() => {
 		const threshold = rowCount - 8;
 		
 		if (lastItem.index >= threshold) {
-			console.log('Fetching next page...', { 
-				lastRowIndex: lastItem.index, 
-				totalRows: rowCount,
-				threshold,
-				currentProducts: products.length,
-				hasNextPage,
-			});
 			fetchNextPage();
 		}
-	}, [virtualItems, hasNextPage, isFetchingNextPage, rowCount, fetchNextPage, products.length]);
+	}, [virtualItems, hasNextPage, isFetchingNextPage, rowCount, fetchNextPage]);
 
 	const handleChange = (
 		e: React.ChangeEvent<
@@ -715,9 +703,6 @@ useEffect(() => {
 					}),
 				);
 				await Promise.all(deletePromises);
-				if (allImagesToDelete.length > 0) {
-					console.log(`Deleted ${allImagesToDelete.length} image(s) from storage`);
-				}
 			}
 
 			const formattedVariations = editVariations.map(
@@ -811,16 +796,14 @@ useEffect(() => {
 		setIsEditMode(true);
 
 		try {
-			console.log('🔍 EDIT: Loading product data for:', product.id, product.name);
+		// Removed edit debug log
 			// Fetch complete product data using the React Query cache (benefits from prefetch on hover)
 			const productWithDetails = await queryClient.fetchQuery({
 				queryKey: ["bfloorDashboardProduct", product.id],
 				queryFn: () => getProductBySlug({ data: { id: product.id } }),
 				staleTime: 1000 * 60 * 5,
 			});
-			console.log('🔍 EDIT: Product loaded - Tags:', productWithDetails.tags, 'Store Location ID:', productWithDetails.storeLocationId, 'Store Location IDs:', productWithDetails.storeLocationIds);
-			console.log('🔍 EDIT: SKU field:', productWithDetails.sku);
-			console.log('🔍 EDIT: All product fields:', Object.keys(productWithDetails));
+			// Removed verbose product load logs
 
 			// Convert variations to the new frontend format
 			const formattedVariations =
@@ -945,7 +928,6 @@ useEffect(() => {
 
 			// Load existing store locations for this product
 			const storeLocationIds = (productWithDetails.storeLocationIds || []).filter((id): id is number => id !== null);
-			console.log('🔍 EDIT: Store locations from product data:', storeLocationIds);
 			setEditSelectedStoreLocationIds(storeLocationIds);
 
 			// Set auto-slug state based on whether slug is custom
@@ -1065,10 +1047,10 @@ useEffect(() => {
 									ref={virtualizer.measureElement}
 									className="absolute top-0 left-0 w-full"
 									style={{
-										height: `${virtualRow.size}px`,
+									minHeight: `${virtualRow.size}px`,
 										transform: `translate3d(0, ${virtualRow.start}px, 0)`,
 										willChange: 'transform',
-										contain: 'layout paint size',
+									contain: 'layout paint',
 									}}
 								>
 									<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">

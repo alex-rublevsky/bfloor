@@ -256,9 +256,8 @@ export const getAllProducts = createServerFn({ method: "GET" })
 
 			// Add pagination info if pagination was used
             if (hasPagination && page !== undefined && pageLimit !== undefined) {
-                const hasNextPage = offsetValue + pageLimit < totalCount;
-                const hasPreviousPage = page > 1;
-				console.log(`[getAllProducts] page=${page} limit=${pageLimit} search=${effectiveSearch ?? ''} category=${categoryFilter ?? ''} brand=${brandFilter ?? ''} collection=${collectionFilter ?? ''} sort=${sort ?? ''} matched=${totalCount} returned=${productsArray.length} hasNext=${hasNextPage}`);
+				const hasNextPage = offsetValue + pageLimit < totalCount;
+				const hasPreviousPage = page > 1;
 				
 				return {
 					...result,

@@ -30,12 +30,7 @@ export const logMiddleware = createMiddleware()
 	.client(async (ctx) => {
 		const res = await ctx.next();
 
-		const now = new Date();
-		console.log("Client Req/Res:", {
-			duration: res.context.clientTime.getTime() - now.getTime(),
-			durationToServer: res.context.durationToServer,
-			durationFromServer: now.getTime() - res.context.serverTime.getTime(),
-		});
+	// Removed client request/response logging
 
 		return res;
 	});

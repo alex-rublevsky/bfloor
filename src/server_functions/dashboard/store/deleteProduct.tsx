@@ -51,15 +51,14 @@ export const deleteProduct = createServerFn({ method: "POST" })
 						const bucket = env.BFLOOR_STORAGE as R2Bucket;
 						if (bucket) {
 							// Delete all images associated with this product
-							await Promise.all(imageArray.map(async (imagePath) => {
+						await Promise.all(imageArray.map(async (imagePath) => {
 								try {
 									await bucket.delete(imagePath);
 								} catch (error) {
 									// Log but don't fail if image deletion fails
 									console.warn(`Failed to delete image ${imagePath}:`, error);
 								}
-							}));
-							console.log(`Deleted ${imageArray.length} image(s) from R2 for product ${productId}`);
+						}));
 						}
 					}
 				} catch (error) {

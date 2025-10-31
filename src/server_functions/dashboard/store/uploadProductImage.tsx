@@ -20,17 +20,6 @@ interface UploadImageInput {
 export const uploadProductImage = createServerFn({ method: "POST" })
 	.inputValidator((data: UploadImageInput) => data)
 	.handler(async ({ data }) => {
-		console.log("🖥️ Server: Starting image upload process");
-		console.log("🖥️ Server: Received data:", {
-			fileName: data.fileName,
-			fileType: data.fileType,
-			fileSize: data.fileSize,
-			folder: data.folder,
-			slug: data.slug,
-			categorySlug: data.categorySlug,
-			productName: data.productName,
-			fileDataLength: data.fileData?.length || 0,
-		});
 
 		try {
 			const {
@@ -66,7 +55,7 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 				throw new Error("File size must be less than 1.5MB");
 			}
 
-			console.log("🖥️ Server: File validation passed");
+			// File validation passed
 
 			// Resolve R2 bucket binding (supports new and legacy names)
 			const bucket = env.BFLOOR_STORAGE as R2Bucket;
@@ -77,7 +66,7 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 				throw new Error("Storage bucket not configured");
 			}
 
-			console.log("🖥️ Server: R2 bucket found");
+			// R2 bucket found
 
 			// Helper function to sanitize filename
 			const sanitizeFilename = (name: string): string => {
@@ -137,8 +126,7 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 				bytes[i] = binaryString.charCodeAt(i);
 			}
 
-			console.log("🖥️ Server: About to upload to R2. Filename:", filename);
-			console.log("🖥️ Server: File size:", bytes.buffer.byteLength, "bytes");
+			// Proceed to upload to R2
 
 			// Upload to R2
 			await bucket.put(filename, bytes.buffer, {
@@ -147,7 +135,7 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 				},
 			});
 
-			console.log("🖥️ Server: Upload to R2 successful!");
+			// Upload to R2 successful
 
 			// Return the filename (path in R2)
 			const result = {
@@ -156,7 +144,6 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 				url: `${ASSETS_BASE_URL}/${filename}`,
 			};
 
-			console.log("🖥️ Server: Returning result:", result);
 			return result;
 		} catch (error) {
 			console.error("🖥️ Server: Error uploading image:", error);

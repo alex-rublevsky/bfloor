@@ -18,7 +18,7 @@ export const deleteProductCategory = createServerFn({ method: "POST" })
 				throw new Error("Invalid category ID");
 			}
 
-			console.log("Deleting category with id:", id);
+			// Removed debug log
 
 			// Check if category exists
 			const existingCategory = await db

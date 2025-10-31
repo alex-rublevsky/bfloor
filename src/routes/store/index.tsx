@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import ProductCard from "~/components/ui/store/ProductCard";
 import { StorePageSkeleton } from "~/components/ui/store/skeletons/StorePageSkeleton";
 import { useClientSearch } from "~/lib/clientSearchContext";
@@ -69,6 +69,7 @@ function useResponsiveColumns() {
 }
 
 function StorePage() {
+	const storeScrollId = useId();
 	const parentRef = useRef<HTMLDivElement>(null);
 	const columnsPerRow = useResponsiveColumns();
 	
@@ -146,7 +147,7 @@ function StorePage() {
 	// Re-measure rows when the number of columns changes
 	useEffect(() => {
 		virtualizer.measure();
-	}, [columnsPerRow, virtualizer]);
+	}, [virtualizer]);
 
 	// Re-measure on container width changes
 	useEffect(() => {
@@ -173,16 +174,9 @@ function StorePage() {
 		const threshold = rowCount - 8;
 		
 		if (lastItem.index >= threshold) {
-			console.log('Store: Fetching next page...', { 
-				lastRowIndex: lastItem.index, 
-				totalRows: rowCount,
-				threshold,
-				currentProducts: sortedProducts.length,
-				hasNextPage,
-			});
 			fetchNextPage();
 		}
-	}, [virtualItems, hasNextPage, isFetchingNextPage, rowCount, fetchNextPage, sortedProducts.length]);
+	}, [virtualItems, hasNextPage, isFetchingNextPage, rowCount, fetchNextPage]);
 
 	// Helper function to get products for a specific row
 	const getProductsForRow = (rowIndex: number) => {
@@ -199,7 +193,7 @@ function StorePage() {
 	return (
 		<div className="h-screen bg-background flex flex-col">
 			<main className="flex-1 overflow-hidden">
-				<div id="store-scroll" ref={parentRef} className="overflow-auto overscroll-contain px-0 py-4 h-full">
+				<div id={storeScrollId} ref={parentRef} className="overflow-auto overscroll-contain px-0 py-4 h-full">
 					<div className="relative" style={{ height: `${virtualizer.getTotalSize()}px` }}>
 						{virtualizer.getVirtualItems().map((virtualRow) => {
 							const rowProducts = getProductsForRow(virtualRow.index);
@@ -209,11 +203,12 @@ function StorePage() {
 									data-index={virtualRow.index}
 									ref={virtualizer.measureElement}
 									className="absolute top-0 left-0 w-full"
-								style={{
-									transform: `translate3d(0, ${virtualRow.start}px, 0)`,
-									willChange: 'transform',
-									contain: 'layout paint size',
-								}}
+							style={{
+								minHeight: `${virtualRow.size}px`,
+								transform: `translate3d(0, ${virtualRow.start}px, 0)`,
+								willChange: 'transform',
+								contain: 'layout paint',
+							}}
 								>
 									<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
 										{rowProducts.map((product) => (

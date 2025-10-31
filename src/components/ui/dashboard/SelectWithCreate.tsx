@@ -136,8 +136,7 @@ export function SelectWithCreate({
 				`${entityType === "category" ? "Категория" : entityType === "brand" ? "Бренд" : "Коллекция"} создана успешно!`,
 			);
 
-			// Debug: Log the result to see the structure
-			console.log("Creation result:", result);
+			// Removed debug log
 
 			// Reset form
 			setFormData({
@@ -171,15 +170,12 @@ export function SelectWithCreate({
 			}
 
 			if (newEntity) {
-				console.log("Selecting new entity:", newEntity.slug);
 				// Call the entity created callback first to refresh the options
 				onEntityCreated?.(newEntity);
 				// Then select the new entity after a small delay to ensure options are updated
 				setTimeout(() => {
 					onValueChange(newEntity.slug);
 				}, 100);
-			} else {
-				console.log("No new entity found in result:", result);
 			}
 		} catch (error) {
 			const errorMsg =

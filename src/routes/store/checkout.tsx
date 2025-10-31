@@ -141,11 +141,9 @@ function CheckoutScreen() {
 
 			// Store in sessionStorage for the success page
 			sessionStorage.setItem("orderSuccess", JSON.stringify(orderData));
-			console.log("💾 Stored order data for success page:", orderId);
 
 			// Small delay to ensure success message is seen, then redirect
 			setTimeout(() => {
-				console.log("🚀 Redirecting to order page:", orderId);
 				// Clear the cart AFTER redirect to avoid showing "cart is empty"
 				clearCart();
 				window.location.href = `/order/${orderId}?new=true`;

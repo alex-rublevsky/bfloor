@@ -287,11 +287,10 @@ export function AdminProductCard({
 								type="button"
 							onMouseEnter={() => prefetchDashboardProduct(product.id)}
 							onFocus={() => prefetchDashboardProduct(product.id)}
-								onClick={(e) => {
-									e.stopPropagation();
-									console.log('🔍 EDIT: Mobile Edit button clicked for:', product.id, product.name);
-									onEdit(product);
-								}}
+									onClick={(e) => {
+										e.stopPropagation();
+										onEdit(product);
+									}}
 								className="flex-1 cursor-pointer flex items-center justify-center space-x-2 bg-muted backdrop-blur-xs text-foreground hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-all duration-500 py-2 px-4 outline-none border-none"
 								style={{ margin: 0 }}
 							>

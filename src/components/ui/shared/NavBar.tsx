@@ -282,6 +282,7 @@ export function NavBar({
 }: Omit<NavBarProps, "items">) {
 	const routerState = useRouterState();
 	const pathname = routerState.location.pathname;
+    const isStore = pathname.startsWith("/store");
 	const { prefetchDashboardOrders } = usePrefetch();
 	const dynamicPlaceholder = useSearchPlaceholderWithCount();
 
@@ -372,7 +373,7 @@ export function NavBar({
 	if (isDashboard) {
 		return (
 			<>
-				<nav className={cn("fixed top-0 left-0 right-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border", className)}>
+				<nav className={cn(isStore ? "fixed top-0 left-0 right-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border" : "sticky top-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border", className)}>
 					<div className="px-4 py-3">
 						{/* Desktop layout - Large screens and above */}
 						<div className="hidden lg:flex items-center gap-4">
@@ -483,7 +484,7 @@ export function NavBar({
 		<>
 			<nav
 				className={cn(
-					"fixed top-0 left-0 right-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border",
+					isStore ? "fixed top-0 left-0 right-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border" : "sticky top-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border",
 					className,
 				)}
 			>
