@@ -1,36 +1,11 @@
 import { createMiddleware } from "@tanstack/react-start";
 
-const preLogMiddleware = createMiddleware()
-	.client(async (ctx) => {
-		const clientTime = new Date();
+export const logMiddleware = createMiddleware().server(async ({ next }) => {
+	const start = Date.now();
+	const res = await next();
+	const end = Date.now();
 
-		return ctx.next({
-			context: {
-				clientTime,
-			},
-			sendContext: {
-				clientTime,
-			},
-		});
-	})
-	.server(async (ctx) => {
-		const serverTime = new Date();
+	console.log("Server request duration (ms):", end - start);
 
-		return ctx.next({
-			sendContext: {
-				serverTime,
-				durationToServer:
-					serverTime.getTime() - ctx.context.clientTime.getTime(),
-			},
-		});
-	});
-
-export const logMiddleware = createMiddleware()
-	.middleware([preLogMiddleware])
-	.client(async (ctx) => {
-		const res = await ctx.next();
-
-	// Removed client request/response logging
-
-		return res;
-	});
+	return res;
+});

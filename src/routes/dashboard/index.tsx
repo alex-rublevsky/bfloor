@@ -58,8 +58,6 @@ import type {
 	ProductWithVariations,
 } from "~/types";
 
-// (no helpers; compute inline to avoid hook deps)
-
 interface Variation {
 	id: string;
 	sku: string;
@@ -473,11 +471,7 @@ const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0,
 
 // Virtualizer configuration - responsive columns handled by useResponsiveColumns hook
 const itemHeight = 365;
-// Fixed row gap in px between virtual rows
-const rowGapPx = 16;
 const rowCount = Math.ceil(displayProducts.length / columnsPerRow);
-
-// No state needed for gap; compute on demand via getGapPx()
 
 const virtualizer = useWindowVirtualizer({
     count: rowCount,
@@ -491,7 +485,16 @@ const virtualizer = useWindowVirtualizer({
 		virtualizer.measure();
 	}, [columnsPerRow, virtualizer]);
 
-// Avoid remeasuring on every width change; only remeasure when columnsPerRow changes
+// Re-measure on container width changes to account for responsive grid/gaps
+useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => {
+        virtualizer.measure();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+}, [virtualizer]);
 
 
 	// Helper function to get products for a specific row
@@ -1029,28 +1032,28 @@ const virtualizer = useWindowVirtualizer({
 				{displayProducts.length === 0 && !isFetching ? (
 					<EmptyState entityType="products" isSearchResult={!!normalizedSearch} />
 				) : (
-                    <div
-                        className="relative px-4 py-4"
-                        style={{
-                            height: `${virtualizer.getTotalSize() + rowCount * rowGapPx}px`,
-                        }}
-                    >
+					<div
+						className="relative px-4 py-4"
+						style={{
+							height: `${virtualizer.getTotalSize()}px`,
+						}}
+					>
 						{virtualizer.getVirtualItems().map((virtualRow) => {
 							const rowProducts = getProductsForRow(virtualRow.index);
 							return (
-                                <div
+								<div
 									key={virtualRow.key}
 									data-index={virtualRow.index}
 									ref={virtualizer.measureElement}
 									className="absolute top-0 left-0 w-full"
-                                    style={{
-                                    minHeight: `${virtualRow.size}px`,
-                                        transform: `translate3d(0, ${Math.round(virtualRow.start + virtualRow.index * rowGapPx)}px, 0)`,
-                                        willChange: 'transform',
-                                    contain: 'layout paint',
-                                    }}
-                                >
-                                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-[16px]">
+									style={{
+									minHeight: `${virtualRow.size}px`,
+										transform: `translate3d(0, ${virtualRow.start}px, 0)`,
+										willChange: 'transform',
+									contain: 'layout paint',
+									}}
+								>
+									<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
 										{rowProducts.map((product: ProductWithVariations) => (
 											<AdminProductCard
 												key={product.id}

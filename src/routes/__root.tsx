@@ -115,11 +115,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			<head>
 				<HeadContent />
 			</head>
-			<body className={`h-screen flex flex-col ${isStore ? "overflow-hidden" : ""}`} suppressHydrationWarning>
+			<body className={`min-h-screen flex flex-col ${isStore ? "overflow-hidden" : ""}`} suppressHydrationWarning>
 				<NavBar />
-				{/* Spacer to offset fixed navbar on store pages (inner scroll container) */}
-				{isStore ? <div className="h-16 md:h-20 lg:h-28" /> : null}
-				{children}
+				
+				<main className="flex-1">
+					{children}
+				</main>
 				{!isStore && !isDashboard && <Footer />}
 				{/* <TanStackRouterDevtools position="bottom-right" /> */}
 				<Scripts />

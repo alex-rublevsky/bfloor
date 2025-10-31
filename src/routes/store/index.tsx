@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useEffect, useId, useMemo, useRef, useState, useLayoutEffect } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import ProductCard from "~/components/ui/store/ProductCard";
 import { StorePageSkeleton } from "~/components/ui/store/skeletons/StorePageSkeleton";
 import { useClientSearch } from "~/lib/clientSearchContext";
@@ -41,7 +41,7 @@ export const Route = createFileRoute("/store/")({
 function useResponsiveColumns() {
 	const [columnsPerRow, setColumnsPerRow] = useState(6);
 
-    useEffect(() => {
+	useEffect(() => {
 		const updateColumns = () => {
 			const width = window.innerWidth;
 			if (width >= 1536) {
@@ -63,7 +63,7 @@ function useResponsiveColumns() {
 		// Update on resize
 		window.addEventListener('resize', updateColumns);
 		return () => window.removeEventListener('resize', updateColumns);
-    }, []);
+	}, []);
 
 	return columnsPerRow;
 }
@@ -133,26 +133,32 @@ function StorePage() {
 	}, [filteredProducts]);
 
 	// Virtualizer configuration - responsive columns based on screen size
-    const itemHeight = 365;
-    // Fixed row gap in px between virtual rows
-    const rowGapPx = 16;
+	const itemHeight = 365;
 	const rowCount = Math.ceil(sortedProducts.length / columnsPerRow);
 
 	// Use container scroll (same as dashboard)
-    const virtualizer = useVirtualizer({
+	const virtualizer = useVirtualizer({
 		count: rowCount,
 		getScrollElement: () => parentRef.current,
-        estimateSize: () => itemHeight,
+		estimateSize: () => itemHeight,
 		overscan: 8, // Render extra rows for smooth scrolling and pre-fetching
 	});
 
 	// Re-measure rows when the number of columns changes
-    useLayoutEffect(() => {
-        virtualizer.measure();
-    }, [virtualizer]);
+	useEffect(() => {
+		virtualizer.measure();
+	}, [virtualizer]);
 
 	// Re-measure on container width changes
-    // Avoid remeasuring on every width change; only remeasure when columnsPerRow changes
+	useEffect(() => {
+		const el = parentRef.current;
+		if (!el || typeof ResizeObserver === 'undefined') return;
+		const ro = new ResizeObserver(() => {
+			virtualizer.measure();
+		});
+		ro.observe(el);
+		return () => ro.disconnect();
+	}, [virtualizer]);
 
 	// Infinite scroll - load more products when user scrolls near the end (IDENTICAL to dashboard)
 	const virtualItems = virtualizer.getVirtualItems();
@@ -188,23 +194,23 @@ function StorePage() {
 		<div className="h-screen bg-background flex flex-col">
 			<main className="flex-1 overflow-hidden">
 				<div id={storeScrollId} ref={parentRef} className="overflow-auto overscroll-contain px-0 py-4 h-full">
-                    <div className="relative" style={{ height: `${virtualizer.getTotalSize() + rowCount * rowGapPx}px` }}>
+					<div className="relative" style={{ height: `${virtualizer.getTotalSize()}px` }}>
 						{virtualizer.getVirtualItems().map((virtualRow) => {
 							const rowProducts = getProductsForRow(virtualRow.index);
 							return (
-                                <div
+								<div
 									key={virtualRow.key}
 									data-index={virtualRow.index}
 									ref={virtualizer.measureElement}
 									className="absolute top-0 left-0 w-full"
-                                style={{
-                                minHeight: `${virtualRow.size}px`,
-                                transform: `translate3d(0, ${Math.round(virtualRow.start + virtualRow.index * rowGapPx)}px, 0)`,
-                                willChange: 'transform',
-                                contain: 'layout paint',
-                            }}
+							style={{
+								minHeight: `${virtualRow.size}px`,
+								transform: `translate3d(0, ${virtualRow.start}px, 0)`,
+								willChange: 'transform',
+								contain: 'layout paint',
+							}}
 								>
-                                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-[16px]">
+									<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
 										{rowProducts.map((product) => (
 											<ProductCard key={product.id} product={product} />
 										))}
