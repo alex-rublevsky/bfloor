@@ -7,7 +7,6 @@ import BenefitsSection from "~/components/ui/home/BenefitsSection";
 import OurPartnersSection from "~/components/ui/home/OurPartnersSection";
 import TestimonialSliderSection from "~/components/ui/home/testimonial/TestimonialSection";
 import ProductSlider from "~/components/ui/shared/ProductSlider";
-import ColorPalette from "~/components/ui/shared/ColorPalette";
 import { seo } from "~/utils/seo";
 
 export const Route = createFileRoute("/")({
@@ -28,7 +27,6 @@ function App() {
 	return (
 		<div className="min-h-screen flex flex-col">
 			<main className="flex-1 flex flex-col items-center px-4 py-8">
-				<ColorPalette />
 				<div className="w-full max-w-md space-y-6 text-center">
 					<section className="!p-0 !static">
 						<Banner />

@@ -104,6 +104,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 	const pathname = routerState.location.pathname;
 
 	const isStore = pathname.startsWith("/store");
+	const isDashboard = pathname.startsWith("/dashboard");
 
 	return (
 		<html
@@ -119,7 +120,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				{/* Spacer to offset fixed navbar on store pages (inner scroll container) */}
 				{isStore ? <div className="h-16 md:h-20 lg:h-28" /> : null}
 				{children}
-				{!isStore && <Footer />}
+				{!isStore && !isDashboard && <Footer />}
 				{/* <TanStackRouterDevtools position="bottom-right" /> */}
 				<Scripts />
 			</body>
