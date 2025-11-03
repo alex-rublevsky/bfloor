@@ -3,11 +3,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
+import { Trash2, AlertTriangle } from "lucide-react";
 import { AdminProductCard } from "~/components/ui/dashboard/AdminProductCard";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
 import { EnhancedDescriptionField } from "~/components/ui/dashboard/EnhancedDescriptionField";
 import { ImageUpload } from "~/components/ui/dashboard/ImageUpload";
+import { countProductsWithErrors } from "~/utils/productAttributesUtils";
+import { countProductsWithAttributeErrors } from "~/server_functions/dashboard/store/countProductsWithAttributeErrors";
 import ProductAttributesForm from "~/components/ui/dashboard/ProductAttributesForm";
 import { DrawerSection } from "~/components/ui/dashboard/ProductFormSection";
 import { ProductSettingsFields } from "~/components/ui/dashboard/ProductSettingsFields";
@@ -17,6 +20,7 @@ import { SelectWithCreate } from "~/components/ui/dashboard/SelectWithCreate";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { StoreLocationsSelector } from "~/components/ui/dashboard/StoreLocationsSelector";
 import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
+import { Button } from "~/components/ui/shared/Button";
 import { CheckboxList } from "~/components/ui/shared/CheckboxList";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { Input } from "~/components/ui/shared/input";
@@ -151,7 +155,8 @@ const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0,
         isFetching,
 		fetchNextPage, 
 		hasNextPage, 
-		isFetchingNextPage 
+		isFetchingNextPage,
+		refetch: refetchProducts
 	} = useInfiniteQuery({
 		...productsInfiniteQueryOptions(normalizedSearch, {
 			categorySlug: selectedCategory ?? undefined,
@@ -182,11 +187,28 @@ const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0,
 
 	// Product attributes query
 	const { data: attributes } = useProductAttributes();
+	
+	// Count of products with attribute errors (server-side count from all products in database)
+	const { data: errorCountData, isLoading: isLoadingErrorCount } = useQuery({
+		queryKey: ["bfloorProductsAttributeErrorCount"],
+		queryFn: async () => {
+			return await countProductsWithAttributeErrors();
+		},
+		staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+	
+	const totalProductsWithErrors = errorCountData?.count ?? 0;
 
 	// Function to refetch data using query invalidation
 	const refetch = () => {
-		// Invalidate dashboard products infinite query
-		queryClient.invalidateQueries({
+		// Completely remove and reset all cached pages - forces full refetch from page 1
+		queryClient.removeQueries({
+			queryKey: ["bfloorDashboardProductsInfinite"],
+		});
+		
+		queryClient.resetQueries({
 			queryKey: ["bfloorDashboardProductsInfinite"],
 		});
 
@@ -194,7 +216,16 @@ const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0,
 		queryClient.removeQueries({
 			queryKey: ["bfloorStoreDataInfinite"],
 		});
+		
+		// Invalidate error count so it recalculates with fresh data
+		queryClient.invalidateQueries({
+			queryKey: ["bfloorProductsAttributeErrorCount"],
+		});
+		
+		// Refetch the products query to get fresh data
+		refetchProducts();
 	};
+
 
 	// Function to invalidate specific product cache (for updates)
 	const invalidateProductCache = (
@@ -451,6 +482,9 @@ const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0,
 
     // Use merged products directly (search is applied server-side)
     const allProducts = products;
+    
+    // Count products with out-of-scope attributes (efficient - no extra DB queries, uses already-loaded data)
+    const productsWithErrorsCount = countProductsWithErrors(allProducts, attributes);
 
 	// Handlers for refreshing data when new entities are created
 	const handleEntityCreated = () => {
@@ -740,6 +774,11 @@ useEffect(() => {
 			// Refresh dashboard data
 			refetch();
 
+			// Invalidate error count (products might have been fixed)
+			queryClient.invalidateQueries({
+				queryKey: ["bfloorProductsAttributeErrorCount"],
+			});
+
 			// Invalidate specific product cache
 			invalidateProductCache(
 				editingProductId,
@@ -1012,6 +1051,29 @@ useEffect(() => {
 		<>
             {/* Filters bar (reusing store ProductFilters for hide-on-scroll behavior) */}
             <div ref={containerRef}>
+                {/* Status bar with error count */}
+                <div className="px-4 pt-4 pb-2">
+                    {/* Products with errors count - shows total from database, not just loaded products */}
+                    {totalProductsWithErrors > 0 && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-300 rounded-md">
+                            <AlertTriangle className="w-4 h-4" />
+                            <span>
+                                {isLoadingErrorCount ? (
+                                    'Counting...'
+                                ) : (
+                                    <>
+                                        {totalProductsWithErrors} product{totalProductsWithErrors !== 1 ? 's' : ''} with attribute errors
+                                        {productsWithErrorsCount !== totalProductsWithErrors && (
+                                            <span className="ml-1 text-xs opacity-75">
+                                                ({productsWithErrorsCount} visible)
+                                            </span>
+                                        )}
+                                    </>
+                                )}
+                            </span>
+                        </div>
+                    )}
+                </div>
                 <ProductFilters
                     categories={categories.map((c: any) => ({ ...c, count: (c as any).count ?? 0 }))}
                     selectedCategory={selectedCategory}
@@ -1059,7 +1121,6 @@ useEffect(() => {
 												key={product.id}
 												product={product}
 												onEdit={handleEdit}
-												onDelete={handleDeleteClick}
 												formatPrice={formatPrice}
 											/>
 										))}
@@ -1392,6 +1453,33 @@ useEffect(() => {
 							</DrawerSection>
 						</>
 					)}
+
+					{/* Delete Product Section - At the very end */}
+					<DrawerSection variant="default" className="lg:col-span-2">
+						<div className="flex flex-col gap-2">
+							<h3 className="text-sm font-medium text-destructive">Опасная зона</h3>
+							<p className="text-sm text-muted-foreground">
+								Удаление товара является необратимым действием. Все данные о товаре будут безвозвратно удалены.
+							</p>
+							<Button
+								type="button"
+								variant="destructive"
+								onClick={() => {
+									if (editingProductId) {
+										// Find the product to delete
+										const product = displayProducts.find(p => p.id === editingProductId);
+										if (product) {
+											handleDeleteClick(product);
+										}
+									}
+								}}
+								className="mt-2 w-fit"
+							>
+								<Trash2 className="w-4 h-4" />
+								<span>Удалить товар</span>
+							</Button>
+						</div>
+					</DrawerSection>
 				</form>
 			</DashboardFormDrawer>
 

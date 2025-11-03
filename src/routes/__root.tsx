@@ -115,7 +115,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			<head>
 				<HeadContent />
 			</head>
-			<body className={`min-h-screen flex flex-col ${isStore ? "overflow-hidden" : ""}`} suppressHydrationWarning>
+			<body className={"min-h-screen flex flex-col"} suppressHydrationWarning>
 				<NavBar />
 				
 				<main className="flex-1">

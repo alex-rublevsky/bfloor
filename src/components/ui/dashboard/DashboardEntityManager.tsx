@@ -395,18 +395,6 @@ export function DashboardEntityManager<
 								idPrefix="edit"
 							/>
 
-							{config.formFields({
-								formData: form.editForm.formData,
-								onFieldChange: form.editForm.updateField,
-								onSlugChange: handleEditSlugChange,
-								isAutoSlug: isEditAutoSlug,
-								onAutoSlugChange: setIsEditAutoSlug,
-								idPrefix: "edit",
-								entities: data,
-								editingEntity:
-									data.find((e) => e.id === editingEntityId) || null,
-							})}
-
 							<div className="flex items-center gap-2">
 								<Switch
 									name="isActive"
@@ -417,6 +405,25 @@ export function DashboardEntityManager<
 							</div>
 						</div>
 					</DrawerSection>
+					{/* Render additional sections from formFields if needed (e.g., for attribute values) */}
+					{(() => {
+						const additionalContent = config.formFields({
+							formData: form.editForm.formData,
+							onFieldChange: form.editForm.updateField,
+							onSlugChange: handleEditSlugChange,
+							isAutoSlug: isEditAutoSlug,
+							onAutoSlugChange: setIsEditAutoSlug,
+							idPrefix: "edit",
+							entities: data,
+							editingEntity:
+								data.find((e) => e.id === editingEntityId) || null,
+						});
+						// Only render if it contains DrawerSection or other valid content
+						if (additionalContent && typeof additionalContent === 'object' && 'type' in additionalContent) {
+							return additionalContent;
+						}
+						return null;
+					})()}
 				</form>
 			</DashboardFormDrawer>
 

@@ -21,6 +21,11 @@ import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
 import { getAllCollections } from "~/server_functions/dashboard/collections/getAllCollections";
 import { getAllProductCategories } from "~/server_functions/dashboard/categories/getAllProductCategories";
 import { getAllStoreLocations } from "~/server_functions/dashboard/storeLocations/getAllStoreLocations";
+import { getAllProductAttributes } from "~/server_functions/dashboard/attributes/getAllProductAttributes";
+import { getProductAttributeCounts } from "~/server_functions/dashboard/attributes/getProductAttributeCounts";
+import { getProductAttributesWithCounts } from "~/server_functions/dashboard/attributes/getProductAttributesWithCounts";
+import { getAllAttributeValuesByAttribute } from "~/server_functions/dashboard/attributes/getAllAttributeValuesByAttribute";
+import { getAttributeValues } from "~/server_functions/dashboard/attributes/getAttributeValues";
 
 /**
  * Store data query options (DEPRECATED - use storeDataInfiniteQueryOptions)
@@ -160,6 +165,7 @@ export const productsInfiniteQueryOptions = (
             },
         }),
 	staleTime: 0, // No cache - force fresh data for dashboard
+	// Note: Query will be manually invalidated via refetch() after product updates
 	initialPageParam: 1,
 	getNextPageParam: (lastPage: any) => {
 		// Simple and clean: if there's a next page, return next page number
@@ -301,6 +307,101 @@ export const storeLocationsQueryOptions = () =>
 		queryKey: ["bfloorStoreLocations"],
 		queryFn: async () => getAllStoreLocations(),
 		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - store locations rarely change
+		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Product Attributes query options (without counts - fast)
+ * Used for: All routes that need attribute data
+ *
+ * Cache Strategy: Maximum caching for static data
+ * - Attributes cached for 3 days (very static)
+ * - Kept in memory for 7 days
+ * - No automatic refetching
+ */
+export const productAttributesQueryOptions = () =>
+	queryOptions({
+		queryKey: ["productAttributes"],
+		queryFn: async () => getAllProductAttributes(),
+		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - attributes rarely change
+		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Product Attribute Counts query options (slower - counts products)
+ * Used for: /dashboard/attributes route for streaming counts
+ *
+ * Cache Strategy: Moderate caching for dynamic data
+ * - Counts cached for 30 minutes (more dynamic than attributes themselves)
+ * - Kept in memory for 1 day
+ * - No automatic refetching
+ */
+export const productAttributeCountsQueryOptions = () =>
+	queryOptions({
+		queryKey: ["productAttributeCounts"],
+		queryFn: async () => getProductAttributeCounts(),
+		staleTime: 1000 * 60 * 30, // 30 minutes - counts change more frequently
+		gcTime: 1000 * 60 * 60 * 24, // 1 day - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * All attribute values grouped by attribute ID query options
+ * Used for: Attributes dashboard page to show standardized values
+ *
+ * Cache Strategy: Moderate caching for semi-static data
+ * - Attribute values cached for 1 hour (more dynamic than attributes)
+ * - Kept in memory for 1 day
+ */
+export const allAttributeValuesByAttributeQueryOptions = () =>
+	queryOptions({
+		queryKey: ["attributeValuesByAttribute"],
+		queryFn: async () => getAllAttributeValuesByAttribute(),
+		staleTime: 1000 * 60 * 60, // 1 hour - values change more frequently
+		gcTime: 1000 * 60 * 60 * 24, // 1 day - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Attribute values for a specific attribute query options
+ * Used for: Editing attribute values in the attribute form
+ *
+ * Cache Strategy: Short caching for form data
+ * - Values cached for 5 minutes
+ * - Kept in memory for 1 hour
+ */
+export const attributeValuesQueryOptions = (attributeId: number) =>
+	queryOptions({
+		queryKey: ["attributeValues", attributeId],
+		queryFn: async () => getAttributeValues({ data: { attributeId } }),
+		staleTime: 1000 * 60 * 5, // 5 minutes - fresh for editing
+		gcTime: 1000 * 60 * 60, // 1 hour - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Product Attributes with counts query options (DEPRECATED - use separate queries for streaming)
+ * Used for: Legacy support, but prefer productAttributesQueryOptions + productAttributeCountsQueryOptions
+ *
+ * Cache Strategy: Moderate caching for semi-static data
+ */
+export const productAttributesWithCountsQueryOptions = () =>
+	queryOptions({
+		queryKey: ["productAttributesWithCounts"],
+		queryFn: async () => getProductAttributesWithCounts(),
+		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - attributes rarely change
 		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
 		retry: 3,
 		refetchOnWindowFocus: false,

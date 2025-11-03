@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { getAllProductAttributes } from "~/server_functions/dashboard/attributes/getAllProductAttributes";
+import { productAttributesWithCountsQueryOptions } from "~/lib/queryOptions";
 import type { ProductAttribute } from "~/types";
+import type { ProductAttributeWithCount } from "~/server_functions/dashboard/attributes/getProductAttributesWithCounts";
 
 export function useProductAttributes() {
 	return useQuery({
@@ -8,6 +10,15 @@ export function useProductAttributes() {
 		queryFn: () => getAllProductAttributes(),
 		staleTime: 1000 * 60 * 5, // Cache for 5 minutes
 	});
+}
+
+/**
+ * Hook to get product attributes with product counts
+ * Used specifically for the attributes dashboard page
+ * Follows the project's queryOptions pattern for consistent caching
+ */
+export function useProductAttributesWithCounts() {
+	return useQuery(productAttributesWithCountsQueryOptions());
 }
 
 /**

@@ -10,8 +10,8 @@ export default function BenefitEntry({
 	icon: React.ReactNode;
 }) {
 	return (
-		<div className="flex flex-col items-center text-center gap-2 md:gap-4 py-3 md:py-6 w-fit max-w-[200px] md:max-w-[240px]">
-			<div className="h-16 md:h-24 w-fit flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full">
+		<div className="flex flex-col items-center text-center gap-2 md:gap-4 py-3 md:py-6 w-fit max-w-[18ch] lg:max-w-[22ch]">
+			<div className="h-16 md:h-[76.8px] w-fit flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full">
 				{icon}
 			</div>
 			<div className="flex flex-col gap-1 md:gap-2 w-fit">

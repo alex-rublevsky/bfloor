@@ -13,7 +13,8 @@ import {
 	Plus,
 } from "lucide-react";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { motion, useMotionValueEvent, useScroll } from "motion/react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -286,6 +287,19 @@ export function NavBar({
 	const { prefetchDashboardOrders } = usePrefetch();
 	const dynamicPlaceholder = useSearchPlaceholderWithCount();
 
+	// Hide-on-scroll state
+	const { cartOpen } = useCart();
+	const { scrollY } = useScroll();
+	const lastYRef = useRef(0);
+	const [isHidden, setIsHidden] = useState(false);
+	useMotionValueEvent(scrollY, "change", (y) => {
+		const difference = y - lastYRef.current;
+		if (Math.abs(difference) > 200 && !cartOpen) {
+			setIsHidden(difference > 0);
+			lastYRef.current = y;
+		}
+	});
+
 	// Client-side search context
 	const clientSearch = useClientSearch();
 
@@ -373,7 +387,15 @@ export function NavBar({
 	if (isDashboard) {
 		return (
 			<>
-				<nav className={cn(isStore ? "fixed top-0 left-0 right-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border" : "sticky top-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border", className)}>
+				<motion.nav
+					animate={isHidden ? "hidden" : "visible"}
+					whileHover="visible"
+					onClick={() => setIsHidden(false)}
+					onFocusCapture={() => setIsHidden(false)}
+					transition={{ duration: 0.5, ease: [0.215, 0.61, 0.355, 1] }}
+					variants={{ hidden: { y: "-100%" }, visible: { y: "0%" } }}
+					className={cn(isStore ? "fixed top-0 left-0 right-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border" : "sticky top-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border", className)}
+				>
 					<div className="px-4 py-3">
 						{/* Desktop layout - Large screens and above */}
 						<div className="hidden lg:flex items-center gap-4">
@@ -467,7 +489,7 @@ export function NavBar({
 					)}
 						</div>
 					</div>
-				</nav>
+				</motion.nav>
 
 				{/* Bottom Navigation Bar - Mobile only */}
 				<BottomNavBar
@@ -482,7 +504,13 @@ export function NavBar({
 	// Client navigation layout
 	return (
 		<>
-			<nav
+			<motion.nav
+				animate={isHidden ? "hidden" : "visible"}
+				whileHover="visible"
+				onClick={() => setIsHidden(false)}
+				onFocusCapture={() => setIsHidden(false)}
+				transition={{ duration: 0.5, ease: [0.215, 0.61, 0.355, 1] }}
+				variants={{ hidden: { y: "-100%" }, visible: { y: "0%" } }}
 				className={cn(
 					isStore ? "fixed top-0 left-0 right-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border" : "sticky top-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border",
 					className,
@@ -613,7 +641,7 @@ export function NavBar({
 						</div>
 					</div>
 				</div>
-			</nav>
+			</motion.nav>
 
 			{/* Bottom Navigation Bar - Mobile only */}
 			<BottomNavBar />

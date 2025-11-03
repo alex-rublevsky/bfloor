@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { DB } from "~/db";
 import { products, productVariations, variationAttributes, productStoreLocations } from "~/schema";
 import type { ProductFormData } from "~/types";
+import { validateAttributeValues } from "~/utils/validateAttributeValues";
 
 export const createProduct = createServerFn({ method: "POST" })
 	.inputValidator((data: ProductFormData) => data)
@@ -55,6 +56,20 @@ export const createProduct = createServerFn({ method: "POST" })
 				: [];
 			const imagesJson =
 				imagesArray.length > 0 ? JSON.stringify(imagesArray) : "";
+
+			// Validate standardized attribute values before saving
+			if (productData.attributes?.length) {
+				const validationErrors = await validateAttributeValues(
+					db,
+					productData.attributes,
+				);
+				
+				if (validationErrors.length > 0) {
+					setResponseStatus(400);
+					const errorMessages = validationErrors.map((err) => err.error).join("; ");
+					throw new Error(`Ошибки валидации атрибутов: ${errorMessages}`);
+				}
+			}
 
 			// Convert attributes array back to object format for database storage
 			let attributesJson = null;

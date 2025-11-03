@@ -1,8 +1,7 @@
 import useEmblaCarousel from "embla-carousel-react";
 import "./testimonial.css";
-import { AnimatedGroup } from "~/components/motion_primitives/AnimatedGroup";
 import { Image } from "~/components/ui/shared/Image";
-import NeumorphismCard from "~/components/ui/shared/NeumorphismCard";
+import { Icon } from "~/components/ui/shared/Icon";
 import {
 	NextButton,
 	PrevButton,
@@ -14,38 +13,52 @@ const testimonials = [
 	{
 		id: 1,
 		name: "Степанова Алёна",
+		content:"В поисках качественного напольного покрытия обратилась в магазин Beauty Floor — требовался красивый, крепкий, нешумный и теплый пол для квартиры в новостройке. Приходила в салон несколько раз — смотрела, выбирала, советовалась. Выбрала пробковый пол Egger с подходящим соотношением цены и качества. Спасибо сотрудникам салона — дали поцарапать ногтем, походить, попрыгать и вообще всячески повоздействовать на образцы)) Идеальное знание своего продукта, очень вежливое и приветливое отношение к клиентам — это редко и очень приятно) Доставка покрытия со склада в другом городе в течение трех недель, а дальнейшее хранение на складе во Владивостоке бесплатно, не нужно думать над тем, куда все эти коробки сложить, чтобы не испортить пол. В салоне огромное количество различных настенных и напольных покрытий и аксессуаров к ним — порогов, плинтусов, подложек. Я очень благодарна ребятам из Beauty Floor за помощь в подборе паркета, за дружеское отношение и отличный сервис!)",
+		avatar: "/testimonial-avatars/stepanova-alena.webp",
 		rating: 5,
 		date: "2019-08-18",
-		content:"В поисках качественного напольного покрытия обратилась в магазин Beauty Floor — требовался красивый, крепкий, нешумный и теплый пол для квартиры в новостройке. Приходила в салон несколько раз — смотрела, выбирала, советовалась. Выбрала пробковый пол Egger с подходящим соотношением цены и качества. Спасибо сотрудникам салона — дали поцарапать ногтем, походить, попрыгать и вообще всячески повоздействовать на образцы)) Идеальное знание своего продукта, очень вежливое и приветливое отношение к клиентам — это редко и очень приятно) Доставка покрытия со склада в другом городе в течение трех недель, а дальнейшее хранение на складе во Владивостоке бесплатно, не нужно думать над тем, куда все эти коробки сложить, чтобы не испортить пол. В салоне огромное количество различных настенных и напольных покрытий и аксессуаров к ним — порогов, плинтусов, подложек. Я очень благодарна ребятам из Beauty Floor за помощь в подборе паркета, за дружеское отношение и отличный сервис!)"
-		,avatar: "/testimonials/roman.webp",
-		link: "https://www.google.ru/maps/place/Beauty+Floor/@43.1688399,131.9257411,17z/data=!4m18!1m9!3m8!1s0x5fb39183a2c24f9f:0x50ad4f6d76b05a03!2sBeauty+Floor!8m2!3d43.168836!4d131.928316!9m1!1b1!16s%2Fg%2F11rqx6015!3m7!1s0x5fb39183a2c24f9f:0x50ad4f6d76b05a03!8m2!3d43.168836!4d131.928316!9m1!1b1!16s%2Fg%2F11rqx6015?entry=ttu",
+		source: "Google",
+		link: "",
 	},
 	{
 		id: 2,
-		name: "Diana Egorova",
-		role: "CEO at InkSoul",
-		content:
-			"In our interaction I liked Alexander's attentiveness to my requests, detailed analysis of my activity and his desire to find unusual and yet functional design solutions, suitable for the specifics of my work.",
-		avatar: "/testimonials/diana.webp",
-		link: "https://www.instagram.com/diana_inksoul/",
+		name: "Гера К",
+		content:"Покупали пробковый пол, впервые решили попробовать такое покрытие. В магазине нам рассказали все преимущества такого пола, окончательно убедив нас в правильности выбора — говорят, что со временем мы ощутим преимущества этого пола над обычным ламинатом, особенно полезно для людей в возрасте и детей. Заказ пришёл в срок, как нам и обещали👍 Ещё и оказалось, что укладка пола бесплатно осуществляется представителями магазина! В общем советуем этот магазин однозначно👍",
+		avatar: "/testimonial-avatars/gera-k.webp",
+		link: "",
+		rating: 5,
+		date: "2019-08-18",
+		source: "Yandex",
 	},
 	{
 		id: 3,
-		name: "Kristina",
-		role: "Street Artist",
-		content:
-			"I reached out to Alexander to help expand my personal brand, and he assisted with creating merchandise, including clothing, stickers, and posters. I really appreciated his creativity and straightforward approach to the task.",
-		avatar: "/testimonials/kristina.jpg",
-		link: "https://www.instagram.com/abalych",
+		name: "Maria Rayer",
+		content:"В августе 2020 года покупали здесь ламинат, подложку, плинтусы. Все очень понравилось: от ассортимента и ценовой составляющей до работы сотрудников. Из всех упаковок ламината не было ни одной бракованной планки. Делали самовывоз, так сотрудник (замечательный специалист, очень хорошо, со знанием дела, терпеливо консультировал таких дотошных зануд, как мы с мужем) помог все погрузить в машину. В самом зале есть небольшой, но спасительный детский уголок, где наш непоседа провел достаточно времени, пока мы выбирали покрытие. В итоге, сумма затрат соответствует качеству, пол сделан и радует меня каждый день) всем советую)",
+		avatar: "/testimonial-avatars/maria-ryayer.webp",
+		link: "",
+		rating: 5,
+		date: "2022-05-13",
+		source: "2GIS",
 	},
 	{
 		id: 4,
-		name: "Brighton",
-		role: "Music Artist",
-		content:
-			"Alexander did an outstanding job with pre-press editing and large-format printing of posters that brilliantly showcase my artistic vision. His attention to detail and expertise brought my ideas to life, delivering mind-blowing quality that was absolutely top-notch. Everything was fabulous—from the prints themselves to the entire experience—which has helped elevate my brand presence and supported my music journey immensely.",
-		avatar: "/testimonials/brighton.webp",
-		link: "https://on.soundcloud.com/yBk5X3a4cWA4xnWdA",
+		name: "Павел Авхуцкий",
+		content: "Уютно, много чего представлено, девушка-консультант вообще молодец, знает о чем говорит.",
+		avatar: "/testimonial-avatars/pavel-avhutskiy.webp",
+		link: "",
+		rating: 5,
+		date: "2023-12-27",
+		source: "2GIS",
+	},
+	{
+		id: 5,
+		name: "Olga Kuznetsova",
+		content: "Мне очень понравился магазин, ВСЁ компактно, до этого посетила многие магазины по продаже напольных покрытий, постм везде не чувствуется заинтересованности продавцов в продаже, а тут в магазине на Русской, 78, продавец Елена подошла сразу, я скащала ,что мне нудна спокойная расцветка ламината, она предложила германский ламинат дуб кофейный со скидкой , мне он понравился, покупкой очень довольна и особенно приятно, что доставка была в течение 3 часов.Огромное спасибо Елене, что помогла с выбором, приятный, вежливый продавец, желаю хороших продаж и здоровья",
+		avatar: "/testimonial-avatars/olga-kuznetsova.webp",
+		link: "",
+		rating: 5,
+		date: "2021-05-15",
+		source: "Google",
 	},
 ];
 
@@ -64,6 +77,13 @@ export default function TestimonialSliderSection() {
 	const { selectedIndex, scrollSnaps, onDotButtonClick } =
 		useDotButton(emblaApi);
 
+	const getIconName = (source: string): "google" | "yandex" | "2gis" => {
+		const sourceLower = source.toLowerCase();
+		if (sourceLower === "yandex") return "yandex";
+		if (sourceLower === "2gis") return "2gis";
+		return "google"; // default to google
+	};
+
 	return (
 		<section className="embla no-padding">
 			{/* Arrow controls positioned above carousel on the right */}
@@ -76,21 +96,16 @@ export default function TestimonialSliderSection() {
 			
 			<div className="embla__viewport" ref={emblaRef}>
 				<div className="embla__container">
-					{testimonials.map((testimonial, index) => (
-						<AnimatedGroup
-							amount={0.5}
-							delay={index * 0.1}
-							className="embla__slide"
-							key={testimonial.id}
-						>
-							<NeumorphismCard className="m-10">
+					{testimonials.map((testimonial) => (
+						<div className="embla__slide" key={testimonial.id}>
+							<div className="m-6">
 								<div className="testimonial-card">
-									<p className="mb-6">&ldquo;{testimonial.content}&rdquo;</p>
+									<p className="mb-6 line-clamp-[20]">{testimonial.content}</p>
 									<a
 										href={testimonial.link}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="flex items-center group transition-transform duration-300 ease-in-out transform hover:translate-y-[-5px]"
+										className="flex items-center group"
 									>
 										<div className="w-12 h-12 rounded-full mr-4 relative overflow-hidden">
 											<Image
@@ -101,18 +116,22 @@ export default function TestimonialSliderSection() {
 												loading="eager"
 											/>
 										</div>
-										<div>
+										<div className="flex items-center gap-3">
 											<p className="font-semibold group-hover:underline">
 												{testimonial.name}
 											</p>
-											<p className="text-sm text-muted-foreground">
-												{testimonial.role}
-											</p>
+											{testimonial.source && (
+												<Icon
+													name={getIconName(testimonial.source)}
+													size={24}
+													className="flex-shrink-0"
+												/>
+											)}
 										</div>
 									</a>
 								</div>
-							</NeumorphismCard>
-						</AnimatedGroup>
+							</div>
+						</div>
 					))}
 				</div>
 			</div>

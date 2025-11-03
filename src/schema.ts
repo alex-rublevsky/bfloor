@@ -53,6 +53,22 @@ export const productAttributes = sqliteTable("product_attributes", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	name: text("name").notNull().unique(), // Display name: "Размер (см)", "Цвет"
 	slug: text("slug").notNull().unique(), // URL/SKU friendly: "size-cm", "color"
+	valueType: text("value_type").notNull().default("free-text"), // 'free-text' | 'standardized' | 'both'
+	allowMultipleValues: integer("allow_multiple_values", { mode: "boolean" })
+		.notNull()
+		.default(false),
+});
+
+export const attributeValues = sqliteTable("attribute_values", {
+	id: integer("id").primaryKey({ autoIncrement: true }),
+	attributeId: integer("attribute_id")
+		.references(() => productAttributes.id, { onDelete: "cascade" })
+		.notNull(),
+	value: text("value").notNull(), // Display value: "ПВХ плитка"
+	slug: text("slug"), // Optional: "pvh-plitka" for URLs
+	sortOrder: integer("sort_order").notNull().default(0),
+	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+	createdAt: integer("created_at", { mode: "timestamp" }),
 });
 
 export const variationAttributes = sqliteTable("variation_attributes", {
@@ -232,6 +248,7 @@ export const schema = {
 	products,
 	productVariations,
 	productAttributes,
+	attributeValues,
 	variationAttributes,
 	categories,
 	brands,

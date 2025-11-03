@@ -1,13 +1,9 @@
 #productCard {
-	transition:
-		transform 0.3s ease-out,
-		box-shadow 0.3s ease-out;
+	transition: var(--transition-standard);
 }
 
 #productCard img {
-	transition:
-		transform 0.5s ease-out,
-		opacity 0.5s ease-out;
+	transition: var(--transition-standard);
 }
 
 /* Only enable hover effects on desktop */
@@ -24,10 +20,7 @@
 
 /* Desktop Add to Cart button */
 #addToCartBtn {
-	transition:
-		opacity 0.3s ease-in-out,
-		background-color 0.3s ease-in-out,
-		color 0.3s ease-in-out;
+	transition: var(--transition-standard);
 }
 
 /* Only hide desktop button by default */

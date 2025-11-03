@@ -6,7 +6,7 @@ export function Footer() {
 				<p className=""> © Все права защищены ООО "BeautyFloor" 2025</p>
 				{/* TODO: add link www.rublevsky.studio */}
 				<p className="">
-					Сайт создан <span className="">Rublevsky Studio</span>
+					Понравился сайт? <a href="https://www.rublevsky.studio" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-hover transition-colors">Написать разработчику </a>
 				</p>
 			</div>
 		</footer>

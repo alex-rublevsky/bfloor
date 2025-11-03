@@ -6,6 +6,7 @@ import { DB } from "~/db";
 import type * as schema from "~/schema";
 import { products, productVariations, variationAttributes, productStoreLocations } from "~/schema";
 import type { ProductFormData } from "~/types"; // Updated interface
+import { validateAttributeValues } from "~/utils/validateAttributeValues";
 
 export const updateProduct = createServerFn({ method: "POST" })
 	.inputValidator((data: { id: number; data: ProductFormData }) => data)
@@ -69,6 +70,20 @@ export const updateProduct = createServerFn({ method: "POST" })
 				: [];
 			const imagesJson =
 				imagesArray.length > 0 ? JSON.stringify(imagesArray) : "";
+
+			// Validate standardized attribute values before saving
+			if (productData.attributes?.length) {
+				const validationErrors = await validateAttributeValues(
+					db,
+					productData.attributes,
+				);
+				
+				if (validationErrors.length > 0) {
+					setResponseStatus(400);
+					const errorMessages = validationErrors.map((err) => err.error).join("; ");
+					throw new Error(`Ошибки валидации атрибутов: ${errorMessages}`);
+				}
+			}
 
 			// Convert attributes array back to object format for database storage
 			let attributesJson = null;
@@ -232,7 +247,10 @@ export const updateProduct = createServerFn({ method: "POST" })
 			};
 		} catch (error) {
 			console.error("Error updating product:", error);
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			const errorStack = error instanceof Error ? error.stack : undefined;
+			console.error("Error details:", { errorMessage, errorStack, error });
 			setResponseStatus(500);
-			throw new Error("Failed to update product");
+			throw new Error(`Failed to update product: ${errorMessage}`);
 		}
 	});

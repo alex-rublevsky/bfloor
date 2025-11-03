@@ -1,4 +1,4 @@
-import { Edit, Trash2 } from "lucide-react";
+import { Edit } from "lucide-react";
 import { Badge } from "~/components/ui/shared/Badge";
 import { getBrandCountryName } from "~/constants/units";
 import { ASSETS_BASE_URL } from "~/constants/urls";
@@ -8,18 +8,17 @@ import type { ProductWithVariations } from "~/types";
 import styles from "../store/productCard.module.css";
 import { Icon } from "~/components/ui/shared/Icon";
 import { Skeleton } from "~/components/ui/dashboard/skeleton";
+import { hasOutOfScopeAttributes } from "~/utils/productAttributesUtils";
 
 interface AdminProductCardProps {
 	product: ProductWithVariations;
 	onEdit: (product: ProductWithVariations) => void;
-	onDelete: (product: ProductWithVariations) => void;
 	formatPrice: (price: number) => string;
 }
 
 export function AdminProductCard({
 	product,
 	onEdit,
-	onDelete,
 	formatPrice: _formatPrice,
 }: AdminProductCardProps) {
 	const { prefetchDashboardProduct } = usePrefetch();
@@ -72,20 +71,11 @@ export function AdminProductCard({
 	const allShippingLocations = getAllShippingLocations();
 
     // Detect if product has any out-of-scope product-level attributes
-    const hasOutOfScopeAttributes = (() => {
-        try {
-            if (!product.productAttributes) return false;
-            const parsed = JSON.parse(product.productAttributes);
-            const attributesArray: Array<{ attributeId: string; value: string }> = Array.isArray(parsed)
-                ? parsed
-                : [];
-            if (!attributesArray.length || !availableAttributes?.length) return false;
-            const availableIds = new Set(availableAttributes.map((a) => a.id.toString()));
-            return attributesArray.some((attr) => !availableIds.has(attr.attributeId));
-        } catch {
-            return false;
-        }
-    })();
+    // Uses the shared utility function for consistency
+    const hasOutOfScopeAttrs = hasOutOfScopeAttributes(
+        product.productAttributes,
+        availableAttributes
+    );
 
 	// Prefetch on hover
 	const handleMouseEnter = () => {
@@ -94,8 +84,9 @@ export function AdminProductCard({
 
 	return (
 		<article 
-			className="block h-full relative"
+			className="block h-full relative cursor-pointer"
 			onMouseEnter={handleMouseEnter}
+			onClick={() => onEdit(product)}
 		>
 			<div
 				className="w-full product-card overflow-hidden group"
@@ -155,7 +146,7 @@ export function AdminProductCard({
 											/>
 										)}
                                 {/* Out-of-scope attributes indicator */}
-                                {hasOutOfScopeAttributes && (
+                                {hasOutOfScopeAttrs && (
                                     <div className="absolute top-2 left-2 flex items-center justify-center">
                                         <svg
                                             width="48"
@@ -189,38 +180,17 @@ export function AdminProductCard({
 
 						{/* Featured Badge */}
 						{product.isFeatured && (
-							<div className="absolute top-2 right-2">
+							<div className="absolute top-2 right-2 z-10">
 								<Badge variant="default">Featured</Badge>
 							</div>
 						)}
 
-						{/* Desktop Action Buttons */}
-						<div className="absolute bottom-0 left-0 right-0 hidden md:flex opacity-0 group-hover:opacity-100 transition-all duration-500">
-							<button
-								type="button"
-							onMouseEnter={() => prefetchDashboardProduct(product.id)}
-							onFocus={() => prefetchDashboardProduct(product.id)}
-								onClick={(e) => {
-									e.stopPropagation();
-									onEdit(product);
-								}}
-								className="flex-1 flex items-center justify-center space-x-2 bg-muted/70 backdrop-blur-xs text-foreground hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-all duration-500 py-2 cursor-pointer outline-none border-none"
-								style={{ margin: 0, padding: "0.5rem 0" }}
-							>
+						{/* Desktop Edit Indicator - Centered on image */}
+						<div className="absolute inset-0 hidden md:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-10">
+							<div className="flex items-center justify-center gap-2 px-4 py-2 bg-background/70 backdrop-blur-sm rounded-md border border-border/50">
 								<Edit className="w-4 h-4" />
-								<span>Изменить</span>
-							</button>
-							<button
-								type="button"
-								onClick={(e) => {
-									e.stopPropagation();
-									onDelete(product);
-								}}
-								className="w-12 flex items-center justify-center bg-muted/70 backdrop-blur-xs text-foreground hover:bg-red-600 hover:text-primary-foreground active:bg-red-600 active:text-primary-foreground transition-all duration-500 cursor-pointer outline-none border-none"
-								style={{ margin: 0, padding: "0.5rem 0" }}
-							>
-								<Trash2 className="w-4 h-4" />
-							</button>
+								<span className="text-sm font-medium">Изменить</span>
+							</div>
 						</div>
 					</div>
 
@@ -231,27 +201,38 @@ export function AdminProductCard({
 							{/* Price */}
 							<div className="flex flex-col mb-2">
 								<div className="flex flex-wrap items-center justify-between w-full gap-x-2">
-									<div className="flex flex-col items-baseline gap-1">
+									<div className="flex flex-col items-baseline gap-0 flex-shrink-0">
 										{product.discount ? (
 											<>
-												<h5 className="whitespace-nowrap">
-													{(
-														displayPrice *
-														(1 - product.discount / 100)
-													).toFixed(2)}{" "}
-													р
-												</h5>
+												<div className="whitespace-nowrap flex items-baseline gap-0.5">
+													<span className="text-xl font-light">
+														{(
+															displayPrice *
+															(1 - product.discount / 100)
+														).toFixed(2)}
+													</span>
+													<span className="text-xs font-light text-muted-foreground">
+														р
+													</span>
+												</div>
 												<div className="flex items-center gap-1">
-													<h6 className="line-through text-muted-foreground">
-														${displayPrice.toFixed(2)}
-													</h6>
-													<Badge variant="green">{product.discount}% OFF</Badge>
+													<span className="text-sm line-through text-muted-foreground">
+														{displayPrice.toFixed(2)}
+													</span>
+													<span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+														-{product.discount}%
+													</span>
 												</div>
 											</>
 										) : (
-											<h5 className="whitespace-nowrap">
-												{displayPrice.toFixed(2)} р
-											</h5>
+											<div className="whitespace-nowrap flex items-baseline gap-0.5">
+												<span className="text-xl font-light">
+													{displayPrice.toFixed(2)}
+												</span>
+												<span className="text-xs font-light text-muted-foreground">
+													р
+												</span>
+											</div>
 										)}
 									</div>
 								</div>
@@ -279,35 +260,6 @@ export function AdminProductCard({
 									</div>
 								)}
 							</div>
-						</div>
-
-						{/* Mobile Action Buttons */}
-						<div className="md:hidden mt-auto flex">
-							<button
-								type="button"
-							onMouseEnter={() => prefetchDashboardProduct(product.id)}
-							onFocus={() => prefetchDashboardProduct(product.id)}
-									onClick={(e) => {
-										e.stopPropagation();
-										onEdit(product);
-									}}
-								className="flex-1 cursor-pointer flex items-center justify-center space-x-2 bg-muted backdrop-blur-xs text-foreground hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-all duration-500 py-2 px-4 outline-none border-none"
-								style={{ margin: 0 }}
-							>
-								<Edit className="w-4 h-4" />
-								<span>Edit</span>
-							</button>
-							<button
-								type="button"
-								onClick={(e) => {
-									e.stopPropagation();
-									onDelete(product);
-								}}
-								className="w-12 cursor-pointer flex items-center justify-center bg-muted backdrop-blur-xs text-foreground hover:bg-red-600 hover:text-primary-foreground active:bg-red-600 active:text-primary-foreground transition-all duration-500 outline-none border-none"
-								style={{ margin: 0, padding: "0.5rem 0" }}
-							>
-								<Trash2 className="w-4 h-4" />
-							</button>
 						</div>
 					</div>
 				</div>

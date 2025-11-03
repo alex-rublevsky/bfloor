@@ -35,6 +35,7 @@ import type {
 	ProductWithDetails,
 } from "~/types";
 import { seo } from "~/utils/seo";
+ 
 
 // Simple search params - no Zod needed for basic optional strings
 const validateSearch = (search: Record<string, unknown>) => {
@@ -152,6 +153,29 @@ function ProductPage() {
 	
 	// Type assertion for product with all details
 	const productWithDetails = product as ProductWithDetails | undefined;
+
+	// Determine if product is flooring (sold in packs with area in m²)
+	const isFlooringProduct = Boolean(productWithDetails?.squareMetersPerPack);
+
+	// Map full unit names to short labels for UI display
+	const getUnitShortLabel = (unit: string | undefined): string => {
+		if (!unit) return "шт";
+		const normalized = unit.trim().toLowerCase();
+		switch (normalized) {
+			case "квадратный метр":
+				return "м²";
+			case "погонный метр":
+				return "м.п.";
+			case "литр":
+				return "л";
+			case "штука":
+				return "шт";
+			case "упаковка":
+				return "упак";
+			default:
+				return unit; // fallback to raw value if unknown
+		}
+	};
 
 
 	// Auto-select first variation if no search params and product has variations
@@ -472,9 +496,9 @@ function ProductPage() {
 							<div className="border border-border rounded-lg p-2 space-y-4">
 								{/* Price and Quantity */}
 								<div className="flex items-stretch gap-0">
-                                {/* Price Box */}
-                                <div className="bg-muted px-4 py-3 rounded-lg">
-                                    <div className="text-sm text-gray-500 mb-1">Цена за м²</div>
+							{/* Price Box */}
+							<div className="bg-muted px-4 py-3 rounded-lg">
+								<div className="text-sm text-gray-500 mb-1">{`Цена за ${isFlooringProduct ? "м²" : getUnitShortLabel(productWithDetails?.unitOfMeasurement)}`}</div>
                                     <div
                                         className="text-2xl font-bold text-gray-800"
                                         style={{
@@ -515,12 +539,14 @@ function ProductPage() {
 														</div>
 													</div>
 												)}
-												<div className="flex items-baseline gap-1 flex-wrap justify-center">
+											<div className="flex items-baseline gap-1 flex-wrap justify-center">
+												{isFlooringProduct && (
 													<div className="text-sm  font-normal">Упаковок</div>
-													<div className="text-2xl font-normal">
-														{quantity}
-													</div>
+												)}
+												<div className="text-2xl font-normal">
+													{quantity}
 												</div>
+											</div>
 											</div>
 										</div>
 									<button
@@ -545,7 +571,7 @@ function ProductPage() {
 								)}
 
 							{/* Price and Add to Cart */}
-							<div className="bg-muted rounded-lg p-2 flex flex-col md:flex-row gap-4 md:items-stretch">
+							<div className="bg-muted rounded-lg p-2 flex flex-col md:flex-row gap-4 items-baseline">
 							{/* Price Display */}
 							<div className="flex flex-col gap-2">
 								{/* Discount Row */}
@@ -633,14 +659,25 @@ function ProductPage() {
 							<div className="space-y-4">
 								<h2>Характеристики</h2>
 								<div>
-									{/* Product-level attributes */}
-									{Array.isArray(product?.productAttributes) && productWithDetails?.productAttributes?.map((attr: { attributeId: string; value: string }) => {
-										const attribute = attributes?.find(
-											(a) => a.id.toString() === attr.attributeId || a.slug === attr.attributeId || a.name === attr.attributeId,
-										);
-										const displayName = attribute
-											? attribute.name
-											: attr.attributeId;
+										{/* Product-level attributes - only show standardized attributes */}
+										{(productWithDetails?.productAttributes ?? [])
+											// Filter out error attributes (out-of-scope attributes)
+											.filter((attr: { attributeId: string; value: string }) => {
+											if (!attributes || !attributes.length) return false;
+											// Check if attribute is in the standardized list
+											const attribute = attributes.find(
+												(a) => a.id.toString() === attr.attributeId || a.slug === attr.attributeId || a.name === attr.attributeId,
+											);
+											// Only show if it's a standardized attribute
+											return attribute !== undefined;
+										})
+										.map((attr: { attributeId: string; value: string }) => {
+											const attribute = attributes?.find(
+												(a) => a.id.toString() === attr.attributeId || a.slug === attr.attributeId || a.name === attr.attributeId,
+											);
+											const displayName = attribute
+												? attribute.name
+												: attr.attributeId;
 
 											return (
 												<div

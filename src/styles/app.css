@@ -88,17 +88,17 @@ input.field-sizing-content {
 @theme {
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
-	--color-foreground-muted: color-mix(in oklch, var(--foreground) 45%, var(--background));
+	--color-foreground-muted: color-mix(
+		in oklch,
+		var(--foreground) 45%,
+		var(--background)
+	);
 	--color-card: var(--card);
 	--color-card-foreground: var(--card-foreground);
 	--color-popover: var(--popover);
 	--color-popover-foreground: var(--popover-foreground);
 	--color-primary: var(--primary);
-	--color-primary-hover: color-mix(
-		in oklch,
-		var(--primary) 80%,
-		white 20%
-	);
+	--color-primary-hover: color-mix(in oklch, var(--primary) 80%, white 20%);
 	--color-primary-foreground: var(--primary-foreground);
 	--color-secondary: var(--secondary);
 	--color-secondary-foreground: var(--secondary-foreground);
@@ -151,7 +151,6 @@ input.field-sizing-content {
 }
 
 @layer base {
-
 	* {
 		border-color: var(--primary);
 	}
@@ -170,22 +169,21 @@ input.field-sizing-content {
 	--primary: oklch(0.4005 0.1632 var(--hue));
 	--primary-foreground: oklch(95.85% 0.0037 var(--hue));
 
-	--muted: oklch(0.9437 0.0174  var(--hue));
-	--muted-foreground: oklch(0.5 0.0374  var(--hue));
+	--muted: oklch(0.9437 0.0174 var(--hue));
+	--muted-foreground: oklch(0.5 0.0374 var(--hue));
 
 	--card: 0 0% 100%;
 	--card-foreground: 0 0% 3.9%;
 	--popover: 0 0% 100%;
 	--popover-foreground: 0 0% 3.9%;
-	
+
 	/* or this? 0.4005 0.1373 25.99; */
-	
-	--secondary:  oklch(0.8779 0.0512  var(--hue));
-	--secondary-hover: oklch(0.54 0.2203 var(--hue) calc(l_*_0.9));
+
+	--secondary: oklch(0.8779 0.0512 var(--hue));
+	--secondary-hover: oklch(0.54 0.2203 var(--hue) calc(l_ * _0 0.9));
 
 	--secondary-foreground: oklch(0.9672 0.0043 var(--hue));
-	
-	
+
 	--accent: oklch(0.54 0.2203 var(--hue));
 	--accent-foreground: var(--background);
 	--destructive: 0.6368 0.2078 25.33;
@@ -206,6 +204,12 @@ input.field-sizing-content {
 	--sidebar-ring: 217.2 91.2% 59.8%;
 	--discount-badge: #bee42b;
 	--discount-badge-foreground: #3c480b;
+
+	/* Standard transition settings (unified) */
+	--transition-standard-duration: 0.3s;
+	--transition-standard-easing: ease-out;
+	--transition-standard: all var(--transition-standard-duration)
+		var(--transition-standard-easing);
 }
 
 @layer base {
@@ -523,7 +527,8 @@ p {
 }
 
 /* View transition for elements that actually transition */
-::view-transition-old(root) {	animation: none;
+::view-transition-old(root) {
+	animation: none;
 }
 
 ::view-transition-new(root) {
