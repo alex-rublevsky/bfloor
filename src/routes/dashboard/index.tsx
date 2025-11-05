@@ -22,9 +22,9 @@ import { ProductSettingsFields } from "~/components/ui/dashboard/ProductSettings
 import ProductVariationAttributesSelector from "~/components/ui/dashboard/ProductVariationAttributesSelector";
 import ProductVariationForm from "~/components/ui/dashboard/ProductVariationForm";
 import { SelectWithCreate } from "~/components/ui/dashboard/SelectWithCreate";
-import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { StoreLocationsSelector } from "~/components/ui/dashboard/StoreLocationsSelector";
+import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
 import { Button } from "~/components/ui/shared/Button";
 import { CheckboxList } from "~/components/ui/shared/CheckboxList";
 import { EmptyState } from "~/components/ui/shared/EmptyState";

@@ -3,8 +3,14 @@ section.embla {
 	max-width: none;
 	--slide-height: 19rem;
 	--slide-spacing: 0rem;
-	--slide-size: 100%;
+	--slide-size: 45ch;
 	overflow: hidden;
+}
+
+@media (max-width: 640px) {
+	section.embla {
+		--slide-size: 34ch;
+	}
 }
 
 .embla__viewport {
@@ -19,9 +25,9 @@ section.embla {
 .embla__slide {
 	transform: translate3d(0, 0, 0);
 	flex: 0 0 var(--slide-size);
-	min-width: 0;
 	position: relative;
-	max-width: 50ch;
+	width: var(--slide-size);
+	max-width: var(--slide-size);
 	padding-left: var(--slide-spacing);
 }
 .embla__slide__number {
@@ -85,7 +91,6 @@ section.embla {
 .embla__dots-container {
 	display: flex;
 	justify-content: center;
-	padding: 1rem 0;
 }
 
 .embla__dots {

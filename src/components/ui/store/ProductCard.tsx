@@ -469,7 +469,7 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 										fill="none"
 										viewBox="0 0 33 30"
 										className="cart-icon"
-										aria-label="Добавить в корзину"
+										aria-label="В корзину"
 									>
 										<title>Add to cart</title>
 										<path
@@ -493,7 +493,7 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 										/>
 									</svg>
 									{!isAddingToCart ? (
-										<span>Добавить в корзину</span>
+										<span>В корзину</span>
 									) : (
 										<span>Добавление…</span>
 									)}

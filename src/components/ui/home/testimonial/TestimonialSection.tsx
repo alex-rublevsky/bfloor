@@ -128,7 +128,7 @@ export default function TestimonialSliderSection() {
 				<div className="embla__container">
 					{testimonials.map((testimonial) => (
 						<div className="embla__slide" key={testimonial.id}>
-							<div className="m-6">
+							<div className="m-3">
 								<a
 									href={testimonial.link}
 									target="_blank"

@@ -4,8 +4,13 @@ import { ASSETS_BASE_URL } from "~/constants/urls";
 
 type EmblaOptionsType = Parameters<typeof useEmblaCarousel>[0];
 
+type SlideImage = {
+	desktop: string;
+	mobile: string;
+};
+
 type EmblaPropType = {
-	slides: string[];
+	slides: SlideImage[];
 	options?: EmblaOptionsType;
 };
 
@@ -28,7 +33,7 @@ export const Thumb: React.FC<PropType> = (props) => {
 			<button
 				onClick={onClick}
 				type="button"
-				className="embla-thumbs__slide__button"
+				className="embla-thumbs__slide__button aspect-[3/2]"
 				aria-label={`Go to slide ${index + 1}`}
 			>
 				<img
@@ -71,18 +76,21 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 	}, [emblaMainApi, onSelect]);
 
 	return (
-		<section className="no-padding">
+		<section className="no-padding pb-12">
 			<div className="embla">
 				<div className="embla__viewport" ref={emblaMainRef}>
 					<div className="embla__container">
-						{slides.map((src, index) => (
-							<div className="embla__slide" key={src}>
+						{slides.map((slide, index) => (
+							<div className="embla__slide" key={slide.desktop}>
 								<div className="embla__slide__number">
-									<img
-										src={src}
-										alt={`banner ${index + 1}`}
-										className="embla__slide__image"
-									/>
+									<picture>
+										<source media="(min-width: 768px)" srcSet={slide.desktop} />
+										<img
+											src={slide.mobile}
+											alt={`banner ${index + 1}`}
+											className="embla__slide__image"
+										/>
+									</picture>
 								</div>
 							</div>
 						))}
@@ -91,14 +99,14 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 
 				<div className="embla-thumbs">
 					<div className="embla-thumbs__viewport" ref={emblaThumbsRef}>
-						<div className="embla-thumbs__container">
-							{slides.map((src, index) => (
+						<div className="embla-thumbs__container flex gap-3">
+							{slides.map((slide, index) => (
 								<Thumb
-									key={`thumb-${src}`}
+									key={`thumb-${slide.desktop}`}
 									onClick={() => onThumbClick(index)}
 									selected={index === selectedIndex}
 									index={index}
-									src={src}
+									src={slide.mobile}
 								/>
 							))}
 						</div>
@@ -128,95 +136,117 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 }
 .embla__slide__number {
 	box-shadow: inset 0 0 0 0.2rem var(--detail-medium-contrast);
-	border-radius: 1.8rem;
-	font-size: 4rem;
-	font-weight: 600;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	height: var(--slide-height);
+	border-radius: var(--radius-lg);
+	overflow: hidden;
 	user-select: none;
+	position: relative;
+	width: 100%;
+	height: auto;
 }
-  .embla__slide__image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 1.8rem;
-    display: block;
-  }
+.embla__slide__number picture {
+	display: block;
+	width: auto;
+	height: auto;
+}
+.embla__slide__image {
+	width: auto;
+	height: auto;
+	min-width: 100%;
+	display: block;
+	object-position: left bottom;
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+	.embla__slide__number {
+		height: 400px;
+		min-height: 400px;
+	}
+	.embla__slide__number picture {
+		height: 100%;
+	}
+	.embla__slide__image {
+		height: 100%;
+		object-fit: cover;
+	}
+}
+@media (min-width: 1024px) {
+	.embla__slide__number {
+		height: 500px;
+		min-height: 500px;
+	}
+}
+@media (min-width: 1400px) {
+	.embla__slide__number {
+		height: auto;
+		min-height: 0;
+		display: block;
+	}
+	.embla__slide__number picture {
+		width: auto;
+		height: auto;
+		display: block;
+		max-width: none;
+	}
+	.embla__slide__image {
+		width: auto;
+		height: auto;
+		max-width: none;
+		max-height: none;
+		object-fit: none;
+	}
+}
 .embla-thumbs {
 	--thumbs-slide-spacing: 0.8rem;
-	--thumbs-slide-height: 6rem;
+	--thumbs-slide-height: 4rem;
 	margin-top: var(--thumbs-slide-spacing);
+}
+@media (min-width: 768px) {
+	.embla-thumbs {
+		--thumbs-slide-height: 6rem;
+	}
 }
 .embla-thumbs__viewport {
 	overflow: hidden;
 }
-.embla-thumbs__container {
-	display: flex;
-	flex-direction: row;
-	margin-left: calc(var(--thumbs-slide-spacing) * -1);
-}
 .embla-thumbs__slide {
-	flex: 0 0 22%;
+	flex: 0 0 auto;
 	min-width: 0;
-	padding-left: var(--thumbs-slide-spacing);
 }
 @media (min-width: 576px) {
 	.embla-thumbs__slide {
-		flex: 0 0 15%;
+		flex: 0 0 auto;
 	}
 }
-.embla-thumbs__slide__number {
-	border-radius: 1.8rem;
-	-webkit-tap-highlight-color: rgba(var(--text-high-contrast-rgb-value), 0.5);
-	-webkit-appearance: none;
-	appearance: none;
-	background-color: transparent;
-	touch-action: manipulation;
-	display: inline-flex;
-	text-decoration: none;
-	cursor: pointer;
-	border: 0;
-	padding: 0;
-	margin: 0;
-	box-shadow: inset 0 0 0 0.2rem var(--detail-medium-contrast);
-	font-size: 1.8rem;
-	font-weight: 600;
-	color: var(--detail-high-contrast);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	height: var(--thumbs-slide-height);
-	width: 100%;
-}
 .embla-thumbs__slide__button {
-	border-radius: 1.8rem;
+	border-radius: var(--radius-sm);
 	-webkit-tap-highlight-color: rgba(var(--text-high-contrast-rgb-value), 0.5);
 	-webkit-appearance: none;
 	appearance: none;
 	background-color: transparent;
 	touch-action: manipulation;
-	display: inline-flex;
+	display: flex;
+	align-items: flex-end;
+	justify-content: flex-start;
 	text-decoration: none;
 	cursor: pointer;
-	border: 0;
+	border: 1.5px solid transparent;
 	padding: 0;
 	margin: 0;
 	box-shadow: inset 0 0 0 0.2rem var(--detail-medium-contrast);
 	height: var(--thumbs-slide-height);
-	width: 100%;
 	overflow: hidden;
+	transition: var(--transition-standard);
+	box-sizing: border-box;
 }
 .embla-thumbs__slide__image {
-	width: 100%;
+	width: auto;
 	height: 100%;
 	object-fit: cover;
 	display: block;
-	border-radius: 1.8rem;
+	border-radius: var(--radius-sm);
+	object-position: left bottom;
 }
-.embla-thumbs__slide--selected .embla-thumbs__slide__number {
-	color: var(--text-body);
+.embla-thumbs__slide--selected .embla-thumbs__slide__button {
+	border-color: var(--accent);
 }
 `}</style>
 			</div>
@@ -225,9 +255,15 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 };
 
 export function Banner() {
-	const SLIDES: string[] = [
-		`${ASSETS_BASE_URL}/banners/laminat-elochka.webp`,
-		`${ASSETS_BASE_URL}/banners/nastennaya-probka-vsega-v-nalichii.webp`,
+	const SLIDES: SlideImage[] = [
+		{
+			desktop: `${ASSETS_BASE_URL}/banners/elochka.webp`,
+			mobile: `${ASSETS_BASE_URL}/banners/elochka-mobile.webp`,
+		},
+		{
+			desktop: `${ASSETS_BASE_URL}/banners/cork.webp`,
+			mobile: `${ASSETS_BASE_URL}/banners/cork-mobile.webp`,
+		},
 	];
 	const OPTIONS: EmblaOptionsType = { loop: true };
 

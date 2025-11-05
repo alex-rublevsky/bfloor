@@ -9,6 +9,7 @@
 	margin-bottom: 1.5rem;
 	padding: 0 1rem;
 	gap: 1rem;
+	flex-wrap: wrap; /* Allow wrapping only when needed */
 }
 
 @media (min-width: 640px) {
@@ -22,12 +23,17 @@
 	display: flex;
 	flex-direction: column;
 	flex: 1;
+	min-width: 0; /* Allow flex item to shrink below content size */
 	gap: 1rem;
 }
 
 /* Title styling in header */
 .product-slider__header-content h2 {
 	margin: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 100%;
 }
 
 /* Tag buttons row */
@@ -74,13 +80,25 @@
 }
 
 .product-slider__tag-button--active:hover {
-	background-color: var(--primary);
-	opacity: 0.9;
+	background-color: var(--muted);
+	border-color: var(--primary);
+	color: var(--foreground);
 }
 
 .product-slider__tag-count {
 	font-size: 0.75rem;
 	opacity: 0.7;
+}
+
+/* Desktop adjustments - reduce button padding and gap */
+@media (min-width: 640px) {
+	.product-slider__tags {
+		gap: 0.375rem; /* Half of base gap (0.75rem / 2) */
+	}
+
+	.product-slider__tag-button {
+		padding: 0.375rem 0.875rem; /* Reduced from 0.5rem 1rem */
+	}
 }
 
 .product-slider__controls {
@@ -91,17 +109,17 @@
 }
 
 /* Adjust slide size for products - products are wider than testimonials */
-section.embla .embla__slide {
-	max-width: 20rem; /* Wider than testimonials (50ch) for product cards */
+section.embla.product-slider-section .embla__slide {
+	max-width: 16rem; /* Wider than testimonials (50ch) for product cards */
 }
 
 /* Remove left padding from first slide to eliminate gap */
-section.embla .embla__slide:first-child > div {
+section.embla.product-slider-section .embla__slide:first-child > div {
 	padding-left: 0;
 }
 
 /* Remove right padding from last slide to eliminate gap */
-section.embla .embla__slide:last-child > div {
+section.embla.product-slider-section .embla__slide:last-child > div {
 	padding-right: 0;
 }
 
@@ -119,12 +137,23 @@ section.embla .embla__slide:last-child > div {
 	min-height: 10rem;
 }
 
+/* Dot indicators - override testimonial styles for product slider */
+.embla__dots-container .embla__dots {
+	gap: 0;
+}
+
+.embla__dots-container .embla__dot {
+	width: 1.733rem; /* 2.6rem / 1.5 */
+	height: 1.733rem; /* 2.6rem / 1.5 */
+}
+
+.embla__dots-container .embla__dot:after {
+	width: 0.8rem; /* 1.2rem / 1.5 */
+	height: 0.8rem; /* 1.2rem / 1.5 */
+}
+
 /* Responsive adjustments */
 @media (max-width: 640px) {
-	.product-slider__header {
-		flex-wrap: wrap;
-	}
-
 	.product-slider__tags {
 		gap: 0.5rem;
 		width: 100%;
@@ -135,16 +164,28 @@ section.embla .embla__slide:last-child > div {
 		font-size: 0.8125rem;
 	}
 
-	.product-slider__header-content h2 {
-		width: 100%;
+	/* Let flexbox handle wrapping naturally - don't force widths */
+	.product-slider__header-content {
+		flex: 1 1 auto;
+		min-width: 0; /* Allow shrinking */
 	}
 
+	/* Controls stay on same row when space allows, wrap naturally when needed */
 	.product-slider__controls {
-		width: 100%;
-		justify-content: flex-end;
+		flex-shrink: 0;
 	}
 
-	section.embla .embla__slide {
-		max-width: 16rem; /* Smaller on mobile */
+	section.embla.product-slider-section .embla__slide {
+		max-width: 12rem; /* Smaller on mobile */
+	}
+
+	.embla__dots-container .embla__dot {
+		width: 1.333rem; /* 2rem / 1.5 */
+		height: 1.333rem; /* 2rem / 1.5 */
+	}
+
+	.embla__dots-container .embla__dot:after {
+		width: 0.8rem; /* 1.2rem / 1.5 */
+		height: 0.8rem; /* 1.2rem / 1.5 */
 	}
 }

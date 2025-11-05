@@ -220,7 +220,7 @@ input.field-sizing-content {
 @layer utilities {
 	section {
 		background-color: oklch(var(--background));
-		padding-bottom: 13rem;
+		padding-bottom: 6rem;
 		padding-left: 1rem;
 		z-index: 1;
 		padding-right: 1rem;

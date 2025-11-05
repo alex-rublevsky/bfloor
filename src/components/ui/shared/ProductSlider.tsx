@@ -186,7 +186,7 @@ export default function ProductSlider({
 		useDotButton(emblaApi);
 
 	return (
-		<section className="embla no-padding">
+		<section className="embla no-padding product-slider-section">
 			{/* Header Row - Title/Tags and Arrows */}
 			<div className="product-slider__header">
 				<div className="product-slider__header-content">

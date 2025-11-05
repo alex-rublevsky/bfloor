@@ -3,7 +3,7 @@
 	margin: auto;
 	--slide-height: 19rem;
 	--slide-spacing: 0rem;
-	--slide-size: 100%;
+	--slide-size: 50ch;
 	overflow: hidden;
 }
 .embla__viewport {
@@ -18,9 +18,9 @@
 .embla__slide {
 	transform: translate3d(0, 0, 0);
 	flex: 0 0 var(--slide-size);
-	min-width: 0;
 	position: relative;
-	max-width: 50ch;
+	width: var(--slide-size);
+	max-width: var(--slide-size);
 	padding-left: var(--slide-spacing);
 }
 .embla__slide__number {
