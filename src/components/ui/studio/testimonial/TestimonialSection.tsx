@@ -1,8 +1,7 @@
 import useEmblaCarousel from "embla-carousel-react";
-import "./testimonial.css";
 import { AnimatedGroup } from "~/components/motion_primitives/AnimatedGroup";
 import { Image } from "~/components/ui/shared/Image";
-import NeumorphismCard from "~/components/ui/shared/NeumorphismCard";
+import "./testimonial.css";
 import {
 	NextButton,
 	PrevButton,
@@ -75,35 +74,33 @@ export default function TestimonialSliderSection() {
 							className="embla__slide"
 							key={testimonial.id}
 						>
-							<NeumorphismCard className=" m-10">
-								<div className="testimonial-card">
-									<p className="mb-6">&ldquo;{testimonial.content}&rdquo;</p>
-									<a
-										href={testimonial.link}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="flex items-center group transition-transform duration-300 ease-in-out transform hover:translate-y-[-5px]"
-									>
-										<div className="w-12 h-12 rounded-full mr-4 relative overflow-hidden">
-											<Image
-												src={testimonial.avatar}
-												alt={testimonial.name}
-												//fill
-												className="object-cover"
-												loading="eager"
-											/>
-										</div>
-										<div>
-											<p className="font-semibold group-hover:underline">
-												{testimonial.name}
-											</p>
-											<p className="text-sm text-muted-foreground">
-												{testimonial.role}
-											</p>
-										</div>
-									</a>
-								</div>
-							</NeumorphismCard>
+							<div className="testimonial-card">
+								<p className="mb-6">&ldquo;{testimonial.content}&rdquo;</p>
+								<a
+									href={testimonial.link}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="flex items-center group transition-transform duration-300 ease-in-out transform hover:translate-y-[-5px]"
+								>
+									<div className="w-12 h-12 rounded-full mr-4 relative overflow-hidden">
+										<Image
+											src={testimonial.avatar}
+											alt={testimonial.name}
+											//fill
+											className="object-cover"
+											loading="eager"
+										/>
+									</div>
+									<div>
+										<p className="font-semibold group-hover:underline">
+											{testimonial.name}
+										</p>
+										<p className="text-sm text-muted-foreground">
+											{testimonial.role}
+										</p>
+									</div>
+								</a>
+							</div>
 						</AnimatedGroup>
 					))}
 				</div>

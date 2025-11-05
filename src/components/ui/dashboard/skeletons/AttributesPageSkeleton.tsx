@@ -1,5 +1,11 @@
 import { Skeleton } from "~/components/ui/dashboard/skeleton";
 
+// Generate stable keys for skeleton items
+const SKELETON_KEYS = Array.from(
+	{ length: 10 },
+	(_, i) => `attribute-skeleton-${i}`,
+);
+
 export function AttributesPageSkeleton() {
 	return (
 		<div className="space-y-6 px-6 py-6">
@@ -15,9 +21,9 @@ export function AttributesPageSkeleton() {
 
 			{/* Attributes Grid */}
 			<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-				{Array.from({ length: 10 }, (_, index) => (
+				{SKELETON_KEYS.map((key) => (
 					<div
-						key={`attribute-skeleton-${index}`}
+						key={key}
 						className="border border-muted rounded-lg p-4 bg-card space-y-2"
 					>
 						<div className="flex items-center gap-2">
@@ -40,5 +46,3 @@ export function AttributesPageSkeleton() {
 		</div>
 	);
 }
-
-

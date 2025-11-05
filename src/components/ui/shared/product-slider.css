@@ -1,0 +1,150 @@
+/* Reuse testimonial carousel styles - most styles are shared */
+/* Product-specific adjustments */
+
+/* Header row - contains title/tags and arrows */
+.product-slider__header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	margin-bottom: 1.5rem;
+	padding: 0 1rem;
+	gap: 1rem;
+}
+
+@media (min-width: 640px) {
+	.product-slider__header {
+		padding: 0 1.5rem;
+	}
+}
+
+/* Header content wrapper - contains title and tags */
+.product-slider__header-content {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	gap: 1rem;
+}
+
+/* Title styling in header */
+.product-slider__header-content h2 {
+	margin: 0;
+}
+
+/* Tag buttons row */
+.product-slider__tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+}
+
+.product-slider__tag-button {
+	-webkit-tap-highlight-color: rgba(var(--text-high-contrast-rgb-value), 0.5);
+	-webkit-appearance: none;
+	appearance: none;
+	background-color: transparent;
+	border: 2px solid var(--border);
+	border-radius: var(--radius);
+	padding: 0.5rem 1rem;
+	cursor: pointer;
+	transition: var(--transition-standard);
+	color: var(--foreground);
+	font-size: 0.875rem;
+	font-weight: 500;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	white-space: nowrap;
+}
+
+.product-slider__tag-button:hover:not(:disabled) {
+	background-color: var(--muted);
+	border-color: var(--primary);
+	transform: translateY(-1px);
+}
+
+.product-slider__tag-button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.product-slider__tag-button--active {
+	background-color: var(--primary);
+	border-color: var(--primary);
+	color: var(--primary-foreground);
+}
+
+.product-slider__tag-button--active:hover {
+	background-color: var(--primary);
+	opacity: 0.9;
+}
+
+.product-slider__tag-count {
+	font-size: 0.75rem;
+	opacity: 0.7;
+}
+
+.product-slider__controls {
+	display: flex;
+	align-items: flex-start;
+	flex-shrink: 0;
+	padding-top: 0.25rem; /* Align with h2 top */
+}
+
+/* Adjust slide size for products - products are wider than testimonials */
+section.embla .embla__slide {
+	max-width: 20rem; /* Wider than testimonials (50ch) for product cards */
+}
+
+/* Remove left padding from first slide to eliminate gap */
+section.embla .embla__slide:first-child > div {
+	padding-left: 0;
+}
+
+/* Remove right padding from last slide to eliminate gap */
+section.embla .embla__slide:last-child > div {
+	padding-right: 0;
+}
+
+/* Loading and empty states */
+.product-slider__loading,
+.product-slider__empty {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 3rem 1rem;
+	text-align: center;
+}
+
+.product-slider__empty {
+	min-height: 10rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+	.product-slider__header {
+		flex-wrap: wrap;
+	}
+
+	.product-slider__tags {
+		gap: 0.5rem;
+		width: 100%;
+	}
+
+	.product-slider__tag-button {
+		padding: 0.375rem 0.75rem;
+		font-size: 0.8125rem;
+	}
+
+	.product-slider__header-content h2 {
+		width: 100%;
+	}
+
+	.product-slider__controls {
+		width: 100%;
+		justify-content: flex-end;
+	}
+
+	section.embla .embla__slide {
+		max-width: 16rem; /* Smaller on mobile */
+	}
+}

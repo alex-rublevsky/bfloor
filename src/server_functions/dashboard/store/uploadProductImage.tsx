@@ -20,7 +20,6 @@ interface UploadImageInput {
 export const uploadProductImage = createServerFn({ method: "POST" })
 	.inputValidator((data: UploadImageInput) => data)
 	.handler(async ({ data }) => {
-
 		try {
 			const {
 				fileData,

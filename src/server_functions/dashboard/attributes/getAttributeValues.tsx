@@ -38,5 +38,3 @@ export const getAttributeValues = createServerFn({ method: "GET" })
 			createdAt: v.createdAt ? Number(v.createdAt) : null,
 		}));
 	});
-
-

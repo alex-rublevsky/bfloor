@@ -1,8 +1,15 @@
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { MoreVertical, Plus } from "lucide-react";
 import { useState } from "react";
+import {
+	Drawer,
+	DrawerContent,
+	DrawerTrigger,
+} from "~/components/ui/shared/Drawer";
+import { useCart } from "~/lib/cartContext";
 import { signOut } from "~/utils/auth-client";
 import { cn } from "~/utils/utils";
+import { CartDrawerContent } from "../store/CartDrawerContent";
 
 interface BottomNavBarProps {
 	className?: string;
@@ -19,6 +26,57 @@ interface BottomNavBarProps {
 		userEmail: string;
 		userAvatar: string;
 	};
+}
+
+// Cart Button Component for mobile bottom nav
+function CartButton() {
+	const { cartOpen, setCartOpen, itemCount } = useCart();
+
+	return (
+		<Drawer open={cartOpen} onOpenChange={setCartOpen}>
+			<DrawerTrigger asChild>
+				<button
+					type="button"
+					onClick={() => setCartOpen(true)}
+					className={cn(
+						"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors relative",
+						cartOpen
+							? "text-primary bg-primary/10"
+							: "text-muted-foreground hover:text-foreground hover:bg-muted",
+					)}
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						className="w-5 h-5"
+						fill="none"
+						viewBox="0 0 33 30"
+						aria-label="Корзина"
+						role="img"
+					>
+						<title>Корзина</title>
+						<path
+							d="M1.94531 1.80127H7.27113L11.9244 18.602C12.2844 19.9016 13.4671 20.8013 14.8156 20.8013H25.6376C26.9423 20.8013 28.0974 19.958 28.495 18.7154L31.9453 7.9303H19.0041"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						/>
+						<circle cx="13.4453" cy="27.3013" r="2.5" fill="currentColor" />
+						<circle cx="26.4453" cy="27.3013" r="2.5" fill="currentColor" />
+					</svg>
+					{itemCount > 0 && (
+						<span className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs w-4 h-4 flex items-center justify-center rounded-full">
+							{itemCount}
+						</span>
+					)}
+					<span className="text-xs font-medium">Корзина</span>
+				</button>
+			</DrawerTrigger>
+			<DrawerContent>
+				<CartDrawerContent />
+			</DrawerContent>
+		</Drawer>
+	);
 }
 
 export function BottomNavBar({
@@ -173,6 +231,35 @@ export function BottomNavBar({
 					) : (
 						/* Client-side Mobile Navigation */
 						<div className="flex items-center justify-center gap-8">
+							{/* Главная (Home) Button */}
+							<Link
+								to="/"
+								className={cn(
+									"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors",
+									pathname === "/"
+										? "text-primary bg-primary/10"
+										: "text-muted-foreground hover:text-foreground hover:bg-muted",
+								)}
+							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									className="w-5 h-5"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+									strokeWidth={2}
+									aria-label="Главная"
+								>
+									<title>Главная</title>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+									/>
+								</svg>
+								<span className="text-xs font-medium">Главная</span>
+							</Link>
+
 							{/* Catalog Button */}
 							<Link
 								to="/store"
@@ -202,34 +289,8 @@ export function BottomNavBar({
 								<span className="text-xs font-medium">Каталог</span>
 							</Link>
 
-							{/* Contact Button */}
-							<Link
-								to="/contact"
-								className={cn(
-									"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors",
-									pathname === "/contact"
-										? "text-primary bg-primary/10"
-										: "text-muted-foreground hover:text-foreground hover:bg-muted",
-								)}
-							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									className="w-5 h-5"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-									strokeWidth={2}
-									aria-label="Контакты"
-								>
-									<title>Контакты</title>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-									/>
-								</svg>
-								<span className="text-xs font-medium">Контакты</span>
-							</Link>
+							{/* Cart Button */}
+							<CartButton />
 						</div>
 					)}
 				</div>

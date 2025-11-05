@@ -56,7 +56,6 @@ export function VariationSelector({
 
 	return (
 		<>
-			
 			{productAttributes.map(({ attributeId, displayName, values }) => (
 				<div key={attributeId} className="space-y-2">
 					<div className="text-sm font-medium text-gray-700">{displayName}</div>

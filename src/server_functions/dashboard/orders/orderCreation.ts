@@ -113,14 +113,20 @@ async function createOrderInternal(
 			}
 
 			if (!product.hasVariations && item.variationId) {
-				throw new Error(`Product does not support variations: ${item.productName}`);
+				throw new Error(
+					`Product does not support variations: ${item.productName}`,
+				);
 			}
 
 			// If variation is required, validate it exists
 			if (item.variationId) {
-				const variation = product.variations?.find((v) => v.id === item.variationId);
+				const variation = product.variations?.find(
+					(v) => v.id === item.variationId,
+				);
 				if (!variation) {
-					throw new Error(`Variation not found for product: ${item.productName}`);
+					throw new Error(
+						`Variation not found for product: ${item.productName}`,
+					);
 				}
 			}
 

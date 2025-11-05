@@ -213,8 +213,8 @@ export function CartProvider({ children }: CartProviderProps) {
 			}
 
 			// Check if item already exists in cart to determine proper validation
-		// Create minimal cart item - just IDs and quantity
-		// All other data will be looked up from TanStack Query cache when needed
+			// Create minimal cart item - just IDs and quantity
+			// All other data will be looked up from TanStack Query cache when needed
 			const cartItem: CartItem = {
 				productId: product.id,
 				variationId: selectedVariation?.id,

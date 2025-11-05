@@ -1,4 +1,5 @@
 import useEmblaCarousel from "embla-carousel-react";
+import { ExternalLink } from "lucide-react";
 import { Icon } from "~/components/ui/shared/Icon";
 import { Image } from "~/components/ui/shared/Image";
 import "./testimonial.css";
@@ -9,7 +10,20 @@ import {
 } from "./TestimonialArrows";
 import { DotButton, useDotButton } from "./TestimonialDotButton";
 
-const testimonials = [
+type TestimonialSource = "Google" | "Yandex" | "2GIS";
+
+interface Testimonial {
+	id: number;
+	name: string;
+	content: string;
+	avatar: string;
+	rating: number;
+	date: string;
+	source: TestimonialSource;
+	link: string;
+}
+
+const testimonials: Testimonial[] = [
 	{
 		id: 1,
 		name: "Степанова Алёна",
@@ -19,7 +33,7 @@ const testimonials = [
 		rating: 5,
 		date: "2019-08-18",
 		source: "Google",
-		link: "",
+		link: "https://www.google.ru/maps/place/Beauty+Floor/@43.1688399,131.9257411,17z/data=!4m18!1m9!3m8!1s0x5fb39183a2c24f9f:0x50ad4f6d76b05a03!2sBeauty+Floor!8m2!3d43.168836!4d131.928316!9m1!1b1!16s%2Fg%2F11rqx6015!3m7!1s0x5fb39183a2c24f9f:0x50ad4f6d76b05a03!8m2!3d43.168836!4d131.928316!9m1!1b1!16s%2Fg%2F11rqx6015?entry=ttu",
 	},
 	{
 		id: 2,
@@ -27,7 +41,7 @@ const testimonials = [
 		content:
 			"Покупали пробковый пол, впервые решили попробовать такое покрытие. В магазине нам рассказали все преимущества такого пола, окончательно убедив нас в правильности выбора — говорят, что со временем мы ощутим преимущества этого пола над обычным ламинатом, особенно полезно для людей в возрасте и детей. Заказ пришёл в срок, как нам и обещали👍 Ещё и оказалось, что укладка пола бесплатно осуществляется представителями магазина! В общем советуем этот магазин однозначно👍",
 		avatar: "/testimonial-avatars/gera-k.webp",
-		link: "",
+		link: "https://yandex.ru/maps/org/beauty_floor/109013944306/reviews/?ll=131.925211%2C43.169177&source=serp_navig&z=18.11",
 		rating: 5,
 		date: "2019-08-18",
 		source: "Yandex",
@@ -38,7 +52,7 @@ const testimonials = [
 		content:
 			"В августе 2020 года покупали здесь ламинат, подложку, плинтусы. Все очень понравилось: от ассортимента и ценовой составляющей до работы сотрудников. Из всех упаковок ламината не было ни одной бракованной планки. Делали самовывоз, так сотрудник (замечательный специалист, очень хорошо, со знанием дела, терпеливо консультировал таких дотошных зануд, как мы с мужем) помог все погрузить в машину. В самом зале есть небольшой, но спасительный детский уголок, где наш непоседа провел достаточно времени, пока мы выбирали покрытие. В итоге, сумма затрат соответствует качеству, пол сделан и радует меня каждый день) всем советую)",
 		avatar: "/testimonial-avatars/maria-ryayer.webp",
-		link: "",
+		link: "https://2gis.ru/vladivostok/firm/70000001043762992/tab/reviews",
 		rating: 5,
 		date: "2022-05-13",
 		source: "2GIS",
@@ -49,7 +63,7 @@ const testimonials = [
 		content:
 			"Уютно, много чего представлено, девушка-консультант вообще молодец, знает о чем говорит.",
 		avatar: "/testimonial-avatars/pavel-avhutskiy.webp",
-		link: "",
+		link: "https://2gis.ru/vladivostok/firm/70000001043762992/tab/reviews",
 		rating: 5,
 		date: "2023-12-27",
 		source: "2GIS",
@@ -60,7 +74,7 @@ const testimonials = [
 		content:
 			"Мне очень понравился магазин, ВСЁ компактно, до этого посетила многие магазины по продаже напольных покрытий, постм везде не чувствуется заинтересованности продавцов в продаже, а тут в магазине на Русской, 78, продавец Елена подошла сразу, я скащала ,что мне нудна спокойная расцветка ламината, она предложила германский ламинат дуб кофейный со скидкой , мне он понравился, покупкой очень довольна и особенно приятно, что доставка была в течение 3 часов.Огромное спасибо Елене, что помогла с выбором, приятный, вежливый продавец, желаю хороших продаж и здоровья",
 		avatar: "/testimonial-avatars/olga-kuznetsova.webp",
-		link: "",
+		link: "https://www.google.ru/maps/place/Beauty+Floor/@43.1688399,131.9257411,17z/data=!4m18!1m9!3m8!1s0x5fb39183a2c24f9f:0x50ad4f6d76b05a03!2sBeauty+Floor!8m2!3d43.168836!4d131.928316!9m1!1b1!16s%2Fg%2F11rqx6015!3m7!1s0x5fb39183a2c24f9f:0x50ad4f6d76b05a03!8m2!3d43.168836!4d131.928316!9m1!1b1!16s%2Fg%2F11rqx6015?entry=ttu",
 		rating: 5,
 		date: "2021-05-15",
 		source: "Google",
@@ -82,15 +96,26 @@ export default function TestimonialSliderSection() {
 	const { selectedIndex, scrollSnaps, onDotButtonClick } =
 		useDotButton(emblaApi);
 
-	const getIconName = (source: string): "google" | "yandex" | "2gis" => {
-		const sourceLower = source.toLowerCase();
-		if (sourceLower === "yandex") return "yandex";
-		if (sourceLower === "2gis") return "2gis";
+	const getIconName = (
+		source: TestimonialSource,
+	): "google" | "yandex" | "2gis" => {
+		if (source === "Yandex") return "yandex";
+		if (source === "2GIS") return "2gis";
 		return "google"; // default to google
+	};
+
+	const formatDate = (dateString: string): string => {
+		const date = new Date(dateString);
+		return new Intl.DateTimeFormat("ru-RU", {
+			year: "numeric",
+			month: "long",
+			day: "numeric",
+		}).format(date);
 	};
 
 	return (
 		<section className="embla no-padding">
+			<h2>Отзывы</h2>
 			{/* Arrow controls positioned above carousel on the right */}
 			<div className="embla__controls">
 				<div className="embla__buttons">
@@ -104,14 +129,17 @@ export default function TestimonialSliderSection() {
 					{testimonials.map((testimonial) => (
 						<div className="embla__slide" key={testimonial.id}>
 							<div className="m-6">
-								<div className="testimonial-card">
-									<p className="mb-6 line-clamp-[20]">{testimonial.content}</p>
-									<a
-										href={testimonial.link}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="flex items-center group"
-									>
+								<a
+									href={testimonial.link}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="testimonial-card"
+								>
+									<div className="testimonial-card__external-link">
+										<ExternalLink size={20} />
+									</div>
+									<p className="mb-6 line-clamp-[10]">{testimonial.content}</p>
+									<div className="flex items-center">
 										<div className="w-12 h-12 rounded-full mr-4 relative overflow-hidden">
 											<Image
 												src={testimonial.avatar}
@@ -121,20 +149,25 @@ export default function TestimonialSliderSection() {
 												loading="eager"
 											/>
 										</div>
-										<div className="flex items-center gap-3">
-											<p className="font-semibold group-hover:underline">
-												{testimonial.name}
-											</p>
-											{testimonial.source && (
-												<Icon
-													name={getIconName(testimonial.source)}
-													size={24}
-													className="flex-shrink-0"
-												/>
+										<div className="flex flex-col">
+											<div className="flex items-center gap-3">
+												<p className="font-medium">{testimonial.name}</p>
+												{testimonial.source && (
+													<Icon
+														name={getIconName(testimonial.source)}
+														size={24}
+														className="flex-shrink-0"
+													/>
+												)}
+											</div>
+											{testimonial.date && (
+												<p className="text-sm text-muted-foreground mt-1">
+													{formatDate(testimonial.date)}
+												</p>
 											)}
 										</div>
-									</a>
-								</div>
+									</div>
+								</a>
 							</div>
 						</div>
 					))}

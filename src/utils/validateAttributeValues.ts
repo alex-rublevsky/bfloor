@@ -1,7 +1,7 @@
-import { eq, and } from "drizzle-orm";
-import { productAttributes, attributeValues } from "~/schema";
+import { and, eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import type * as schema from "~/schema";
+import { attributeValues, productAttributes } from "~/schema";
 
 /**
  * Validates that standardized attribute values exist in attribute_values table
@@ -45,7 +45,7 @@ export async function validateAttributeValues(
 		}
 
 		if (!attributeId) {
-			// Attribute doesn't exist - this is handled by out-of-scope detection
+			// Attribute doesn't exist - skip validation
 			continue;
 		}
 
@@ -66,7 +66,10 @@ export async function validateAttributeValues(
 
 		// Handle comma-separated values for multi-value attributes
 		const valuesToCheck = attr.value.includes(",")
-			? attr.value.split(",").map((v) => v.trim()).filter(Boolean)
+			? attr.value
+					.split(",")
+					.map((v) => v.trim())
+					.filter(Boolean)
 			: [attr.value.trim()];
 
 		// Check each value exists in attribute_values table
@@ -93,7 +96,10 @@ export async function validateAttributeValues(
 				}
 			} catch (dbError) {
 				// If database query fails, log error but don't block validation
-				console.error(`Error validating attribute value "${valueToCheck}" for attribute ${attr.attributeId}:`, dbError);
+				console.error(
+					`Error validating attribute value "${valueToCheck}" for attribute ${attr.attributeId}:`,
+					dbError,
+				);
 				errors.push({
 					attributeId: attr.attributeId,
 					value: valueToCheck,
@@ -105,4 +111,3 @@ export async function validateAttributeValues(
 
 	return errors;
 }
-

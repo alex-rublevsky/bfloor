@@ -21,20 +21,12 @@ export function CartItem({ item }: CartItemProps) {
 	const { data: attributes } = useProductAttributes();
 
 	const handleIncrement = () => {
-		updateQuantity(
-			item.productId,
-			item.quantity + 1,
-			item.variationId,
-		);
+		updateQuantity(item.productId, item.quantity + 1, item.variationId);
 	};
 
 	const handleDecrement = () => {
 		if (item.quantity > 1) {
-			updateQuantity(
-				item.productId,
-				item.quantity - 1,
-				item.variationId,
-			);
+			updateQuantity(item.productId, item.quantity - 1, item.variationId);
 		}
 	};
 

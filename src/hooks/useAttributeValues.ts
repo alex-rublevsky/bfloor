@@ -10,5 +10,3 @@ export function useAttributeValues(attributeId: number | null) {
 		enabled: attributeId !== null && attributeId > 0,
 	});
 }
-
-

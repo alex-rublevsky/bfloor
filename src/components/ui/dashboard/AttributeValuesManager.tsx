@@ -1,32 +1,32 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Button } from "~/components/ui/shared/Button";
 import { Input } from "~/components/ui/shared/input";
 import { attributeValuesQueryOptions } from "~/lib/queryOptions";
 import { createAttributeValue } from "~/server_functions/dashboard/attributes/createAttributeValue";
-import { updateAttributeValue } from "~/server_functions/dashboard/attributes/updateAttributeValue";
 import { deleteAttributeValue } from "~/server_functions/dashboard/attributes/deleteAttributeValue";
 import type { AttributeValue } from "~/server_functions/dashboard/attributes/getAttributeValues";
+import { updateAttributeValue } from "~/server_functions/dashboard/attributes/updateAttributeValue";
 
 interface AttributeValuesManagerProps {
 	attributeId: number;
-	attributeSlug: string;
 }
 
 export default function AttributeValuesManager({
 	attributeId,
-	attributeSlug,
 }: AttributeValuesManagerProps) {
 	const queryClient = useQueryClient();
 	const [newValue, setNewValue] = useState("");
 	const [isCreating, setIsCreating] = useState(false);
 
 	// Fetch attribute values for this attribute
-	const { data: values, isLoading, error } = useQuery(
-		attributeValuesQueryOptions(attributeId),
-	);
+	const {
+		data: values,
+		isLoading,
+		error,
+	} = useQuery(attributeValuesQueryOptions(attributeId));
 
 	const handleCreateValue = async () => {
 		if (!newValue.trim()) {
@@ -56,7 +56,9 @@ export default function AttributeValuesManager({
 			toast.success("Значение добавлено");
 		} catch (error) {
 			toast.error(
-				error instanceof Error ? error.message : "Ошибка при добавлении значения",
+				error instanceof Error
+					? error.message
+					: "Ошибка при добавлении значения",
 			);
 		} finally {
 			setIsCreating(false);
@@ -64,7 +66,12 @@ export default function AttributeValuesManager({
 	};
 
 	const handleDeleteValue = async (valueId: number) => {
-		if (!confirm("Удалить это значение? Оно будет удалено из всех товаров, которые его используют.")) return;
+		if (
+			!confirm(
+				"Удалить это значение? Оно будет удалено из всех товаров, которые его используют.",
+			)
+		)
+			return;
 
 		try {
 			const result = await deleteAttributeValue({ data: { id: valueId } });
@@ -121,7 +128,9 @@ export default function AttributeValuesManager({
 			toast.success("Значение обновлено");
 		} catch (error) {
 			toast.error(
-				error instanceof Error ? error.message : "Ошибка при обновлении значения",
+				error instanceof Error
+					? error.message
+					: "Ошибка при обновлении значения",
 			);
 		}
 	};
@@ -252,7 +261,7 @@ function ValueItem({
 					</Button>
 					<Button
 						type="button"
-						variant="ghost"
+						variant="secondary"
 						size="sm"
 						onClick={handleCancel}
 						className="h-8 px-2"
@@ -262,16 +271,23 @@ function ValueItem({
 				</>
 			) : (
 				<>
-					<span
-						className="text-sm flex-1 cursor-pointer"
+					<button
+						type="button"
+						className="text-sm flex-1 cursor-pointer text-left"
 						onClick={() => setIsEditing(true)}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								setIsEditing(true);
+							}
+						}}
 						title="Нажмите для редактирования"
 					>
 						{value.value}
-					</span>
+					</button>
 					<Button
 						type="button"
-						variant="ghost"
+						variant="secondary"
 						size="sm"
 						onClick={() => setIsEditing(true)}
 						className="h-8 px-2"
@@ -280,7 +296,7 @@ function ValueItem({
 					</Button>
 					<Button
 						type="button"
-						variant="ghost"
+						variant="secondary"
 						size="sm"
 						onClick={onDelete}
 						className="h-8 px-2 text-destructive hover:text-destructive"
@@ -292,4 +308,3 @@ function ValueItem({
 		</div>
 	);
 }
-

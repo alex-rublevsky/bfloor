@@ -6,9 +6,9 @@ import {
 	brands,
 	categories,
 	collections,
-	products,
 	productAttributes,
 	productStoreLocations,
+	products,
 	productVariations,
 	storeLocations,
 	variationAttributes,
@@ -59,7 +59,9 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 				.all()
 				.then(async (relations) => {
 					if (relations.length === 0) return [];
-					const locationIds = relations.map((r) => r.storeLocationId).filter((id): id is number => id !== null);
+					const locationIds = relations
+						.map((r) => r.storeLocationId)
+						.filter((id): id is number => id !== null);
 					if (locationIds.length === 0) return [];
 					return db
 						.select()
@@ -85,18 +87,18 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 			if (!row.product_variations) return;
 
 			const variationId = row.product_variations.id;
-		if (!variationsMap.has(variationId)) {
-			variationsMap.set(variationId, {
-				id: variationId,
-				productId: row.product_variations.productId,
-				sku: row.product_variations.sku,
-				price: row.product_variations.price,
-				sort: row.product_variations.sort || 0,
-				discount: row.product_variations.discount,
-				createdAt: row.product_variations.createdAt,
-				attributes: [],
-			});
-		}
+			if (!variationsMap.has(variationId)) {
+				variationsMap.set(variationId, {
+					id: variationId,
+					productId: row.product_variations.productId,
+					sku: row.product_variations.sku,
+					price: row.product_variations.price,
+					sort: row.product_variations.sort || 0,
+					discount: row.product_variations.discount,
+					createdAt: row.product_variations.createdAt,
+					attributes: [],
+				});
+			}
 
 			if (row.variation_attributes) {
 				variationsMap.get(variationId)?.attributes.push({
@@ -109,95 +111,109 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 			}
 		});
 
-	// Fetch all attributes to create slug-to-ID mapping
-	const allAttributes = await db.select().from(productAttributes);
-	const slugToIdMap: Record<string, string> = {};
-	allAttributes.forEach(attr => {
-		slugToIdMap[attr.slug] = attr.id.toString();
-	});
+		// Fetch all attributes to create slug-to-ID mapping
+		const allAttributes = await db.select().from(productAttributes);
+		const slugToIdMap: Record<string, string> = {};
+		allAttributes.forEach((attr) => {
+			slugToIdMap[attr.slug] = attr.id.toString();
+		});
 
-	// Map variation attributes from slugs to IDs
-	for (const variation of variationsMap.values()) {
-		if (variation.attributes && variation.attributes.length > 0) {
-			variation.attributes = variation.attributes.map((attr: { attributeId: string; value: string }) => ({
-				...attr,
-				attributeId: slugToIdMap[attr.attributeId] || attr.attributeId
-			}));
+		// Map variation attributes from slugs to IDs
+		for (const variation of variationsMap.values()) {
+			if (variation.attributes && variation.attributes.length > 0) {
+				variation.attributes = variation.attributes.map(
+					(attr: { attributeId: string; value: string }) => ({
+						...attr,
+						attributeId: slugToIdMap[attr.attributeId] || attr.attributeId,
+					}),
+				);
+			}
 		}
-	}
 
-	// Process images - parse JSON string or comma-separated string to array for frontend
-	let imagesArray: string[] = [];
-	if (baseProduct.images) {
-		try {
-			// First, try parsing as JSON array string
-			imagesArray = JSON.parse(baseProduct.images) as string[];
-		} catch {
-			// If JSON parsing fails, try comma-separated string
+		// Process images - parse JSON string or comma-separated string to array for frontend
+		let imagesArray: string[] = [];
+		if (baseProduct.images) {
 			try {
-				// Split by comma and trim whitespace
-				imagesArray = baseProduct.images.split(',').map(img => img.trim()).filter(Boolean);
+				// First, try parsing as JSON array string
+				imagesArray = JSON.parse(baseProduct.images) as string[];
 			} catch {
-				// If both fail, return empty array
-				console.error("Failed to parse images for product:", baseProduct.slug);
-				imagesArray = [];
+				// If JSON parsing fails, try comma-separated string
+				try {
+					// Split by comma and trim whitespace
+					imagesArray = baseProduct.images
+						.split(",")
+						.map((img) => img.trim())
+						.filter(Boolean);
+				} catch {
+					// If both fail, return empty array
+					console.error(
+						"Failed to parse images for product:",
+						baseProduct.slug,
+					);
+					imagesArray = [];
+				}
 			}
 		}
-	}
 
-	// Process productAttributes - convert JSON string to array
-	let productAttributesArray: { attributeId: string; value: string }[] = [];
-	if (baseProduct.productAttributes) {
-		try {
-			const parsed = JSON.parse(baseProduct.productAttributes);
-			// Convert object to array format expected by frontend
-			if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-				// Convert object to array of {attributeId, value} pairs
-				productAttributesArray = Object.entries(parsed).map(([key, value]) => ({
-					attributeId: key,
-					value: String(value)
-				}));
-			} else if (Array.isArray(parsed)) {
-				productAttributesArray = parsed;
+		// Process productAttributes - convert JSON string to array
+		let productAttributesArray: { attributeId: string; value: string }[] = [];
+		if (baseProduct.productAttributes) {
+			try {
+				const parsed = JSON.parse(baseProduct.productAttributes);
+				// Convert object to array format expected by frontend
+				if (
+					typeof parsed === "object" &&
+					parsed !== null &&
+					!Array.isArray(parsed)
+				) {
+					// Convert object to array of {attributeId, value} pairs
+					productAttributesArray = Object.entries(parsed).map(
+						([key, value]) => ({
+							attributeId: key,
+							value: String(value),
+						}),
+					);
+				} else if (Array.isArray(parsed)) {
+					productAttributesArray = parsed;
+				}
+			} catch {
+				// If parsing fails, use empty array
+				productAttributesArray = [];
 			}
-		} catch {
-			// If parsing fails, use empty array
-			productAttributesArray = [];
 		}
-	}
 
-	const productWithDetails = {
-		...baseProduct,
-		images: imagesArray, // Return as array - TanStack will serialize/deserialize automatically
-		productAttributes: productAttributesArray,
-		category: firstRow.categories
-			? {
-					name: firstRow.categories.name,
-					slug: firstRow.categories.slug,
-				}
-			: null,
-		brand: firstRow.brands
-			? {
-					name: firstRow.brands.name,
-					slug: firstRow.brands.slug,
-					image: firstRow.brands.image,
-					country: firstRow.brands.country,
-				}
-			: null,
-		collection: collectionData
-			? {
-					name: collectionData.name,
-					slug: collectionData.slug,
-				}
-			: null,
-		storeLocations: storeLocationsData.map((loc) => ({
-			id: loc.id,
-			address: loc.address,
-			description: loc.description,
-			openingHours: loc.openingHours,
-		})),
-		variations: Array.from(variationsMap.values()),
-	};
+		const productWithDetails = {
+			...baseProduct,
+			images: imagesArray, // Return as array - TanStack will serialize/deserialize automatically
+			productAttributes: productAttributesArray,
+			category: firstRow.categories
+				? {
+						name: firstRow.categories.name,
+						slug: firstRow.categories.slug,
+					}
+				: null,
+			brand: firstRow.brands
+				? {
+						name: firstRow.brands.name,
+						slug: firstRow.brands.slug,
+						image: firstRow.brands.image,
+						country: firstRow.brands.country,
+					}
+				: null,
+			collection: collectionData
+				? {
+						name: collectionData.name,
+						slug: collectionData.slug,
+					}
+				: null,
+			storeLocations: storeLocationsData.map((loc) => ({
+				id: loc.id,
+				address: loc.address,
+				description: loc.description,
+				openingHours: loc.openingHours,
+			})),
+			variations: Array.from(variationsMap.values()),
+		};
 
-	return productWithDetails;
+		return productWithDetails;
 	});

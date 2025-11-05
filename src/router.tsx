@@ -12,7 +12,7 @@ export function getRouter() {
 		defaultStructuralSharing: true, //TODO: what is this?
 		defaultPreloadStaleTime: 0,
 		defaultViewTransition: true,
-		scrollRestorationBehavior: "auto",
+		scrollRestorationBehavior: "instant", // Instant scroll for better UX with virtualized lists and view transitions
 		defaultErrorComponent: DefaultCatchBoundary,
 		defaultNotFoundComponent: () => <NotFound />,
 	});

@@ -101,14 +101,15 @@ input.field-sizing-content {
 	--color-primary-hover: color-mix(in oklch, var(--primary) 80%, white 20%);
 	--color-primary-foreground: var(--primary-foreground);
 	--color-secondary: var(--secondary);
-	--color-secondary-foreground: var(--secondary-foreground);
+	--color-secondary-foreground: var(--foreground);
 	--color-muted: var(--muted);
 	--color-muted-foreground: var(--muted-foreground);
 	--color-accent: var(--accent);
 	--color-accent-foreground: var(--accent-foreground);
+	--color-accent-hover: color-mix(in oklch, var(--accent) 80%, white 20%);
 	--color-destructive: oklch(var(--destructive));
 	--color-destructive-foreground: var(--destructive-foreground);
-	--color-border: var(--muted);
+	--color-border: var(--border);
 	--color-input: var(--input);
 	--color-ring: var(--ring);
 	--color-discount-badge: var(--discount-badge);
@@ -172,24 +173,17 @@ input.field-sizing-content {
 	--muted: oklch(0.9437 0.0174 var(--hue));
 	--muted-foreground: oklch(0.5 0.0374 var(--hue));
 
-	--card: 0 0% 100%;
-	--card-foreground: 0 0% 3.9%;
-	--popover: 0 0% 100%;
-	--popover-foreground: 0 0% 3.9%;
-
-	/* or this? 0.4005 0.1373 25.99; */
-
+	/* make sure border is the same as secondary but with 50% opacity */
 	--secondary: oklch(0.8779 0.0512 var(--hue));
 	--secondary-hover: oklch(0.54 0.2203 var(--hue) calc(l_ * _0 0.9));
-
-	--secondary-foreground: oklch(0.9672 0.0043 var(--hue));
+	--border: oklch(0.8779 0.0512 var(--hue) / 0.5);
 
 	--accent: oklch(0.54 0.2203 var(--hue));
 	--accent-foreground: var(--background);
+
 	--destructive: 0.6368 0.2078 25.33;
 	--destructive-foreground: oklch(0.8779 0.0512 var(--hue));
-	/* --border: 87% 0.0037 286.33; */
-	--border: 0 0% 89.8%;
+
 	--input: oklch(0.8779 0.0512 var(--hue));
 	--ring: 0 0% 3.9%;
 
@@ -274,13 +268,13 @@ input.field-sizing-content {
 	/* Hide the element that's causing the white gap in admin pan — no clue where it comes from */
 	section[aria-label="Уведомления alt+T"],
 	section[aria-label="Notifications alt+T"] {
-		padding: 0 !important;
-		margin: 0 !important;
-		height: 0 !important;
-		overflow: hidden !important;
-		position: absolute !important;
-		top: -9999px !important;
-		left: -9999px !important;
+		padding: 0;
+		margin: 0;
+		height: 0;
+		overflow: hidden;
+		position: absolute;
+		top: -9999px;
+		left: -9999px;
 	}
 
 	/* Make body background black in admin panel for overscrolling */
@@ -291,6 +285,11 @@ input.field-sizing-content {
 	.work_page_section_title_holder {
 		padding-top: 6rem;
 		padding-bottom: 7rem;
+	}
+
+	/* Standard transition utility class */
+	.transition-standard {
+		transition: var(--transition-standard);
 	}
 }
 
@@ -527,28 +526,27 @@ p {
 }
 
 /* View transition for elements that actually transition */
-::view-transition-old(root) {
-	animation: none;
-}
-
+/* Remove root animation disabling to allow view transitions to work */
+::view-transition-old(root),
 ::view-transition-new(root) {
-	animation: none;
+	animation-duration: 0.3s;
+	animation-timing-function: ease-in-out;
 }
 
 /* Enable text selection in drawer content */
 [data-vaul-drawer] {
-	user-select: text !important;
+	user-select: text;
 }
 
 [data-vaul-drawer] * {
-	user-select: text !important;
+	user-select: text;
 }
 
 /* Ensure form elements still work properly */
 [data-vaul-drawer] input,
 [data-vaul-drawer] textarea,
 [data-vaul-drawer] select {
-	user-select: text !important;
+	user-select: text;
 }
 
 /* Hide number input spinners */

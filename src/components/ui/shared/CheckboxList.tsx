@@ -34,10 +34,10 @@ export function CheckboxList({
 
 	return (
 		<div className={`grid ${gridCols} gap-3`}>
-				{filteredItems.map((item) => {
-					const isChecked = selectedIds.includes(item.id);
+			{filteredItems.map((item) => {
+				const isChecked = selectedIds.includes(item.id);
 
-					return (
+				return (
 					<label
 						key={item.id}
 						htmlFor={`${idPrefix}-${item.id}`}
@@ -51,15 +51,15 @@ export function CheckboxList({
 								onItemChange(item.id, !!checked);
 							}}
 						/>
-					<div className="flex flex-col">
-						<span className="text-sm font-medium">{item.label}</span>
-						{item.description && (
-							<span className="text-xs text-muted-foreground">
-								{item.description}
-							</span>
-						)}
-					</div>
-				</label>
+						<div className="flex flex-col">
+							<span className="text-sm font-medium">{item.label}</span>
+							{item.description && (
+								<span className="text-xs text-muted-foreground">
+									{item.description}
+								</span>
+							)}
+						</div>
+					</label>
 				);
 			})}
 		</div>

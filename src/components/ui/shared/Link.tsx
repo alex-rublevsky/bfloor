@@ -7,10 +7,7 @@ export interface LinkProps
 }
 
 const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
-	(
-		{ className, onMouseEnter, onMouseLeave, ...props },
-		ref,
-	) => {
+	({ className, onMouseEnter, onMouseLeave, ...props }, ref) => {
 		const handleKeyDown = (e: React.KeyboardEvent<HTMLAnchorElement>) => {
 			// Handle Enter and Space key presses for keyboard navigation
 			if (e.key === "Enter" || e.key === " ") {
@@ -27,11 +24,7 @@ const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
 				onMouseEnter={onMouseEnter}
 				onMouseLeave={onMouseLeave}
 				onKeyDown={handleKeyDown}
-				className={cn(
-					"cursor-pointer hover:underline",
-					
-					className,
-				)}
+				className={cn("cursor-pointer hover:underline", className)}
 				tabIndex={0}
 				{...props}
 			/>

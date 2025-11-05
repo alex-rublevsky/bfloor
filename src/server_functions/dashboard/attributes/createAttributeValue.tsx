@@ -14,9 +14,7 @@ export const createAttributeValue = createServerFn({ method: "POST" })
 		}) => data,
 	)
 	.handler(
-		async ({
-			data,
-		}): Promise<{ value: AttributeValue; message: string }> => {
+		async ({ data }): Promise<{ value: AttributeValue; message: string }> => {
 			const db = DB();
 
 			// Check for duplicate value for this attribute
@@ -79,4 +77,3 @@ export const createAttributeValue = createServerFn({ method: "POST" })
 			};
 		},
 	);
-

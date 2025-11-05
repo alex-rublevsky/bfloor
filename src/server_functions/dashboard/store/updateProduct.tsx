@@ -4,7 +4,12 @@ import { eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import type * as schema from "~/schema";
-import { products, productVariations, variationAttributes, productStoreLocations } from "~/schema";
+import {
+	productStoreLocations,
+	products,
+	productVariations,
+	variationAttributes,
+} from "~/schema";
 import type { ProductFormData } from "~/types"; // Updated interface
 import { validateAttributeValues } from "~/utils/validateAttributeValues";
 
@@ -77,10 +82,12 @@ export const updateProduct = createServerFn({ method: "POST" })
 					db,
 					productData.attributes,
 				);
-				
+
 				if (validationErrors.length > 0) {
 					setResponseStatus(400);
-					const errorMessages = validationErrors.map((err) => err.error).join("; ");
+					const errorMessages = validationErrors
+						.map((err) => err.error)
+						.join("; ");
 					throw new Error(`Ошибки валидации атрибутов: ${errorMessages}`);
 				}
 			}
@@ -90,12 +97,15 @@ export const updateProduct = createServerFn({ method: "POST" })
 			if (productData.attributes?.length) {
 				// Convert array of {attributeId, value} to object format
 				const attributesObject: Record<string, string> = {};
-				productData.attributes.forEach(attr => {
-					if (attr.value && attr.value.trim() !== '') {
+				productData.attributes.forEach((attr) => {
+					if (attr.value && attr.value.trim() !== "") {
 						attributesObject[attr.attributeId] = attr.value;
 					}
 				});
-				attributesJson = Object.keys(attributesObject).length > 0 ? JSON.stringify(attributesObject) : null;
+				attributesJson =
+					Object.keys(attributesObject).length > 0
+						? JSON.stringify(attributesObject)
+						: null;
 			}
 
 			// Update product and related data
@@ -222,13 +232,16 @@ export const updateProduct = createServerFn({ method: "POST" })
 						.where(eq(productStoreLocations.productId, productId));
 
 					// Add new store location connections if provided
-					if (productData.storeLocationIds && productData.storeLocationIds.length > 0) {
+					if (
+						productData.storeLocationIds &&
+						productData.storeLocationIds.length > 0
+					) {
 						await db.insert(productStoreLocations).values(
 							productData.storeLocationIds.map((locationId: number) => ({
 								productId: productId,
 								storeLocationId: locationId,
 								createdAt: new Date(),
-							}))
+							})),
 						);
 					}
 				})(),
@@ -247,7 +260,8 @@ export const updateProduct = createServerFn({ method: "POST" })
 			};
 		} catch (error) {
 			console.error("Error updating product:", error);
-			const errorMessage = error instanceof Error ? error.message : String(error);
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
 			const errorStack = error instanceof Error ? error.stack : undefined;
 			console.error("Error details:", { errorMessage, errorStack, error });
 			setResponseStatus(500);

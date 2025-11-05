@@ -289,155 +289,159 @@ export function DashboardEntityManager<
 					</div>
 				)}
 
-			{/* Create Entity Drawer */}
-			<DashboardFormDrawer
-				isOpen={form.crud.showCreateDrawer}
-				onOpenChange={form.crud.setShowCreateDrawer}
-				title={`Добавить новый${config.entityName.endsWith("а") ? "у" : ""} ${config.entityName}`}
-				formId={createFormId}
-				isSubmitting={form.crud.isSubmitting}
-				submitButtonText={`Создать ${config.entityName}`}
-				submittingText="Создание..."
-				onCancel={closeCreateDrawer}
-				error={
-					form.crud.error && !form.crud.showEditDrawer
-						? form.crud.error
-						: undefined
-				}
-				layout="single-column"
-			>
-				<form onSubmit={handleSubmit} id={createFormId} className="contents">
-					<DrawerSection maxWidth title={`Детали ${config.entityName}`}>
-						<div className="space-y-4">
-							<Input
-								label={`Название ${config.entityName}`}
-								type="text"
-								name="name"
-								value={form.createForm.formData.name}
-								onChange={form.createForm.handleChange}
-								required
-							/>
-
-							<SlugField
-								slug={form.createForm.formData.slug}
-								name={form.createForm.formData.name}
-								isAutoSlug={isCreateAutoSlug}
-								onSlugChange={(slug) => {
-									setIsCreateAutoSlug(false);
-									form.createForm.updateField("slug", slug);
-								}}
-								onAutoSlugChange={setIsCreateAutoSlug}
-								idPrefix="create"
-							/>
-
-							{config.formFields({
-								formData: form.createForm.formData,
-								onFieldChange: form.createForm.updateField,
-								onSlugChange: handleCreateSlugChange,
-								isAutoSlug: isCreateAutoSlug,
-								onAutoSlugChange: setIsCreateAutoSlug,
-								idPrefix: "create",
-								entities: data,
-								editingEntity: null,
-							})}
-
-							<div className="flex items-center gap-2">
-								<Switch
-									name="isActive"
-									checked={form.createForm.formData.isActive}
+				{/* Create Entity Drawer */}
+				<DashboardFormDrawer
+					isOpen={form.crud.showCreateDrawer}
+					onOpenChange={form.crud.setShowCreateDrawer}
+					title={`Добавить новый${config.entityName.endsWith("а") ? "у" : ""} ${config.entityName}`}
+					formId={createFormId}
+					isSubmitting={form.crud.isSubmitting}
+					submitButtonText={`Создать ${config.entityName}`}
+					submittingText="Создание..."
+					onCancel={closeCreateDrawer}
+					error={
+						form.crud.error && !form.crud.showEditDrawer
+							? form.crud.error
+							: undefined
+					}
+					layout="single-column"
+				>
+					<form onSubmit={handleSubmit} id={createFormId} className="contents">
+						<DrawerSection maxWidth title={`Детали ${config.entityName}`}>
+							<div className="space-y-4">
+								<Input
+									label={`Название ${config.entityName}`}
+									type="text"
+									name="name"
+									value={form.createForm.formData.name}
 									onChange={form.createForm.handleChange}
+									required
 								/>
-								<span className="text-sm">Активен</span>
+
+								<SlugField
+									slug={form.createForm.formData.slug}
+									name={form.createForm.formData.name}
+									isAutoSlug={isCreateAutoSlug}
+									onSlugChange={(slug) => {
+										setIsCreateAutoSlug(false);
+										form.createForm.updateField("slug", slug);
+									}}
+									onAutoSlugChange={setIsCreateAutoSlug}
+									idPrefix="create"
+								/>
+
+								{config.formFields({
+									formData: form.createForm.formData,
+									onFieldChange: form.createForm.updateField,
+									onSlugChange: handleCreateSlugChange,
+									isAutoSlug: isCreateAutoSlug,
+									onAutoSlugChange: setIsCreateAutoSlug,
+									idPrefix: "create",
+									entities: data,
+									editingEntity: null,
+								})}
+
+								<div className="flex items-center gap-2">
+									<Switch
+										name="isActive"
+										checked={form.createForm.formData.isActive}
+										onChange={form.createForm.handleChange}
+									/>
+									<span className="text-sm">Активен</span>
+								</div>
 							</div>
-						</div>
-					</DrawerSection>
-				</form>
-			</DashboardFormDrawer>
+						</DrawerSection>
+					</form>
+				</DashboardFormDrawer>
 
-			{/* Edit Entity Drawer */}
-			<DashboardFormDrawer
-				isOpen={form.crud.showEditDrawer}
-				onOpenChange={form.crud.setShowEditDrawer}
-				title={`Редактировать ${config.entityName}`}
-				formId={editFormId}
-				isSubmitting={form.crud.isSubmitting}
-				submitButtonText={`Обновить ${config.entityName}`}
-				submittingText="Обновление..."
-				onCancel={closeEditModal}
-				error={
-					form.crud.error && form.crud.showEditDrawer
-						? form.crud.error
-						: undefined
-				}
-				layout="single-column"
-			>
-				<form onSubmit={handleUpdate} id={editFormId} className="contents">
-					<DrawerSection maxWidth title={`Детали ${config.entityName}`}>
-						<div className="space-y-4">
-							<Input
-								label={`Название ${config.entityName}`}
-								type="text"
-								name="name"
-								value={form.editForm.formData.name}
-								onChange={form.editForm.handleChange}
-								required
-							/>
-
-							<SlugField
-								slug={form.editForm.formData.slug}
-								name={form.editForm.formData.name}
-								isAutoSlug={isEditAutoSlug}
-								onSlugChange={(slug) => {
-									setIsEditAutoSlug(false);
-									form.editForm.updateField("slug", slug);
-								}}
-								onAutoSlugChange={setIsEditAutoSlug}
-								idPrefix="edit"
-							/>
-
-							<div className="flex items-center gap-2">
-								<Switch
-									name="isActive"
-									checked={form.editForm.formData.isActive}
+				{/* Edit Entity Drawer */}
+				<DashboardFormDrawer
+					isOpen={form.crud.showEditDrawer}
+					onOpenChange={form.crud.setShowEditDrawer}
+					title={`Редактировать ${config.entityName}`}
+					formId={editFormId}
+					isSubmitting={form.crud.isSubmitting}
+					submitButtonText={`Обновить ${config.entityName}`}
+					submittingText="Обновление..."
+					onCancel={closeEditModal}
+					error={
+						form.crud.error && form.crud.showEditDrawer
+							? form.crud.error
+							: undefined
+					}
+					layout="single-column"
+				>
+					<form onSubmit={handleUpdate} id={editFormId} className="contents">
+						<DrawerSection maxWidth title={`Детали ${config.entityName}`}>
+							<div className="space-y-4">
+								<Input
+									label={`Название ${config.entityName}`}
+									type="text"
+									name="name"
+									value={form.editForm.formData.name}
 									onChange={form.editForm.handleChange}
+									required
 								/>
-								<span className="text-sm">Активен</span>
-							</div>
-						</div>
-					</DrawerSection>
-					{/* Render additional sections from formFields if needed (e.g., for attribute values) */}
-					{(() => {
-						const additionalContent = config.formFields({
-							formData: form.editForm.formData,
-							onFieldChange: form.editForm.updateField,
-							onSlugChange: handleEditSlugChange,
-							isAutoSlug: isEditAutoSlug,
-							onAutoSlugChange: setIsEditAutoSlug,
-							idPrefix: "edit",
-							entities: data,
-							editingEntity:
-								data.find((e) => e.id === editingEntityId) || null,
-						});
-						// Only render if it contains DrawerSection or other valid content
-						if (additionalContent && typeof additionalContent === 'object' && 'type' in additionalContent) {
-							return additionalContent;
-						}
-						return null;
-					})()}
-				</form>
-			</DashboardFormDrawer>
 
-			{form.crud.showDeleteDialog && (
-				<DeleteConfirmationDialog
-					isOpen={form.crud.showDeleteDialog}
-					onClose={handleDeleteCancel}
-					onConfirm={handleDeleteConfirm}
-				title={`Удалить ${config.entityName}`}
-				description={`Вы уверены, что хотите удалить этот${config.entityName.endsWith("а") ? "" : ""} ${config.entityName}? Это действие нельзя отменить.`}
-				isDeleting={form.crud.isDeleting}
-			/>
-		)}
+								<SlugField
+									slug={form.editForm.formData.slug}
+									name={form.editForm.formData.name}
+									isAutoSlug={isEditAutoSlug}
+									onSlugChange={(slug) => {
+										setIsEditAutoSlug(false);
+										form.editForm.updateField("slug", slug);
+									}}
+									onAutoSlugChange={setIsEditAutoSlug}
+									idPrefix="edit"
+								/>
+
+								<div className="flex items-center gap-2">
+									<Switch
+										name="isActive"
+										checked={form.editForm.formData.isActive}
+										onChange={form.editForm.handleChange}
+									/>
+									<span className="text-sm">Активен</span>
+								</div>
+							</div>
+						</DrawerSection>
+						{/* Render additional sections from formFields if needed (e.g., for attribute values) */}
+						{(() => {
+							const additionalContent = config.formFields({
+								formData: form.editForm.formData,
+								onFieldChange: form.editForm.updateField,
+								onSlugChange: handleEditSlugChange,
+								isAutoSlug: isEditAutoSlug,
+								onAutoSlugChange: setIsEditAutoSlug,
+								idPrefix: "edit",
+								entities: data,
+								editingEntity:
+									data.find((e) => e.id === editingEntityId) || null,
+							});
+							// Only render if it contains DrawerSection or other valid content
+							if (
+								additionalContent &&
+								typeof additionalContent === "object" &&
+								"type" in additionalContent
+							) {
+								return additionalContent;
+							}
+							return null;
+						})()}
+					</form>
+				</DashboardFormDrawer>
+
+				{form.crud.showDeleteDialog && (
+					<DeleteConfirmationDialog
+						isOpen={form.crud.showDeleteDialog}
+						onClose={handleDeleteCancel}
+						onConfirm={handleDeleteConfirm}
+						title={`Удалить ${config.entityName}`}
+						description={`Вы уверены, что хотите удалить этот${config.entityName.endsWith("а") ? "" : ""} ${config.entityName}? Это действие нельзя отменить.`}
+						isDeleting={form.crud.isDeleting}
+					/>
+				)}
+			</div>
 		</div>
-	</div>
 	);
 }

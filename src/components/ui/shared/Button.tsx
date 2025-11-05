@@ -13,13 +13,13 @@ type RouterSearch = Record<
 >;
 
 const buttonVariants = cva(
-	"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[15px] text-sm font-medium transition-all duration-300 ease-in-out focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-80 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+	"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[15px] text-sm font-medium transition-standard focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-80 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
 	{
 		variants: {
 			variant: {
 				default: "bg-primary text-primary-foreground hover:bg-primary-hover",
 				secondary:
-					"bg-secondary text-secondary-foreground hover:bg-secondary-hover active:bg-secondary-active",
+					"bg-transparent border-1 border-accent text-secondary-foreground hover:bg-accent active:bg-accent hover:text-accent-foreground",
 				destructive:
 					"bg-backgorund text-destructive border border-destructive shadow-2xs hover:bg-destructive/90 hover:text-destructive-foreground active:bg-destructive/90 active:text-destructive-foreground",
 				green:
@@ -29,7 +29,7 @@ const buttonVariants = cva(
 				outline:
 					"bg-transparent text-foreground border border-black hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground",
 				accent:
-					"bg-accent text-accent-foreground hover:bg-accent-hover",
+					"bg-accent text-accent-foreground hover:bg-accent-hover active:bg-accent-hover active:text-accent-foreground",
 				link: "text-primary underline-offset-4 hover:underline active:underline",
 			},
 			size: {

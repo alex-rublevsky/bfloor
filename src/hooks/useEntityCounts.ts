@@ -1,8 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
+import {
+	brandsQueryOptions,
+	categoriesQueryOptions,
+	collectionsQueryOptions,
+	storeLocationsQueryOptions,
+} from "~/lib/queryOptions";
 import { getAllProductAttributes } from "~/server_functions/dashboard/attributes/getAllProductAttributes";
 import { getAllOrders } from "~/server_functions/dashboard/orders/getAllOrders";
 import { getAllProducts } from "~/server_functions/dashboard/store/getAllProducts";
-import { brandsQueryOptions, categoriesQueryOptions, collectionsQueryOptions, storeLocationsQueryOptions } from "~/lib/queryOptions";
 
 /**
  * Hook to get products count
@@ -18,7 +23,7 @@ export function useProductsCount() {
 	if (productsData?.pagination?.totalCount) {
 		return productsData.pagination.totalCount;
 	}
-	
+
 	return productsData?.products?.length || 0;
 }
 

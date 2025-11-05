@@ -4,7 +4,6 @@ import { CheckCircle, Clock } from "lucide-react";
 import { Badge } from "~/components/ui/shared/Badge";
 import { Button } from "~/components/ui/shared/Button";
 import { Image } from "~/components/ui/shared/Image";
-import NeumorphismCard from "~/components/ui/shared/NeumorphismCard";
 import {
 	getAttributeDisplayName,
 	useProductAttributes,
@@ -123,7 +122,7 @@ function OrderPage() {
 
 				{/* What Happens Next Section - Only shown for new orders */}
 				{isNewOrder && (
-					<NeumorphismCard className="space-y-4">
+					<>
 						<h5 className="text-muted-foreground">What happens next?</h5>
 						<ol className="list-decimal list-inside space-y-2 text-secondary-foreground">
 							<li>You will receive an order confirmation email shortly.</li>
@@ -139,14 +138,14 @@ function OrderPage() {
 								shipping.
 							</li>
 						</ol>
-					</NeumorphismCard>
+					</>
 				)}
 
 				{/* Order Items Section */}
 				<div className="space-y-4">
 					<div className="space-y-4">
 						{order.items?.map((item) => (
-							<NeumorphismCard key={item.id} className="flex gap-4">
+							<>
 								{item.product?.images && (
 									<div className="w-20 flex-shrink-0">
 										<Image
@@ -207,40 +206,38 @@ function OrderPage() {
 										</div>
 									</div>
 								</div>
-							</NeumorphismCard>
+							</>
 						))}
 					</div>
 				</div>
 
 				{/* Order Summary Section */}
-				<NeumorphismCard className="">
-					<div className="space-y-2">
-						<div className="flex justify-between">
-							<p>Subtotal</p>
-							<p>CA${order.subtotalAmount.toFixed(2)}</p>
-						</div>
-						{order.discountAmount > 0 && (
-							<div className="flex justify-between text-green-600">
-								<p>Discount</p>
-								<Badge variant="green" className="self-end">
-									-CA${order.discountAmount.toFixed(2)}
-								</Badge>
-							</div>
-						)}
-						<div className="flex justify-between ">
-							<p>Shipping</p>
-							<p className="text-muted-foreground">
-								{order.shippingAmount
-									? `CA$${order.shippingAmount.toFixed(2)}`
-									: "To be determined"}
-							</p>
-						</div>
-						<div className="flex justify-between items-baseline text-lg pt-2 border-t">
-							<h5>Total</h5>
-							<h3>CA${order.totalAmount.toFixed(2)}</h3>
-						</div>
+				<div className="space-y-2">
+					<div className="flex justify-between">
+						<p>Subtotal</p>
+						<p>CA${order.subtotalAmount.toFixed(2)}</p>
 					</div>
-				</NeumorphismCard>
+					{order.discountAmount > 0 && (
+						<div className="flex justify-between text-green-600">
+							<p>Discount</p>
+							<Badge variant="green" className="self-end">
+								-CA${order.discountAmount.toFixed(2)}
+							</Badge>
+						</div>
+					)}
+					<div className="flex justify-between ">
+						<p>Shipping</p>
+						<p className="text-muted-foreground">
+							{order.shippingAmount
+								? `CA$${order.shippingAmount.toFixed(2)}`
+								: "To be determined"}
+						</p>
+					</div>
+					<div className="flex justify-between items-baseline text-lg pt-2 border-t">
+						<h5>Total</h5>
+						<h3>CA${order.totalAmount.toFixed(2)}</h3>
+					</div>
+				</div>
 
 				{/* Actions Section */}
 				<div className="flex justify-center gap-4">

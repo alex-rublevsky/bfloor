@@ -1,25 +1,20 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
-import { ASSETS_BASE_URL } from "~/constants/urls";
-import { Icon } from "../shared/Icon";
 import { Skeleton } from "~/components/ui/dashboard/skeleton";
+import { ASSETS_BASE_URL } from "~/constants/urls";
 import { usePrefetch } from "~/hooks/usePrefetch";
 import {
 	getAttributeDisplayName,
-    getAttributeNameFromSlug,
+	getAttributeNameFromSlug,
 	useProductAttributes,
 } from "~/hooks/useProductAttributes";
 import { useVariationSelection } from "~/hooks/useVariationSelection";
 import { useCart } from "~/lib/cartContext";
 import { storeDataQueryOptions } from "~/lib/queryOptions";
-import type {
-	CartItem,
-	Product,
-	ProductVariation,
-	VariationAttribute,
-} from "~/types";
+import type { Product, ProductVariation, VariationAttribute } from "~/types";
 import { FilterGroup } from "../shared/FilterGroup";
+import { Icon } from "../shared/Icon";
 import styles from "./productCard.module.css";
 
 // Extended product interface with variations
@@ -218,7 +213,6 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 	);
 
 	// Check if product is coming soon (not in the type, so we'll use a placeholder)
-    
 
 	return (
 		<Link
@@ -239,67 +233,73 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 				<div className="bg-background flex flex-col">
 					<div className="relative aspect-square overflow-hidden">
 						<div>
-										{/* Primary Image */}
+							{/* Primary Image */}
 							<div className="relative aspect-square flex items-center justify-center overflow-hidden">
-											{imageArray.length > 0 ? (
-												<div className="relative w-full h-full">
-													{/* Loading skeleton, initially visible */}
-													<div className="absolute inset-0 w-full h-full bfloor-img-skeleton">
-														<Skeleton className="absolute inset-0 w-full h-full rounded-none" />
-													</div>
+								{imageArray.length > 0 ? (
+									<div className="relative w-full h-full">
+										{/* Loading skeleton, initially visible */}
+										<div className="absolute inset-0 w-full h-full bfloor-img-skeleton">
+											<Skeleton className="absolute inset-0 w-full h-full rounded-none" />
+										</div>
 
-													{/* Broken overlay, initially hidden */}
-													<div className="absolute inset-0 hidden items-center justify-center flex-col text-muted-foreground select-none bfloor-img-fallback">
-														<Icon name="image" className="w-12 h-12" />
-														<span className="mt-2 text-xs">Картинка сломана</span>
-													</div>
+										{/* Broken overlay, initially hidden */}
+										<div className="absolute inset-0 hidden items-center justify-center flex-col text-muted-foreground select-none bfloor-img-fallback">
+											<Icon name="image" className="w-12 h-12" />
+											<span className="mt-2 text-xs">Картинка сломана</span>
+										</div>
 
-													{/* Primary Image */}
-													<img
-														src={`${ASSETS_BASE_URL}/${imageArray[0]}`}
-														alt={product.name}
-														loading="eager"
-														className="absolute inset-0 w-full h-full object-cover object-center"
-														style={{
-															viewTransitionName: `product-image-${product.slug}`,
-														}}
-													onLoad={(e) => {
-														const parent = e.currentTarget.parentElement;
-														const sk = parent?.querySelector<HTMLDivElement>(".bfloor-img-skeleton");
-														if (sk) sk.style.display = "none";
-													}}
-														onError={(e) => {
-														const img = e.currentTarget;
-														const parent = img.parentElement;
-														img.style.display = "none";
-														const sk = parent?.querySelector<HTMLDivElement>(".bfloor-img-skeleton");
-														if (sk) sk.style.display = "none";
-														const fb = parent?.querySelector<HTMLDivElement>(".bfloor-img-fallback");
-														if (fb) fb.style.display = "flex";
-														}}
-													/>
-													{/* (no always-visible fallback overlay here; shown only via .bfloor-img-fallback when onError) */}
+										{/* Primary Image */}
+										<img
+											src={`${ASSETS_BASE_URL}/${imageArray[0]}`}
+											alt={product.name}
+											loading="eager"
+											className="absolute inset-0 w-full h-full object-cover object-center"
+											style={{
+												viewTransitionName: `product-image-${product.slug}`,
+											}}
+											onLoad={(e) => {
+												const parent = e.currentTarget.parentElement;
+												const sk = parent?.querySelector<HTMLDivElement>(
+													".bfloor-img-skeleton",
+												);
+												if (sk) sk.style.display = "none";
+											}}
+											onError={(e) => {
+												const img = e.currentTarget;
+												const parent = img.parentElement;
+												img.style.display = "none";
+												const sk = parent?.querySelector<HTMLDivElement>(
+													".bfloor-img-skeleton",
+												);
+												if (sk) sk.style.display = "none";
+												const fb = parent?.querySelector<HTMLDivElement>(
+													".bfloor-img-fallback",
+												);
+												if (fb) fb.style.display = "flex";
+											}}
+										/>
+										{/* (no always-visible fallback overlay here; shown only via .bfloor-img-fallback when onError) */}
 
-													{/* Secondary Image (if exists) - Only on desktop devices with hover capability */}
-													{imageArray.length > 1 && (
-														<img
-															src={`${ASSETS_BASE_URL}/${imageArray[1]}`}
-															alt={product.name}
-															loading="eager"
-															className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-500 ease-in-out opacity-0 group-hover:opacity-100 hidden md:block"
-															onError={(e) => {
-																const t = e.currentTarget;
-																t.style.display = "none";
-															}}
-														/>
-													)}
-												</div>
-											) : (
-												<div className="absolute inset-0 bg-muted flex flex-col items-center justify-center text-muted-foreground select-none">
-													<Icon name="image" className="w-12 h-12" />
-													<span className="mt-2 text-xs">Нет картинки</span>
-												</div>
-											)}
+										{/* Secondary Image (if exists) - Only on desktop devices with hover capability */}
+										{imageArray.length > 1 && (
+											<img
+												src={`${ASSETS_BASE_URL}/${imageArray[1]}`}
+												alt={product.name}
+												loading="eager"
+												className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-500 ease-in-out opacity-0 group-hover:opacity-100 hidden md:block"
+												onError={(e) => {
+													const t = e.currentTarget;
+													t.style.display = "none";
+												}}
+											/>
+										)}
+									</div>
+								) : (
+									<div className="absolute inset-0 bg-muted flex flex-col items-center justify-center text-muted-foreground select-none">
+										<Icon name="image" className="w-12 h-12" />
+										<span className="mt-2 text-xs">Нет картинки</span>
+									</div>
+								)}
 							</div>
 						</div>
 
@@ -316,7 +316,7 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 									: "cursor-pointer hover:text-primary-foreground active:text-primary-foreground"
 							}`}
 							disabled={!isAvailable}
-                            aria-label={!isAddingToCart ? "В корзину" : "Добавление…"}
+							aria-label={!isAddingToCart ? "В корзину" : "Добавление…"}
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -326,7 +326,7 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 								viewBox="0 0 33 30"
 								className="cart-icon"
 							>
-									<title>В корзину</title>
+								<title>В корзину</title>
 								<path
 									d="M1.94531 1.80127H7.27113L11.9244 18.602C12.2844 19.9016 13.4671 20.8013 14.8156 20.8013H25.6376C26.9423 20.8013 28.0974 19.958 28.495 18.7154L31.9453 7.9303H19.0041"
 									stroke="currentColor"
@@ -337,11 +337,11 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 								<circle cx="13.4453" cy="27.3013" r="2.5" fill="currentColor" />
 								<circle cx="26.4453" cy="27.3013" r="2.5" fill="currentColor" />
 							</svg>
-                            {!isAddingToCart ? (
-                                <span>В корзину</span>
-                            ) : (
-                                <span>Добавление…</span>
-                            )}
+							{!isAddingToCart ? (
+								<span>В корзину</span>
+							) : (
+								<span>Добавление…</span>
+							)}
 						</button>
 					</div>
 
@@ -392,7 +392,7 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 										)}
 									</div>
 
-                                    {/* Coming Soon removed */}
+									{/* Coming Soon removed */}
 								</div>
 
 								{/* Product Name */}
@@ -413,20 +413,20 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 											{attributeNames.map((attributeId: string) => (
 												<FilterGroup
 													key={attributeId}
-                                                    title={((): string => {
-                                                        const byId = getAttributeDisplayName(
-                                                            attributeId,
-                                                            attributes || [],
-                                                        );
-                                                        // If lookup by ID failed (returns the same value), try slug-to-name
-                                                        if (byId === attributeId) {
-                                                            return getAttributeNameFromSlug(
-                                                                attributeId,
-                                                                attributes || [],
-                                                            );
-                                                        }
-                                                        return byId;
-                                                    })()}
+													title={((): string => {
+														const byId = getAttributeDisplayName(
+															attributeId,
+															attributes || [],
+														);
+														// If lookup by ID failed (returns the same value), try slug-to-name
+														if (byId === attributeId) {
+															return getAttributeNameFromSlug(
+																attributeId,
+																attributes || [],
+															);
+														}
+														return byId;
+													})()}
 													options={getUniqueAttributeValues(attributeId)}
 													selectedOptions={
 														selectedAttributes[attributeId] || null
@@ -492,11 +492,11 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 											fill="currentColor"
 										/>
 									</svg>
-                                    {!isAddingToCart ? (
-                                        <span>Добавить в корзину</span>
-                                    ) : (
-                                        <span>Добавление…</span>
-                                    )}
+									{!isAddingToCart ? (
+										<span>Добавить в корзину</span>
+									) : (
+										<span>Добавление…</span>
+									)}
 								</button>
 							</div>
 						</div>

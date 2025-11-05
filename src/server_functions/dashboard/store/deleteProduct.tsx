@@ -44,21 +44,26 @@ export const deleteProduct = createServerFn({ method: "POST" })
 						imageArray = JSON.parse(existingProduct[0].images);
 					} catch {
 						// If it's not JSON, treat it as comma-separated string
-						imageArray = existingProduct[0].images.split(",").map(img => img.trim()).filter(Boolean);
+						imageArray = existingProduct[0].images
+							.split(",")
+							.map((img) => img.trim())
+							.filter(Boolean);
 					}
 
 					if (imageArray.length > 0) {
 						const bucket = env.BFLOOR_STORAGE as R2Bucket;
 						if (bucket) {
 							// Delete all images associated with this product
-						await Promise.all(imageArray.map(async (imagePath) => {
-								try {
-									await bucket.delete(imagePath);
-								} catch (error) {
-									// Log but don't fail if image deletion fails
-									console.warn(`Failed to delete image ${imagePath}:`, error);
-								}
-						}));
+							await Promise.all(
+								imageArray.map(async (imagePath) => {
+									try {
+										await bucket.delete(imagePath);
+									} catch (error) {
+										// Log but don't fail if image deletion fails
+										console.warn(`Failed to delete image ${imagePath}:`, error);
+									}
+								}),
+							);
 						}
 					}
 				} catch (error) {

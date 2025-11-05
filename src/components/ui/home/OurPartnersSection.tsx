@@ -1,5 +1,9 @@
 function OurPartnersSection() {
-	return <h1>Наши партнёры</h1>;
+	return (
+		<section>
+			<h2>Наши партнёры</h2>
+		</section>
+	);
 }
 
 export default OurPartnersSection;

@@ -1,12 +1,12 @@
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { eq, sql } from "drizzle-orm";
-import { products, productAttributes } from "~/schema";
+import type { DrizzleD1Database } from "drizzle-orm/d1";
 import type * as schema from "~/schema";
+import { productAttributes, products } from "~/schema";
 
 /**
  * Removes a specific attribute value from all products that have it selected
  * Handles comma-separated values in product_attributes JSON
- * 
+ *
  * @param db - Database connection
  * @param attributeId - ID of the attribute (vid-profilya = 35)
  * @param valueToRemove - The value string to remove (e.g., "Профиль для лестницы")
@@ -47,15 +47,20 @@ export async function cleanupAttributeValueFromProducts(
 
 		try {
 			const parsed = JSON.parse(product.productAttributes);
-			
+
 			// Check if product has this attribute
-			const currentValue = parsed[attributeSlug] || parsed[attributeId.toString()];
+			const currentValue =
+				parsed[attributeSlug] || parsed[attributeId.toString()];
 			if (!currentValue) continue;
 
 			// Handle both single value and comma-separated values
-			const values = typeof currentValue === "string"
-				? currentValue.split(",").map((v: string) => v.trim()).filter(Boolean)
-				: [String(currentValue)];
+			const values =
+				typeof currentValue === "string"
+					? currentValue
+							.split(",")
+							.map((v: string) => v.trim())
+							.filter(Boolean)
+					: [String(currentValue)];
 
 			// Check if value to remove is in the list
 			if (!values.includes(valueToRemove)) continue;
@@ -74,10 +79,11 @@ export async function cleanupAttributeValueFromProducts(
 				}
 			} else {
 				// Update with remaining values (join if multiple, single if one)
-				const newValue = updatedValues.length === 1 
-					? updatedValues[0] 
-					: updatedValues.join(",");
-				
+				const newValue =
+					updatedValues.length === 1
+						? updatedValues[0]
+						: updatedValues.join(",");
+
 				// Use slug as key if it exists, otherwise use attributeId
 				if (parsed[attributeSlug] !== undefined) {
 					parsed[attributeSlug] = newValue;
@@ -98,12 +104,12 @@ export async function cleanupAttributeValueFromProducts(
 			updateCount++;
 		} catch (error) {
 			// Skip products with invalid JSON
-			console.warn(`Failed to parse attributes for product ${product.id}:`, error);
-			continue;
+			console.warn(
+				`Failed to parse attributes for product ${product.id}:`,
+				error,
+			);
 		}
 	}
 
 	return { updatedCount: updateCount, productIds: updatedProductIds };
 }
-
-

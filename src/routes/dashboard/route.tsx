@@ -6,15 +6,15 @@ import {
 	useRouter,
 } from "@tanstack/react-router";
 import { Toaster } from "~/components/ui/shared/sonner";
+
 // import { getUserData } from "~/utils/auth-server-func";
 
-
 const validateSearch = (search: Record<string, unknown>) => {
-    const result: { search?: string } = {};
-    if (typeof search.search === "string") {
-        result.search = search.search;
-    }
-    return result;
+	const result: { search?: string } = {};
+	if (typeof search.search === "string") {
+		result.search = search.search;
+	}
+	return result;
 };
 
 export const Route = createFileRoute("/dashboard")({
@@ -53,34 +53,32 @@ export const Route = createFileRoute("/dashboard")({
 			userAvatar: "",
 		};
 	},
-    component: RouteComponent,
-    validateSearch,
+	component: RouteComponent,
+	validateSearch,
 });
 
 function DashboardLayout() {
-    const _loaderData = useLoaderData({ from: "/dashboard" }) as
-        | {
-                userID: string;
-                userName: string;
-                userEmail: string;
-                userAvatar: string;
-          }
-        | undefined;
+	const _loaderData = useLoaderData({ from: "/dashboard" }) as
+		| {
+				userID: string;
+				userName: string;
+				userEmail: string;
+				userAvatar: string;
+		  }
+		| undefined;
 
-    const _router = useRouter();
+	const _router = useRouter();
 
 	return (
 		<div className="h-screen bg-background flex flex-col">
-			<main className="flex-1">
+			<div className="flex-1">
 				<Outlet />
-			</main>
+			</div>
 			<Toaster className="fixed top-4 right-4 z-50" />
 		</div>
 	);
 }
 
 function RouteComponent() {
-    return (
-        <DashboardLayout />
-    );
+	return <DashboardLayout />;
 }

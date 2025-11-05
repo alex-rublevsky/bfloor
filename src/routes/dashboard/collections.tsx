@@ -20,7 +20,10 @@ import {
 import { Switch } from "~/components/ui/shared/Switch";
 import { useDashboardForm } from "~/hooks/useDashboardForm";
 import { generateSlug, useSlugGeneration } from "~/hooks/useSlugGeneration";
-import { brandsQueryOptions, collectionsQueryOptions } from "~/lib/queryOptions";
+import {
+	brandsQueryOptions,
+	collectionsQueryOptions,
+} from "~/lib/queryOptions";
 import { createCollection } from "~/server_functions/dashboard/collections/createCollection";
 import { deleteCollection } from "~/server_functions/dashboard/collections/deleteCollection";
 import { updateCollection } from "~/server_functions/dashboard/collections/updateCollection";

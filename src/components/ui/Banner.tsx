@@ -1,28 +1,28 @@
-import { useCallback, useEffect, useState } from 'react'
-import useEmblaCarousel from 'embla-carousel-react'
-import { ASSETS_BASE_URL } from '~/constants/urls'
+import useEmblaCarousel from "embla-carousel-react";
+import { useCallback, useEffect, useState } from "react";
+import { ASSETS_BASE_URL } from "~/constants/urls";
 
-type EmblaOptionsType = Parameters<typeof useEmblaCarousel>[0]
+type EmblaOptionsType = Parameters<typeof useEmblaCarousel>[0];
 
 type EmblaPropType = {
-	slides: string[]
-	options?: EmblaOptionsType
-}
+	slides: string[];
+	options?: EmblaOptionsType;
+};
 
 type PropType = {
-	selected: boolean
-	index: number
-	onClick: () => void
-	src: string
-}
+	selected: boolean;
+	index: number;
+	onClick: () => void;
+	src: string;
+};
 
 export const Thumb: React.FC<PropType> = (props) => {
-	const { selected, index, onClick, src } = props
+	const { selected, index, onClick, src } = props;
 
 	return (
 		<div
-			className={'embla-thumbs__slide'.concat(
-				selected ? ' embla-thumbs__slide--selected' : '',
+			className={"embla-thumbs__slide".concat(
+				selected ? " embla-thumbs__slide--selected" : "",
 			)}
 		>
 			<button
@@ -31,74 +31,82 @@ export const Thumb: React.FC<PropType> = (props) => {
 				className="embla-thumbs__slide__button"
 				aria-label={`Go to slide ${index + 1}`}
 			>
-				<img src={src} alt={`thumb ${index + 1}`} className="embla-thumbs__slide__image" />
+				<img
+					src={src}
+					alt={`thumb ${index + 1}`}
+					className="embla-thumbs__slide__image"
+				/>
 			</button>
 		</div>
-	)
-}
+	);
+};
 
 const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
-    const { slides, options } = props
-	const [selectedIndex, setSelectedIndex] = useState(0)
-	const [emblaMainRef, emblaMainApi] = useEmblaCarousel(options)
+	const { slides, options } = props;
+	const [selectedIndex, setSelectedIndex] = useState(0);
+	const [emblaMainRef, emblaMainApi] = useEmblaCarousel(options);
 	const [emblaThumbsRef, emblaThumbsApi] = useEmblaCarousel({
-		containScroll: 'keepSnaps',
+		containScroll: "keepSnaps",
 		dragFree: true,
-	})
+	});
 
 	const onThumbClick = useCallback(
 		(index: number) => {
-			if (!emblaMainApi || !emblaThumbsApi) return
-			emblaMainApi.scrollTo(index)
+			if (!emblaMainApi || !emblaThumbsApi) return;
+			emblaMainApi.scrollTo(index);
 		},
 		[emblaMainApi, emblaThumbsApi],
-	)
+	);
 
 	const onSelect = useCallback(() => {
-		if (!emblaMainApi || !emblaThumbsApi) return
-		setSelectedIndex(emblaMainApi.selectedScrollSnap())
-		emblaThumbsApi.scrollTo(emblaMainApi.selectedScrollSnap())
-	}, [emblaMainApi, emblaThumbsApi])
+		if (!emblaMainApi || !emblaThumbsApi) return;
+		setSelectedIndex(emblaMainApi.selectedScrollSnap());
+		emblaThumbsApi.scrollTo(emblaMainApi.selectedScrollSnap());
+	}, [emblaMainApi, emblaThumbsApi]);
 
 	useEffect(() => {
-		if (!emblaMainApi) return
-		onSelect()
-		emblaMainApi.on('select', onSelect).on('reInit', onSelect)
-	}, [emblaMainApi, onSelect])
+		if (!emblaMainApi) return;
+		onSelect();
+		emblaMainApi.on("select", onSelect).on("reInit", onSelect);
+	}, [emblaMainApi, onSelect]);
 
 	return (
-		<div className="embla">
-			<div className="embla__viewport" ref={emblaMainRef}>
-				<div className="embla__container">
-					{slides.map((src, index) => (
-						<div className="embla__slide" key={src}>
-							<div className="embla__slide__number">
-								<img src={src} alt={`banner ${index + 1}`} className="embla__slide__image" />
-							</div>
-						</div>
-					))}
-				</div>
-			</div>
-
-			<div className="embla-thumbs">
-				<div className="embla-thumbs__viewport" ref={emblaThumbsRef}>
-					<div className="embla-thumbs__container">
+		<section className="no-padding">
+			<div className="embla">
+				<div className="embla__viewport" ref={emblaMainRef}>
+					<div className="embla__container">
 						{slides.map((src, index) => (
-							<Thumb
-								key={`thumb-${src}`}
-								onClick={() => onThumbClick(index)}
-								selected={index === selectedIndex}
-								index={index}
-								src={src}
-							/>
+							<div className="embla__slide" key={src}>
+								<div className="embla__slide__number">
+									<img
+										src={src}
+										alt={`banner ${index + 1}`}
+										className="embla__slide__image"
+									/>
+								</div>
+							</div>
 						))}
 					</div>
 				</div>
-			</div>
 
-			<style>{`
+				<div className="embla-thumbs">
+					<div className="embla-thumbs__viewport" ref={emblaThumbsRef}>
+						<div className="embla-thumbs__container">
+							{slides.map((src, index) => (
+								<Thumb
+									key={`thumb-${src}`}
+									onClick={() => onThumbClick(index)}
+									selected={index === selectedIndex}
+									index={index}
+									src={src}
+								/>
+							))}
+						</div>
+					</div>
+				</div>
+
+				<style>{`
 .embla {
-	max-width: 48rem;
 	margin: auto;
 	--slide-height: 19rem;
 	--slide-spacing: 1rem;
@@ -211,16 +219,17 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 	color: var(--text-body);
 }
 `}</style>
-		</div>
-	)
-}
+			</div>
+		</section>
+	);
+};
 
 export function Banner() {
 	const SLIDES: string[] = [
 		`${ASSETS_BASE_URL}/banners/laminat-elochka.webp`,
 		`${ASSETS_BASE_URL}/banners/nastennaya-probka-vsega-v-nalichii.webp`,
-	]
-	const OPTIONS: EmblaOptionsType = { loop: true }
+	];
+	const OPTIONS: EmblaOptionsType = { loop: true };
 
-	return <EmblaCarousel slides={SLIDES} options={OPTIONS} />
+	return <EmblaCarousel slides={SLIDES} options={OPTIONS} />;
 }

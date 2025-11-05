@@ -13,19 +13,18 @@
 
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { notFound } from "@tanstack/react-router";
+import { getAllAttributeValuesByAttribute } from "~/server_functions/dashboard/attributes/getAllAttributeValuesByAttribute";
+import { getAllProductAttributes } from "~/server_functions/dashboard/attributes/getAllProductAttributes";
+import { getAttributeValues } from "~/server_functions/dashboard/attributes/getAttributeValues";
+import { getProductAttributeCounts } from "~/server_functions/dashboard/attributes/getProductAttributeCounts";
+import { getAllProductCategories } from "~/server_functions/dashboard/categories/getAllProductCategories";
+import { getAllCollections } from "~/server_functions/dashboard/collections/getAllCollections";
+import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
 import { getAllOrders } from "~/server_functions/dashboard/orders/getAllOrders";
 import { getAllProducts } from "~/server_functions/dashboard/store/getAllProducts";
+import { getAllStoreLocations } from "~/server_functions/dashboard/storeLocations/getAllStoreLocations";
 import { getStoreData } from "~/server_functions/store/getAllProducts";
 import { getProductBySlug } from "~/server_functions/store/getProductBySlug";
-import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
-import { getAllCollections } from "~/server_functions/dashboard/collections/getAllCollections";
-import { getAllProductCategories } from "~/server_functions/dashboard/categories/getAllProductCategories";
-import { getAllStoreLocations } from "~/server_functions/dashboard/storeLocations/getAllStoreLocations";
-import { getAllProductAttributes } from "~/server_functions/dashboard/attributes/getAllProductAttributes";
-import { getProductAttributeCounts } from "~/server_functions/dashboard/attributes/getProductAttributeCounts";
-import { getProductAttributesWithCounts } from "~/server_functions/dashboard/attributes/getProductAttributesWithCounts";
-import { getAllAttributeValuesByAttribute } from "~/server_functions/dashboard/attributes/getAllAttributeValuesByAttribute";
-import { getAttributeValues } from "~/server_functions/dashboard/attributes/getAttributeValues";
 
 /**
  * Store data query options (DEPRECATED - use storeDataInfiniteQueryOptions)
@@ -46,33 +45,82 @@ export const storeDataQueryOptions = () =>
 		refetchOnMount: false, // Don't refetch on component mount if data is fresh
 	});
 
+// Type for paginated response from getStoreData and getAllProducts
+type PaginatedResponse = {
+	products: unknown[];
+	pagination?: {
+		page: number;
+		limit: number;
+		totalCount: number;
+		totalPages: number;
+		hasNextPage: boolean;
+		hasPreviousPage: boolean;
+	};
+};
+
 /**
  * Store data infinite query options
  * Used for: /store route with virtualized infinite scroll
  *
  * Cache Strategy: Optimized for infinite scrolling
- * - Each page cached for 12 hours
+ * - Each page cached per filter combination
  * - Infinite query with 50 products per page
  * - Perfect for virtualizer implementation
+ * - Server-side filtering (same as dashboard)
  */
-export const storeDataInfiniteQueryOptions = () => infiniteQueryOptions({
-	queryKey: ["bfloorStoreDataInfinite"],
-	queryFn: ({ pageParam = 1 }) => getStoreData({ data: { page: pageParam as number, limit: 50 } }),
-	staleTime: 0, // No cache - always fetch fresh data (same as dashboard)
-	initialPageParam: 1,
-	getNextPageParam: (lastPage: any) => {
-		// Simple: return next page number if there's a next page
-		return lastPage?.pagination?.hasNextPage 
-			? lastPage.pagination.page + 1 
-			: undefined;
+export const storeDataInfiniteQueryOptions = (
+	search?: string,
+	filters?: {
+		categorySlug?: string | null;
+		brandSlug?: string | null;
+		collectionSlug?: string | null;
+		sort?:
+			| "relevant"
+			| "name"
+			| "price-asc"
+			| "price-desc"
+			| "newest"
+			| "oldest";
 	},
-	getPreviousPageParam: (firstPage: any) => {
-		// Simple: return previous page number if there's a previous page
-		return firstPage?.pagination?.hasPreviousPage 
-			? firstPage.pagination.page - 1 
-			: undefined;
-	},
-});
+) =>
+	infiniteQueryOptions({
+		queryKey: [
+			"bfloorStoreDataInfinite",
+			{
+				search: search ?? "",
+				categorySlug: filters?.categorySlug ?? null,
+				brandSlug: filters?.brandSlug ?? null,
+				collectionSlug: filters?.collectionSlug ?? null,
+				sort: filters?.sort ?? "relevant",
+			},
+		],
+		queryFn: ({ pageParam = 1 }) =>
+			getStoreData({
+				data: {
+					page: pageParam as number,
+					limit: 50,
+					search,
+					categorySlug: filters?.categorySlug ?? undefined,
+					brandSlug: filters?.brandSlug ?? undefined,
+					collectionSlug: filters?.collectionSlug ?? undefined,
+					sort: filters?.sort ?? undefined,
+				},
+			}),
+		staleTime: 0, // No cache - always fetch fresh data (same as dashboard)
+		initialPageParam: 1,
+		getNextPageParam: (lastPage: PaginatedResponse) => {
+			// Simple: return next page number if there's a next page
+			return lastPage?.pagination?.hasNextPage
+				? lastPage.pagination.page + 1
+				: undefined;
+		},
+		getPreviousPageParam: (firstPage: PaginatedResponse) => {
+			// Simple: return previous page number if there's a previous page
+			return firstPage?.pagination?.hasPreviousPage
+				? firstPage.pagination.page - 1
+				: undefined;
+		},
+	});
 
 /**
  * Product by slug query options
@@ -134,84 +182,93 @@ export const dashboardOrdersQueryOptions = () =>
  * - Background refetching for fresh data
  */
 export const productsInfiniteQueryOptions = (
-    search?: string,
-    filters?: {
-        categorySlug?: string | null;
-        brandSlug?: string | null;
-        collectionSlug?: string | null;
-        sort?: "relevant" | "name" | "price-asc" | "price-desc" | "newest" | "oldest";
-    }
-) => infiniteQueryOptions({
-    queryKey: [
-        "bfloorDashboardProductsInfinite",
-        {
-            search: search ?? "",
-            categorySlug: filters?.categorySlug ?? null,
-            brandSlug: filters?.brandSlug ?? null,
-            collectionSlug: filters?.collectionSlug ?? null,
-            sort: filters?.sort ?? "relevant",
-        },
-    ],
-    queryFn: ({ pageParam = 1 }) =>
-        getAllProducts({
-            data: {
-                page: pageParam as number,
-                limit: 50,
-                search,
-                categorySlug: filters?.categorySlug ?? undefined,
-                brandSlug: filters?.brandSlug ?? undefined,
-                collectionSlug: filters?.collectionSlug ?? undefined,
-                sort: filters?.sort ?? undefined,
-            },
-        }),
-	staleTime: 0, // No cache - force fresh data for dashboard
-	// Note: Query will be manually invalidated via refetch() after product updates
-	initialPageParam: 1,
-	getNextPageParam: (lastPage: any) => {
-		// Simple and clean: if there's a next page, return next page number
-		return lastPage?.pagination?.hasNextPage 
-			? lastPage.pagination.page + 1 
-			: undefined;
+	search?: string,
+	filters?: {
+		categorySlug?: string | null;
+		brandSlug?: string | null;
+		collectionSlug?: string | null;
+		sort?:
+			| "relevant"
+			| "name"
+			| "price-asc"
+			| "price-desc"
+			| "newest"
+			| "oldest";
 	},
-	getPreviousPageParam: (firstPage: any) => {
-		// Simple and clean: if there's a previous page, return previous page number
-		return firstPage?.pagination?.hasPreviousPage 
-			? firstPage.pagination.page - 1 
-			: undefined;
-	},
-});
+) =>
+	infiniteQueryOptions({
+		queryKey: [
+			"bfloorDashboardProductsInfinite",
+			{
+				search: search ?? "",
+				categorySlug: filters?.categorySlug ?? null,
+				brandSlug: filters?.brandSlug ?? null,
+				collectionSlug: filters?.collectionSlug ?? null,
+				sort: filters?.sort ?? "relevant",
+			},
+		],
+		queryFn: ({ pageParam = 1 }) =>
+			getAllProducts({
+				data: {
+					page: pageParam as number,
+					limit: 50,
+					search,
+					categorySlug: filters?.categorySlug ?? undefined,
+					brandSlug: filters?.brandSlug ?? undefined,
+					collectionSlug: filters?.collectionSlug ?? undefined,
+					sort: filters?.sort ?? undefined,
+				},
+			}),
+		staleTime: 0, // No cache - force fresh data for dashboard
+		// Note: Query will be manually invalidated via refetch() after product updates
+		initialPageParam: 1,
+		getNextPageParam: (lastPage: PaginatedResponse) => {
+			// Simple and clean: if there's a next page, return next page number
+			return lastPage?.pagination?.hasNextPage
+				? lastPage.pagination.page + 1
+				: undefined;
+		},
+		getPreviousPageParam: (firstPage: PaginatedResponse) => {
+			// Simple and clean: if there's a previous page, return previous page number
+			return firstPage?.pagination?.hasPreviousPage
+				? firstPage.pagination.page - 1
+				: undefined;
+		},
+	});
 
 export const dashboardProductsInfiniteQueryOptions = (pageSize: number = 20) =>
 	infiniteQueryOptions({
 		queryKey: ["bfloorDashboardProductsInfinite", pageSize],
 		queryFn: async ({ pageParam = 1 }) => {
-			return await getAllProducts({ 
-				data: { 
-					page: pageParam as number, 
-					limit: pageSize 
-				} 
+			return await getAllProducts({
+				data: {
+					page: pageParam as number,
+					limit: pageSize,
+				},
 			});
 		},
 		initialPageParam: 1,
-		getNextPageParam: (lastPage: any) => {
+		getNextPageParam: (lastPage: PaginatedResponse) => {
 			try {
 				// Completely defensive - check absolutely everything
-				if (!lastPage || typeof lastPage !== 'object') return undefined;
-				if (!lastPage.pagination || typeof lastPage.pagination !== 'object') return undefined;
+				if (!lastPage || typeof lastPage !== "object") return undefined;
+				if (!lastPage.pagination || typeof lastPage.pagination !== "object")
+					return undefined;
 				if (lastPage.pagination.hasNextPage !== true) return undefined;
-				if (typeof lastPage.pagination.page !== 'number') return undefined;
+				if (typeof lastPage.pagination.page !== "number") return undefined;
 				return lastPage.pagination.page + 1;
 			} catch {
 				return undefined;
 			}
 		},
-		getPreviousPageParam: (firstPage: any) => {
+		getPreviousPageParam: (firstPage: PaginatedResponse) => {
 			try {
 				// Completely defensive - check absolutely everything
-				if (!firstPage || typeof firstPage !== 'object') return undefined;
-				if (!firstPage.pagination || typeof firstPage.pagination !== 'object') return undefined;
+				if (!firstPage || typeof firstPage !== "object") return undefined;
+				if (!firstPage.pagination || typeof firstPage.pagination !== "object")
+					return undefined;
 				if (firstPage.pagination.hasPreviousPage !== true) return undefined;
-				if (typeof firstPage.pagination.page !== 'number') return undefined;
+				if (typeof firstPage.pagination.page !== "number") return undefined;
 				return firstPage.pagination.page - 1;
 			} catch {
 				return undefined;
@@ -392,18 +449,133 @@ export const attributeValuesQueryOptions = (attributeId: number) =>
 	});
 
 /**
- * Product Attributes with counts query options (DEPRECATED - use separate queries for streaming)
- * Used for: Legacy support, but prefer productAttributesQueryOptions + productAttributeCountsQueryOptions
+ * Products by tag query options
+ * Used for: ProductSlider component on home page
  *
- * Cache Strategy: Moderate caching for semi-static data
+ * Cache Strategy: Extremely aggressive caching
+ * - Products by tag cached for 7 days (extremely cached)
+ * - Kept in memory for 14 days
+ * - No automatic refetching
+ * - Perfect for prefetching all tags on mount
  */
-export const productAttributesWithCountsQueryOptions = () =>
+export const productsByTagQueryOptions = (tag: string) =>
 	queryOptions({
-		queryKey: ["productAttributesWithCounts"],
-		queryFn: async () => getProductAttributesWithCounts(),
-		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - attributes rarely change
-		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
+		queryKey: ["bfloorProductsByTag", tag],
+		queryFn: async () =>
+			getAllProducts({
+				data: {
+					tag,
+					sort: "name",
+				},
+			}),
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - extremely cached
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
+	});
+
+/**
+ * Discounted products query options
+ * Used for: ProductSlider component (simple mode) on home page
+ *
+ * Cache Strategy: Extremely aggressive caching
+ * - Discounted products cached for 7 days (extremely cached)
+ * - Kept in memory for 14 days
+ * - No automatic refetching
+ * - Perfect for home page carousel
+ */
+export const discountedProductsQueryOptions = () =>
+	queryOptions({
+		queryKey: ["bfloorDiscountedProducts"],
+		queryFn: async () =>
+			getAllProducts({
+				data: {
+					hasDiscount: true,
+					sort: "name",
+				},
+			}),
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - extremely cached
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Products by tag infinite query options
+ * Used for: ProductSlider component with pagination and infinite scrolling
+ *
+ * Cache Strategy: Optimized for infinite scrolling
+ * - Each page cached for 12 hours
+ * - Infinite query with 20 products per page
+ * - Perfect for carousel implementation with progressive loading
+ */
+export const productsByTagInfiniteQueryOptions = (tag: string) =>
+	infiniteQueryOptions({
+		queryKey: ["bfloorProductsByTagInfinite", tag],
+		queryFn: ({ pageParam = 1 }) =>
+			getAllProducts({
+				data: {
+					tag,
+					page: pageParam as number,
+					limit: 20, // Smaller page size for carousel
+					sort: "name",
+				},
+			}),
+		staleTime: 1000 * 60 * 60 * 12, // 12 hours
+		gcTime: 1000 * 60 * 60 * 24 * 3, // 3 days - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+		initialPageParam: 1,
+		getNextPageParam: (lastPage: PaginatedResponse) => {
+			return lastPage?.pagination?.hasNextPage
+				? lastPage.pagination.page + 1
+				: undefined;
+		},
+		getPreviousPageParam: (firstPage: PaginatedResponse) => {
+			return firstPage?.pagination?.hasPreviousPage
+				? firstPage.pagination.page - 1
+				: undefined;
+		},
+	});
+
+/**
+ * Discounted products infinite query options
+ * Used for: ProductSlider component (simple mode) with pagination and infinite scrolling
+ *
+ * Cache Strategy: Optimized for infinite scrolling
+ * - Each page cached for 12 hours
+ * - Infinite query with 20 products per page
+ * - Perfect for carousel implementation with progressive loading
+ */
+export const discountedProductsInfiniteQueryOptions = () =>
+	infiniteQueryOptions({
+		queryKey: ["bfloorDiscountedProductsInfinite"],
+		queryFn: ({ pageParam = 1 }) =>
+			getAllProducts({
+				data: {
+					hasDiscount: true,
+					page: pageParam as number,
+					limit: 20,
+					sort: "name",
+				},
+			}),
+		staleTime: 1000 * 60 * 60 * 12, // 12 hours
+		gcTime: 1000 * 60 * 60 * 24 * 3, // 3 days - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+		initialPageParam: 1,
+		getNextPageParam: (lastPage: PaginatedResponse) => {
+			return lastPage?.pagination?.hasNextPage
+				? lastPage.pagination.page + 1
+				: undefined;
+		},
+		getPreviousPageParam: (firstPage: PaginatedResponse) => {
+			return firstPage?.pagination?.hasPreviousPage
+				? firstPage.pagination.page - 1
+				: undefined;
+		},
 	});

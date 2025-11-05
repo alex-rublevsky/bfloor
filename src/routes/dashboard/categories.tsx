@@ -117,9 +117,7 @@ export const Route = createFileRoute("/dashboard/categories")({
 
 function RouteComponent() {
 	// Use suspense queries - data is guaranteed to be loaded by the loader
-	const { data: categoriesData } = useSuspenseQuery(
-		categoriesQueryOptions(),
-	);
+	const { data: categoriesData } = useSuspenseQuery(categoriesQueryOptions());
 
 	// Entity manager configuration
 	const entityManagerConfig = {

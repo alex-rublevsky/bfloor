@@ -37,7 +37,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 						variant="secondary"
 						type="button"
 						onClick={handleClear}
-						className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+						className="h-9 w-9 text-muted-foreground hover:text-foreground transition-standard flex-shrink-0"
 						aria-label="Очистить поиск"
 					>
 						<X className="h-4 w-4" style={{ color: "currentColor" }} />
@@ -50,7 +50,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 					onChange={(e) => onChange(e.target.value)}
 					placeholder={placeholder}
 					className={cn(
-						"flex h-9 w-full min-w-[15ch] rounded-md border border-input bg-background px-3 py-1 text-base shadow-xs transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-primary hover:border-primary disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+						"flex h-9 w-full min-w-[15ch] rounded-md border-[1.5px] border-input bg-background px-3 py-1 text-base shadow-xs transition-standard file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-accent hover:border-accent disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
 						className,
 					)}
 					{...props}

@@ -12,9 +12,9 @@ import {
 	MoreVertical,
 	Plus,
 } from "lucide-react";
+import { motion, useMotionValueEvent, useScroll } from "motion/react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
-import { motion, useMotionValueEvent, useScroll } from "motion/react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -75,14 +75,22 @@ const dashboardSecondaryItems: NavItem[] = [
 ];
 
 // Reusable dashboard navigation component
-const DashboardNavLinks = ({ className = "", dashboardNavItems, pathname, prefetchDashboardOrders }: { 
+const DashboardNavLinks = ({
+	className = "",
+	dashboardNavItems,
+	pathname,
+	prefetchDashboardOrders,
+}: {
 	className?: string;
 	dashboardNavItems: NavItem[];
 	pathname: string;
 	prefetchDashboardOrders: () => void;
 }) => (
-	<div 
-		className={cn("flex  rounded-full border  border-border bg-background p-[0.3rem]", className)}
+	<div
+		className={cn(
+			"flex  rounded-full border  border-border bg-background p-[0.3rem]",
+			className,
+		)}
 	>
 		{dashboardNavItems.map((item) => (
 			<Link
@@ -107,19 +115,22 @@ const DashboardNavLinks = ({ className = "", dashboardNavItems, pathname, prefet
 );
 
 // Reusable action button component
-const ActionButton = ({ actionButton, className = "" }: { 
+const ActionButton = ({
+	actionButton,
+	className = "",
+}: {
 	actionButton: { label: string; onClick: () => void } | null;
 	className?: string;
 }) => {
 	if (!actionButton) return null;
-	
+
 	return (
 		<button
 			type="button"
 			onClick={actionButton.onClick}
 			className={cn(
 				"relative flex rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground transition-all duration-300 p-[0.3rem] focus:outline-hidden focus:ring-1 focus:ring-ring whitespace-nowrap min-w-fit",
-				className
+				className,
 			)}
 		>
 			<span className="relative z-10 flex items-center gap-1.5 cursor-pointer px-3 py-1.5 text-xs">
@@ -144,7 +155,7 @@ const DropdownNavMenu = ({
 		userAvatar: string;
 	};
 }) => {
-    const navigate = useNavigate();
+	const navigate = useNavigate();
 
 	const userID = userData?.userID || "";
 	const userName = userData?.userName || "";
@@ -283,7 +294,6 @@ export function NavBar({
 }: Omit<NavBarProps, "items">) {
 	const routerState = useRouterState();
 	const pathname = routerState.location.pathname;
-    const isStore = pathname.startsWith("/store");
 	const { prefetchDashboardOrders } = usePrefetch();
 	const dynamicPlaceholder = useSearchPlaceholderWithCount();
 
@@ -304,40 +314,50 @@ export function NavBar({
 	const clientSearch = useClientSearch();
 
 	const isDashboard = pathname.startsWith("/dashboard");
-    const isMiscPage = pathname === "/dashboard/misc";
+	const isMiscPage = pathname === "/dashboard/misc";
 
 	// Dashboard search state (self-managed when not provided by props)
-    const currentSearchParam = (routerState.location.search as unknown as Record<string, unknown>)?.search;
-    const [typedDashboardSearch, setTypedDashboardSearch] = useState(
+	const currentSearchParam = (
+		routerState.location.search as unknown as Record<string, unknown>
+	)?.search;
+	const [typedDashboardSearch, setTypedDashboardSearch] = useState(
 		typeof currentSearchParam === "string" ? currentSearchParam : "",
 	);
 
 	// Keep internal input in sync with URL changes
-    useEffect(() => {
+	useEffect(() => {
 		if (!isDashboard) return;
-		setTypedDashboardSearch(typeof currentSearchParam === "string" ? currentSearchParam : "");
+		setTypedDashboardSearch(
+			typeof currentSearchParam === "string" ? currentSearchParam : "",
+		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isDashboard, currentSearchParam]);
 
 	// Debounce URL update when using internal dashboard search
-    useEffect(() => {
+	useEffect(() => {
 		if (!isDashboard || isMiscPage) return;
 		// If parent provides controlled search, do nothing here
 		if (searchTerm !== undefined && onSearchChange) return;
 		const normalized = typedDashboardSearch.trim().replace(/\s+/g, " ");
 		const applied = normalized.length >= 2 ? normalized : undefined;
-        const handle = setTimeout(() => {
-            const url = new URL(window.location.href);
-            if (applied) {
-                url.searchParams.set("search", applied);
-            } else {
-                url.searchParams.delete("search");
-            }
-            window.history.replaceState(null, "", url.toString());
-        }, 400);
+		const handle = setTimeout(() => {
+			const url = new URL(window.location.href);
+			if (applied) {
+				url.searchParams.set("search", applied);
+			} else {
+				url.searchParams.delete("search");
+			}
+			window.history.replaceState(null, "", url.toString());
+		}, 400);
 		return () => clearTimeout(handle);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isDashboard, isMiscPage, typedDashboardSearch, searchTerm, onSearchChange]);
+	}, [
+		isDashboard,
+		isMiscPage,
+		typedDashboardSearch,
+		searchTerm,
+		onSearchChange,
+	]);
 
 	// Handle action button clicks directly
 	const handleActionClick = () => {
@@ -394,31 +414,42 @@ export function NavBar({
 					onFocusCapture={() => setIsHidden(false)}
 					transition={{ duration: 0.5, ease: [0.215, 0.61, 0.355, 1] }}
 					variants={{ hidden: { y: "-100%" }, visible: { y: "0%" } }}
-					className={cn(isStore ? "fixed top-0 left-0 right-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border" : "sticky top-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border", className)}
+					className={cn(
+						"sticky top-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border",
+						className,
+					)}
 				>
 					<div className="px-4 py-3">
 						{/* Desktop layout - Large screens and above */}
 						<div className="hidden lg:flex items-center gap-4">
 							{/* Pages navigation - fixed width */}
 							<div className="flex-shrink-0">
-								<DashboardNavLinks 
+								<DashboardNavLinks
 									dashboardNavItems={dashboardNavItems}
 									pathname={pathname}
 									prefetchDashboardOrders={prefetchDashboardOrders}
 								/>
 							</div>
 
-					{/* Search - takes all available space (dashboard) */}
-					{!isMiscPage && (
-						<div className="flex-1 min-w-0">
-							<SearchInput
-								placeholder={dynamicPlaceholder}
-								value={searchTerm !== undefined && onSearchChange ? searchTerm : typedDashboardSearch}
-								onChange={searchTerm !== undefined && onSearchChange ? onSearchChange : setTypedDashboardSearch}
-								className="w-full"
-							/>
-						</div>
-					)}
+							{/* Search - takes all available space (dashboard) */}
+							{!isMiscPage && (
+								<div className="flex-1 min-w-0">
+									<SearchInput
+										placeholder={dynamicPlaceholder}
+										value={
+											searchTerm !== undefined && onSearchChange
+												? searchTerm
+												: typedDashboardSearch
+										}
+										onChange={
+											searchTerm !== undefined && onSearchChange
+												? onSearchChange
+												: setTypedDashboardSearch
+										}
+										className="w-full"
+									/>
+								</div>
+							)}
 
 							{/* Action button - fixed width */}
 							<div className="flex-shrink-0">
@@ -439,26 +470,34 @@ export function NavBar({
 						<div className="hidden md:flex lg:hidden flex-col gap-3">
 							{/* First row: Pages navigation */}
 							<div className="flex-shrink-0">
-								<DashboardNavLinks 
+								<DashboardNavLinks
 									dashboardNavItems={dashboardNavItems}
 									pathname={pathname}
 									prefetchDashboardOrders={prefetchDashboardOrders}
 								/>
 							</div>
 
-						{/* Second row: Search + Action + Menu */}
+							{/* Second row: Search + Action + Menu */}
 							<div className="flex items-center gap-3">
-							{/* Search - takes available space (dashboard) */}
-							{!isMiscPage && (
-								<div className="flex-1 min-w-0">
-									<SearchInput
-										placeholder={dynamicPlaceholder}
-										value={searchTerm !== undefined && onSearchChange ? searchTerm : typedDashboardSearch}
-										onChange={searchTerm !== undefined && onSearchChange ? onSearchChange : setTypedDashboardSearch}
-										className="w-full"
-									/>
-								</div>
-							)}
+								{/* Search - takes available space (dashboard) */}
+								{!isMiscPage && (
+									<div className="flex-1 min-w-0">
+										<SearchInput
+											placeholder={dynamicPlaceholder}
+											value={
+												searchTerm !== undefined && onSearchChange
+													? searchTerm
+													: typedDashboardSearch
+											}
+											onChange={
+												searchTerm !== undefined && onSearchChange
+													? onSearchChange
+													: setTypedDashboardSearch
+											}
+											className="w-full"
+										/>
+									</div>
+								)}
 
 								{/* Action button - fixed width */}
 								<div className="flex-shrink-0">
@@ -478,15 +517,23 @@ export function NavBar({
 
 						{/* Mobile layout - Small screens */}
 						<div className="md:hidden w-full">
-					{/* Search - takes full available space (dashboard) */}
-					{!isMiscPage && (
-						<SearchInput
-							placeholder={dynamicPlaceholder}
-							value={searchTerm !== undefined && onSearchChange ? searchTerm : typedDashboardSearch}
-							onChange={searchTerm !== undefined && onSearchChange ? onSearchChange : setTypedDashboardSearch}
-							className="w-full"
-						/>
-					)}
+							{/* Search - takes full available space (dashboard) */}
+							{!isMiscPage && (
+								<SearchInput
+									placeholder={dynamicPlaceholder}
+									value={
+										searchTerm !== undefined && onSearchChange
+											? searchTerm
+											: typedDashboardSearch
+									}
+									onChange={
+										searchTerm !== undefined && onSearchChange
+											? onSearchChange
+											: setTypedDashboardSearch
+									}
+									className="w-full"
+								/>
+							)}
 						</div>
 					</div>
 				</motion.nav>
@@ -512,7 +559,7 @@ export function NavBar({
 				transition={{ duration: 0.5, ease: [0.215, 0.61, 0.355, 1] }}
 				variants={{ hidden: { y: "-100%" }, visible: { y: "0%" } }}
 				className={cn(
-					isStore ? "fixed top-0 left-0 right-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border" : "sticky top-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border",
+					"sticky top-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border",
 					className,
 				)}
 			>
@@ -521,22 +568,38 @@ export function NavBar({
 					<div className="hidden lg:flex flex-col gap-3">
 						{/* First row: Navigation Links */}
 						<div className="flex items-center justify-between gap-3 text-sm flex-wrap">
-							
-							<a href="/contacts" className="text-foreground hover:text-primary transition-colors whitespace-nowrap">
+							<a
+								href="/contacts"
+								className="text-foreground hover:text-primary transition-colors whitespace-nowrap"
+							>
 								Владивосток, ул. Русская, д. 78
 							</a>
-							<a href="tel:+79025559405" className="text-foreground hover:text-primary transition-colors whitespace-nowrap">
+							<a
+								href="tel:+79025559405"
+								className="text-foreground hover:text-primary transition-colors whitespace-nowrap"
+							>
 								8 902 555 9405
 							</a>
-							<div className="flex items-center gap-3"><a href="/delivery" className="text-foreground hover:text-primary transition-colors whitespace-nowrap">
-								Доставка и оплата
-							</a>
-							<a href="/contacts" className="text-foreground hover:text-primary transition-colors whitespace-nowrap">
-								Контакты и адреса
-							</a>
-							<a href="/about" className="text-foreground hover:text-primary transition-colors whitespace-nowrap">
-								О компании
-							</a></div>
+							<div className="flex items-center gap-3">
+								<a
+									href="/delivery"
+									className="text-foreground hover:text-primary transition-colors whitespace-nowrap"
+								>
+									Доставка и оплата
+								</a>
+								<a
+									href="/contacts"
+									className="text-foreground hover:text-primary transition-colors whitespace-nowrap"
+								>
+									Контакты и адреса
+								</a>
+								<a
+									href="/about"
+									className="text-foreground hover:text-primary transition-colors whitespace-nowrap"
+								>
+									О компании
+								</a>
+							</div>
 						</div>
 
 						{/* Second row: Logo, Catalog, Search, Cart, Dashboard */}

@@ -1,30 +1,34 @@
-import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import {
+	useInfiniteQuery,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
+import {
+	createFileRoute,
+	useElementScrollRestoration,
+} from "@tanstack/react-router";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
+import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useWindowVirtualizer } from "@tanstack/react-virtual";
-import { Trash2, AlertTriangle } from "lucide-react";
 import { AdminProductCard } from "~/components/ui/dashboard/AdminProductCard";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
 import { EnhancedDescriptionField } from "~/components/ui/dashboard/EnhancedDescriptionField";
 import { ImageUpload } from "~/components/ui/dashboard/ImageUpload";
-import { countProductsWithErrors } from "~/utils/productAttributesUtils";
-import { countProductsWithAttributeErrors } from "~/server_functions/dashboard/store/countProductsWithAttributeErrors";
 import ProductAttributesForm from "~/components/ui/dashboard/ProductAttributesForm";
 import { DrawerSection } from "~/components/ui/dashboard/ProductFormSection";
 import { ProductSettingsFields } from "~/components/ui/dashboard/ProductSettingsFields";
 import ProductVariationAttributesSelector from "~/components/ui/dashboard/ProductVariationAttributesSelector";
 import ProductVariationForm from "~/components/ui/dashboard/ProductVariationForm";
 import { SelectWithCreate } from "~/components/ui/dashboard/SelectWithCreate";
+import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { StoreLocationsSelector } from "~/components/ui/dashboard/StoreLocationsSelector";
-import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
 import { Button } from "~/components/ui/shared/Button";
 import { CheckboxList } from "~/components/ui/shared/CheckboxList";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { Input } from "~/components/ui/shared/input";
-import ProductFilters from "~/components/ui/store/ProductFilters";
 import {
 	Select,
 	SelectContent,
@@ -32,6 +36,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "~/components/ui/shared/Select";
+import ProductFilters from "~/components/ui/store/ProductFilters";
 import {
 	getProductTagName,
 	PRODUCT_TAGS,
@@ -42,12 +47,12 @@ import {
 	useProductAttributes,
 } from "~/hooks/useProductAttributes";
 import { generateSlug, useSlugGeneration } from "~/hooks/useSlugGeneration";
-import { 
-	productsInfiniteQueryOptions, 
-	brandsQueryOptions, 
-	collectionsQueryOptions, 
+import {
+	brandsQueryOptions,
 	categoriesQueryOptions,
-	storeLocationsQueryOptions 
+	collectionsQueryOptions,
+	productsInfiniteQueryOptions,
+	storeLocationsQueryOptions,
 } from "~/lib/queryOptions";
 import { cn } from "~/lib/utils";
 import { createProduct } from "~/server_functions/dashboard/store/createProduct";
@@ -56,6 +61,9 @@ import { deleteProductImage } from "~/server_functions/dashboard/store/deletePro
 import { getProductBySlug } from "~/server_functions/dashboard/store/getProductBySlug";
 import { updateProduct } from "~/server_functions/dashboard/store/updateProduct";
 import type {
+	Brand,
+	CategoryWithCount,
+	Collection,
 	ProductAttributeFormData,
 	ProductFormData,
 	ProductVariationWithAttributes,
@@ -71,21 +79,19 @@ interface Variation {
 	attributeValues: Record<string, string>; // attributeId -> value mapping
 }
 
-
-
 // Support optional search param in URL
 const validateSearch = (search: Record<string, unknown>) => {
-    const result: { search?: string } = {};
-    if (typeof search.search === "string") {
-        result.search = search.search;
-    }
-    return result;
+	const result: { search?: string } = {};
+	if (typeof search.search === "string") {
+		result.search = search.search;
+	}
+	return result;
 };
 
 export const Route = createFileRoute("/dashboard/")({
-    component: RouteComponent,
-    pendingComponent: ProductsPageSkeleton,
-    validateSearch,
+	component: RouteComponent,
+	pendingComponent: ProductsPageSkeleton,
+	validateSearch,
 });
 
 // Hook to get responsive columns per row based on screen size
@@ -112,8 +118,8 @@ function useResponsiveColumns() {
 		updateColumns();
 
 		// Update on resize
-		window.addEventListener('resize', updateColumns);
-		return () => window.removeEventListener('resize', updateColumns);
+		window.addEventListener("resize", updateColumns);
+		return () => window.removeEventListener("resize", updateColumns);
 	}, []);
 
 	return columnsPerRow;
@@ -121,21 +127,28 @@ function useResponsiveColumns() {
 
 function RouteComponent() {
 	const queryClient = useQueryClient();
-    const searchParams = Route.useSearch();
-    const normalizedSearch = (() => {
-        const value = typeof searchParams.search === 'string' ? searchParams.search : '';
-        const trimmed = value.trim().replace(/\s+/g, ' ');
-        return trimmed.length >= 2 ? trimmed : undefined;
-    })();
-const containerRef = useRef<HTMLDivElement>(null);
+	const searchParams = Route.useSearch();
+	const normalizedSearch = (() => {
+		const value =
+			typeof searchParams.search === "string" ? searchParams.search : "";
+		const trimmed = value.trim().replace(/\s+/g, " ");
+		return trimmed.length >= 2 ? trimmed : undefined;
+	})();
+	const containerRef = useRef<HTMLDivElement>(null);
 	const columnsPerRow = useResponsiveColumns();
 
-// Dashboard filters state
-const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
-const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
-const [sortBy, setSortBy] = useState<"relevant" | "name" | "price-asc" | "price-desc" | "newest" | "oldest">("relevant");
-const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0, 1000000]);
+	// Dashboard filters state
+	const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+	const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+	const [selectedCollection, setSelectedCollection] = useState<string | null>(
+		null,
+	);
+	const [sortBy, setSortBy] = useState<
+		"relevant" | "name" | "price-asc" | "price-desc" | "newest" | "oldest"
+	>("relevant");
+	const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([
+		0, 1000000,
+	]);
 
 	const isValidSort = (v: string): v is typeof sortBy => {
 		return (
@@ -149,14 +162,14 @@ const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0,
 	};
 
 	// Use infinite query to track loading state
-	const { 
-		data: productsData, 
-		isLoading, 
-        isFetching,
-		fetchNextPage, 
-		hasNextPage, 
+	const {
+		data: productsData,
+		isLoading,
+		isFetching,
+		fetchNextPage,
+		hasNextPage,
 		isFetchingNextPage,
-		refetch: refetchProducts
+		refetch: refetchProducts,
 	} = useInfiniteQuery({
 		...productsInfiniteQueryOptions(normalizedSearch, {
 			categorySlug: selectedCategory ?? undefined,
@@ -164,9 +177,9 @@ const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0,
 			collectionSlug: selectedCollection ?? undefined,
 			sort: sortBy,
 		}),
-        // Preserve previous data while new search loads
-        placeholderData: (prev) => prev,
-    });
+		// Preserve previous data while new search loads
+		placeholderData: (prev) => prev,
+	});
 
 	// Fetch all reference data separately with aggressive caching (3-day stale time)
 	const { data: storeLocations = [] } = useQuery({
@@ -187,19 +200,6 @@ const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0,
 
 	// Product attributes query
 	const { data: attributes } = useProductAttributes();
-	
-	// Count of products with attribute errors (server-side count from all products in database)
-	const { data: errorCountData, isLoading: isLoadingErrorCount } = useQuery({
-		queryKey: ["bfloorProductsAttributeErrorCount"],
-		queryFn: async () => {
-			return await countProductsWithAttributeErrors();
-		},
-		staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-		refetchOnWindowFocus: false,
-		refetchOnMount: false,
-	});
-	
-	const totalProductsWithErrors = errorCountData?.count ?? 0;
 
 	// Function to refetch data using query invalidation
 	const refetch = () => {
@@ -207,7 +207,7 @@ const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0,
 		queryClient.removeQueries({
 			queryKey: ["bfloorDashboardProductsInfinite"],
 		});
-		
+
 		queryClient.resetQueries({
 			queryKey: ["bfloorDashboardProductsInfinite"],
 		});
@@ -216,16 +216,10 @@ const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0,
 		queryClient.removeQueries({
 			queryKey: ["bfloorStoreDataInfinite"],
 		});
-		
-		// Invalidate error count so it recalculates with fresh data
-		queryClient.invalidateQueries({
-			queryKey: ["bfloorProductsAttributeErrorCount"],
-		});
-		
+
 		// Refetch the products query to get fresh data
 		refetchProducts();
 	};
-
 
 	// Function to invalidate specific product cache (for updates)
 	const invalidateProductCache = (
@@ -476,15 +470,15 @@ const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0,
 	};
 
 	// Merge products from all pages
-	const products = productsData?.pages?.flatMap((page) => page?.products ?? [])?.filter(Boolean) ?? [];
-	
+	const products =
+		productsData?.pages
+			?.flatMap((page) => page?.products ?? [])
+			?.filter(Boolean) ?? [];
+
 	// Debug logging removed
 
-    // Use merged products directly (search is applied server-side)
-    const allProducts = products;
-    
-    // Count products with out-of-scope attributes (efficient - no extra DB queries, uses already-loaded data)
-    const productsWithErrorsCount = countProductsWithErrors(allProducts, attributes);
+	// Use merged products directly (search is applied server-side)
+	const allProducts = products;
 
 	// Handlers for refreshing data when new entities are created
 	const handleEntityCreated = () => {
@@ -500,41 +494,51 @@ const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0,
 		});
 	};
 
-    // Server-side filtered list
-    const displayProducts = allProducts;
+	// Server-side filtered list
+	const displayProducts = allProducts;
 
-// Virtualizer configuration - responsive columns handled by useResponsiveColumns hook
-const itemHeight = 365;
-const rowCount = Math.ceil(displayProducts.length / columnsPerRow);
+	// Scroll restoration for virtualized list
+	// Following TanStack Router docs: https://tanstack.com/router/v1/docs/framework/react/guide/scroll-restoration#manual-scroll-restoration
+	const scrollEntry = useElementScrollRestoration({
+		getElement: () => window,
+	});
 
-const virtualizer = useWindowVirtualizer({
-    count: rowCount,
-    estimateSize: () => itemHeight,
-    overscan: 8, // Render extra rows for smooth scrolling and pre-fetching
-});
+	// Virtualizer configuration - responsive columns handled by useResponsiveColumns hook
+	// Following TanStack Virtual dynamic example pattern: https://tanstack.com/virtual/latest/docs/framework/react/examples/dynamic
+	const itemHeight = 365;
+	const rowCount = Math.ceil(displayProducts.length / columnsPerRow);
 
-	// Re-measure rows when the number of columns changes (grid layout changes row heights)
-	// biome-ignore lint/correctness/useExhaustiveDependencies: We intentionally re-measure when columns/grid change and the instance is stable
+	const virtualizer = useWindowVirtualizer({
+		count: rowCount,
+		estimateSize: () => itemHeight,
+		overscan: 8,
+		initialOffset: scrollEntry?.scrollY,
+	});
+
+	// Re-measure rows when the number of columns changes
+	// biome-ignore lint/correctness/useExhaustiveDependencies: We intentionally re-measure when columns change
 	useEffect(() => {
 		virtualizer.measure();
 	}, [columnsPerRow, virtualizer]);
 
-// Re-measure on container width changes to account for responsive grid/gaps
-useEffect(() => {
-    const el = containerRef.current;
-    if (!el || typeof ResizeObserver === 'undefined') return;
-    const ro = new ResizeObserver(() => {
-        virtualizer.measure();
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-}, [virtualizer]);
-
+	// Re-measure on container width changes
+	useEffect(() => {
+		const el = containerRef.current;
+		if (!el || typeof ResizeObserver === "undefined") return;
+		const ro = new ResizeObserver(() => {
+			virtualizer.measure();
+		});
+		ro.observe(el);
+		return () => ro.disconnect();
+	}, [virtualizer]);
 
 	// Helper function to get products for a specific row
 	const getProductsForRow = (rowIndex: number) => {
 		const startIndex = rowIndex * columnsPerRow;
-		const endIndex = Math.min(startIndex + columnsPerRow, displayProducts.length);
+		const endIndex = Math.min(
+			startIndex + columnsPerRow,
+			displayProducts.length,
+		);
 		return displayProducts.slice(startIndex, endIndex);
 	};
 
@@ -542,15 +546,15 @@ useEffect(() => {
 	const virtualItems = virtualizer.getVirtualItems();
 	useEffect(() => {
 		const lastItem = virtualItems[virtualItems.length - 1];
-		
+
 		// Don't fetch if already fetching, no next page, or no items rendered
 		if (!lastItem || !hasNextPage || isFetchingNextPage) return;
-		
+
 		// Fetch next page when user scrolls near the end
 		// lastItem.index is the row index, rowCount is total rows
 		// Trigger when within 15 rows of the end (prefetch for smooth scrolling)
 		const threshold = rowCount - 8;
-		
+
 		if (lastItem.index >= threshold) {
 			fetchNextPage();
 		}
@@ -716,17 +720,27 @@ useEffect(() => {
 		try {
 			// Parse original and new images to compare
 			const originalImages = originalEditImages
-				? originalEditImages.split(",").map(img => img.trim()).filter(Boolean)
+				? originalEditImages
+						.split(",")
+						.map((img) => img.trim())
+						.filter(Boolean)
 				: [];
 			const newImages = editFormData.images
-				? editFormData.images.split(",").map(img => img.trim()).filter(Boolean)
+				? editFormData.images
+						.split(",")
+						.map((img) => img.trim())
+						.filter(Boolean)
 				: [];
 
 			// Find images that were removed (in original but not in new)
-			const removedImages = originalImages.filter(img => !newImages.includes(img));
-			
+			const removedImages = originalImages.filter(
+				(img) => !newImages.includes(img),
+			);
+
 			// Combine explicitly deleted images with automatically detected removed images
-			const allImagesToDelete = [...new Set([...editDeletedImages, ...removedImages])];
+			const allImagesToDelete = [
+				...new Set([...editDeletedImages, ...removedImages]),
+			];
 
 			// Delete images from R2
 			if (allImagesToDelete.length > 0) {
@@ -773,11 +787,6 @@ useEffect(() => {
 
 			// Refresh dashboard data
 			refetch();
-
-			// Invalidate error count (products might have been fixed)
-			queryClient.invalidateQueries({
-				queryKey: ["bfloorProductsAttributeErrorCount"],
-			});
 
 			// Invalidate specific product cache
 			invalidateProductCache(
@@ -835,7 +844,7 @@ useEffect(() => {
 		setIsEditMode(true);
 
 		try {
-		// Removed edit debug log
+			// Removed edit debug log
 			// Fetch complete product data using the React Query cache (benefits from prefetch on hover)
 			const productWithDetails = await queryClient.fetchQuery({
 				queryKey: ["bfloorDashboardProduct", product.id],
@@ -917,7 +926,7 @@ useEffect(() => {
 			if (productWithDetails.productAttributes) {
 				if (Array.isArray(productWithDetails.productAttributes)) {
 					parsedAttributes = productWithDetails.productAttributes;
-				} else if (typeof productWithDetails.productAttributes === 'string') {
+				} else if (typeof productWithDetails.productAttributes === "string") {
 					try {
 						const parsed = JSON.parse(productWithDetails.productAttributes);
 						parsedAttributes = Array.isArray(parsed) ? parsed : [];
@@ -966,7 +975,9 @@ useEffect(() => {
 			setOriginalEditImages(imagesString);
 
 			// Load existing store locations for this product
-			const storeLocationIds = (productWithDetails.storeLocationIds || []).filter((id): id is number => id !== null);
+			const storeLocationIds = (
+				productWithDetails.storeLocationIds || []
+			).filter((id): id is number => id !== null);
 			setEditSelectedStoreLocationIds(storeLocationIds);
 
 			// Set auto-slug state based on whether slug is custom
@@ -1042,64 +1053,57 @@ useEffect(() => {
 		}
 	};
 
-    // Show skeleton only on very first load with no data
-    if (!productsData && (isLoading || isFetching)) {
+	// Show skeleton only on very first load with no data
+	if (!productsData && (isLoading || isFetching)) {
 		return <ProductsPageSkeleton />;
 	}
 
 	return (
 		<>
-            {/* Filters bar (reusing store ProductFilters for hide-on-scroll behavior) */}
-            <div ref={containerRef}>
-                {/* Status bar with error count */}
-                <div className="px-4 pt-4 pb-2">
-                    {/* Products with errors count - shows total from database, not just loaded products */}
-                    {totalProductsWithErrors > 0 && (
-                        <div className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-300 rounded-md">
-                            <AlertTriangle className="w-4 h-4" />
-                            <span>
-                                {isLoadingErrorCount ? (
-                                    'Counting...'
-                                ) : (
-                                    <>
-                                        {totalProductsWithErrors} product{totalProductsWithErrors !== 1 ? 's' : ''} with attribute errors
-                                        {productsWithErrorsCount !== totalProductsWithErrors && (
-                                            <span className="ml-1 text-xs opacity-75">
-                                                ({productsWithErrorsCount} visible)
-                                            </span>
-                                        )}
-                                    </>
-                                )}
-                            </span>
-                        </div>
-                    )}
-                </div>
-                <ProductFilters
-                    categories={categories.map((c: any) => ({ ...c, count: (c as any).count ?? 0 }))}
-                    selectedCategory={selectedCategory}
-                    onCategoryChange={setSelectedCategory}
-                    brands={brands.map((b: any) => ({ slug: b.slug, name: b.name }))}
-                    selectedBrand={selectedBrand}
-                    onBrandChange={setSelectedBrand}
-                    collections={collections.map((co: any) => ({ slug: co.slug, name: co.name }))}
-                    selectedCollection={selectedCollection}
-                    onCollectionChange={setSelectedCollection}
-                    priceRange={{ min: 0, max: 1000000 }}
-                    currentPriceRange={currentPriceRange}
-                    onPriceRangeChange={setCurrentPriceRange}
-                    sortBy={sortBy}
-                    onSortChange={(v) => { if (isValidSort(v)) setSortBy(v as any); }}
-                />
-                {/* Products List - Virtualized for performance */}
+			{/* Filters bar (reusing store ProductFilters for hide-on-scroll behavior) */}
+			<div ref={containerRef}>
+				<ProductFilters
+					categories={categories.map(
+						(c): CategoryWithCount => ({
+							...c,
+							count: 0,
+						}),
+					)}
+					selectedCategory={selectedCategory}
+					onCategoryChange={setSelectedCategory}
+					brands={brands.map((b: Brand) => ({ slug: b.slug, name: b.name }))}
+					selectedBrand={selectedBrand}
+					onBrandChange={setSelectedBrand}
+					collections={collections.map((co: Collection) => ({
+						slug: co.slug,
+						name: co.name,
+					}))}
+					selectedCollection={selectedCollection}
+					onCollectionChange={setSelectedCollection}
+					priceRange={{ min: 0, max: 1000000 }}
+					currentPriceRange={currentPriceRange}
+					onPriceRangeChange={setCurrentPriceRange}
+					sortBy={sortBy}
+					onSortChange={(v) => {
+						if (isValidSort(v)) setSortBy(v);
+					}}
+				/>
+				{/* Products List - Virtualized for performance */}
 				{displayProducts.length === 0 && !isFetching ? (
-					<EmptyState entityType="products" isSearchResult={!!normalizedSearch} />
+					<EmptyState
+						entityType="products"
+						isSearchResult={!!normalizedSearch}
+					/>
 				) : (
 					<div
 						className="relative px-4 py-4"
 						style={{
 							height: `${virtualizer.getTotalSize()}px`,
+							width: "100%",
+							position: "relative",
 						}}
 					>
+						{/* Following TanStack Virtual dynamic example pattern for useWindowVirtualizer */}
 						{virtualizer.getVirtualItems().map((virtualRow) => {
 							const rowProducts = getProductsForRow(virtualRow.index);
 							return (
@@ -1107,12 +1111,12 @@ useEffect(() => {
 									key={virtualRow.key}
 									data-index={virtualRow.index}
 									ref={virtualizer.measureElement}
-									className="absolute top-0 left-0 w-full"
 									style={{
-									minHeight: `${virtualRow.size}px`,
-										transform: `translate3d(0, ${virtualRow.start}px, 0)`,
-										willChange: 'transform',
-									contain: 'layout paint',
+										position: "absolute",
+										top: 0,
+										left: 0,
+										width: "100%",
+										transform: `translateY(${virtualRow.start}px)`,
 									}}
 								>
 									<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
@@ -1126,7 +1130,7 @@ useEffect(() => {
 										))}
 									</div>
 								</div>
-						);
+							);
 						})}
 						{/* Loading indicator for next page */}
 						{isFetchingNextPage && (
@@ -1195,36 +1199,36 @@ useEffect(() => {
 							/>
 						</DrawerSection>
 
-					{/* Store Locations Block */}
-					<DrawerSection variant="default" title="Местоположения магазинов">
-						<StoreLocationsSelector
-							storeLocations={storeLocations}
-							selectedLocationIds={editSelectedStoreLocationIds}
-							onLocationChange={handleEditStoreLocationChange}
-							idPrefix="edit"
-						/>
-					</DrawerSection>
+						{/* Store Locations Block */}
+						<DrawerSection variant="default" title="Местоположения магазинов">
+							<StoreLocationsSelector
+								storeLocations={storeLocations}
+								selectedLocationIds={editSelectedStoreLocationIds}
+								onLocationChange={handleEditStoreLocationChange}
+								idPrefix="edit"
+							/>
+						</DrawerSection>
 
-					{/* Description Field - Moved to left column */}
-					<DrawerSection variant="default" title="Описание">
-						<EnhancedDescriptionField
-							name="description"
-							value={editFormData.description || ""}
-							onChange={handleEditChange}
-							placeholder="Добавьте описание товара..."
-							className="min-h-[4rem]"
-							showPreview={true}
-							showHelp={true}
-							autoClean={false}
-							label="" // Remove label to use only the DrawerSection title
-						/>
-					</DrawerSection>
-				</div>
+						{/* Description Field - Moved to left column */}
+						<DrawerSection variant="default" title="Описание">
+							<EnhancedDescriptionField
+								name="description"
+								value={editFormData.description || ""}
+								onChange={handleEditChange}
+								placeholder="Добавьте описание товара..."
+								className="min-h-[4rem]"
+								showPreview={true}
+								showHelp={true}
+								autoClean={false}
+								label="" // Remove label to use only the DrawerSection title
+							/>
+						</DrawerSection>
+					</div>
 
-				{/* Right Column - Basic Information */}
-				<div className="space-y-4 flex flex-col">
-					{/* Basic Info */}
-					<DrawerSection variant="default" title="Базовая информация">
+					{/* Right Column - Basic Information */}
+					<div className="space-y-4 flex flex-col">
+						{/* Basic Info */}
+						<DrawerSection variant="default" title="Базовая информация">
 							<div className="grid grid-cols-1 gap-4">
 								<Input
 									label="Название"
@@ -1261,47 +1265,47 @@ useEffect(() => {
 									placeholder="Опционально - уникальный артикул товара"
 								/>
 
-							{/* Settings Fields */}
-							<ProductSettingsFields
-								isActive={editFormData.isActive}
-								isFeatured={editFormData.isFeatured}
-								hasVariations={editFormData.hasVariations}
-								onIsActiveChange={handleEditChange}
-								onIsFeaturedChange={handleEditChange}
-								onHasVariationsChange={handleEditChange}
-								idPrefix="edit"
-							/>
+								{/* Settings Fields */}
+								<ProductSettingsFields
+									isActive={editFormData.isActive}
+									isFeatured={editFormData.isFeatured}
+									hasVariations={editFormData.hasVariations}
+									onIsActiveChange={handleEditChange}
+									onIsFeaturedChange={handleEditChange}
+									onHasVariationsChange={handleEditChange}
+									idPrefix="edit"
+								/>
 
-							{/* Two column layout for basic information fields */}
-							<div className="grid grid-cols-2 gap-4">
-								{/* Column 1: Price */}
-								<div>
-									<Input
-										id={editPriceId}
-										type="number"
-										name="price"
-										label="Цена р"
-										value={editFormData.price}
-										onChange={handleEditChange}
-										step="0.01"
-										required
-									/>
-								</div>
+								{/* Two column layout for basic information fields */}
+								<div className="grid grid-cols-2 gap-4">
+									{/* Column 1: Price */}
+									<div>
+										<Input
+											id={editPriceId}
+											type="number"
+											name="price"
+											label="Цена р"
+											value={editFormData.price}
+											onChange={handleEditChange}
+											step="0.01"
+											required
+										/>
+									</div>
 
-								{/* Column 2: Discount */}
-								<div>
-									<Input
-										id={editDiscountId}
-										type="number"
-										name="discount"
-										label="Скидка %"
-										value={editFormData.discount || ""}
-										onChange={handleEditChange}
-										min="0"
-										max="100"
-										placeholder="Опционально"
-									/>
-								</div>
+									{/* Column 2: Discount */}
+									<div>
+										<Input
+											id={editDiscountId}
+											type="number"
+											name="discount"
+											label="Скидка %"
+											value={editFormData.discount || ""}
+											onChange={handleEditChange}
+											min="0"
+											max="100"
+											placeholder="Опционально"
+										/>
+									</div>
 
 									{/* Square Meters Per Pack (for flooring products) */}
 									<Input
@@ -1344,84 +1348,88 @@ useEffect(() => {
 										</Select>
 									</div>
 
-							{/* Category, Brand, and Collection in one row */}
-							<div className="col-span-2 flex flex-wrap gap-4">
-								{/* Category */}
-								<div className="flex-1 min-w-[150px]">
-									<SelectWithCreate
-										value={editFormData.categorySlug}
-										onValueChange={(value) => {
-											handleEditChange({
-												target: { name: "categorySlug", value: value || "" },
-											} as React.ChangeEvent<HTMLSelectElement>);
-										}}
-										placeholder="Выберите категорию"
-										label="Категория"
-										required
-										id={editCategoryId}
-										entityType="category"
-										options={categories}
-										onEntityCreated={handleEntityCreated}
-									/>
+									{/* Category, Brand, and Collection in one row */}
+									<div className="col-span-2 flex flex-wrap gap-4">
+										{/* Category */}
+										<div className="flex-1 min-w-[150px]">
+											<SelectWithCreate
+												value={editFormData.categorySlug}
+												onValueChange={(value) => {
+													handleEditChange({
+														target: {
+															name: "categorySlug",
+															value: value || "",
+														},
+													} as React.ChangeEvent<HTMLSelectElement>);
+												}}
+												placeholder="Выберите категорию"
+												label="Категория"
+												required
+												id={editCategoryId}
+												entityType="category"
+												options={categories}
+												onEntityCreated={handleEntityCreated}
+											/>
+										</div>
+
+										{/* Brand */}
+										<div className="flex-1 min-w-[150px]">
+											<SelectWithCreate
+												value={editFormData.brandSlug}
+												onValueChange={(value) => {
+													handleEditChange({
+														target: { name: "brandSlug", value },
+													} as React.ChangeEvent<HTMLSelectElement>);
+												}}
+												placeholder="Выберите бренд"
+												label="Бренд"
+												id={editBrandId}
+												entityType="brand"
+												options={brands}
+												onEntityCreated={handleEntityCreated}
+											/>
+										</div>
+
+										{/* Collection */}
+										<div className="flex-1 min-w-[150px]">
+											<SelectWithCreate
+												value={editFormData.collectionSlug || null}
+												onValueChange={(value) => {
+													handleEditChange({
+														target: { name: "collectionSlug", value },
+													} as React.ChangeEvent<HTMLSelectElement>);
+												}}
+												placeholder="Выберите коллекцию"
+												label="Коллекция"
+												id={editCollectionId}
+												entityType="collection"
+												options={collections}
+												brands={brands}
+												onEntityCreated={handleEntityCreated}
+											/>
+										</div>
+									</div>
 								</div>
+							</div>{" "}
+							{/* Close grid-cols-1 gap-4 */}
+						</DrawerSection>
 
-								{/* Brand */}
-								<div className="flex-1 min-w-[150px]">
-									<SelectWithCreate
-										value={editFormData.brandSlug}
-										onValueChange={(value) => {
-											handleEditChange({
-												target: { name: "brandSlug", value },
-											} as React.ChangeEvent<HTMLSelectElement>);
-										}}
-										placeholder="Выберите бренд"
-										label="Бренд"
-										id={editBrandId}
-										entityType="brand"
-										options={brands}
-										onEntityCreated={handleEntityCreated}
-									/>
-								</div>
+						{/* Important Note Field - Separated into its own section */}
+						<DrawerSection variant="default" title="Важная заметка">
+							<EnhancedDescriptionField
+								name="importantNote"
+								value={editFormData.importantNote || ""}
+								onChange={handleEditChange}
+								placeholder="Добавьте важную заметку с поддержкой Markdown..."
+								className="min-h-[4rem]"
+								label="" // Remove label to use only the DrawerSection title
+								showPreview={true}
+								showHelp={true}
+							/>
+						</DrawerSection>
+					</div>
 
-								{/* Collection */}
-								<div className="flex-1 min-w-[150px]">
-									<SelectWithCreate
-										value={editFormData.collectionSlug || null}
-										onValueChange={(value) => {
-											handleEditChange({
-												target: { name: "collectionSlug", value },
-											} as React.ChangeEvent<HTMLSelectElement>);
-										}}
-										placeholder="Выберите коллекцию"
-										label="Коллекция"
-										id={editCollectionId}
-										entityType="collection"
-										options={collections}
-										brands={brands}
-										onEntityCreated={handleEntityCreated}
-									/>
-								</div>
-							</div>
-							</div>
-						</div> {/* Close grid-cols-1 gap-4 */}
-					</DrawerSection>
-
-					{/* Important Note Field - Separated into its own section */}
-					<DrawerSection variant="default" title="Важная заметка">
-						<EnhancedDescriptionField
-							name="importantNote"
-							value={editFormData.importantNote || ""}
-							onChange={handleEditChange}
-							placeholder="Добавьте важную заметку с поддержкой Markdown..."
-							className="min-h-[4rem]"
-							label="" // Remove label to use only the DrawerSection title
-							showPreview={true}
-							showHelp={true}
-						/>
-					</DrawerSection>
-				</div>
-
-				{/* Product Attributes Block */}
+					{/* Product Attributes Block */}
 					<DrawerSection variant="default" className="lg:col-span-2">
 						<ProductAttributesForm
 							attributes={editFormData.attributes || []}
@@ -1457,9 +1465,12 @@ useEffect(() => {
 					{/* Delete Product Section - At the very end */}
 					<DrawerSection variant="default" className="lg:col-span-2">
 						<div className="flex flex-col gap-2">
-							<h3 className="text-sm font-medium text-destructive">Опасная зона</h3>
+							<h3 className="text-sm font-medium text-destructive">
+								Опасная зона
+							</h3>
 							<p className="text-sm text-muted-foreground">
-								Удаление товара является необратимым действием. Все данные о товаре будут безвозвратно удалены.
+								Удаление товара является необратимым действием. Все данные о
+								товаре будут безвозвратно удалены.
 							</p>
 							<Button
 								type="button"
@@ -1467,7 +1478,9 @@ useEffect(() => {
 								onClick={() => {
 									if (editingProductId) {
 										// Find the product to delete
-										const product = displayProducts.find(p => p.id === editingProductId);
+										const product = displayProducts.find(
+											(p) => p.id === editingProductId,
+										);
 										if (product) {
 											handleDeleteClick(product);
 										}
@@ -1541,36 +1554,36 @@ useEffect(() => {
 							/>
 						</DrawerSection>
 
-					{/* Store Locations Block */}
-					<DrawerSection variant="default" title="Местоположения магазинов">
-						<StoreLocationsSelector
-							storeLocations={storeLocations}
-							selectedLocationIds={selectedStoreLocationIds}
-							onLocationChange={handleStoreLocationChange}
-							idPrefix="create"
-						/>
-					</DrawerSection>
+						{/* Store Locations Block */}
+						<DrawerSection variant="default" title="Местоположения магазинов">
+							<StoreLocationsSelector
+								storeLocations={storeLocations}
+								selectedLocationIds={selectedStoreLocationIds}
+								onLocationChange={handleStoreLocationChange}
+								idPrefix="create"
+							/>
+						</DrawerSection>
 
-					{/* Description Field - Moved to left column */}
-					<DrawerSection variant="default" title="Описание">
-						<EnhancedDescriptionField
-							name="description"
-							value={formData.description || ""}
-							onChange={handleChange}
-							placeholder="Добавьте описание товара..."
-							className="min-h-[4rem]"
-							showPreview={true}
-							showHelp={true}
-							autoClean={false}
-							label="" // Remove label to use only the DrawerSection title
-						/>
-					</DrawerSection>
-				</div>
+						{/* Description Field - Moved to left column */}
+						<DrawerSection variant="default" title="Описание">
+							<EnhancedDescriptionField
+								name="description"
+								value={formData.description || ""}
+								onChange={handleChange}
+								placeholder="Добавьте описание товара..."
+								className="min-h-[4rem]"
+								showPreview={true}
+								showHelp={true}
+								autoClean={false}
+								label="" // Remove label to use only the DrawerSection title
+							/>
+						</DrawerSection>
+					</div>
 
-				{/* Right Column - Basic Information */}
-				<div className="space-y-4 flex flex-col">
-					{/* Basic Info */}
-					<DrawerSection variant="default" title="Базовая информация">
+					{/* Right Column - Basic Information */}
+					<div className="space-y-4 flex flex-col">
+						{/* Basic Info */}
+						<DrawerSection variant="default" title="Базовая информация">
 							<div className="grid grid-cols-1 gap-4">
 								<Input
 									label="Название товара"
@@ -1607,53 +1620,53 @@ useEffect(() => {
 									placeholder="Опционально - уникальный артикул товара"
 								/>
 
-							{/* Settings Fields */}
-							<ProductSettingsFields
-								isActive={formData.isActive}
-								isFeatured={formData.isFeatured}
-								hasVariations={formData.hasVariations}
-								onIsActiveChange={handleChange}
-								onIsFeaturedChange={handleChange}
-								onHasVariationsChange={handleChange}
-								idPrefix="add"
-							/>
+								{/* Settings Fields */}
+								<ProductSettingsFields
+									isActive={formData.isActive}
+									isFeatured={formData.isFeatured}
+									hasVariations={formData.hasVariations}
+									onIsActiveChange={handleChange}
+									onIsFeaturedChange={handleChange}
+									onHasVariationsChange={handleChange}
+									idPrefix="add"
+								/>
 
-							{/* Two column layout for basic information fields */}
-							<div className="grid grid-cols-2 gap-4">
-								{/* Column 1: Price */}
-								<div>
-									<Input
-										id={addPriceId}
-										type="number"
-										name="price"
-										label="Цена р"
-										value={formData.price}
-										onChange={handleChange}
-										required
-										step="0.01"
-										min="0"
-										className={cn(
-											hasAttemptedSubmit && !formData.price
-												? "border-red-500"
-												: "",
-										)}
-									/>
-								</div>
+								{/* Two column layout for basic information fields */}
+								<div className="grid grid-cols-2 gap-4">
+									{/* Column 1: Price */}
+									<div>
+										<Input
+											id={addPriceId}
+											type="number"
+											name="price"
+											label="Цена р"
+											value={formData.price}
+											onChange={handleChange}
+											required
+											step="0.01"
+											min="0"
+											className={cn(
+												hasAttemptedSubmit && !formData.price
+													? "border-red-500"
+													: "",
+											)}
+										/>
+									</div>
 
-								{/* Column 2: Discount */}
-								<div>
-									<Input
-										id={addDiscountId}
-										type="number"
-										name="discount"
-										label="Скидка %"
-										value={formData.discount || ""}
-										onChange={handleChange}
-										min="0"
-										max="100"
-										placeholder="Опционально"
-									/>
-								</div>
+									{/* Column 2: Discount */}
+									<div>
+										<Input
+											id={addDiscountId}
+											type="number"
+											name="discount"
+											label="Скидка %"
+											value={formData.discount || ""}
+											onChange={handleChange}
+											min="0"
+											max="100"
+											placeholder="Опционально"
+										/>
+									</div>
 
 									{/* Square Meters Per Pack (for flooring products) */}
 									<Input
@@ -1696,90 +1709,91 @@ useEffect(() => {
 										</Select>
 									</div>
 
-							{/* Category, Brand, and Collection in one row */}
-							<div className="col-span-2 flex flex-wrap gap-4">
-								{/* Category */}
-								<div className="flex-1 min-w-[150px]">
-									<SelectWithCreate
-										value={formData.categorySlug}
-										onValueChange={(value) => {
-											setFormData({
-												...formData,
-												categorySlug: value || "",
-											});
-										}}
-										placeholder="Выберите категорию"
-										label="Категория"
-										required
-										id={addCategoryId}
-										entityType="category"
-										options={categories}
-										onEntityCreated={handleEntityCreated}
-									/>
+									{/* Category, Brand, and Collection in one row */}
+									<div className="col-span-2 flex flex-wrap gap-4">
+										{/* Category */}
+										<div className="flex-1 min-w-[150px]">
+											<SelectWithCreate
+												value={formData.categorySlug}
+												onValueChange={(value) => {
+													setFormData({
+														...formData,
+														categorySlug: value || "",
+													});
+												}}
+												placeholder="Выберите категорию"
+												label="Категория"
+												required
+												id={addCategoryId}
+												entityType="category"
+												options={categories}
+												onEntityCreated={handleEntityCreated}
+											/>
+										</div>
+
+										{/* Brand */}
+										<div className="flex-1 min-w-[150px]">
+											<SelectWithCreate
+												value={formData.brandSlug}
+												onValueChange={(value) => {
+													setFormData({
+														...formData,
+														brandSlug: value,
+													});
+												}}
+												placeholder="Выберите бренд"
+												label="Бренд"
+												id={addBrandId}
+												entityType="brand"
+												options={brands}
+												onEntityCreated={handleEntityCreated}
+											/>
+										</div>
+
+										{/* Collection */}
+										<div className="flex-1 min-w-[150px]">
+											<SelectWithCreate
+												value={formData.collectionSlug || null}
+												onValueChange={(value) => {
+													setFormData({
+														...formData,
+														collectionSlug: value,
+													});
+												}}
+												placeholder="Выберите коллекцию"
+												label="Коллекция"
+												id={addCollectionId}
+												entityType="collection"
+												options={collections}
+												brands={brands}
+												onEntityCreated={handleEntityCreated}
+											/>
+										</div>
+									</div>
 								</div>
+							</div>{" "}
+							{/* Close grid-cols-1 gap-4 */}
+						</DrawerSection>
 
-								{/* Brand */}
-								<div className="flex-1 min-w-[150px]">
-									<SelectWithCreate
-										value={formData.brandSlug}
-										onValueChange={(value) => {
-											setFormData({
-												...formData,
-												brandSlug: value,
-											});
-										}}
-										placeholder="Выберите бренд"
-										label="Бренд"
-										id={addBrandId}
-										entityType="brand"
-										options={brands}
-										onEntityCreated={handleEntityCreated}
-									/>
-								</div>
+						{/* Important Note Field - Separated into its own section */}
+						<DrawerSection variant="default" title="Важная заметка">
+							<EnhancedDescriptionField
+								name="importantNote"
+								value={formData.importantNote || ""}
+								onChange={handleChange}
+								placeholder="Добавьте важную заметку с поддержкой Markdown..."
+								className="min-h-[4rem]"
+								label="" // Remove label to use only the DrawerSection title
+								showPreview={true}
+								showHelp={true}
+							/>
+						</DrawerSection>
+					</div>
 
-								{/* Collection */}
-								<div className="flex-1 min-w-[150px]">
-									<SelectWithCreate
-										value={formData.collectionSlug || null}
-										onValueChange={(value) => {
-											setFormData({
-												...formData,
-												collectionSlug: value,
-											});
-										}}
-										placeholder="Выберите коллекцию"
-										label="Коллекция"
-										id={addCollectionId}
-										entityType="collection"
-										options={collections}
-										brands={brands}
-										onEntityCreated={handleEntityCreated}
-									/>
-								</div>
-							</div>
-							</div>
-						</div> {/* Close grid-cols-1 gap-4 */}
-					</DrawerSection>
-
-					{/* Important Note Field - Separated into its own section */}
-					<DrawerSection variant="default" title="Важная заметка">
-						<EnhancedDescriptionField
-							name="importantNote"
-							value={formData.importantNote || ""}
-							onChange={handleChange}
-							placeholder="Добавьте важную заметку с поддержкой Markdown..."
-							className="min-h-[4rem]"
-							label="" // Remove label to use only the DrawerSection title
-							showPreview={true}
-							showHelp={true}
-						/>
-					</DrawerSection>
-				</div>
-
-			{/* Product Attributes Block */}
-				<DrawerSection variant="default" className="lg:col-span-2">
-					<ProductAttributesForm
-						attributes={formData.attributes || []}
+					{/* Product Attributes Block */}
+					<DrawerSection variant="default" className="lg:col-span-2">
+						<ProductAttributesForm
+							attributes={formData.attributes || []}
 							onChange={(attributes) =>
 								setFormData({ ...formData, attributes })
 							}

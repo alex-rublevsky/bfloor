@@ -2,7 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
 import { DB } from "~/db";
-import { products, productVariations, variationAttributes, productStoreLocations } from "~/schema";
+import {
+	productStoreLocations,
+	products,
+	productVariations,
+	variationAttributes,
+} from "~/schema";
 import type { ProductFormData } from "~/types";
 import { validateAttributeValues } from "~/utils/validateAttributeValues";
 
@@ -63,10 +68,12 @@ export const createProduct = createServerFn({ method: "POST" })
 					db,
 					productData.attributes,
 				);
-				
+
 				if (validationErrors.length > 0) {
 					setResponseStatus(400);
-					const errorMessages = validationErrors.map((err) => err.error).join("; ");
+					const errorMessages = validationErrors
+						.map((err) => err.error)
+						.join("; ");
 					throw new Error(`Ошибки валидации атрибутов: ${errorMessages}`);
 				}
 			}
@@ -76,12 +83,15 @@ export const createProduct = createServerFn({ method: "POST" })
 			if (productData.attributes?.length) {
 				// Convert array of {attributeId, value} to object format
 				const attributesObject: Record<string, string> = {};
-				productData.attributes.forEach(attr => {
-					if (attr.value && attr.value.trim() !== '') {
+				productData.attributes.forEach((attr) => {
+					if (attr.value && attr.value.trim() !== "") {
 						attributesObject[attr.attributeId] = attr.value;
 					}
 				});
-				attributesJson = Object.keys(attributesObject).length > 0 ? JSON.stringify(attributesObject) : null;
+				attributesJson =
+					Object.keys(attributesObject).length > 0
+						? JSON.stringify(attributesObject)
+						: null;
 			}
 
 			// Insert main product
@@ -124,10 +134,10 @@ export const createProduct = createServerFn({ method: "POST" })
 					.insert(productVariations)
 					.values(
 						productData.variations.map((v) => ({
-						productId: newProduct.id,
-						sku: v.sku,
-						price: parseFloat(v.price.toString()),
-						sort: v.sort || 0,
+							productId: newProduct.id,
+							sku: v.sku,
+							price: parseFloat(v.price.toString()),
+							sort: v.sort || 0,
 							discount: v.discount ? parseInt(v.discount.toString(), 10) : null,
 							createdAt: new Date(),
 						})),
@@ -155,13 +165,16 @@ export const createProduct = createServerFn({ method: "POST" })
 			}
 
 			// Handle store location connections
-			if (productData.storeLocationIds && productData.storeLocationIds.length > 0) {
+			if (
+				productData.storeLocationIds &&
+				productData.storeLocationIds.length > 0
+			) {
 				await db.insert(productStoreLocations).values(
 					productData.storeLocationIds.map((locationId: number) => ({
 						productId: newProduct.id,
 						storeLocationId: locationId,
 						createdAt: new Date(),
-					}))
+					})),
 				);
 			}
 

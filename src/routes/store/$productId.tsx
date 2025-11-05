@@ -29,13 +29,12 @@ import { useVariationSelection } from "~/hooks/useVariationSelection";
 import { useCart } from "~/lib/cartContext";
 import { productQueryOptions } from "~/lib/queryOptions";
 import type {
-	ProductWithVariations,
-	VariationAttribute,
 	Product,
 	ProductWithDetails,
+	ProductWithVariations,
+	VariationAttribute,
 } from "~/types";
 import { seo } from "~/utils/seo";
- 
 
 // Simple search params - no Zod needed for basic optional strings
 const validateSearch = (search: Record<string, unknown>) => {
@@ -146,11 +145,15 @@ function ProductPage() {
 	const { data: attributes } = useProductAttributes();
 
 	// Use query to track loading state
-	const { data: product, isLoading: isLoadingProduct, isFetching: isFetchingProduct } = useQuery({
+	const {
+		data: product,
+		isLoading: isLoadingProduct,
+		isFetching: isFetchingProduct,
+	} = useQuery({
 		...productQueryOptions(productId),
 		refetchOnMount: true,
 	});
-	
+
 	// Type assertion for product with all details
 	const productWithDetails = product as ProductWithDetails | undefined;
 
@@ -177,11 +180,14 @@ function ProductPage() {
 		}
 	};
 
-
 	// Auto-select first variation if no search params and product has variations
 	// This runs once when product loads and no search params exist
 	useEffect(() => {
-		if (!productWithDetails?.hasVariations || !productWithDetails.variations?.length) return;
+		if (
+			!productWithDetails?.hasVariations ||
+			!productWithDetails.variations?.length
+		)
+			return;
 
 		// Check if any search params are set
 		const hasAnySearchParams = Object.values(search).some(
@@ -239,7 +245,8 @@ function ProductPage() {
 			productWithDetails.variations.find((variation) => {
 				return Object.entries(selectedAttributes).every(([attrId, value]) =>
 					variation.attributes.some(
-						(attr: VariationAttribute) => attr.attributeId === attrId && attr.value === value,
+						(attr: VariationAttribute) =>
+							attr.attributeId === attrId && attr.value === value,
 					),
 				);
 			}) || null
@@ -264,11 +271,7 @@ function ProductPage() {
 			return relevantVariation?.price || 0;
 		}
 		return productWithDetails.price || 0;
-	}, [
-		selectedVariation,
-		variationForPricing,
-		productWithDetails,
-	]);
+	}, [selectedVariation, variationForPricing, productWithDetails]);
 
 	// Calculate current discount based on selected variation
 	const currentDiscount = useMemo(() => {
@@ -361,21 +364,21 @@ function ProductPage() {
 	// Get images array - should already be an array from server
 	const productImages = useMemo(() => {
 		if (!productWithDetails?.images) return [];
-		
+
 		// Images should already be an array from the server
 		if (Array.isArray(productWithDetails.images)) {
 			return productWithDetails.images;
 		}
-		
+
 		// Fallback: try parsing if it's somehow a string (backward compatibility)
-		if (typeof productWithDetails.images === 'string') {
+		if (typeof productWithDetails.images === "string") {
 			try {
 				return JSON.parse(productWithDetails.images) as string[];
 			} catch {
 				return [];
 			}
 		}
-		
+
 		return [];
 	}, [productWithDetails?.images]);
 
@@ -385,7 +388,7 @@ function ProductPage() {
 	}
 
 	return (
-		<main className="min-h-screen bg-background">
+		<div className="min-h-screen bg-background">
 			{/* First Section - Product Info */}
 			<div className="max-w-7xl mx-auto px-4 py-8">
 				<div className="flex flex-col lg:flex-row gap-8">
@@ -423,6 +426,8 @@ function ProductPage() {
 												<Link
 													to="/store"
 													className="text-gray-400 hover:text-gray-600"
+													viewTransition={true}
+													resetScroll={false}
 												>
 													Ламинат
 												</Link>
@@ -438,16 +443,16 @@ function ProductPage() {
 								</Breadcrumb>
 							</div>
 
-                            {/* Product Title */}
-                            <div>
-                                <h1
-                                    className=""
-                                    style={{
-                                        viewTransitionName: `product-name-${productWithDetails?.slug}`,
-                                    }}
-                                >
-                                    {productWithDetails?.name || "Product"}
-                                </h1>
+							{/* Product Title */}
+							<div>
+								<h1
+									className=""
+									style={{
+										viewTransitionName: `product-name-${productWithDetails?.slug}`,
+									}}
+								>
+									{productWithDetails?.name || "Product"}
+								</h1>
 								<div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600">
 									{/* Brand Logo/Name */}
 									{productWithDetails?.brand && (
@@ -470,7 +475,9 @@ function ProductPage() {
 									{productWithDetails?.sku && (
 										<div className="flex items-center gap-1">
 											<span className="text-gray-500">Артикул:</span>
-											<span className="font-semibold">{productWithDetails.sku}</span>
+											<span className="font-semibold">
+												{productWithDetails.sku}
+											</span>
 										</div>
 									)}
 
@@ -478,7 +485,9 @@ function ProductPage() {
 									{productWithDetails?.brand?.country && (
 										<div className="flex items-center gap-1">
 											<span className="text-gray-500">Страна:</span>
-											<span className="font-semibold">{productWithDetails.brand.country}</span>
+											<span className="font-semibold">
+												{productWithDetails.brand.country}
+											</span>
 										</div>
 									)}
 
@@ -486,7 +495,9 @@ function ProductPage() {
 									{productWithDetails?.collection && (
 										<div className="flex items-center gap-1">
 											<span className="text-gray-500">Коллекция:</span>
-											<span className="font-semibold">{productWithDetails.collection.name}</span>
+											<span className="font-semibold">
+												{productWithDetails.collection.name}
+											</span>
 										</div>
 									)}
 								</div>
@@ -496,66 +507,70 @@ function ProductPage() {
 							<div className="border border-border rounded-lg p-2 space-y-4">
 								{/* Price and Quantity */}
 								<div className="flex items-stretch gap-0">
-							{/* Price Box */}
-							<div className="bg-muted px-4 py-3 rounded-lg">
-								<div className="text-sm text-gray-500 mb-1">{`Цена за ${isFlooringProduct ? "м²" : getUnitShortLabel(productWithDetails?.unitOfMeasurement)}`}</div>
-                                    <div
-                                        className="text-2xl font-bold text-gray-800"
-                                        style={{
-                                            viewTransitionName: `product-price-${productWithDetails?.slug}`,
-                                        }}
-                                    >
-                                        {currentPrice.toLocaleString()} р
-                                    </div>
-                                </div>
+									{/* Price Box */}
+									<div className="bg-muted px-4 py-3 rounded-lg">
+										<div className="text-sm text-gray-500 mb-1">{`Цена за ${isFlooringProduct ? "м²" : getUnitShortLabel(productWithDetails?.unitOfMeasurement)}`}</div>
+										<div
+											className="text-2xl font-bold text-gray-800"
+											style={{
+												viewTransitionName: `product-price-${productWithDetails?.slug}`,
+											}}
+										>
+											{currentPrice.toLocaleString()} р
+										</div>
+									</div>
 
-								{/* Icon divider */}
-								<div className="flex-shrink-0 mx-2 flex items-center">
-									<Icon 
-										name="plus" 
-										size={28} 
-										className="text-foreground-muted rotate-45"
-									/>
-								</div>
+									{/* Icon divider */}
+									<div className="flex-shrink-0 mx-2 flex items-center">
+										<Icon
+											name="plus"
+											size={28}
+											className="text-foreground-muted rotate-45"
+										/>
+									</div>
 
-								{/* Quantity Selector */}
-								<div className="flex-1 flex flex-col">
-									<div className="flex gap-1 items-stretch flex-1">
-									<button
-										type="button"
-										onClick={decrementQuantity}
-										disabled={quantity <= 1}
-										className="aspect-square flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex-shrink-0 h-full"
-									>
-										<Icon name="minus" size={20} />
-									</button>
-									<div className="text-center bg-muted rounded-lg p-2 flex items-center justify-center flex-grow h-full">
-										<div className="space-y-1">
-												{productWithDetails?.squareMetersPerPack && (
+									{/* Quantity Selector */}
+									<div className="flex-1 flex flex-col">
+										<div className="flex gap-1 items-stretch flex-1">
+											<button
+												type="button"
+												onClick={decrementQuantity}
+												disabled={quantity <= 1}
+												className="aspect-square flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex-shrink-0 h-full"
+											>
+												<Icon name="minus" size={20} />
+											</button>
+											<div className="text-center bg-muted rounded-lg p-2 flex items-center justify-center flex-grow h-full">
+												<div className="space-y-1">
+													{productWithDetails?.squareMetersPerPack && (
+														<div className="flex items-baseline gap-1 flex-wrap justify-center">
+															<div className="text-sm font-normal">Площадь</div>
+															<div className="text-2xl font-normal">
+																{quantity *
+																	productWithDetails.squareMetersPerPack}{" "}
+																м²
+															</div>
+														</div>
+													)}
 													<div className="flex items-baseline gap-1 flex-wrap justify-center">
-														<div className="text-sm font-normal">Площадь</div>
+														{isFlooringProduct && (
+															<div className="text-sm  font-normal">
+																Упаковок
+															</div>
+														)}
 														<div className="text-2xl font-normal">
-															{quantity * productWithDetails.squareMetersPerPack} м²
+															{quantity}
 														</div>
 													</div>
-												)}
-											<div className="flex items-baseline gap-1 flex-wrap justify-center">
-												{isFlooringProduct && (
-													<div className="text-sm  font-normal">Упаковок</div>
-												)}
-												<div className="text-2xl font-normal">
-													{quantity}
 												</div>
 											</div>
-											</div>
-										</div>
-									<button
-										type="button"
-										onClick={incrementQuantity}
-										className="aspect-square flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] cursor-pointer flex-shrink-0 h-full"
-									>
-										<Icon name="plus" size={20} />
-									</button>
+											<button
+												type="button"
+												onClick={incrementQuantity}
+												className="aspect-square flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] cursor-pointer flex-shrink-0 h-full"
+											>
+												<Icon name="plus" size={20} />
+											</button>
 										</div>
 									</div>
 								</div>
@@ -570,67 +585,75 @@ function ProductPage() {
 									/>
 								)}
 
-							{/* Price and Add to Cart */}
-							<div className="bg-muted rounded-lg p-2 flex flex-col md:flex-row gap-4 items-baseline">
-							{/* Price Display */}
-							<div className="flex flex-col gap-2">
-								{/* Discount Row */}
-								{currentDiscount && originalPrice && (
-									<div className="flex items-baseline justify-between gap-6">
-										<div className="text-left">Скидка</div>
-										<div className="flex items-baseline gap-3 text-right">
-											<span className="text-lg line-through ">
-												{originalPrice.toLocaleString()} р
-											</span>
-											<span className="px-2 py-1 bg-accent text-accent-foreground text-sm font-semibold rounded-[5px]">
-												{currentDiscount}%
+								{/* Price and Add to Cart */}
+								<div className="bg-muted rounded-lg p-2 flex flex-col md:flex-row gap-4 items-baseline">
+									{/* Price Display */}
+									<div className="flex flex-col gap-2">
+										{/* Discount Row */}
+										{currentDiscount && originalPrice && (
+											<div className="flex items-baseline justify-between gap-6">
+												<div className="text-left">Скидка</div>
+												<div className="flex items-baseline gap-3 text-right">
+													<span className="text-lg line-through ">
+														{originalPrice.toLocaleString()} р
+													</span>
+													<span className="px-2 py-1 bg-accent text-accent-foreground text-sm font-semibold rounded-[5px]">
+														{currentDiscount}%
+													</span>
+												</div>
+											</div>
+										)}
+
+										{/* Total Row */}
+										<div className="flex items-baseline justify-between gap-6">
+											<div className="text-left">Итого</div>
+											<span className="text-3xl font-bold text-right">
+												{totalPrice.toLocaleString()} р
 											</span>
 										</div>
 									</div>
-								)}
-								
-								{/* Total Row */}
-								<div className="flex items-baseline justify-between gap-6">
-									<div className="text-left">Итого</div>
-									<span className="text-3xl font-bold text-right">
-										{totalPrice.toLocaleString()} р
-									</span>
+
+									{/* Add to Cart Button */}
+									<div className="flex-1 flex">
+										<Button
+											onClick={handleAddToCart}
+											disabled={!canAddToCart}
+											size="lg"
+											className="w-full h-full"
+										>
+											{!canAddToCart ? "Недоступно" : "В корзину"}
+										</Button>
+									</div>
 								</div>
-							</div>
-							
-							{/* Add to Cart Button */}
-							<div className="flex-1 flex">
-								<Button
-									onClick={handleAddToCart}
-									disabled={!canAddToCart}
-									size="lg"
-									className="w-full h-full"
-								>
-									{!canAddToCart ? "Недоступно" : "В корзину"}
-								</Button>
-							</div>
-						</div>
-							
-							{/* Store Locations */}
-							{productWithDetails?.storeLocations && productWithDetails.storeLocations.length > 0 && (
-								<div className="text-sm">
-									<span className="text-foreground-muted">Доступно в магазинах: </span>
-									<span className="text-foreground">
-										{productWithDetails.storeLocations?.map((location, index) => (
-											<span key={location.id}>
-												<Link 
-													to="/contacts"
-													className="text-accent hover:underline"
-												>
-													{location.address}
-												</Link>
-												{index < (productWithDetails.storeLocations?.length ?? 0) - 1 && ", "}
+
+								{/* Store Locations */}
+								{productWithDetails?.storeLocations &&
+									productWithDetails.storeLocations.length > 0 && (
+										<div className="text-sm">
+											<span className="text-foreground-muted">
+												Доступно в магазинах:{" "}
 											</span>
-										))}
-									</span>
-								</div>
-							)}
-						</div>
+											<span className="text-foreground">
+												{productWithDetails.storeLocations?.map(
+													(location, index) => (
+														<span key={location.id}>
+															<Link
+																to="/contacts"
+																className="text-accent hover:underline"
+															>
+																{location.address}
+															</Link>
+															{index <
+																(productWithDetails.storeLocations?.length ??
+																	0) -
+																	1 && ", "}
+														</span>
+													),
+												)}
+											</span>
+										</div>
+									)}
+							</div>
 
 							{/* Important Note */}
 							{product?.importantNote && (
@@ -639,41 +662,53 @@ function ProductPage() {
 										components={markdownComponents}
 										rehypePlugins={rehypePlugins}
 									>
-										{productWithDetails?.importantNote?.replace(/\\n/g, '\n') ?? ''}
+										{productWithDetails?.importantNote?.replace(/\\n/g, "\n") ??
+											""}
 									</ReactMarkdown>
 								</div>
 							)}
-
-							
 						</div>
 					</div>
 				</div>
 			</div>
 
 			{/* Second Section - Description and Characteristics */}
-			{(product?.description || product?.hasVariations || (product?.productAttributes && Array.isArray(productWithDetails.productAttributes) && productWithDetails.productAttributes.length > 0)) && (
+			{(product?.description ||
+				product?.hasVariations ||
+				(product?.productAttributes &&
+					Array.isArray(productWithDetails.productAttributes) &&
+					productWithDetails.productAttributes.length > 0)) && (
 				<div className="max-w-7xl mx-auto px-4 py-8">
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 						{/* Left Column - Characteristics */}
-						{(product?.hasVariations || (product?.productAttributes && Array.isArray(productWithDetails.productAttributes) && productWithDetails.productAttributes.length > 0)) && (
+						{(product?.hasVariations ||
+							(product?.productAttributes &&
+								Array.isArray(productWithDetails.productAttributes) &&
+								productWithDetails.productAttributes.length > 0)) && (
 							<div className="space-y-4">
 								<h2>Характеристики</h2>
 								<div>
-										{/* Product-level attributes - only show standardized attributes */}
-										{(productWithDetails?.productAttributes ?? [])
-											// Filter out error attributes (out-of-scope attributes)
-											.filter((attr: { attributeId: string; value: string }) => {
+									{/* Product-level attributes - only show standardized attributes */}
+									{(productWithDetails?.productAttributes ?? [])
+										// Filter to only show attributes that exist in the standardized list
+										.filter((attr: { attributeId: string; value: string }) => {
 											if (!attributes || !attributes.length) return false;
 											// Check if attribute is in the standardized list
 											const attribute = attributes.find(
-												(a) => a.id.toString() === attr.attributeId || a.slug === attr.attributeId || a.name === attr.attributeId,
+												(a) =>
+													a.id.toString() === attr.attributeId ||
+													a.slug === attr.attributeId ||
+													a.name === attr.attributeId,
 											);
 											// Only show if it's a standardized attribute
 											return attribute !== undefined;
 										})
 										.map((attr: { attributeId: string; value: string }) => {
 											const attribute = attributes?.find(
-												(a) => a.id.toString() === attr.attributeId || a.slug === attr.attributeId || a.name === attr.attributeId,
+												(a) =>
+													a.id.toString() === attr.attributeId ||
+													a.slug === attr.attributeId ||
+													a.name === attr.attributeId,
 											);
 											const displayName = attribute
 												? attribute.name
@@ -687,15 +722,14 @@ function ProductPage() {
 													<span className="text-foreground-muted">
 														{displayName}
 													</span>
-													<span >
-														{attr.value}
-													</span>
+													<span>{attr.value}</span>
 												</div>
 											);
 										})}
 
-										{/* Variation attributes */}
-										{product?.hasVariations && (() => {
+									{/* Variation attributes */}
+									{product?.hasVariations &&
+										(() => {
 											// Find the variation with attributes that matches the selected variation
 											const productWithVariations =
 												product as unknown as ProductWithVariations;
@@ -741,20 +775,21 @@ function ProductPage() {
 												},
 											);
 										})()}
-									</div>
+								</div>
 							</div>
 						)}
 
 						{/* Right Column - Description */}
 						{product?.description && (
 							<div className="space-y-4">
-								<h2 >Описание</h2>
+								<h2>Описание</h2>
 								<div className="prose max-w-none">
 									<ReactMarkdown
 										components={markdownComponents}
 										rehypePlugins={rehypePlugins}
 									>
-										{productWithDetails?.description?.replace(/\\n/g, '\n') ?? ''}
+										{productWithDetails?.description?.replace(/\\n/g, "\n") ??
+											""}
 									</ReactMarkdown>
 								</div>
 							</div>
@@ -762,6 +797,6 @@ function ProductPage() {
 					</div>
 				</div>
 			)}
-		</main>
+		</div>
 	);
 }

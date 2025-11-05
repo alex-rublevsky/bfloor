@@ -1,14 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { eq, inArray, sql } from "drizzle-orm";
+import { eq, type SQL, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import type * as schema from "~/schema";
-import {
-	products,
-	productVariations,
-	variationAttributes,
-} from "~/schema";
+import { products, productVariations, variationAttributes } from "~/schema";
 import type {
 	ProductVariationWithAttributes,
 	ProductWithVariations,
@@ -22,42 +18,71 @@ type JoinedQueryResult = {
 };
 
 export const getAllProducts = createServerFn({ method: "GET" })
-    .inputValidator((data: {
-        page?: number;
-        limit?: number;
-        search?: string;
-        categorySlug?: string;
-        brandSlug?: string;
-        collectionSlug?: string;
-        sort?: "relevant" | "name" | "price-asc" | "price-desc" | "newest" | "oldest";
-    } = {}) => data)
+	.inputValidator(
+		(
+			data: {
+				page?: number;
+				limit?: number;
+				search?: string;
+				categorySlug?: string;
+				brandSlug?: string;
+				collectionSlug?: string;
+				tag?: string;
+				hasDiscount?: boolean;
+				sort?:
+					| "relevant"
+					| "name"
+					| "price-asc"
+					| "price-desc"
+					| "newest"
+					| "oldest";
+			} = {},
+		) => data,
+	)
 	.handler(async ({ data = {} }) => {
 		try {
 			const db: DrizzleD1Database<typeof schema> = DB();
 			const { page, limit: pageLimit } = data;
-            const rawSearch = typeof data.search === 'string' ? data.search : undefined;
-            const normalizedSearch = rawSearch?.trim().replace(/\s+/g, ' ');
-            const effectiveSearch = normalizedSearch && normalizedSearch.length >= 2 ? normalizedSearch : undefined;
+			const rawSearch =
+				typeof data.search === "string" ? data.search : undefined;
+			const normalizedSearch = rawSearch?.trim().replace(/\s+/g, " ");
+			const effectiveSearch =
+				normalizedSearch && normalizedSearch.length >= 2
+					? normalizedSearch
+					: undefined;
 
-			const categoryFilter = data.categorySlug && data.categorySlug.length > 0 ? data.categorySlug : undefined;
-			const brandFilter = data.brandSlug && data.brandSlug.length > 0 ? data.brandSlug : undefined;
-			const collectionFilter = data.collectionSlug && data.collectionSlug.length > 0 ? data.collectionSlug : undefined;
+			const categoryFilter =
+				data.categorySlug && data.categorySlug.length > 0
+					? data.categorySlug
+					: undefined;
+			const brandFilter =
+				data.brandSlug && data.brandSlug.length > 0
+					? data.brandSlug
+					: undefined;
+			const collectionFilter =
+				data.collectionSlug && data.collectionSlug.length > 0
+					? data.collectionSlug
+					: undefined;
+			const tagFilter = data.tag && data.tag.length > 0 ? data.tag : undefined;
+			const hasDiscountFilter = data.hasDiscount === true;
 			const sort = data.sort;
 
-		// Calculate pagination if provided
-		const hasPagination = typeof page === 'number' && typeof pageLimit === 'number';
-		const offsetValue = hasPagination ? (page - 1) * pageLimit : 0;
+			// Calculate pagination if provided
+			const hasPagination =
+				typeof page === "number" && typeof pageLimit === "number";
+			const offsetValue = hasPagination ? (page - 1) * pageLimit : 0;
 
 			// Build where clause (search + filters)
-			const conditions: any[] = [];
+			const conditions: SQL[] = [];
 			if (effectiveSearch) {
+				const searchPattern = `%${effectiveSearch.toLowerCase()}%`;
 				conditions.push(sql`(
-					LOWER(${products.name}) LIKE ${'%' + effectiveSearch.toLowerCase() + '%'}
-					OR LOWER(${products.slug}) LIKE ${'%' + effectiveSearch.toLowerCase() + '%'}
-					OR LOWER(${products.sku}) LIKE ${'%' + effectiveSearch.toLowerCase() + '%'}
-					OR LOWER(${products.brandSlug}) LIKE ${'%' + effectiveSearch.toLowerCase() + '%'}
-					OR LOWER(${products.collectionSlug}) LIKE ${'%' + effectiveSearch.toLowerCase() + '%'}
-					OR LOWER(${products.categorySlug}) LIKE ${'%' + effectiveSearch.toLowerCase() + '%'}
+					LOWER(${products.name}) LIKE ${searchPattern}
+					OR LOWER(${products.slug}) LIKE ${searchPattern}
+					OR LOWER(${products.sku}) LIKE ${searchPattern}
+					OR LOWER(${products.brandSlug}) LIKE ${searchPattern}
+					OR LOWER(${products.collectionSlug}) LIKE ${searchPattern}
+					OR LOWER(${products.categorySlug}) LIKE ${searchPattern}
 				)`);
 			}
 			if (categoryFilter) {
@@ -69,27 +94,39 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			if (collectionFilter) {
 				conditions.push(eq(products.collectionSlug, collectionFilter));
 			}
-			const whereCondition = conditions.length > 0 ? sql.join(conditions, sql` AND `) : sql`1=1`;
+			if (tagFilter) {
+				// Filter products where tags JSON array contains the tag
+				// Using LIKE for simplicity (matches JSON array format: ["tag1","tag2"])
+				conditions.push(sql`${products.tags} LIKE ${`%"${tagFilter}"%`}`);
+			}
+			if (hasDiscountFilter) {
+				// Filter products where discount is not null and greater than 0
+				conditions.push(
+					sql`${products.discount} IS NOT NULL AND ${products.discount} > 0`,
+				);
+			}
+			const whereCondition =
+				conditions.length > 0 ? sql.join(conditions, sql` AND `) : sql`1=1`;
 
-            // Get total count for pagination info (respecting search)
+			// Get total count for pagination info (respecting search)
 			const totalCountResult = await db
 				.select({ count: sql<number>`COUNT(*)` })
 				.from(products)
 				.where(whereCondition)
 				.all();
-            const totalCount = totalCountResult[0]?.count ?? 0;
+			const totalCount = totalCountResult[0]?.count ?? 0;
 
 			// Build the products query with conditional pagination
-            // Build a paged subquery to avoid large IN() parameter lists and ensure correct pagination
+			// Build a paged subquery to avoid large IN() parameter lists and ensure correct pagination
 			// Determine ordering
-			let orderSql = products.name as any;
-			if (sort === 'price-asc') {
+			let orderSql: SQL | typeof products.name = products.name;
+			if (sort === "price-asc") {
 				orderSql = sql`${products.price} asc`;
-			} else if (sort === 'price-desc') {
+			} else if (sort === "price-desc") {
 				orderSql = sql`${products.price} desc`;
-			} else if (sort === 'newest') {
+			} else if (sort === "newest") {
 				orderSql = sql`${products.createdAt} desc`;
-			} else if (sort === 'oldest') {
+			} else if (sort === "oldest") {
 				orderSql = sql`${products.createdAt} asc`;
 			} else if (effectiveSearch) {
 				orderSql = sql`instr(lower(${products.name}), ${effectiveSearch.toLowerCase()}), ${products.name}`;
@@ -101,22 +138,22 @@ export const getAllProducts = createServerFn({ method: "GET" })
 				limit ${hasPagination ? pageLimit : totalCount}
 				offset ${hasPagination ? offsetValue : 0}`;
 
-            const baseQuery = db
-                .select()
-                .from(products)
-                .leftJoin(
-                    productVariations,
-                    eq(productVariations.productId, products.id),
-                )
-                .leftJoin(
-                    variationAttributes,
-                    eq(variationAttributes.productVariationId, productVariations.id),
-                )
+			const baseQuery = db
+				.select()
+				.from(products)
+				.leftJoin(
+					productVariations,
+					eq(productVariations.productId, products.id),
+				)
+				.leftJoin(
+					variationAttributes,
+					eq(variationAttributes.productVariationId, productVariations.id),
+				)
 				.where(sql`${products.id} in (${subquery})`)
 				.orderBy(orderSql);
 
 			// Apply pagination if provided
-            const rows: JoinedQueryResult[] = await baseQuery.all();
+			const rows: JoinedQueryResult[] = await baseQuery.all();
 
 			// Allow empty state: don't error when there are no products yet
 
@@ -144,17 +181,24 @@ export const getAllProducts = createServerFn({ method: "GET" })
 					}
 
 					// Process productAttributes - convert JSON string to array
-					let productAttributesArray: { attributeId: string; value: string }[] = [];
+					let productAttributesArray: { attributeId: string; value: string }[] =
+						[];
 					if (product.productAttributes) {
 						try {
 							const parsed = JSON.parse(product.productAttributes);
 							// Convert object to array format expected by frontend
-							if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+							if (
+								typeof parsed === "object" &&
+								parsed !== null &&
+								!Array.isArray(parsed)
+							) {
 								// Convert object to array of {attributeId, value} pairs
-								productAttributesArray = Object.entries(parsed).map(([key, value]) => ({
-									attributeId: key,
-									value: String(value)
-								}));
+								productAttributesArray = Object.entries(parsed).map(
+									([key, value]) => ({
+										attributeId: key,
+										value: String(value),
+									}),
+								);
 							} else if (Array.isArray(parsed)) {
 								productAttributesArray = parsed;
 							}
@@ -247,18 +291,18 @@ export const getAllProducts = createServerFn({ method: "GET" })
 				product.variations?.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
 			}
 
-        // Preserve database ordering for relevance or name ordering
-        const productsArray = Array.from(productMap.values());
+			// Preserve database ordering for relevance or name ordering
+			const productsArray = Array.from(productMap.values());
 
-		const result = {
-			products: productsArray,
-		};
+			const result = {
+				products: productsArray,
+			};
 
 			// Add pagination info if pagination was used
-            if (hasPagination && page !== undefined && pageLimit !== undefined) {
+			if (hasPagination && page !== undefined && pageLimit !== undefined) {
 				const hasNextPage = offsetValue + pageLimit < totalCount;
 				const hasPreviousPage = page > 1;
-				
+
 				return {
 					...result,
 					pagination: {
@@ -294,6 +338,8 @@ export const getAllProducts = createServerFn({ method: "GET" })
 				name: error instanceof Error ? error.name : "Unknown",
 			});
 			setResponseStatus(500);
-			throw new Error(`Failed to fetch dashboard data: ${error instanceof Error ? error.message : String(error)}`);
+			throw new Error(
+				`Failed to fetch dashboard data: ${error instanceof Error ? error.message : String(error)}`,
+			);
 		}
 	});

@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { Button } from "~/components/ui/shared/Button";
 import { Image } from "~/components/ui/shared/Image";
 import { Link } from "~/components/ui/shared/Link";
-import NeumorphismCard from "~/components/ui/shared/NeumorphismCard";
 import { Textarea } from "~/components/ui/shared/TextArea";
 import type { EnrichedCartItem } from "~/hooks/useEnrichedCart";
 import { useEnrichedCart } from "~/hooks/useEnrichedCart";
@@ -335,115 +334,113 @@ function CheckoutScreen() {
 					</div>
 					{/* Order Summary - Right Side */}
 					<div className="lg:w-[27rem] lg:sticky lg:top-4 lg:self-start">
-						<NeumorphismCard className="">
-							<h5>Summary</h5>
-							<div className="flex justify-between items-baseline my-2">
-								<span>Subtotal</span>
-								<span>CA${subtotal.toFixed(2)}</span>
+						<h5>Summary</h5>
+						<div className="flex justify-between items-baseline my-2">
+							<span>Subtotal</span>
+							<span>CA${subtotal.toFixed(2)}</span>
+						</div>
+						{totalDiscount > 0 && (
+							<div className="flex justify-between items-baseline my-2 text-red-600">
+								<span>Discount</span>
+								<span>-CA${totalDiscount.toFixed(2)}</span>
 							</div>
-							{totalDiscount > 0 && (
-								<div className="flex justify-between items-baseline my-2 text-red-600">
-									<span>Discount</span>
-									<span>-CA${totalDiscount.toFixed(2)}</span>
-								</div>
+						)}
+						<div className="flex justify-between items-baseline mb-4">
+							<p>Shipping</p>
+							<p className="text-right text-muted-foreground">
+								To be discussed after order
+							</p>
+						</div>
+						<div className="flex justify-between items-baseline text-xl mb-2 border-t pt-4">
+							<span>Total</span>
+							<h3 className="">CA${total.toFixed(2)}</h3>
+						</div>
+						<Button
+							onClick={handleButtonClick}
+							disabled={isLoading || cart.items.length === 0}
+							variant={getButtonVariant()}
+							className="w-full transition-all duration-300 ease-in-out disabled:cursor-not-allowed"
+						>
+							{isLoading && (
+								<div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
 							)}
-							<div className="flex justify-between items-baseline mb-4">
-								<p>Shipping</p>
-								<p className="text-right text-muted-foreground">
-									To be discussed after order
-								</p>
-							</div>
-							<div className="flex justify-between items-baseline text-xl mb-2 border-t pt-4">
-								<span>Total</span>
-								<h3 className="">CA${total.toFixed(2)}</h3>
-							</div>
-							<Button
-								onClick={handleButtonClick}
-								disabled={isLoading || cart.items.length === 0}
-								variant={getButtonVariant()}
-								className="w-full transition-all duration-300 ease-in-out disabled:cursor-not-allowed"
-							>
-								{isLoading && (
-									<div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-								)}
-								{getButtonText()}
-							</Button>
-							<div className="mt-6 pt-4 border-t">
-								<h6>Order Items</h6>
-								{enrichedItems.map((item) => (
-									<div
-										key={`${item.productId}-${item.variationId || "default"}`}
-										className="flex items-start gap-3 py-2"
-									>
-										{/* Product image */}
-										<div className="shrink-0 relative w-16 h-16 bg-muted rounded overflow-hidden">
-											{item.image ? (
-												<Image
-													src={`https://assets.rublevsky.studio/${item.image}`}
-													alt={item.productName}
-													className="object-cover"
-												/>
-											) : (
-												<div className="w-full h-full flex items-center justify-center text-muted-foreground">
-													No image
-												</div>
-											)}
-										</div>
-										{/* Product info */}
-										<div className="grow">
-											<Link
-												href={`/store/${item.productId}`}
-												className="blurLink"
-												id={`product-${item.productId}`}
-											>
-												{item.productName}
-											</Link>
-											{item.attributes &&
-												Object.keys(item.attributes).length > 0 && (
-													<p className="text-sm text-muted-foreground">
-														{Object.entries(item.attributes)
-															.map(
-																([key, value]) =>
-																	`${getAttributeDisplayName(key, attributes || [])}: ${value}`,
-															)
-															.join(", ")}
-													</p>
-												)}
-											<p className="text-sm text-muted-foreground">
-												Quantity: {item.quantity}
-											</p>
-										</div>
-										{/* Price */}
-										<div className="text-right">
-											{item.discount ? (
-												<>
-													<p className="text-sm font-medium line-through text-muted-foreground">
-														CA${(item.price * item.quantity).toFixed(2)}
-													</p>
-													<div className="flex items-center justify-end gap-2">
-														<p className="text-sm font-medium">
-															CA$
-															{(
-																item.price *
-																(1 - item.discount / 100) *
-																item.quantity
-															).toFixed(2)}
-														</p>
-														<span className="text-xs text-red-600">
-															{item.discount}% OFF
-														</span>
-													</div>
-												</>
-											) : (
-												<p className="text-sm font-medium">
-													CA${(item.price * item.quantity).toFixed(2)}
+							{getButtonText()}
+						</Button>
+						<div className="mt-6 pt-4 border-t">
+							<h6>Order Items</h6>
+							{enrichedItems.map((item) => (
+								<div
+									key={`${item.productId}-${item.variationId || "default"}`}
+									className="flex items-start gap-3 py-2"
+								>
+									{/* Product image */}
+									<div className="shrink-0 relative w-16 h-16 bg-muted rounded overflow-hidden">
+										{item.image ? (
+											<Image
+												src={`https://assets.rublevsky.studio/${item.image}`}
+												alt={item.productName}
+												className="object-cover"
+											/>
+										) : (
+											<div className="w-full h-full flex items-center justify-center text-muted-foreground">
+												No image
+											</div>
+										)}
+									</div>
+									{/* Product info */}
+									<div className="grow">
+										<Link
+											href={`/store/${item.productId}`}
+											className="blurLink"
+											id={`product-${item.productId}`}
+										>
+											{item.productName}
+										</Link>
+										{item.attributes &&
+											Object.keys(item.attributes).length > 0 && (
+												<p className="text-sm text-muted-foreground">
+													{Object.entries(item.attributes)
+														.map(
+															([key, value]) =>
+																`${getAttributeDisplayName(key, attributes || [])}: ${value}`,
+														)
+														.join(", ")}
 												</p>
 											)}
-										</div>
+										<p className="text-sm text-muted-foreground">
+											Quantity: {item.quantity}
+										</p>
 									</div>
-								))}
-							</div>
-						</NeumorphismCard>
+									{/* Price */}
+									<div className="text-right">
+										{item.discount ? (
+											<>
+												<p className="text-sm font-medium line-through text-muted-foreground">
+													CA${(item.price * item.quantity).toFixed(2)}
+												</p>
+												<div className="flex items-center justify-end gap-2">
+													<p className="text-sm font-medium">
+														CA$
+														{(
+															item.price *
+															(1 - item.discount / 100) *
+															item.quantity
+														).toFixed(2)}
+													</p>
+													<span className="text-xs text-red-600">
+														{item.discount}% OFF
+													</span>
+												</div>
+											</>
+										) : (
+											<p className="text-sm font-medium">
+												CA${(item.price * item.quantity).toFixed(2)}
+											</p>
+										)}
+									</div>
+								</div>
+							))}
+						</div>
 					</div>
 				</div>
 			</div>

@@ -107,7 +107,7 @@ function ImageGallerySkeleton() {
 
 export function ProductPageSkeleton() {
 	return (
-		<main className="min-h-screen flex flex-col lg:h-screen lg:overflow-hidden">
+		<div className="min-h-screen flex flex-col lg:h-screen lg:overflow-hidden">
 			<div className="grow flex items-start justify-center">
 				<div className="w-full h-full flex flex-col lg:flex-row gap-0 lg:gap-10 items-start">
 					{/* Image gallery section */}
@@ -184,6 +184,6 @@ export function ProductPageSkeleton() {
 					</div>
 				</div>
 			</div>
-		</main>
+		</div>
 	);
 }

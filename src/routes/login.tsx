@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AnimatedGroup } from "~/components/motion_primitives/AnimatedGroup";
 import { TextEffect } from "~/components/motion_primitives/AnimatedText";
 import { Button } from "~/components/ui/shared/Button";
-import NeumorphismCard from "~/components/ui/shared/NeumorphismCard";
 import { signIn, signOut, useSession } from "~/utils/auth-client";
 import { getAuthStatus } from "~/utils/auth-server-func";
 
@@ -31,7 +30,7 @@ function RouteComponent() {
 			return (
 				<section className="relative min-h-[80dvh] flex items-center justify-center">
 					<AnimatedGroup>
-						<NeumorphismCard className="text-center max-w-md">
+						<div className="text-center max-w-md">
 							<TextEffect as="h2" className="mb-4">
 								Welcome back!
 							</TextEffect>
@@ -41,7 +40,7 @@ function RouteComponent() {
 							<Button asChild size="lg" className="w-full">
 								<Link to="/dashboard">Go to Dashboard</Link>
 							</Button>
-						</NeumorphismCard>
+						</div>
 					</AnimatedGroup>
 				</section>
 			);
@@ -49,7 +48,7 @@ function RouteComponent() {
 			return (
 				<section className="relative min-h-[80dvh] flex items-center justify-center">
 					<AnimatedGroup>
-						<NeumorphismCard className="text-center max-w-md">
+						<div className="text-center max-w-md">
 							<TextEffect as="h2" className="mb-4">
 								Access Restricted
 							</TextEffect>
@@ -65,7 +64,7 @@ function RouteComponent() {
 							>
 								Sign Out
 							</Button>
-						</NeumorphismCard>
+						</div>
 					</AnimatedGroup>
 				</section>
 			);
@@ -75,7 +74,7 @@ function RouteComponent() {
 	return (
 		<section className="relative h-screen flex items-center justify-center">
 			<AnimatedGroup>
-				<NeumorphismCard className="w-full max-w-md">
+				<div className="w-full max-w-md">
 					<div className="text-center">
 						<TextEffect as="h3" className="mb-2">
 							Rublevsky Studio
@@ -113,7 +112,7 @@ function RouteComponent() {
 						</svg>
 						Continue with Google
 					</Button>
-				</NeumorphismCard>
+				</div>
 			</AnimatedGroup>
 		</section>
 	);

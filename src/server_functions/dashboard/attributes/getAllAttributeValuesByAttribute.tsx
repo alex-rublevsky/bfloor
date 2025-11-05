@@ -17,7 +17,9 @@ export interface AttributeValue {
  * Get all attribute values grouped by attribute ID
  * Used for displaying values on the attributes list page
  */
-export const getAllAttributeValuesByAttribute = createServerFn({ method: "GET" })
+export const getAllAttributeValuesByAttribute = createServerFn({
+	method: "GET",
+})
 	.inputValidator(() => ({}))
 	.handler(async (): Promise<Record<number, AttributeValue[]>> => {
 		const db = DB();
@@ -56,4 +58,3 @@ export const getAllAttributeValuesByAttribute = createServerFn({ method: "GET" }
 
 		return grouped;
 	});
-

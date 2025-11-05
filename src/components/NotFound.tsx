@@ -6,7 +6,7 @@ export function NotFound({ children }: { children?: ReactNode }) {
 	const navigate = useNavigate();
 	return (
 		<div className="flex-1 flex flex-col">
-			<main className="flex-1 flex justify-center items-center">
+			<div className="flex-1 flex justify-center items-center">
 				<div className="text-center">
 					<div className="">
 						{children || (
@@ -33,7 +33,7 @@ export function NotFound({ children }: { children?: ReactNode }) {
 						</Button>
 					</p>
 				</div>
-			</main>
+			</div>
 		</div>
 	);
 }

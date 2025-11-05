@@ -7,5 +7,11 @@ export const Route = createFileRoute("/store")({
 });
 
 function StoreLayout() {
-	return <Outlet />;
+	return (
+		<div className="h-screen bg-background flex flex-col">
+			<div className="flex-1">
+				<Outlet />
+			</div>
+		</div>
+	);
 }

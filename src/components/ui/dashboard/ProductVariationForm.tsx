@@ -104,7 +104,7 @@ function SortableVariationItem({
 							...v,
 							attributeValues: newAttributeValues,
 							sku: newSKU,
-					  }
+						}
 					: v,
 			),
 		);

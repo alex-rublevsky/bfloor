@@ -2,8 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, eq, ne } from "drizzle-orm";
 import { DB } from "~/db";
 import { attributeValues } from "~/schema";
-import type { AttributeValue } from "./getAttributeValues";
 import { updateAttributeValueInProducts } from "~/utils/updateAttributeValueInProducts";
+import type { AttributeValue } from "./getAttributeValues";
 
 export const updateAttributeValue = createServerFn({ method: "POST" })
 	.inputValidator(
@@ -18,9 +18,7 @@ export const updateAttributeValue = createServerFn({ method: "POST" })
 		}) => data,
 	)
 	.handler(
-		async ({
-			data,
-		}): Promise<{ value: AttributeValue; message: string }> => {
+		async ({ data }): Promise<{ value: AttributeValue; message: string }> => {
 			const db = DB();
 
 			// Get existing value to check attributeId
@@ -100,12 +98,9 @@ export const updateAttributeValue = createServerFn({ method: "POST" })
 					slug: updated[0].slug || null,
 					sortOrder: updated[0].sortOrder,
 					isActive: updated[0].isActive,
-					createdAt: updated[0].createdAt
-						? Number(updated[0].createdAt)
-						: null,
+					createdAt: updated[0].createdAt ? Number(updated[0].createdAt) : null,
 				},
 				message: "Attribute value updated successfully",
 			};
 		},
 	);
-

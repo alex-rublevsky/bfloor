@@ -1,21 +1,29 @@
-import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import {
+	useQuery,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { Loader2 } from "lucide-react";
 import { useMemo } from "react";
+import AttributeValuesManager from "~/components/ui/dashboard/AttributeValuesManager";
 import {
 	DashboardEntityManager,
-	type EntityListProps,
-	type EntityFormFieldsProps,
 	type EntityFormData,
+	type EntityFormFieldsProps,
+	type EntityListProps,
 } from "~/components/ui/dashboard/DashboardEntityManager";
+import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
 import { EntityCardGrid } from "~/components/ui/dashboard/EntityCardGrid";
 import { AttributesPageSkeleton } from "~/components/ui/dashboard/skeletons/AttributesPageSkeleton";
-import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
-import { Loader2 } from "lucide-react";
-import { productAttributesQueryOptions, productAttributeCountsQueryOptions, allAttributeValuesByAttributeQueryOptions } from "~/lib/queryOptions";
+import {
+	allAttributeValuesByAttributeQueryOptions,
+	productAttributeCountsQueryOptions,
+	productAttributesQueryOptions,
+} from "~/lib/queryOptions";
 import { createProductAttribute } from "~/server_functions/dashboard/attributes/createProductAttribute";
 import { deleteProductAttribute } from "~/server_functions/dashboard/attributes/deleteProductAttribute";
 import { updateProductAttribute } from "~/server_functions/dashboard/attributes/updateProductAttribute";
-import AttributeValuesManager from "~/components/ui/dashboard/AttributeValuesManager";
 import type { ProductAttribute } from "~/types";
 
 // Type for attribute with potentially loading count and values
@@ -31,8 +39,7 @@ const AttributeFormFields = ({
 	// Show attribute values manager if editing and attribute has standardized values
 	const isEditing = editingEntity !== null && editingEntity !== undefined;
 	const hasStandardizedValues =
-		isEditing &&
-		editingEntity.valueType === "standardized";
+		isEditing && editingEntity.valueType === "standardized";
 
 	if (!hasStandardizedValues || !editingEntity) {
 		return null;
@@ -42,10 +49,7 @@ const AttributeFormFields = ({
 	// This will be rendered after the main form section
 	return (
 		<DrawerSection maxWidth title="Стандартизированные значения">
-			<AttributeValuesManager
-				attributeId={editingEntity.id}
-				attributeSlug={editingEntity.slug}
-			/>
+			<AttributeValuesManager attributeId={editingEntity.id} />
 		</DrawerSection>
 	);
 };
@@ -114,15 +118,19 @@ export const Route = createFileRoute("/dashboard/attributes")({
 
 function AttributesPage() {
 	const queryClient = useQueryClient();
-	
+
 	// Load attributes with Suspense (fast - guaranteed to be loaded by loader)
-	const { data: attributes } = useSuspenseQuery(productAttributesQueryOptions());
-	
+	const { data: attributes } = useSuspenseQuery(
+		productAttributesQueryOptions(),
+	);
+
 	// Load counts separately with regular query (slower - streams in)
 	const { data: counts } = useQuery(productAttributeCountsQueryOptions());
 
 	// Load attribute values grouped by attribute ID
-	const { data: attributeValuesByAttribute } = useQuery(allAttributeValuesByAttributeQueryOptions());
+	const { data: attributeValuesByAttribute } = useQuery(
+		allAttributeValuesByAttributeQueryOptions(),
+	);
 
 	// Merge attributes with counts and values
 	const attributesWithCounts = useMemo((): ProductAttributeWithCount[] => {
