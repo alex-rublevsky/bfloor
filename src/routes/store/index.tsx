@@ -20,12 +20,43 @@ import {
 import type { Brand, CategoryWithCount, Collection } from "~/types";
 import { seo } from "~/utils/seo";
 
-// Simple search params validation for category filtering
+// Search params validation for all filter options
 const validateSearch = (search: Record<string, unknown>) => {
-	const result: { category?: string } = {};
+	const result: {
+		category?: string;
+		brand?: string;
+		collection?: string;
+		sort?:
+			| "relevant"
+			| "name"
+			| "price-asc"
+			| "price-desc"
+			| "newest"
+			| "oldest";
+	} = {};
 
 	if (typeof search.category === "string") {
 		result.category = search.category;
+	}
+
+	if (typeof search.brand === "string") {
+		result.brand = search.brand;
+	}
+
+	if (typeof search.collection === "string") {
+		result.collection = search.collection;
+	}
+
+	if (
+		typeof search.sort === "string" &&
+		(search.sort === "relevant" ||
+			search.sort === "name" ||
+			search.sort === "price-asc" ||
+			search.sort === "price-desc" ||
+			search.sort === "newest" ||
+			search.sort === "oldest")
+	) {
+		result.sort = search.sort;
 	}
 
 	return result;
@@ -84,6 +115,10 @@ function StorePage() {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const columnsPerRow = useResponsiveColumns();
 
+	// Get search params from URL using TanStack Router
+	const search = Route.useSearch();
+	const navigate = Route.useNavigate();
+
 	// Get search term from context (same as dashboard)
 	const clientSearch = useClientSearch();
 	const normalizedSearch = (() => {
@@ -95,18 +130,30 @@ function StorePage() {
 		return trimmed.length >= 2 ? trimmed : undefined;
 	})();
 
-	// Filter state (matching dashboard)
-	const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-	const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+	// Initialize filter state from URL search params
+	const [selectedCategory, setSelectedCategory] = useState<string | null>(
+		search.category ?? null,
+	);
+	const [selectedBrand, setSelectedBrand] = useState<string | null>(
+		search.brand ?? null,
+	);
 	const [selectedCollection, setSelectedCollection] = useState<string | null>(
-		null,
+		search.collection ?? null,
 	);
 	const [sortBy, setSortBy] = useState<
 		"relevant" | "name" | "price-asc" | "price-desc" | "newest" | "oldest"
-	>("relevant");
+	>(search.sort ?? "relevant");
 	const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([
 		0, 1000000,
 	]);
+
+	// Sync state with URL when search params change (e.g., from browser back/forward)
+	useEffect(() => {
+		setSelectedCategory(search.category ?? null);
+		setSelectedBrand(search.brand ?? null);
+		setSelectedCollection(search.collection ?? null);
+		setSortBy(search.sort ?? "relevant");
+	}, [search.category, search.brand, search.collection, search.sort]);
 
 	const isValidSort = (v: string): v is typeof sortBy => {
 		return (
@@ -117,6 +164,51 @@ function StorePage() {
 			v === "newest" ||
 			v === "oldest"
 		);
+	};
+
+	// Update URL when filters change
+	const updateCategory = (category: string | null) => {
+		setSelectedCategory(category);
+		navigate({
+			search: {
+				...search,
+				category: category ?? undefined,
+			},
+			replace: true,
+		});
+	};
+
+	const updateBrand = (brand: string | null) => {
+		setSelectedBrand(brand);
+		navigate({
+			search: {
+				...search,
+				brand: brand ?? undefined,
+			},
+			replace: true,
+		});
+	};
+
+	const updateCollection = (collection: string | null) => {
+		setSelectedCollection(collection);
+		navigate({
+			search: {
+				...search,
+				collection: collection ?? undefined,
+			},
+			replace: true,
+		});
+	};
+
+	const updateSort = (sort: typeof sortBy) => {
+		setSortBy(sort);
+		navigate({
+			search: {
+				...search,
+				sort: sort !== "relevant" ? sort : undefined,
+			},
+			replace: true,
+		});
 	};
 
 	// Use infinite query to track loading state (same as dashboard)
@@ -250,22 +342,22 @@ function StorePage() {
 						}),
 					)}
 					selectedCategory={selectedCategory}
-					onCategoryChange={setSelectedCategory}
+					onCategoryChange={updateCategory}
 					brands={brands.map((b: Brand) => ({ slug: b.slug, name: b.name }))}
 					selectedBrand={selectedBrand}
-					onBrandChange={setSelectedBrand}
+					onBrandChange={updateBrand}
 					collections={collections.map((co: Collection) => ({
 						slug: co.slug,
 						name: co.name,
 					}))}
 					selectedCollection={selectedCollection}
-					onCollectionChange={setSelectedCollection}
+					onCollectionChange={updateCollection}
 					priceRange={{ min: 0, max: 1000000 }}
 					currentPriceRange={currentPriceRange}
 					onPriceRangeChange={setCurrentPriceRange}
 					sortBy={sortBy}
 					onSortChange={(v) => {
-						if (isValidSort(v)) setSortBy(v);
+						if (isValidSort(v)) updateSort(v);
 					}}
 				/>
 				{/* Products List - Virtualized for performance */}

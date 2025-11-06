@@ -5,6 +5,7 @@ import {
 	IconPackage,
 	IconTags,
 } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
 	ArrowLeftFromLine,
@@ -17,12 +18,6 @@ import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "~/components/ui/DropdownMenu";
-import {
 	Drawer,
 	DrawerContent,
 	DrawerTrigger,
@@ -32,12 +27,14 @@ import { usePrefetch } from "~/hooks/usePrefetch";
 import { useSearchPlaceholderWithCount } from "~/hooks/useSearchPlaceholderWithCount";
 import { useCart } from "~/lib/cartContext";
 import { useClientSearch } from "~/lib/clientSearchContext";
+import { categoriesQueryOptions } from "~/lib/queryOptions";
 import { signOut } from "~/utils/auth-client";
 import { cn } from "~/utils/utils";
 import { CartDrawerContent } from "../store/CartDrawerContent";
 import { BottomNavBar } from "./BottomNavBar";
 import { Button } from "./Button";
 import { Logo } from "./Logo";
+import { SafeArea } from "./SafeArea";
 
 interface NavItem {
 	name: string;
@@ -156,21 +153,75 @@ const DropdownNavMenu = ({
 	};
 }) => {
 	const navigate = useNavigate();
+	const [open, setOpen] = useState<boolean>(false);
+	const parent = useRef<HTMLDivElement>(null);
+	const child = useRef<HTMLDivElement>(null);
+	const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	const userID = userData?.userID || "";
 	const userName = userData?.userName || "";
 	const userEmail = userData?.userEmail || "";
 	const userAvatar = userData?.userAvatar || "";
 
+	const handleMouseLeave = () => {
+		closeTimeoutRef.current = setTimeout(() => {
+			setOpen(false);
+		}, 200);
+	};
+
+	const handleMouseEnter = () => {
+		if (closeTimeoutRef.current) {
+			clearTimeout(closeTimeoutRef.current);
+			closeTimeoutRef.current = null;
+		}
+		setOpen(true);
+	};
+
+	useEffect(() => {
+		return () => {
+			if (closeTimeoutRef.current) {
+				clearTimeout(closeTimeoutRef.current);
+			}
+		};
+	}, []);
+
 	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger className="flex items-center justify-center cursor-pointer p-2 text-foreground hover:text-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50">
+		<div
+			ref={parent}
+			className="relative"
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={handleMouseLeave}
+			role="menu"
+		>
+			<button
+				type="button"
+				className="flex items-center justify-center cursor-pointer p-2 text-foreground hover:text-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+			>
 				<MoreVertical className="w-5 h-5" />
-			</DropdownMenuTrigger>
-			<DropdownMenuContent
-				side="top"
-				align="start"
-				className="mb-2 rounded-2xl border border-black bg-background text-foreground"
+			</button>
+			{/* Safe mouse area - SVG triangle */}
+			{open && parent.current && child.current && (
+				<SafeArea
+					anchor={parent.current}
+					submenu={child.current}
+					onMouseEnter={handleMouseEnter}
+				/>
+			)}
+			{/* Dropdown menu - positioned below */}
+			<div
+				ref={child}
+				style={{
+					visibility: open ? "visible" : "hidden",
+					opacity: open ? 1 : 0,
+					position: "absolute",
+					right: 0,
+					top: "100%",
+					marginTop: "0.5rem",
+				}}
+				className="catalog-dropdown-menu catalog-dropdown-menu-single-column"
+				onMouseEnter={handleMouseEnter}
+				onMouseLeave={handleMouseLeave}
+				role="menu"
 			>
 				{showUserInfo && (
 					<>
@@ -190,7 +241,8 @@ const DropdownNavMenu = ({
 								</span>
 							</div>
 						</div>
-						<DropdownMenuItem
+						<button
+							type="button"
 							onClick={async () => {
 								try {
 									const _result = await signOut();
@@ -212,36 +264,36 @@ const DropdownNavMenu = ({
 									navigate({ to: "/" });
 								}
 							}}
-							className="flex items-center gap-2 py-2 px-3 text-sm hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200 border-b border-border"
+							className="flex w-full items-center gap-2 py-2 px-3 text-sm hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200 border-b border-border"
 						>
 							<LogOutIcon className="h-4 w-4" />
 							Выйти
-						</DropdownMenuItem>
+						</button>
 					</>
 				)}
-				{items.map((item) => (
-					<DropdownMenuItem key={item.url} asChild>
-						{item.url.startsWith("http") ? (
-							<a
-								href={item.url}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="relative flex w-full cursor-default select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200"
-							>
-								{item.name}
-							</a>
-						) : (
-							<Link
-								to={item.url}
-								className="relative flex w-full cursor-default select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200"
-							>
-								{item.name}
-							</Link>
-						)}
-					</DropdownMenuItem>
-				))}
-			</DropdownMenuContent>
-		</DropdownMenu>
+				{items.map((item) =>
+					item.url.startsWith("http") ? (
+						<a
+							key={item.url}
+							href={item.url}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="relative flex w-full cursor-default select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200"
+						>
+							{item.name}
+						</a>
+					) : (
+						<Link
+							key={item.url}
+							to={item.url}
+							className="relative flex w-full cursor-default select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200"
+						>
+							{item.name}
+						</Link>
+					),
+				)}
+			</div>
+		</div>
 	);
 };
 
@@ -283,6 +335,267 @@ const CartButton = () => {
 				<CartDrawerContent />
 			</DrawerContent>
 		</Drawer>
+	);
+};
+
+// Reusable hover dropdown component
+const HoverDropdown = ({
+	trigger,
+	children,
+	className = "",
+}: {
+	trigger: React.ReactNode;
+	children: React.ReactNode;
+	className?: string;
+}) => {
+	const [open, setOpen] = useState<boolean>(false);
+	const parent = useRef<HTMLDivElement>(null);
+	const child = useRef<HTMLDivElement>(null);
+	const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+	const handleMouseLeave = () => {
+		closeTimeoutRef.current = setTimeout(() => {
+			setOpen(false);
+		}, 200);
+	};
+
+	const handleMouseEnter = () => {
+		if (closeTimeoutRef.current) {
+			clearTimeout(closeTimeoutRef.current);
+			closeTimeoutRef.current = null;
+		}
+		setOpen(true);
+	};
+
+	useEffect(() => {
+		return () => {
+			if (closeTimeoutRef.current) {
+				clearTimeout(closeTimeoutRef.current);
+			}
+		};
+	}, []);
+
+	return (
+		<div
+			ref={parent}
+			className={cn("relative", className)}
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={handleMouseLeave}
+			role="menu"
+		>
+			{trigger}
+			{open && parent.current && child.current && (
+				<SafeArea
+					anchor={parent.current}
+					submenu={child.current}
+					onMouseEnter={handleMouseEnter}
+				/>
+			)}
+			<div
+				ref={child}
+				style={{
+					visibility: open ? "visible" : "hidden",
+					opacity: open ? 1 : 0,
+					position: "absolute",
+					left: 0,
+					top: "100%",
+					marginTop: "0.5rem",
+				}}
+				className="catalog-dropdown-menu"
+				onMouseEnter={handleMouseEnter}
+				onMouseLeave={handleMouseLeave}
+				role="menu"
+			>
+				{children}
+			</div>
+		</div>
+	);
+};
+
+// Address Dropdown Component
+const AddressDropdown = () => {
+	return (
+		<HoverDropdown
+			trigger={
+				<a
+					href="/contacts"
+					className="text-foreground hover:text-primary transition-colors whitespace-nowrap cursor-pointer"
+				>
+					Владивосток, ул. Русская, д. 78
+				</a>
+			}
+		>
+			<div className="px-4 py-3">
+				<div className="text-sm font-medium mb-2">Наши адреса</div>
+				<div className="space-y-2 text-sm">
+					<div>
+						<div className="font-medium">Основной магазин</div>
+						<div className="text-muted-foreground">
+							Владивосток, ул. Русская, д. 78
+						</div>
+						<div className="text-muted-foreground">Пн-Вс: 10:00 - 20:00</div>
+					</div>
+					<div className="pt-2 border-t border-border">
+						<div className="font-medium">Склад</div>
+						<div className="text-muted-foreground">
+							Владивосток, ул. Примерная, д. 10
+						</div>
+						<div className="text-muted-foreground">Пн-Пт: 9:00 - 18:00</div>
+					</div>
+				</div>
+			</div>
+		</HoverDropdown>
+	);
+};
+
+// Phone Dropdown Component
+const PhoneDropdown = () => {
+	return (
+		<HoverDropdown
+			trigger={
+				<a
+					href="tel:+79025559405"
+					className="text-foreground hover:text-primary transition-colors whitespace-nowrap cursor-pointer"
+				>
+					8 902 555 9405
+				</a>
+			}
+		>
+			<div className="px-4 py-3">
+				<div className="text-sm font-medium mb-2">Контакты</div>
+				<div className="space-y-2 text-sm">
+					<div>
+						<div className="font-medium">Телефон</div>
+						<a href="tel:+79025559405" className="text-primary hover:underline">
+							+7 (902) 555-94-05
+						</a>
+					</div>
+					<div>
+						<div className="font-medium">WhatsApp</div>
+						<a
+							href="https://wa.me/79025559405"
+							className="text-primary hover:underline"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							+7 (902) 555-94-05
+						</a>
+					</div>
+					<div>
+						<div className="font-medium">Email</div>
+						<a
+							href="mailto:info@example.com"
+							className="text-primary hover:underline"
+						>
+							info@example.com
+						</a>
+					</div>
+					<div className="pt-2 border-t border-border">
+						<div className="text-muted-foreground">
+							Время работы: Пн-Вс 10:00 - 20:00
+						</div>
+					</div>
+				</div>
+			</div>
+		</HoverDropdown>
+	);
+};
+
+// Catalog Dropdown Component with safe triangle
+const CatalogDropdown = () => {
+	const [open, setOpen] = useState<boolean>(false);
+	const parent = useRef<HTMLDivElement>(null);
+	const child = useRef<HTMLDivElement>(null);
+	const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+	const { data: categories = [] } = useQuery({
+		...categoriesQueryOptions(),
+	});
+
+	// Filter active categories and sort by order
+	const activeCategories = categories
+		.filter((cat) => cat.isActive)
+		.sort((a, b) => a.order - b.order);
+
+	const handleMouseLeave = () => {
+		// Delay closing to allow mouse to reach safe area or menu
+		// Increased to 200ms to accommodate slower mouse movements
+		closeTimeoutRef.current = setTimeout(() => {
+			setOpen(false);
+		}, 200);
+	};
+
+	const handleMouseEnter = () => {
+		// Cancel any pending close
+		if (closeTimeoutRef.current) {
+			clearTimeout(closeTimeoutRef.current);
+			closeTimeoutRef.current = null;
+		}
+		setOpen(true);
+	};
+
+	// Cleanup timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (closeTimeoutRef.current) {
+				clearTimeout(closeTimeoutRef.current);
+			}
+		};
+	}, []);
+
+	return (
+		<div
+			ref={parent}
+			className="relative catalog-dropdown-container"
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={handleMouseLeave}
+			role="menu"
+		>
+			<Button to="/store" variant="accent" size="sm">
+				Каталог
+			</Button>
+			{/* Safe mouse area - SVG triangle */}
+			{open && parent.current && child.current && (
+				<SafeArea
+					anchor={parent.current}
+					submenu={child.current}
+					onMouseEnter={handleMouseEnter}
+				/>
+			)}
+			{/* Dropdown menu - hidden by default, shown on hover (desktop only) */}
+			<div
+				ref={child}
+				style={{
+					visibility: open ? "visible" : "hidden",
+					opacity: open ? 1 : 0,
+					position: "absolute",
+					left: 0,
+					top: "100%",
+					marginTop: "0.5rem",
+				}}
+				className="catalog-dropdown-menu"
+				onMouseEnter={handleMouseEnter}
+				onMouseLeave={handleMouseLeave}
+				role="menu"
+			>
+				{activeCategories.length === 0 ? (
+					<div className="px-4 py-2 text-sm text-muted-foreground">
+						Нет категорий
+					</div>
+				) : (
+					activeCategories.map((category) => (
+						<Link
+							key={category.slug}
+							to="/store"
+							search={{ category: category.slug }}
+							className="block px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+						>
+							{category.name}
+						</Link>
+					))
+				)}
+			</div>
+		</div>
 	);
 };
 
@@ -568,18 +881,8 @@ export function NavBar({
 					<div className="hidden lg:flex flex-col gap-3">
 						{/* First row: Navigation Links */}
 						<div className="flex items-center justify-between gap-3 text-sm flex-wrap">
-							<a
-								href="/contacts"
-								className="text-foreground hover:text-primary transition-colors whitespace-nowrap"
-							>
-								Владивосток, ул. Русская, д. 78
-							</a>
-							<a
-								href="tel:+79025559405"
-								className="text-foreground hover:text-primary transition-colors whitespace-nowrap"
-							>
-								8 902 555 9405
-							</a>
+							<AddressDropdown />
+							<PhoneDropdown />
 							<div className="flex items-center gap-3">
 								<a
 									href="/delivery"
@@ -611,11 +914,9 @@ export function NavBar({
 								</Link>
 							</div>
 
-							{/* Catalog button - fixed width */}
+							{/* Catalog button with dropdown - fixed width */}
 							<div className="flex-shrink-0">
-								<Button to="/store" variant="accent" size="sm">
-									Каталог
-								</Button>
+								<CatalogDropdown />
 							</div>
 
 							{/* Search - takes all available space */}
@@ -652,9 +953,7 @@ export function NavBar({
 								</Link>
 							</div>
 							<div className="flex-shrink-0">
-								<Button to="/store" variant="accent" size="sm">
-									Каталог
-								</Button>
+								<CatalogDropdown />
 							</div>
 						</div>
 

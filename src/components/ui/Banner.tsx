@@ -168,10 +168,17 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 		object-fit: cover;
 	}
 }
-@media (min-width: 1024px) {
+@media (min-width: 1024px) and (max-width: 1399px) {
 	.embla__slide__number {
 		height: 500px;
 		min-height: 500px;
+	}
+	.embla__slide__number picture {
+		height: 100%;
+	}
+	.embla__slide__image {
+		height: 100%;
+		object-fit: cover;
 	}
 }
 @media (min-width: 1400px) {

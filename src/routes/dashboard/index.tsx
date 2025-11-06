@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-query";
 import {
 	createFileRoute,
+	stripSearchParams,
 	useElementScrollRestoration,
 } from "@tanstack/react-router";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
@@ -79,12 +80,50 @@ interface Variation {
 	attributeValues: Record<string, string>; // attributeId -> value mapping
 }
 
-// Support optional search param in URL
+// Search params validation for all filter options and search
 const validateSearch = (search: Record<string, unknown>) => {
-	const result: { search?: string } = {};
+	const result: {
+		search?: string;
+		category?: string;
+		brand?: string;
+		collection?: string;
+		sort?:
+			| "relevant"
+			| "name"
+			| "price-asc"
+			| "price-desc"
+			| "newest"
+			| "oldest";
+	} = {};
+
 	if (typeof search.search === "string") {
 		result.search = search.search;
 	}
+
+	if (typeof search.category === "string") {
+		result.category = search.category;
+	}
+
+	if (typeof search.brand === "string") {
+		result.brand = search.brand;
+	}
+
+	if (typeof search.collection === "string") {
+		result.collection = search.collection;
+	}
+
+	if (
+		typeof search.sort === "string" &&
+		(search.sort === "relevant" ||
+			search.sort === "name" ||
+			search.sort === "price-asc" ||
+			search.sort === "price-desc" ||
+			search.sort === "newest" ||
+			search.sort === "oldest")
+	) {
+		result.sort = search.sort;
+	}
+
 	return result;
 };
 
@@ -92,6 +131,10 @@ export const Route = createFileRoute("/dashboard/")({
 	component: RouteComponent,
 	pendingComponent: ProductsPageSkeleton,
 	validateSearch,
+	// Strip undefined values from URL to keep it clean
+	search: {
+		middlewares: [stripSearchParams({})],
+	},
 });
 
 // Hook to get responsive columns per row based on screen size
@@ -127,7 +170,11 @@ function useResponsiveColumns() {
 
 function RouteComponent() {
 	const queryClient = useQueryClient();
+	
+	// Get search params from URL using TanStack Router
 	const searchParams = Route.useSearch();
+	const navigate = Route.useNavigate();
+	
 	const normalizedSearch = (() => {
 		const value =
 			typeof searchParams.search === "string" ? searchParams.search : "";
@@ -137,18 +184,30 @@ function RouteComponent() {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const columnsPerRow = useResponsiveColumns();
 
-	// Dashboard filters state
-	const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-	const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+	// Initialize filter state from URL search params
+	const [selectedCategory, setSelectedCategory] = useState<string | null>(
+		searchParams.category ?? null,
+	);
+	const [selectedBrand, setSelectedBrand] = useState<string | null>(
+		searchParams.brand ?? null,
+	);
 	const [selectedCollection, setSelectedCollection] = useState<string | null>(
-		null,
+		searchParams.collection ?? null,
 	);
 	const [sortBy, setSortBy] = useState<
 		"relevant" | "name" | "price-asc" | "price-desc" | "newest" | "oldest"
-	>("relevant");
+	>(searchParams.sort ?? "relevant");
 	const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([
 		0, 1000000,
 	]);
+
+	// Sync state with URL when search params change (e.g., from browser back/forward)
+	useEffect(() => {
+		setSelectedCategory(searchParams.category ?? null);
+		setSelectedBrand(searchParams.brand ?? null);
+		setSelectedCollection(searchParams.collection ?? null);
+		setSortBy(searchParams.sort ?? "relevant");
+	}, [searchParams.category, searchParams.brand, searchParams.collection, searchParams.sort]);
 
 	const isValidSort = (v: string): v is typeof sortBy => {
 		return (
@@ -159,6 +218,51 @@ function RouteComponent() {
 			v === "newest" ||
 			v === "oldest"
 		);
+	};
+
+	// Update URL when filters change
+	const updateCategory = (category: string | null) => {
+		setSelectedCategory(category);
+		navigate({
+			search: {
+				...searchParams,
+				category: category ?? undefined,
+			},
+			replace: true,
+		});
+	};
+
+	const updateBrand = (brand: string | null) => {
+		setSelectedBrand(brand);
+		navigate({
+			search: {
+				...searchParams,
+				brand: brand ?? undefined,
+			},
+			replace: true,
+		});
+	};
+
+	const updateCollection = (collection: string | null) => {
+		setSelectedCollection(collection);
+		navigate({
+			search: {
+				...searchParams,
+				collection: collection ?? undefined,
+			},
+			replace: true,
+		});
+	};
+
+	const updateSort = (sort: typeof sortBy) => {
+		setSortBy(sort);
+		navigate({
+			search: {
+				...searchParams,
+				sort: sort !== "relevant" ? sort : undefined,
+			},
+			replace: true,
+		});
 	};
 
 	// Use infinite query to track loading state
@@ -1070,22 +1174,22 @@ function RouteComponent() {
 						}),
 					)}
 					selectedCategory={selectedCategory}
-					onCategoryChange={setSelectedCategory}
+					onCategoryChange={updateCategory}
 					brands={brands.map((b: Brand) => ({ slug: b.slug, name: b.name }))}
 					selectedBrand={selectedBrand}
-					onBrandChange={setSelectedBrand}
+					onBrandChange={updateBrand}
 					collections={collections.map((co: Collection) => ({
 						slug: co.slug,
 						name: co.name,
 					}))}
 					selectedCollection={selectedCollection}
-					onCollectionChange={setSelectedCollection}
+					onCollectionChange={updateCollection}
 					priceRange={{ min: 0, max: 1000000 }}
 					currentPriceRange={currentPriceRange}
 					onPriceRangeChange={setCurrentPriceRange}
 					sortBy={sortBy}
 					onSortChange={(v) => {
-						if (isValidSort(v)) setSortBy(v);
+						if (isValidSort(v)) updateSort(v);
 					}}
 				/>
 				{/* Products List - Virtualized for performance */}
