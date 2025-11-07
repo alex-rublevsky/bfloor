@@ -2,8 +2,10 @@ import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
 	DashboardEntityManager,
+	type EntityFormData,
 	type EntityFormFieldsProps,
 	type EntityListProps,
+	type EntityManagerConfig,
 } from "~/components/ui/dashboard/DashboardEntityManager";
 import { EntityCardGrid } from "~/components/ui/dashboard/EntityCardGrid";
 import { Badge } from "~/components/ui/shared/Badge";
@@ -29,7 +31,7 @@ const CollectionFormFields = ({
 	formData,
 	onFieldChange,
 	idPrefix,
-}: EntityFormFieldsProps<Collection, CollectionFormData>) => {
+}: EntityFormFieldsProps<Collection, CollectionFormData & EntityFormData>) => {
 	// Get brands for the select dropdown (data is already loaded by loader)
 	const { data: brands = [] } = useQuery(brandsQueryOptions());
 
@@ -166,9 +168,11 @@ function RouteComponent() {
 		} as CollectionFormData,
 		formFields: CollectionFormFields,
 		renderList: CollectionList,
-	};
+	} as unknown as EntityManagerConfig<Collection, CollectionFormData>;
 
 	return (
-		<DashboardEntityManager config={entityManagerConfig} data={data || []} />
+		<div className="px-6 py-6">
+			<DashboardEntityManager config={entityManagerConfig} data={data || []} />
+		</div>
 	);
 }

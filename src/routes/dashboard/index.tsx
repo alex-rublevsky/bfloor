@@ -23,9 +23,9 @@ import { ProductSettingsFields } from "~/components/ui/dashboard/ProductSettings
 import ProductVariationAttributesSelector from "~/components/ui/dashboard/ProductVariationAttributesSelector";
 import ProductVariationForm from "~/components/ui/dashboard/ProductVariationForm";
 import { SelectWithCreate } from "~/components/ui/dashboard/SelectWithCreate";
+import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { StoreLocationsSelector } from "~/components/ui/dashboard/StoreLocationsSelector";
-import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
 import { Button } from "~/components/ui/shared/Button";
 import { CheckboxList } from "~/components/ui/shared/CheckboxList";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
@@ -55,11 +55,11 @@ import {
 	productsInfiniteQueryOptions,
 	storeLocationsQueryOptions,
 } from "~/lib/queryOptions";
-import { cn } from "~/lib/utils";
 import { createProduct } from "~/server_functions/dashboard/store/createProduct";
 import { deleteProduct } from "~/server_functions/dashboard/store/deleteProduct";
 import { deleteProductImage } from "~/server_functions/dashboard/store/deleteProductImage";
 import { getProductBySlug } from "~/server_functions/dashboard/store/getProductBySlug";
+import { moveStagingImages } from "~/server_functions/dashboard/store/moveStagingImages";
 import { updateProduct } from "~/server_functions/dashboard/store/updateProduct";
 import type {
 	Brand,
@@ -431,6 +431,7 @@ function RouteComponent() {
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [showCreateForm, setShowCreateForm] = useState(false);
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+	const [hasAttemptedEditSubmit, setHasAttemptedEditSubmit] = useState(false);
 	const [_deletedImages, setDeletedImages] = useState<string[]>([]);
 	const [editDeletedImages, setEditDeletedImages] = useState<string[]>([]);
 	const [originalEditImages, setOriginalEditImages] = useState<string>("");
@@ -574,6 +575,7 @@ function RouteComponent() {
 		setEditDeletedImages([]);
 		setOriginalEditImages("");
 		setIsEditAutoSlug(false);
+		setHasAttemptedEditSubmit(false);
 		setError("");
 	};
 
@@ -769,15 +771,43 @@ function RouteComponent() {
 		e.preventDefault();
 		setHasAttemptedSubmit(true);
 
-		// Collect validation errors
-		const errors: string[] = [];
-		if (!formData.name) errors.push("Product Name");
-		if (!formData.slug) errors.push("Slug");
-		if (!formData.price) errors.push("Price");
-		if (!formData.categorySlug) errors.push("Category");
-
-		if (errors.length > 0) {
-			toast.error(`Please fill in all required fields: ${errors.join(", ")}`);
+		// Validate required fields and scroll to first invalid field
+		if (!formData.name) {
+			const nameInput = document.querySelector(
+				`#${createProductFormId} input[name="name"]`,
+			) as HTMLElement;
+			if (nameInput) {
+				nameInput.scrollIntoView({ behavior: "smooth", block: "center" });
+				nameInput.focus();
+			}
+			return;
+		}
+		if (!formData.slug) {
+			const slugInput = document.querySelector(
+				`#${createProductFormId} input[name="slug"]`,
+			) as HTMLElement;
+			if (slugInput) {
+				slugInput.scrollIntoView({ behavior: "smooth", block: "center" });
+				slugInput.focus();
+			}
+			return;
+		}
+		if (!formData.price) {
+			const priceInput = document.querySelector(
+				`#${createProductFormId} input[name="price"]`,
+			) as HTMLElement;
+			if (priceInput) {
+				priceInput.scrollIntoView({ behavior: "smooth", block: "center" });
+				priceInput.focus();
+			}
+			return;
+		}
+		if (!formData.categorySlug) {
+			const categorySelect = document.getElementById(addCategoryId);
+			if (categorySelect) {
+				categorySelect.scrollIntoView({ behavior: "smooth", block: "center" });
+				categorySelect.focus();
+			}
 			return;
 		}
 
@@ -785,6 +815,110 @@ function RouteComponent() {
 		setError("");
 
 		try {
+			// Parse images to identify staging images
+			const images = formData.images
+				? formData.images
+						.split(",")
+						.map((img) => img.trim())
+						.filter(Boolean)
+				: [];
+			const stagingImages = images.filter((img) => img.startsWith("staging/"));
+
+			console.log("📦 Product create - staging images check:", {
+				images,
+				stagingImages,
+				stagingCount: stagingImages.length,
+			});
+
+			// Move staging images to final location before creating product
+			let finalImagePaths = images;
+			if (stagingImages.length > 0) {
+				console.log("🚀 Starting to move staging images...");
+				try {
+					const moveResult = await moveStagingImages({
+						data: {
+							imagePaths: stagingImages,
+							finalFolder: "products",
+							categorySlug: formData.categorySlug,
+							productName: formData.name,
+							slug: formData.slug,
+						},
+					});
+
+					console.log("📥 Move result received:", {
+						success: moveResult?.success,
+						movedCount: moveResult?.movedImages?.length,
+						pathMapKeys: moveResult?.pathMap
+							? Object.keys(moveResult.pathMap)
+							: [],
+						failedCount: moveResult?.failedImages?.length,
+					});
+
+					if (moveResult?.movedImages && moveResult?.pathMap) {
+						// Replace staging paths with final paths using pathMap
+						finalImagePaths = images.map((img) => {
+							return moveResult.pathMap?.[img] || img;
+						});
+						console.log("🔄 Updated image paths:", {
+							original: images,
+							final: finalImagePaths,
+							pathMap: moveResult.pathMap,
+						});
+					} else if (
+						moveResult?.movedImages &&
+						moveResult.movedImages.length > 0
+					) {
+						// Fallback to index-based mapping if pathMap not available
+						finalImagePaths = images.map((img) => {
+							const stagingIndex = stagingImages.indexOf(img);
+							if (
+								stagingIndex >= 0 &&
+								stagingIndex < moveResult.movedImages.length
+							) {
+								return moveResult.movedImages[stagingIndex] || img;
+							}
+							return img;
+						});
+						console.log("🔄 Updated image paths (fallback):", {
+							original: images,
+							final: finalImagePaths,
+						});
+					} else {
+						// No images were moved - this is a problem
+						console.error("❌ No images were moved!", {
+							moveResult,
+							stagingImages,
+						});
+						toast.error(
+							"Не удалось переместить изображения. Они останутся в staging.",
+						);
+					}
+
+					if (moveResult?.failedImages && moveResult.failedImages.length > 0) {
+						console.warn(
+							"⚠️ Some images failed to move:",
+							moveResult.failedImages,
+						);
+						toast.warning(
+							`${moveResult.failedImages.length} изображение(й) не удалось переместить. Они останутся в staging и будут очищены автоматически.`,
+						);
+					}
+				} catch (moveError) {
+					console.error("❌ Failed to move staging images:", moveError);
+					console.error("Error details:", {
+						message:
+							moveError instanceof Error
+								? moveError.message
+								: String(moveError),
+						stack: moveError instanceof Error ? moveError.stack : undefined,
+					});
+					// Continue anyway - images are already uploaded, just in staging
+					toast.warning(
+						"Изображения загружены, но не перемещены. Они будут очищены автоматически.",
+					);
+				}
+			}
+
 			const formattedVariations = variations.map((variation: Variation) => ({
 				id: variation.id.startsWith("temp-")
 					? undefined
@@ -802,9 +936,30 @@ function RouteComponent() {
 
 			const submissionData = {
 				...formData,
+				images: finalImagePaths.join(", "), // Use final paths (after moving staging)
 				variations: formattedVariations,
 				storeLocationIds: selectedStoreLocationIds,
 			};
+
+			// Safety check: Don't save if we still have staging paths
+			const stillHasStaging = finalImagePaths.some((img) =>
+				img.startsWith("staging/"),
+			);
+			if (stillHasStaging) {
+				console.error(
+					"❌ Still has staging paths after move attempt:",
+					finalImagePaths,
+				);
+				throw new Error(
+					"Не удалось переместить изображения из staging. Пожалуйста, попробуйте еще раз.",
+				);
+			}
+
+			console.log("💾 Creating product with image paths:", {
+				originalImages: formData.images,
+				finalImagePaths,
+				imagesString: submissionData.images,
+			});
 
 			await createProduct({ data: submissionData });
 
@@ -839,6 +994,48 @@ function RouteComponent() {
 			return;
 		}
 
+		setHasAttemptedEditSubmit(true);
+
+		// Validate required fields and scroll to first invalid field
+		if (!editFormData.name) {
+			const nameInput = document.querySelector(
+				`#${editProductFormId} input[name="name"]`,
+			) as HTMLElement;
+			if (nameInput) {
+				nameInput.scrollIntoView({ behavior: "smooth", block: "center" });
+				nameInput.focus();
+			}
+			return;
+		}
+		if (!editFormData.slug) {
+			const slugInput = document.querySelector(
+				`#${editProductFormId} input[name="slug"]`,
+			) as HTMLElement;
+			if (slugInput) {
+				slugInput.scrollIntoView({ behavior: "smooth", block: "center" });
+				slugInput.focus();
+			}
+			return;
+		}
+		if (!editFormData.price) {
+			const priceInput = document.querySelector(
+				`#${editProductFormId} input[name="price"]`,
+			) as HTMLElement;
+			if (priceInput) {
+				priceInput.scrollIntoView({ behavior: "smooth", block: "center" });
+				priceInput.focus();
+			}
+			return;
+		}
+		if (!editFormData.categorySlug) {
+			const categorySelect = document.getElementById(editCategoryId);
+			if (categorySelect) {
+				categorySelect.scrollIntoView({ behavior: "smooth", block: "center" });
+				categorySelect.focus();
+			}
+			return;
+		}
+
 		setIsSubmitting(true);
 		setError("");
 
@@ -857,9 +1054,78 @@ function RouteComponent() {
 						.filter(Boolean)
 				: [];
 
+			// Identify staging images that need to be moved
+			const stagingImages = newImages.filter((img) =>
+				img.startsWith("staging/"),
+			);
+
+			console.log("📦 Product update - staging images check:", {
+				newImages,
+				stagingImages,
+				stagingCount: stagingImages.length,
+			});
+
+			// Move staging images to final location before updating product
+			let finalImagePaths = newImages;
+			if (stagingImages.length > 0) {
+				console.log("🚀 Starting to move staging images...");
+				try {
+					const moveResult = await moveStagingImages({
+						data: {
+							imagePaths: stagingImages,
+							finalFolder: "products",
+							categorySlug: editFormData.categorySlug,
+							productName: editFormData.name,
+							slug: editFormData.slug,
+						},
+					});
+
+					if (moveResult?.movedImages && moveResult?.pathMap) {
+						// Replace staging paths with final paths using pathMap
+						finalImagePaths = newImages.map((img) => {
+							return moveResult.pathMap?.[img] || img;
+						});
+						console.log("🔄 Updated image paths:", {
+							original: newImages,
+							final: finalImagePaths,
+							pathMap: moveResult.pathMap,
+						});
+					} else if (moveResult?.movedImages) {
+						// Fallback to index-based mapping if pathMap not available
+						finalImagePaths = newImages.map((img) => {
+							const stagingIndex = stagingImages.indexOf(img);
+							if (
+								stagingIndex >= 0 &&
+								stagingIndex < moveResult.movedImages.length
+							) {
+								return moveResult.movedImages[stagingIndex] || img;
+							}
+							return img;
+						});
+					}
+
+					if (moveResult?.failedImages && moveResult.failedImages.length > 0) {
+						console.warn(
+							"⚠️ Some images failed to move:",
+							moveResult.failedImages,
+						);
+						toast.warning(
+							`${moveResult.failedImages.length} изображение(й) не удалось переместить. Они останутся в staging и будут очищены автоматически.`,
+						);
+					}
+				} catch (moveError) {
+					console.error("Failed to move staging images:", moveError);
+					// Continue anyway - images are already uploaded, just in staging
+					toast.warning(
+						"Изображения загружены, но не перемещены. Они будут очищены автоматически.",
+					);
+				}
+			}
+
 			// Find images that were removed (in original but not in new)
+			// Compare with final paths (after moving staging images)
 			const removedImages = originalImages.filter(
-				(img) => !newImages.includes(img),
+				(img) => !finalImagePaths.includes(img),
 			);
 
 			// Combine explicitly deleted images with automatically detected removed images
@@ -867,9 +1133,12 @@ function RouteComponent() {
 				...new Set([...editDeletedImages, ...removedImages]),
 			];
 
-			// Delete images from R2
-			if (allImagesToDelete.length > 0) {
-				const deletePromises = allImagesToDelete.map((filename) =>
+			// Delete images from R2 (only non-staging images - staging images are already moved)
+			const imagesToDelete = allImagesToDelete.filter(
+				(img) => !img.startsWith("staging/"),
+			);
+			if (imagesToDelete.length > 0) {
+				const deletePromises = imagesToDelete.map((filename) =>
 					deleteProductImage({ data: { filename } }).catch((error) => {
 						console.error(`Failed to delete ${filename}:`, error);
 						// Don't fail the whole update if one image deletion fails
@@ -897,9 +1166,30 @@ function RouteComponent() {
 
 			const submissionData = {
 				...editFormData,
+				images: finalImagePaths.join(", "), // Use final paths (after moving staging)
 				variations: formattedVariations,
 				storeLocationIds: editSelectedStoreLocationIds,
 			};
+
+			// Safety check: Don't save if we still have staging paths
+			const stillHasStaging = finalImagePaths.some((img) =>
+				img.startsWith("staging/"),
+			);
+			if (stillHasStaging) {
+				console.error(
+					"❌ Still has staging paths after move attempt:",
+					finalImagePaths,
+				);
+				throw new Error(
+					"Не удалось переместить изображения из staging. Пожалуйста, попробуйте еще раз.",
+				);
+			}
+
+			console.log("💾 Saving product with image paths:", {
+				originalImages: editFormData.images,
+				finalImagePaths,
+				imagesString: submissionData.images,
+			});
 
 			await updateProduct({
 				data: { id: editingProductId, data: submissionData },
@@ -1370,6 +1660,11 @@ function RouteComponent() {
 									value={editFormData.name}
 									onChange={handleEditChange}
 									required
+									error={
+										hasAttemptedEditSubmit && !editFormData.name
+											? "обязательно"
+											: undefined
+									}
 								/>
 								<SlugField
 									slug={editFormData.slug}
@@ -1387,6 +1682,11 @@ function RouteComponent() {
 										}
 									}}
 									idPrefix="edit"
+									error={
+										hasAttemptedEditSubmit && !editFormData.slug
+											? "обязательно"
+											: undefined
+									}
 								/>
 
 								<Input
@@ -1422,6 +1722,11 @@ function RouteComponent() {
 											onChange={handleEditChange}
 											step="0.01"
 											required
+											error={
+												hasAttemptedEditSubmit && !editFormData.price
+													? "обязательно"
+													: undefined
+											}
 										/>
 									</div>
 
@@ -1502,6 +1807,11 @@ function RouteComponent() {
 												entityType="category"
 												options={categories}
 												onEntityCreated={handleEntityCreated}
+												error={
+													hasAttemptedEditSubmit && !editFormData.categorySlug
+														? "обязательно"
+														: undefined
+												}
 											/>
 										</div>
 
@@ -1725,8 +2035,10 @@ function RouteComponent() {
 									value={formData.name}
 									onChange={handleChange}
 									required
-									className={
-										hasAttemptedSubmit && !formData.name ? "border-red-500" : ""
+									error={
+										hasAttemptedSubmit && !formData.name
+											? "обязательно"
+											: undefined
 									}
 								/>
 								<SlugField
@@ -1738,8 +2050,10 @@ function RouteComponent() {
 										setFormData((prev) => ({ ...prev, slug }));
 									}}
 									onAutoSlugChange={setIsAutoSlug}
-									className={
-										hasAttemptedSubmit && !formData.slug ? "border-red-500" : ""
+									error={
+										hasAttemptedSubmit && !formData.slug
+											? "обязательно"
+											: undefined
 									}
 									idPrefix="create"
 								/>
@@ -1778,11 +2092,11 @@ function RouteComponent() {
 											required
 											step="0.01"
 											min="0"
-											className={cn(
+											error={
 												hasAttemptedSubmit && !formData.price
-													? "border-red-500"
-													: "",
-											)}
+													? "обязательно"
+													: undefined
+											}
 										/>
 									</div>
 
@@ -1861,6 +2175,11 @@ function RouteComponent() {
 												entityType="category"
 												options={categories}
 												onEntityCreated={handleEntityCreated}
+												error={
+													hasAttemptedSubmit && !formData.categorySlug
+														? "обязательно"
+														: undefined
+												}
 											/>
 										</div>
 

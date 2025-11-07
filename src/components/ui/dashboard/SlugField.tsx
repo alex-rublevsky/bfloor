@@ -24,6 +24,8 @@ interface SlugFieldProps {
 	idPrefix?: string;
 	/** Optional: Show reset button (products page style) */
 	showResetButton?: boolean;
+	/** Optional: Error message to display */
+	error?: string;
 }
 
 /**
@@ -40,6 +42,7 @@ export function SlugField({
 	className,
 	idPrefix = "",
 	showResetButton = false,
+	error,
 }: SlugFieldProps) {
 	const slugId = `${idPrefix}slug`;
 	const autoSlugId = `${idPrefix}autoSlug`;
@@ -61,7 +64,14 @@ export function SlugField({
 				<div className="flex items-center justify-between mb-1">
 					<div className="flex items-center gap-2">
 						<label htmlFor={slugId} className="block text-sm font-medium">
-							ярлык
+							<span className="flex items-center gap-2">
+								ярлык
+								{error && (
+									<span className="text-red-500 text-xs font-medium">
+										{error}
+									</span>
+								)}
+							</span>
 						</label>
 						{isCustomSlug && (
 							<Badge className="" variant="default">
@@ -92,6 +102,7 @@ export function SlugField({
 					onChange={(e) => onSlugChange(e.target.value)}
 					required={required}
 					disabled={isAutoSlug}
+					error={error}
 					className={cn(
 						isAutoSlug ? "opacity-60 cursor-not-allowed" : "",
 						className,
@@ -115,6 +126,7 @@ export function SlugField({
 					onSlugChange(e.target.value);
 				}}
 				required={required}
+				error={error}
 				className={cn("flex-1", className)}
 			/>
 			<Button

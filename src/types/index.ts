@@ -181,6 +181,7 @@ export interface CollectionFormData {
 	slug: string;
 	brandSlug: string;
 	isActive: boolean;
+	[key: string]: unknown; // Allow additional fields for EntityFormData compatibility
 }
 
 export interface StoreLocationFormData {

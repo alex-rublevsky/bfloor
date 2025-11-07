@@ -136,17 +136,18 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 }
 .embla__slide__number {
 	box-shadow: inset 0 0 0 0.2rem var(--detail-medium-contrast);
-	border-radius: var(--radius-lg);
 	overflow: hidden;
 	user-select: none;
 	position: relative;
 	width: 100%;
 	height: auto;
+	border-radius: 0;
 }
 .embla__slide__number picture {
 	display: block;
 	width: auto;
 	height: auto;
+	border-radius: 0;
 }
 .embla__slide__image {
 	width: auto;
@@ -154,6 +155,21 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 	min-width: 100%;
 	display: block;
 	object-position: left bottom;
+	border-radius: 0;
+}
+@media (max-width: 767px) {
+	.embla__slide__number {
+		max-height: var(--slide-height);
+		height: var(--slide-height);
+	}
+	.embla__slide__number picture {
+		height: 100%;
+	}
+	.embla__slide__image {
+		height: 100%;
+		object-fit: cover;
+		object-position: left center;
+	}
 }
 @media (min-width: 768px) and (max-width: 1023px) {
 	.embla__slide__number {
@@ -218,6 +234,9 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 	flex: 0 0 auto;
 	min-width: 0;
 }
+.embla-thumbs__slide:first-child {
+	padding-left: var(--thumbs-slide-spacing);
+}
 @media (min-width: 576px) {
 	.embla-thumbs__slide {
 		flex: 0 0 auto;
@@ -245,11 +264,11 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 	box-sizing: border-box;
 }
 .embla-thumbs__slide__image {
-	width: auto;
+	width: 100%;
 	height: 100%;
 	object-fit: cover;
 	display: block;
-	border-radius: var(--radius-sm);
+	border-radius: 0;
 	object-position: left bottom;
 }
 .embla-thumbs__slide--selected .embla-thumbs__slide__button {

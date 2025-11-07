@@ -71,6 +71,16 @@ export interface EntityListProps<TEntity> {
 	onEdit: (entity: TEntity) => void;
 }
 
+// Helper function to convert Russian noun to accusative case
+function toAccusativeCase(noun: string): string {
+	// For feminine nouns ending in "а", change to "у"
+	if (noun.endsWith("а")) {
+		return noun.slice(0, -1) + "у";
+	}
+	// For other cases (masculine, neuter), return as is
+	return noun;
+}
+
 interface DashboardEntityManagerProps<
 	TEntity,
 	TFormData extends EntityFormData,
@@ -284,7 +294,7 @@ export function DashboardEntityManager<
 
 	return (
 		<div className="h-full overflow-auto">
-			<div className="space-y-6 px-6 py-6">
+			<div className="space-y-6">
 				{/* Entity List */}
 				{data.length === 0 ? (
 					<EmptyState entityType={config.emptyStateEntityType} />
@@ -454,7 +464,7 @@ export function DashboardEntityManager<
 									className="w-full"
 								>
 									<Trash2 className="w-4 h-4 mr-2" />
-									Удалить {config.entityName}
+									Удалить {toAccusativeCase(config.entityName)}
 								</Button>
 							</div>
 						</DrawerSection>
@@ -466,7 +476,7 @@ export function DashboardEntityManager<
 						isOpen={form.crud.showDeleteDialog}
 						onClose={handleDeleteCancel}
 						onConfirm={handleDeleteConfirm}
-						title={`Удалить ${config.entityName}`}
+						title={`Удалить ${toAccusativeCase(config.entityName)}`}
 						description={`Вы уверены, что хотите удалить этот${config.entityName.endsWith("а") ? "" : ""} ${config.entityName}? Это действие нельзя отменить.`}
 						isDeleting={form.crud.isDeleting}
 					/>

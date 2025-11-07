@@ -940,7 +940,7 @@ export function NavBar({
 							{/* Dashboard button - fixed width */}
 							<div className="flex-shrink-0">
 								<Button to="/dashboard" variant="outline" size="sm">
-									Панель управления
+									Админка
 								</Button>
 							</div>
 						</div>
@@ -975,7 +975,7 @@ export function NavBar({
 							</div>
 							<div className="flex-shrink-0">
 								<Button to="/dashboard" variant="outline" size="sm">
-									Панель управления
+									Админка
 								</Button>
 							</div>
 						</div>
@@ -1001,7 +1001,7 @@ export function NavBar({
 						{/* Dashboard button - fixed width */}
 						<div className="flex-shrink-0">
 							<Button to="/dashboard" variant="outline" size="sm">
-								Панель управления
+								Админка
 							</Button>
 						</div>
 					</div>

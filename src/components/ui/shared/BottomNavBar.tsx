@@ -301,10 +301,11 @@ export function BottomNavBar({
 				<button
 					type="button"
 					onClick={actionButton.onClick}
-					className="md:hidden fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex items-center justify-center"
+					className="md:hidden fixed bottom-20 right-4 z-50 rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground shadow-lg hover:shadow-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex items-center gap-1.5 px-3 py-2 text-xs whitespace-nowrap"
 					aria-label={actionButton.label}
 				>
-					<Plus className="w-6 h-6" />
+					<Plus className="w-4 h-4" />
+					<span>{actionButton.label}</span>
 				</button>
 			)}
 		</>

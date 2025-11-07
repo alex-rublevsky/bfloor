@@ -18,6 +18,8 @@ import { GripVertical, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ASSETS_BASE_URL } from "~/constants/urls";
+import { cleanupStagingImages } from "~/server_functions/dashboard/store/cleanupStagingImages";
+import { deleteProductImage } from "~/server_functions/dashboard/store/deleteProductImage";
 import { getImageMetadata } from "~/server_functions/dashboard/store/getImageMetadata";
 import { uploadProductImage } from "~/server_functions/dashboard/store/uploadProductImage";
 import { Button } from "../shared/Button";
@@ -132,7 +134,6 @@ export function ImageUpload({
 	const [isUploading, setIsUploading] = useState(false);
 	const [imageList, setImageList] = useState<string[]>([]);
 	const [showTextarea, setShowTextarea] = useState(false);
-	const [deletedImages, setDeletedImages] = useState<string[]>([]);
 	const [isDragging, setIsDragging] = useState(false);
 	const [isPasting, setIsPasting] = useState(false);
 	const [imageSizes, setImageSizes] = useState<Map<string, number>>(new Map()); // File sizes fetched from R2 server
@@ -141,6 +142,12 @@ export function ImageUpload({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const fileInputId = useId(); // Use React's useId for stable SSR-safe IDs
 	const isProcessingPasteRef = useRef(false); // Guard to prevent double-processing paste events
+
+	// Track staged images (uploaded but not yet saved to database)
+	const stagedImagesRef = useRef<Set<string>>(new Set());
+	const sessionIdRef = useRef<string>(
+		`session-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+	);
 
 	// Drag and drop sensors
 	const sensors = useSensors(
@@ -183,11 +190,6 @@ export function ImageUpload({
 			return;
 		}
 
-		const wasEmpty =
-			!prevCurrentImagesRef.current ||
-			prevCurrentImagesRef.current.trim() === "";
-		const isEmpty = !currentImages || currentImages.trim() === "";
-
 		prevCurrentImagesRef.current = currentImages || "";
 
 		const images = currentImages
@@ -215,12 +217,13 @@ export function ImageUpload({
 			}
 			return newMap;
 		});
-		// Only reset deleted images when currentImages changes from empty to non-empty or vice versa
-		// Don't reset if we're just syncing (e.g., after upload)
-		if (wasEmpty !== isEmpty) {
-			// Only reset if switching between empty and non-empty states
-			setDeletedImages([]);
-		}
+		// Note: deletedImages tracking removed - images are now deleted immediately
+
+		// Update staged images tracking - only track images that are actually in staging
+		// Images that come from currentImages (from database) are not staged
+		stagedImagesRef.current = new Set(
+			images.filter((img) => img.startsWith("staging/")),
+		);
 	}, [currentImages]);
 
 	// Fetch metadata from R2 server for all images in the list
@@ -376,7 +379,6 @@ export function ImageUpload({
 				name: file.name,
 				type: file.type,
 				size: file.size,
-				currentDeletedImages: deletedImages,
 			});
 
 			// Validate file type
@@ -466,6 +468,8 @@ export function ImageUpload({
 								slug,
 								categorySlug,
 								productName,
+								isStaging: true, // Upload to staging folder
+								sessionId: sessionIdRef.current,
 							},
 						});
 
@@ -477,23 +481,24 @@ export function ImageUpload({
 							const newImages = [...imageList, result.filename];
 							const newImagesString = newImages.join(", ");
 
+							// Track staged image if it's in staging folder
+							if (result.filename.startsWith("staging/")) {
+								stagedImagesRef.current.add(result.filename);
+							}
+
 							console.log("Updating image list:", {
 								oldList: imageList,
 								newList: newImages,
 								newString: newImagesString,
-								deletedImages,
+								stagedImages: Array.from(stagedImagesRef.current),
 							});
 
 							// Update local state immediately for instant preview
 							setImageList(newImages);
 							// File size will be fetched from R2 server via useEffect
 
-							// Update parent with new images AND preserve deleted images
-							// This ensures deleted images are tracked even when new images are added
-							onImagesChange(
-								newImagesString,
-								deletedImages.length > 0 ? deletedImages : undefined,
-							);
+							// Update parent with new images
+							onImagesChange(newImagesString);
 
 							// IMPORTANT: Reset uploading state after successful upload
 							setIsUploading(false);
@@ -544,7 +549,6 @@ export function ImageUpload({
 			categorySlug,
 			productName,
 			compressToWebP,
-			deletedImages,
 			isUploading,
 			isPasting,
 		],
@@ -770,10 +774,16 @@ export function ImageUpload({
 	const handleRemoveImage = async (index: number) => {
 		const imageToRemove = imageList[index];
 
-		// Mark image for deletion
-		setDeletedImages((prev) => [...prev, imageToRemove]);
+		if (!imageToRemove) {
+			return;
+		}
 
-		// Remove from list
+		// Remove from staged images if it was staged
+		if (imageToRemove.startsWith("staging/")) {
+			stagedImagesRef.current.delete(imageToRemove);
+		}
+
+		// Remove from list immediately for instant UI feedback
 		const newImages = imageList.filter((_, i) => i !== index);
 		const newImagesString = newImages.join(", ");
 
@@ -787,17 +797,38 @@ export function ImageUpload({
 
 		// Update local state immediately for instant preview
 		setImageList(newImages);
-		// Update parent with new list and deleted images
-		onImagesChange(newImagesString, [...deletedImages, imageToRemove]);
-		toast.info("Изображение будет удалено при сохранении");
+		// Update parent with new list (no need to track deleted images anymore)
+		onImagesChange(newImagesString);
+
+		// Immediately delete from R2 storage
+		try {
+			console.log("🗑️ Deleting image from R2:", imageToRemove);
+			const deleteResult = await deleteProductImage({
+				data: { filename: imageToRemove },
+			});
+
+			if (deleteResult?.success) {
+				console.log("✅ Image deleted successfully:", imageToRemove);
+				toast.success("Изображение удалено");
+			} else {
+				console.warn("⚠️ Image deletion returned non-success:", deleteResult);
+				toast.warning(
+					"Изображение удалено из списка, но может остаться в хранилище",
+				);
+			}
+		} catch (error) {
+			console.error("❌ Failed to delete image from R2:", error);
+			// Don't revert the UI change - the image is already removed from the list
+			// User can re-add it if needed, or it will be cleaned up by automatic cleanup
+			toast.error(
+				"Не удалось удалить изображение из хранилища. Оно будет очищено автоматически.",
+			);
+		}
 	};
 
 	const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-		// When manually editing via textarea, preserve deleted images
-		onImagesChange(
-			e.target.value,
-			deletedImages.length > 0 ? deletedImages : undefined,
-		);
+		// When manually editing via textarea, update images
+		onImagesChange(e.target.value);
 	};
 
 	const handleDragEnd = (event: DragEndEvent) => {
@@ -816,6 +847,42 @@ export function ImageUpload({
 	const handleUploadClick = () => {
 		fileInputRef.current?.click();
 	};
+
+	// Cleanup staged images when component unmounts (drawer closes)
+	useEffect(() => {
+		return () => {
+			// Cleanup staged images on unmount
+			const stagedImages = Array.from(stagedImagesRef.current);
+			if (stagedImages.length > 0) {
+				// Call cleanup function - best effort, failures are okay
+				// Old staging files will be cleaned up automatically after 24h
+				cleanupStagingImages({ data: { imagePaths: stagedImages } }).catch(
+					() => {
+						// Silently fail - cleanup is best effort
+						// Automatic cleanup of old files will handle orphaned images
+					},
+				);
+			}
+		};
+	}, []);
+
+	// Cleanup on beforeunload (page/tab close) - use sendBeacon for reliability
+	useEffect(() => {
+		const handleBeforeUnload = () => {
+			const stagedImages = Array.from(stagedImagesRef.current);
+			if (stagedImages.length > 0) {
+				// For beforeunload, we can't reliably use async functions
+				// Instead, rely on automatic cleanup of old staging files
+				// The staging files will be cleaned up after 24 hours automatically
+				// This is acceptable given the low volume of uploads
+			}
+		};
+
+		window.addEventListener("beforeunload", handleBeforeUnload);
+		return () => {
+			window.removeEventListener("beforeunload", handleBeforeUnload);
+		};
+	}, []);
 
 	return (
 		<div className="space-y-2" ref={containerRef} data-image-upload-container>
@@ -883,7 +950,7 @@ export function ImageUpload({
 									type="button"
 									onClick={handleUploadClick}
 									disabled={isUploading || isPasting}
-									className="aspect-square rounded-lg border-2 border-dashed border-border/50 bg-background hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed group"
+									className="aspect-square rounded-lg border-2 border-dashed border-border/50 bg-background hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer group"
 								>
 									{isUploading || isPasting ? (
 										<>

@@ -1,7 +1,7 @@
+import { env } from "cloudflare:workers";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { reactStartCookies } from "better-auth/react-start";
-import { env } from "cloudflare:workers";
 import { DB } from "~/db";
 import { schema } from "../schema";
 

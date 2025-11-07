@@ -39,6 +39,7 @@ interface SelectWithCreateProps {
 	options: (Category | Brand | Collection)[];
 	brands?: Brand[]; // For collections to select from brands
 	onEntityCreated?: (entity: Category | Brand | Collection) => void;
+	error?: string;
 }
 
 // Brand country select component that uses database countries
@@ -98,6 +99,7 @@ export function SelectWithCreate({
 	options,
 	brands,
 	onEntityCreated,
+	error,
 }: SelectWithCreateProps) {
 	const [isCreating, setIsCreating] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -252,7 +254,12 @@ export function SelectWithCreate({
 	return (
 		<div className="space-y-2">
 			<label htmlFor={id} className="block text-sm font-medium mb-1">
-				{label}
+				<span className="flex items-center gap-2">
+					{label}
+					{error && (
+						<span className="text-red-500 text-xs font-medium">{error}</span>
+					)}
+				</span>
 			</label>
 
 			<Select
@@ -266,7 +273,10 @@ export function SelectWithCreate({
 				}}
 				required={required}
 			>
-				<SelectTrigger id={id} className={cn("w-full", className)}>
+				<SelectTrigger
+					id={id}
+					className={cn("w-full", error && "border-red-500", className)}
+				>
 					<SelectValue placeholder={placeholder} />
 				</SelectTrigger>
 				<SelectContent>

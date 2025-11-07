@@ -6,6 +6,7 @@ import {
 import { createFileRoute } from "@tanstack/react-router";
 import { Edit, Loader2 } from "lucide-react";
 import { useMemo } from "react";
+import { toast } from "sonner";
 import { CountriesManager } from "~/components/ui/dashboard/CountriesManager";
 import {
 	DashboardEntityManager,
@@ -18,6 +19,7 @@ import { ImageUpload } from "~/components/ui/dashboard/ImageUpload";
 import { BrandsPageSkeleton } from "~/components/ui/dashboard/skeletons/BrandsPageSkeleton";
 import { Badge } from "~/components/ui/shared/Badge";
 import { Image } from "~/components/ui/shared/Image";
+import styles from "~/components/ui/store/productCard.module.css";
 import { ASSETS_BASE_URL } from "~/constants/urls";
 import {
 	brandsQueryOptions,
@@ -28,6 +30,7 @@ import { createBrand } from "~/server_functions/dashboard/brands/createBrand";
 import { deleteBrand } from "~/server_functions/dashboard/brands/deleteBrand";
 import { updateBrand } from "~/server_functions/dashboard/brands/updateBrand";
 import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
+import { moveStagingImages } from "~/server_functions/dashboard/store/moveStagingImages";
 import type { Brand, BrandFormData } from "~/types";
 
 // Brand form fields component
@@ -67,7 +70,7 @@ const BrandFormFields = ({
 							e.target.value ? parseInt(e.target.value, 10) : null,
 						)
 					}
-					className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+					className="flex h-9 field-sizing-content rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					<option value="">Не указано</option>
 					{countries.map((country) => (
@@ -92,70 +95,82 @@ const BrandList = ({ entities, onEdit }: EntityListProps<BrandWithCount>) => (
 	<EntityCardGrid
 		entities={entities}
 		onEdit={onEdit}
-		gridClassName="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3"
+		mode="vertical"
+		gridClassName="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3"
 		renderEntity={(brand) => (
-			<div className="flex flex-col w-auto items-start">
-				{/* Brand Image with Edit Label Overlay */}
-				<div className="relative w-full mb-2 aspect-square overflow-hidden group">
-					{brand.image ? (
-						<div className="relative w-full h-full flex items-center justify-center">
-							<Image
-								src={`${ASSETS_BASE_URL}/${brand.image}`}
-								alt={brand.name}
-								className="object-contain w-full h-full"
-							/>
-							{/* Desktop Edit Indicator - Centered on image (identical to ProductCard) */}
-							<div className="absolute inset-0 hidden md:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-[var(--transition-standard)] pointer-events-none z-10">
-								<div className="flex items-center justify-center gap-2 px-4 py-2 bg-background/70 backdrop-blur-sm rounded-md border border-border/50">
-									<Edit className="w-4 h-4" />
-									<span className="text-sm font-medium">Изменить</span>
-								</div>
+			<div
+				className="w-full product-card overflow-hidden group"
+				id={styles.productCard}
+			>
+				<div className="bg-background flex flex-col">
+					{/* Image Section */}
+					<div className="relative aspect-square overflow-hidden">
+						{brand.image ? (
+							<div className="relative w-full h-full flex items-center justify-center">
+								<Image
+									src={`${ASSETS_BASE_URL}/${brand.image}`}
+									alt={brand.name}
+									className="w-full h-full object-contain"
+								/>
+							</div>
+						) : (
+							<div className="absolute inset-0 bg-muted flex items-center justify-center">
+								<span className="text-xs text-muted-foreground">?</span>
+							</div>
+						)}
+
+						{/* Desktop Edit Indicator - Centered on image (identical to ProductCard) */}
+						<div className="absolute inset-0 hidden md:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-10">
+							<div className="flex items-center justify-center gap-2 px-4 py-2 bg-background/70 backdrop-blur-sm rounded-md border border-border/50">
+								<Edit className="w-4 h-4" />
+								<span className="text-sm font-medium">Изменить</span>
 							</div>
 						</div>
-					) : (
-						<div className="w-full h-full bg-muted flex items-center justify-center">
-							<span className="text-xs text-muted-foreground">?</span>
-						</div>
-					)}
-				</div>
+					</div>
 
-				{/* Brand Name and Count */}
-				<div className="flex items-center gap-2 mb-1">
-					<span className="text-sm font-medium whitespace-nowrap">
-						{brand.name}
-					</span>
-					{brand.productCount === null ? (
-						<span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded flex items-center gap-1">
-							<Loader2 className="w-3 h-3 animate-spin" />
-						</span>
-					) : brand.productCount > 0 ? (
-						<span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-							{brand.productCount}
-						</span>
-					) : null}
-					{!brand.isActive && (
-						<Badge variant="secondary" className="text-xs flex-shrink-0">
-							Inactive
-						</Badge>
-					)}
-				</div>
+					{/* Content Section */}
+					<div className="flex flex-col h-auto md:h-full">
+						<div className="p-4 flex flex-col h-auto md:h-full">
+							{/* Brand Name and Count */}
+							<div className="flex items-center gap-2 mb-1">
+								<span className="text-sm font-medium whitespace-nowrap">
+									{brand.name}
+								</span>
+								{brand.productCount === null ? (
+									<span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded flex items-center gap-1">
+										<Loader2 className="w-3 h-3 animate-spin" />
+									</span>
+								) : brand.productCount > 0 ? (
+									<span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+										{brand.productCount}
+									</span>
+								) : null}
+								{!brand.isActive && (
+									<Badge variant="secondary" className="text-xs flex-shrink-0">
+										Inactive
+									</Badge>
+								)}
+							</div>
 
-				{/* Slug and Country Flag */}
-				<div className="flex items-center gap-2">
-					<span className="text-xs text-muted-foreground whitespace-nowrap">
-						{brand.slug}
-					</span>
-					{/* Country Flag */}
-					{brand.countryFlagImage && (
-						<div className="h-4 w-4 relative flex-shrink-0">
-							<Image
-								src={brand.countryFlagImage}
-								alt="Country flag"
-								className="object-contain"
-								width={16}
-							/>
+							{/* Slug and Country Flag */}
+							<div className="flex items-center gap-2">
+								<span className="text-xs text-muted-foreground whitespace-nowrap">
+									{brand.slug}
+								</span>
+								{/* Country Flag */}
+								{brand.countryFlagImage && (
+									<div className="h-4 w-4 relative flex-shrink-0">
+										<Image
+											src={brand.countryFlagImage}
+											alt="Country flag"
+											className="object-contain"
+											width={16}
+										/>
+									</div>
+								)}
+							</div>
 						</div>
-					)}
+					</div>
 				</div>
 			</div>
 		)}
@@ -199,11 +214,53 @@ function RouteComponent() {
 		queryKey: ["bfloorBrands"],
 		queryFn: getAllBrands,
 		createFn: async (data: { data: BrandFormData }) => {
+			// Move staging images to final location before creating brand
+			let finalLogo = data.data.logo || "";
+			if (finalLogo?.startsWith("staging/")) {
+				try {
+					console.log("🚀 Moving brand logo from staging:", finalLogo);
+					const moveResult = await moveStagingImages({
+						data: {
+							imagePaths: [finalLogo],
+							finalFolder: "brands",
+							slug: data.data.slug,
+							productName: data.data.name,
+						},
+					});
+
+					if (moveResult?.pathMap?.[finalLogo]) {
+						finalLogo = moveResult.pathMap[finalLogo];
+						console.log("✅ Brand logo moved to:", finalLogo);
+					} else if (
+						moveResult?.movedImages &&
+						moveResult.movedImages.length > 0
+					) {
+						finalLogo = moveResult.movedImages[0];
+						console.log("✅ Brand logo moved to:", finalLogo);
+					}
+
+					if (moveResult?.failedImages && moveResult.failedImages.length > 0) {
+						console.warn(
+							"⚠️ Brand logo failed to move:",
+							moveResult.failedImages,
+						);
+						toast.warning(
+							"Логотип загружен, но не перемещен. Он будет очищен автоматически.",
+						);
+					}
+				} catch (moveError) {
+					console.error("❌ Failed to move brand logo:", moveError);
+					toast.warning(
+						"Логотип загружен, но не перемещен. Он будет очищен автоматически.",
+					);
+				}
+			}
+
 			await createBrand({
 				data: {
 					name: data.data.name,
 					slug: data.data.slug,
-					logo: data.data.logo || "",
+					logo: finalLogo,
 					countryId: data.data.countryId || null,
 					isActive: data.data.isActive,
 				},
@@ -215,13 +272,55 @@ function RouteComponent() {
 			});
 		},
 		updateFn: async (data: { id: number; data: BrandFormData }) => {
+			// Move staging images to final location before updating brand
+			let finalLogo = data.data.logo || "";
+			if (finalLogo?.startsWith("staging/")) {
+				try {
+					console.log("🚀 Moving brand logo from staging:", finalLogo);
+					const moveResult = await moveStagingImages({
+						data: {
+							imagePaths: [finalLogo],
+							finalFolder: "brands",
+							slug: data.data.slug,
+							productName: data.data.name,
+						},
+					});
+
+					if (moveResult?.pathMap?.[finalLogo]) {
+						finalLogo = moveResult.pathMap[finalLogo];
+						console.log("✅ Brand logo moved to:", finalLogo);
+					} else if (
+						moveResult?.movedImages &&
+						moveResult.movedImages.length > 0
+					) {
+						finalLogo = moveResult.movedImages[0];
+						console.log("✅ Brand logo moved to:", finalLogo);
+					}
+
+					if (moveResult?.failedImages && moveResult.failedImages.length > 0) {
+						console.warn(
+							"⚠️ Brand logo failed to move:",
+							moveResult.failedImages,
+						);
+						toast.warning(
+							"Логотип загружен, но не перемещен. Он будет очищен автоматически.",
+						);
+					}
+				} catch (moveError) {
+					console.error("❌ Failed to move brand logo:", moveError);
+					toast.warning(
+						"Логотип загружен, но не перемещен. Он будет очищен автоматически.",
+					);
+				}
+			}
+
 			await updateBrand({
 				data: {
 					id: data.id,
 					data: {
 						name: data.data.name,
 						slug: data.data.slug,
-						logo: data.data.logo || "",
+						logo: finalLogo,
 						countryId: data.data.countryId || null,
 						isActive: data.data.isActive,
 					},
@@ -259,7 +358,7 @@ function RouteComponent() {
 		<div className="h-full overflow-auto">
 			<div className="space-y-6 px-6 py-6">
 				{/* Countries Management Section */}
-				<CountriesManager className="mb-6" />
+				<CountriesManager />
 
 				{/* Brands Management Section */}
 				<div>

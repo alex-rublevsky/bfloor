@@ -5,6 +5,7 @@ import { ASSETS_BASE_URL } from "~/constants/urls";
 
 const MAX_FILE_SIZE = 1.5 * 1024 * 1024; // 1.5MB
 const MAX_SVG_SIZE = 5 * 1024 * 1024; // 5MB for SVG files (they can be larger)
+const STAGING_CLEANUP_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 const ALLOWED_TYPES = [
 	"image/jpeg",
 	"image/jpg",
@@ -12,6 +13,57 @@ const ALLOWED_TYPES = [
 	"image/webp",
 	"image/svg+xml",
 ];
+
+/**
+ * Cleanup old staging files (older than 24 hours)
+ * This runs on every staging upload to ensure cleanup without cron triggers
+ */
+async function cleanupOldStagingFiles(
+	bucket: R2Bucket,
+	folder: string,
+): Promise<void> {
+	try {
+		const stagingPrefix = `staging/${folder}/`;
+		const cutoffTime = Date.now() - STAGING_CLEANUP_AGE_MS;
+
+		// List all objects in the staging folder
+		const objects = await bucket.list({
+			prefix: stagingPrefix,
+		});
+
+		// Filter and delete old files
+		const deletePromises: Promise<void>[] = [];
+
+		for (const object of objects.objects) {
+			// Extract timestamp from path: staging/{folder}/{sessionId}/{filename}
+			// Or use uploaded date if available
+			const uploadedTime = object.uploaded?.getTime() || 0;
+
+			if (uploadedTime > 0 && uploadedTime < cutoffTime) {
+				deletePromises.push(
+					bucket.delete(object.key).catch((error) => {
+						console.warn(
+							`Failed to delete old staging file ${object.key}:`,
+							error,
+						);
+					}),
+				);
+			}
+		}
+
+		// Execute deletions in parallel
+		await Promise.all(deletePromises);
+
+		if (deletePromises.length > 0) {
+			console.log(
+				`Cleaned up ${deletePromises.length} old staging file(s) from ${folder}`,
+			);
+		}
+	} catch (error) {
+		console.error("Error during staging cleanup:", error);
+		// Don't throw - cleanup failures shouldn't break uploads
+	}
+}
 
 interface UploadImageInput {
 	fileData: string; // base64 encoded file
@@ -22,6 +74,8 @@ interface UploadImageInput {
 	slug?: string; // product slug for subdirectory organization
 	categorySlug?: string; // category slug for proper path structure
 	productName?: string; // product name for proper file naming
+	isStaging?: boolean; // If true, upload to staging folder
+	sessionId?: string; // Session ID for staging folder organization
 }
 
 export const uploadProductImage = createServerFn({ method: "POST" })
@@ -37,6 +91,8 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 				slug,
 				categorySlug,
 				productName,
+				isStaging = false,
+				sessionId,
 			} = data;
 
 			if (!fileData) {
@@ -82,6 +138,17 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 
 			// R2 bucket found
 
+			// Cleanup old staging files (older than 24 hours) - runs on every upload
+			// This ensures we don't need cron triggers for cleanup
+			if (isStaging) {
+				try {
+					await cleanupOldStagingFiles(bucket, folder);
+				} catch (cleanupError) {
+					// Log but don't fail the upload if cleanup fails
+					console.warn("Failed to cleanup old staging files:", cleanupError);
+				}
+			}
+
 			// Helper function to sanitize filename
 			const sanitizeFilename = (name: string): string => {
 				return name
@@ -112,11 +179,15 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 				nameWithoutExt = `image-${timestamp}`;
 			}
 
-			// Create directory path with proper structure: products/category/productName
-			// Special cases: country-flags and brands should be stored in a single directory without subdirectories
+			// Create directory path with proper structure
 			let directoryPath = folder;
 
-			if (folder === "country-flags" || folder === "brands") {
+			if (isStaging) {
+				// Staging folder structure: staging/{folder}/{sessionId}/
+				// This allows easy cleanup by session and by folder type
+				const stagingSessionId = sessionId || `session-${Date.now()}`;
+				directoryPath = `staging/${folder}/${stagingSessionId}`;
+			} else if (folder === "country-flags" || folder === "brands") {
 				// Country flags and brand logos go directly in their respective folders, no subdirectories
 				directoryPath = folder;
 			} else if (

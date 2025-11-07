@@ -30,9 +30,9 @@
 /* Title styling in header */
 .product-slider__header-content h2 {
 	margin: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	/* Allow title to wrap naturally - never truncate */
+	word-wrap: break-word;
+	overflow-wrap: break-word;
 	max-width: 100%;
 }
 
@@ -108,6 +108,11 @@
 	padding-top: 0.25rem; /* Align with h2 top */
 }
 
+/* Carousel viewport - add bottom padding to allow hover shadows to show */
+section.embla.product-slider-section .embla__viewport {
+	padding-bottom: 1.5rem; /* Space for hover shadow (20px shadow + some margin) */
+}
+
 /* Adjust slide size for products - products are wider than testimonials */
 section.embla.product-slider-section .embla__slide {
 	max-width: 16rem; /* Wider than testimonials (50ch) for product cards */
@@ -138,6 +143,12 @@ section.embla.product-slider-section .embla__slide:last-child > div {
 }
 
 /* Dot indicators - override testimonial styles for product slider */
+section.embla.product-slider-section .embla__dots-container {
+	padding: 0;
+	display: flex;
+	justify-content: center;
+}
+
 .embla__dots-container .embla__dots {
 	gap: 0;
 }
@@ -187,5 +198,10 @@ section.embla.product-slider-section .embla__slide:last-child > div {
 	.embla__dots-container .embla__dot:after {
 		width: 0.8rem; /* 1.2rem / 1.5 */
 		height: 0.8rem; /* 1.2rem / 1.5 */
+	}
+
+	/* Hide dots on mobile */
+	.embla__dots-container {
+		display: none;
 	}
 }

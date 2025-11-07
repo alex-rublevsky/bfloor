@@ -213,9 +213,11 @@ function AttributesPage() {
 	};
 
 	return (
-		<DashboardEntityManager
-			config={entityManagerConfig}
-			data={attributesWithCounts}
-		/>
+		<div className="px-6 py-6">
+			<DashboardEntityManager
+				config={entityManagerConfig}
+				data={attributesWithCounts}
+			/>
+		</div>
 	);
 }

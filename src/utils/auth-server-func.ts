@@ -1,5 +1,5 @@
-import { createServerFn } from "@tanstack/react-start";
 import { env } from "cloudflare:workers";
+import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "~/utils/auth-middleware";
 import { resolveSecret } from "~/utils/cloudflare-env";
 
@@ -27,17 +27,20 @@ async function isAdminEmail(userEmail: string | null): Promise<boolean> {
 	}
 
 	// Resolve all admin emails from secrets store
-	const [superAdminEmail, adminEmail, adminEmail2] = await Promise.all([
-		resolveSecret(env.SUPER_ADMIN_EMAIL),
-		resolveSecret(env.ADMIN_EMAIL),
-		resolveSecret(env.ADMIN_EMAIL_2),
-	]);
+	const [superAdminEmail, adminEmail, adminEmail2, adminEmail3] =
+		await Promise.all([
+			resolveSecret(env.SUPER_ADMIN_EMAIL),
+			resolveSecret(env.ADMIN_EMAIL),
+			resolveSecret(env.ADMIN_EMAIL_2),
+			resolveSecret(env.ADMIN_EMAIL_3),
+		]);
 
 	// Normalize all admin emails (trim and lowercase)
 	const adminEmails = [
 		superAdminEmail?.trim().toLowerCase(),
 		adminEmail?.trim().toLowerCase(),
 		adminEmail2?.trim().toLowerCase(),
+		adminEmail3?.trim().toLowerCase(),
 	].filter((email): email is string => !!email); // Filter out null/undefined
 
 	// Check if user email matches any admin email

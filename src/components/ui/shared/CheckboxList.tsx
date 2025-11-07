@@ -33,7 +33,7 @@ export function CheckboxList({
 	const gridCols = columns === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2";
 
 	return (
-		<div className={`grid ${gridCols} gap-3`}>
+		<div className={`grid ${gridCols} gap-0`}>
 			{filteredItems.map((item) => {
 				const isChecked = selectedIds.includes(item.id);
 
