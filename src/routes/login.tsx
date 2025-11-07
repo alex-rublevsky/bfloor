@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AnimatedGroup } from "~/components/motion_primitives/AnimatedGroup";
 import { TextEffect } from "~/components/motion_primitives/AnimatedText";
 import { Button } from "~/components/ui/shared/Button";
+import { ASSETS_BASE_URL } from "~/constants/urls";
 import { signIn, signOut, useSession } from "~/utils/auth-client";
 import { getAuthStatus } from "~/utils/auth-server-func";
 
@@ -28,17 +29,17 @@ function RouteComponent() {
 
 		if (isAuthorized) {
 			return (
-				<section className="relative min-h-[80dvh] flex items-center justify-center">
+				<section className="relative mt-4 lg:mt-12 flex items-center justify-center">
 					<AnimatedGroup>
 						<div className="text-center max-w-md">
 							<TextEffect as="h2" className="mb-4">
-								Welcome back!
+								Добро пожаловать обратно!
 							</TextEffect>
 							<p className="text-muted-foreground mb-6">
-								You're already signed in as {session.user.name}
+								Вы уже вошли как {session.user.name}
 							</p>
 							<Button asChild size="lg" className="w-full">
-								<Link to="/dashboard">Go to Dashboard</Link>
+								<Link to="/dashboard">Перейти к панели управления</Link>
 							</Button>
 						</div>
 					</AnimatedGroup>
@@ -46,15 +47,15 @@ function RouteComponent() {
 			);
 		} else {
 			return (
-				<section className="relative min-h-[80dvh] flex items-center justify-center">
+				<section className="relative mt-4 lg:mt-12 flex items-center justify-center">
 					<AnimatedGroup>
 						<div className="text-center max-w-md">
 							<TextEffect as="h2" className="mb-4">
-								Access Restricted
+								Доступ запрещен
 							</TextEffect>
 							<p className="text-muted-foreground mb-6">
-								You're signed in as {session.user.name} ({session.user.email}),
-								but this account doesn't have access to the dashboard.
+								Вы вошли как {session.user.name} ({session.user.email}), но этот
+								аккаунт не имеет доступа к панели управления.
 							</p>
 							<Button
 								onClick={() => signOut()}
@@ -62,7 +63,7 @@ function RouteComponent() {
 								size="lg"
 								className="w-full"
 							>
-								Sign Out
+								Выйти
 							</Button>
 						</div>
 					</AnimatedGroup>
@@ -72,15 +73,20 @@ function RouteComponent() {
 	}
 
 	return (
-		<section className="relative h-screen flex items-center justify-center">
+		<section className="relative pb-0 mt-4 lg:mt-12 h-full flex items-center justify-center">
 			<AnimatedGroup>
 				<div className="w-full max-w-md">
+					<img
+						src={`${ASSETS_BASE_URL}/misc/login-zaiika.webp`}
+						alt="Rabbit looking at the camera"
+						className="rounded-xl"
+					/>
 					<div className="text-center">
-						<TextEffect as="h3" className="mb-2">
-							Rublevsky Studio
+						<TextEffect as="h3" className="mt-3">
+							Вы точно друг зайки?
 						</TextEffect>
 						<p className="text-muted-foreground mb-8">
-							Sign in to access the dashboard
+							Войдите используя свой аккаунт Google
 						</p>
 					</div>
 
@@ -88,7 +94,7 @@ function RouteComponent() {
 						onClick={() =>
 							signIn.social({ provider: "google", callbackURL: "/dashboard" })
 						}
-						variant="outline"
+						variant="default"
 						size="lg"
 						className="w-full flex items-center gap-3"
 					>
@@ -110,7 +116,7 @@ function RouteComponent() {
 								d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
 							/>
 						</svg>
-						Continue with Google
+						Войти с помощью Google
 					</Button>
 				</div>
 			</AnimatedGroup>

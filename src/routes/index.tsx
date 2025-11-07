@@ -7,7 +7,6 @@ import OurPartnersSection from "~/components/ui/home/OurPartnersSection";
 import TestimonialSliderSection from "~/components/ui/home/testimonial/TestimonialSection";
 import ProductSlider from "~/components/ui/shared/ProductSlider";
 import { seo } from "~/utils/seo";
-import "../styles/app.css";
 
 export const Route = createFileRoute("/")({
 	component: App,

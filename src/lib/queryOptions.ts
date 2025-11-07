@@ -17,28 +17,39 @@ import { getAllAttributeValuesByAttribute } from "~/server_functions/dashboard/a
 import { getAllProductAttributes } from "~/server_functions/dashboard/attributes/getAllProductAttributes";
 import { getAttributeValues } from "~/server_functions/dashboard/attributes/getAttributeValues";
 import { getProductAttributeCounts } from "~/server_functions/dashboard/attributes/getProductAttributeCounts";
+import { getProductBrandCounts } from "~/server_functions/dashboard/brands/getProductBrandCounts";
 import { getAllProductCategories } from "~/server_functions/dashboard/categories/getAllProductCategories";
 import { getAllCollections } from "~/server_functions/dashboard/collections/getAllCollections";
+import { getAllCountriesForDashboard } from "~/server_functions/dashboard/countries/getAllCountries";
 import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
+import { getTotalAttributesCount } from "~/server_functions/dashboard/getTotalAttributesCount";
+import { getTotalBrandsCount } from "~/server_functions/dashboard/getTotalBrandsCount";
+import { getTotalCategoriesCount } from "~/server_functions/dashboard/getTotalCategoriesCount";
+import { getTotalCollectionsCount } from "~/server_functions/dashboard/getTotalCollectionsCount";
+import { getTotalOrdersCount } from "~/server_functions/dashboard/getTotalOrdersCount";
+import { getTotalProductsCount } from "~/server_functions/dashboard/getTotalProductsCount";
+import { getTotalStoreLocationsCount } from "~/server_functions/dashboard/getTotalStoreLocationsCount";
 import { getAllOrders } from "~/server_functions/dashboard/orders/getAllOrders";
 import { getAllProducts } from "~/server_functions/dashboard/store/getAllProducts";
 import { getAllStoreLocations } from "~/server_functions/dashboard/storeLocations/getAllStoreLocations";
 import { getStoreData } from "~/server_functions/store/getAllProducts";
 import { getProductBySlug } from "~/server_functions/store/getProductBySlug";
+import { getUserData } from "~/utils/auth-server-func";
 
 /**
  * Store data query options (DEPRECATED - use storeDataInfiniteQueryOptions)
  * Used for: legacy /store route
  *
- * Cache Strategy: Maximum caching
- * - Data cached in memory for 7 days
- * - Only refetches on manual invalidation or after 24 hours
+ * Cache Strategy: Aggressive caching
+ * - Data cached in memory for 3 days
+ * - Kept in memory for 7 days
+ * - Only refetches on manual invalidation or after 3 days
  */
 export const storeDataQueryOptions = () =>
 	queryOptions({
 		queryKey: ["bfloorStoreData"],
 		queryFn: async () => getStoreData(),
-		staleTime: 1000 * 60 * 60 * 24, // 24 hours - data considered fresh
+		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - data considered fresh
 		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
 		retry: 3,
 		refetchOnWindowFocus: false, // Don't refetch on window focus
@@ -62,8 +73,8 @@ type PaginatedResponse = {
  * Store data infinite query options
  * Used for: /store route with virtualized infinite scroll
  *
- * Cache Strategy: Optimized for infinite scrolling
- * - Each page cached per filter combination
+ * Cache Strategy: Optimized for infinite scrolling with aggressive caching
+ * - Each page cached per filter combination for 3 days
  * - Infinite query with 50 products per page
  * - Perfect for virtualizer implementation
  * - Server-side filtering (same as dashboard)
@@ -106,7 +117,8 @@ export const storeDataInfiniteQueryOptions = (
 					sort: filters?.sort ?? undefined,
 				},
 			}),
-		staleTime: 0, // No cache - always fetch fresh data (same as dashboard)
+		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - products cached aggressively
+		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
 		initialPageParam: 1,
 		getNextPageParam: (lastPage: PaginatedResponse) => {
 			// Simple: return next page number if there's a next page
@@ -126,9 +138,10 @@ export const storeDataInfiniteQueryOptions = (
  * Product by slug query options
  * Used for: /store/$productId route and prefetching individual products
  *
- * Cache Strategy: Long-lived caching
- * - Individual products cached for 24 hours
- * - Cached in memory across page refreshes
+ * Cache Strategy: Aggressive caching for individual products
+ * - Individual products cached for 3 days
+ * - Cached in memory for 7 days
+ * - Perfect for product detail pages
  */
 export const productQueryOptions = (productId: string) =>
 	queryOptions({
@@ -144,7 +157,7 @@ export const productQueryOptions = (productId: string) =>
 			}
 		},
 		retry: false, // Don't retry on error - fail fast for 404s
-		staleTime: 1000 * 60 * 60 * 24, // 24 hours - data considered fresh
+		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - products cached aggressively
 		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
@@ -154,8 +167,9 @@ export const productQueryOptions = (productId: string) =>
  * Dashboard orders query options
  * Used for: /dashboard/orders route
  *
- * Cache Strategy: Short-lived caching for fresh data
- * - Orders cached for 5 minutes (more dynamic than products)
+ * Cache Strategy: Moderate caching for dynamic data
+ * - Orders cached for 1 day (more dynamic than products but still cacheable)
+ * - Kept in memory for 3 days
  * - Refetches on window focus to show latest orders
  * - Manual invalidation after order status updates
  */
@@ -163,8 +177,8 @@ export const dashboardOrdersQueryOptions = () =>
 	queryOptions({
 		queryKey: ["bfloorDashboardOrders"],
 		queryFn: async () => getAllOrders(),
-		staleTime: 1000 * 60 * 5, // 5 minutes - orders are more dynamic
-		gcTime: 1000 * 60 * 30, // 30 minutes - keep in memory
+		staleTime: 1000 * 60 * 60 * 24, // 1 day - orders are dynamic but cacheable
+		gcTime: 1000 * 60 * 60 * 24 * 3, // 3 days - keep in memory
 		retry: 3,
 		refetchOnWindowFocus: true, // Refetch when returning to dashboard
 		refetchOnMount: false,
@@ -175,8 +189,8 @@ export const dashboardOrdersQueryOptions = () =>
  * Dashboard products infinite query options
  * Used for: /dashboard route with virtualized product grid
  *
- * Cache Strategy: Optimized for infinite scrolling
- * - Each page cached for 10 minutes
+ * Cache Strategy: Optimized for infinite scrolling with aggressive caching
+ * - Each page cached for 3 days
  * - Infinite query with 20 products per page
  * - Perfect for virtualizer implementation
  * - Background refetching for fresh data
@@ -219,7 +233,8 @@ export const productsInfiniteQueryOptions = (
 					sort: filters?.sort ?? undefined,
 				},
 			}),
-		staleTime: 0, // No cache - force fresh data for dashboard
+		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - products cached aggressively
+		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
 		// Note: Query will be manually invalidated via refetch() after product updates
 		initialPageParam: 1,
 		getNextPageParam: (lastPage: PaginatedResponse) => {
@@ -274,8 +289,8 @@ export const dashboardProductsInfiniteQueryOptions = (pageSize: number = 20) =>
 				return undefined;
 			}
 		},
-		staleTime: 1000 * 60 * 60 * 12, // 12 hours - data considered fresh
-		gcTime: 1000 * 60 * 60 * 24 * 3, // 3 days - keep in memory
+		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - products cached aggressively
+		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
 		retry: 3,
 		refetchOnWindowFocus: false, // Don't refetch on window focus for better UX
 		refetchOnMount: false,
@@ -287,7 +302,7 @@ export const dashboardProductsInfiniteQueryOptions = (pageSize: number = 20) =>
  * REFERENCE DATA QUERIES (Brands, Collections, Categories, Store Locations)
  * =============================================================================
  * These are static/semi-static data that rarely change.
- * Aggressive caching strategy: 3-day stale time, 7-day garbage collection
+ * Aggressive caching strategy: 7-day stale time, 14-day garbage collection
  */
 
 /**
@@ -295,16 +310,16 @@ export const dashboardProductsInfiniteQueryOptions = (pageSize: number = 20) =>
  * Used for: All routes that need brand data
  *
  * Cache Strategy: Maximum caching for static data
- * - Brands cached for 3 days (very static)
- * - Kept in memory for 7 days
+ * - Brands cached for 7 days (very static)
+ * - Kept in memory for 14 days
  * - No automatic refetching
  */
 export const brandsQueryOptions = () =>
 	queryOptions({
 		queryKey: ["bfloorBrands"],
 		queryFn: async () => getAllBrands(),
-		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - brands rarely change
-		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - brands rarely change
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
@@ -315,16 +330,16 @@ export const brandsQueryOptions = () =>
  * Used for: All routes that need collection data
  *
  * Cache Strategy: Maximum caching for static data
- * - Collections cached for 3 days (very static)
- * - Kept in memory for 7 days
+ * - Collections cached for 7 days (very static)
+ * - Kept in memory for 14 days
  * - No automatic refetching
  */
 export const collectionsQueryOptions = () =>
 	queryOptions({
 		queryKey: ["bfloorCollections"],
 		queryFn: async () => getAllCollections(),
-		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - collections rarely change
-		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - collections rarely change
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
@@ -335,16 +350,16 @@ export const collectionsQueryOptions = () =>
  * Used for: All routes that need category data
  *
  * Cache Strategy: Maximum caching for static data
- * - Categories cached for 3 days (very static)
- * - Kept in memory for 7 days
+ * - Categories cached for 7 days (very static)
+ * - Kept in memory for 14 days
  * - No automatic refetching
  */
 export const categoriesQueryOptions = () =>
 	queryOptions({
 		queryKey: ["bfloorCategories"],
 		queryFn: async () => getAllProductCategories(),
-		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - categories rarely change
-		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - categories rarely change
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
@@ -355,16 +370,36 @@ export const categoriesQueryOptions = () =>
  * Used for: All routes that need store location data
  *
  * Cache Strategy: Maximum caching for static data
- * - Store locations cached for 3 days (very static)
- * - Kept in memory for 7 days
+ * - Store locations cached for 7 days (very static)
+ * - Kept in memory for 14 days
  * - No automatic refetching
  */
 export const storeLocationsQueryOptions = () =>
 	queryOptions({
 		queryKey: ["bfloorStoreLocations"],
 		queryFn: async () => getAllStoreLocations(),
-		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - store locations rarely change
-		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - store locations rarely change
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Countries query options
+ * Used for: Dashboard routes that need country data
+ *
+ * Cache Strategy: Maximum caching for static data
+ * - Countries cached for 7 days (very static)
+ * - Kept in memory for 14 days
+ * - No automatic refetching
+ */
+export const countriesQueryOptions = () =>
+	queryOptions({
+		queryKey: ["bfloorCountries"],
+		queryFn: async () => getAllCountriesForDashboard(),
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - countries rarely change
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
@@ -375,36 +410,56 @@ export const storeLocationsQueryOptions = () =>
  * Used for: All routes that need attribute data
  *
  * Cache Strategy: Maximum caching for static data
- * - Attributes cached for 3 days (very static)
- * - Kept in memory for 7 days
+ * - Attributes cached for 7 days (very static)
+ * - Kept in memory for 14 days
  * - No automatic refetching
  */
 export const productAttributesQueryOptions = () =>
 	queryOptions({
 		queryKey: ["productAttributes"],
 		queryFn: async () => getAllProductAttributes(),
-		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - attributes rarely change
-		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - attributes rarely change
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
 	});
 
 /**
- * Product Attribute Counts query options (slower - counts products)
+ * Product Attribute Counts query options (uses SQL COUNT - efficient)
  * Used for: /dashboard/attributes route for streaming counts
  *
- * Cache Strategy: Moderate caching for dynamic data
- * - Counts cached for 30 minutes (more dynamic than attributes themselves)
- * - Kept in memory for 1 day
+ * Cache Strategy: Aggressive caching for counts
+ * - Counts cached for 2 weeks (counts change when products change, but still relatively static)
+ * - Kept in memory for 4 weeks
  * - No automatic refetching
  */
 export const productAttributeCountsQueryOptions = () =>
 	queryOptions({
 		queryKey: ["productAttributeCounts"],
 		queryFn: async () => getProductAttributeCounts(),
-		staleTime: 1000 * 60 * 30, // 30 minutes - counts change more frequently
-		gcTime: 1000 * 60 * 60 * 24, // 1 day - keep in memory
+		staleTime: 1000 * 60 * 60 * 24 * 14, // 2 weeks - counts are relatively static
+		gcTime: 1000 * 60 * 60 * 24 * 28, // 4 weeks - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Product Brand Counts query options (uses SQL COUNT - efficient)
+ * Used for: /dashboard/brands route for streaming counts
+ *
+ * Cache Strategy: Aggressive caching for counts
+ * - Counts cached for 2 weeks (counts change when products change, but still relatively static)
+ * - Kept in memory for 4 weeks
+ * - No automatic refetching
+ */
+export const productBrandCountsQueryOptions = () =>
+	queryOptions({
+		queryKey: ["productBrandCounts"],
+		queryFn: async () => getProductBrandCounts(),
+		staleTime: 1000 * 60 * 60 * 24 * 14, // 2 weeks - counts are relatively static
+		gcTime: 1000 * 60 * 60 * 24 * 28, // 4 weeks - keep in memory
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
@@ -414,16 +469,16 @@ export const productAttributeCountsQueryOptions = () =>
  * All attribute values grouped by attribute ID query options
  * Used for: Attributes dashboard page to show standardized values
  *
- * Cache Strategy: Moderate caching for semi-static data
- * - Attribute values cached for 1 hour (more dynamic than attributes)
- * - Kept in memory for 1 day
+ * Cache Strategy: Aggressive caching for semi-static data
+ * - Attribute values cached for 7 days (more dynamic than attributes but still cacheable)
+ * - Kept in memory for 14 days
  */
 export const allAttributeValuesByAttributeQueryOptions = () =>
 	queryOptions({
 		queryKey: ["attributeValuesByAttribute"],
 		queryFn: async () => getAllAttributeValuesByAttribute(),
-		staleTime: 1000 * 60 * 60, // 1 hour - values change more frequently
-		gcTime: 1000 * 60 * 60 * 24, // 1 day - keep in memory
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - values change but still cacheable
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
@@ -433,16 +488,16 @@ export const allAttributeValuesByAttributeQueryOptions = () =>
  * Attribute values for a specific attribute query options
  * Used for: Editing attribute values in the attribute form
  *
- * Cache Strategy: Short caching for form data
- * - Values cached for 5 minutes
- * - Kept in memory for 1 hour
+ * Cache Strategy: Short caching for form data (but increased gcTime)
+ * - Values cached for 5 minutes (fresh for editing)
+ * - Kept in memory for 1 day (for quick access)
  */
 export const attributeValuesQueryOptions = (attributeId: number) =>
 	queryOptions({
 		queryKey: ["attributeValues", attributeId],
 		queryFn: async () => getAttributeValues({ data: { attributeId } }),
 		staleTime: 1000 * 60 * 5, // 5 minutes - fresh for editing
-		gcTime: 1000 * 60 * 60, // 1 hour - keep in memory
+		gcTime: 1000 * 60 * 60 * 24, // 1 day - keep in memory for quick access
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
@@ -506,8 +561,8 @@ export const discountedProductsQueryOptions = () =>
  * Products by tag infinite query options
  * Used for: ProductSlider component with pagination and infinite scrolling
  *
- * Cache Strategy: Optimized for infinite scrolling
- * - Each page cached for 12 hours
+ * Cache Strategy: Optimized for infinite scrolling with aggressive caching
+ * - Each page cached for 3 days
  * - Infinite query with 20 products per page
  * - Perfect for carousel implementation with progressive loading
  */
@@ -523,8 +578,8 @@ export const productsByTagInfiniteQueryOptions = (tag: string) =>
 					sort: "name",
 				},
 			}),
-		staleTime: 1000 * 60 * 60 * 12, // 12 hours
-		gcTime: 1000 * 60 * 60 * 24 * 3, // 3 days - keep in memory
+		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - products cached aggressively
+		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
@@ -542,11 +597,153 @@ export const productsByTagInfiniteQueryOptions = (tag: string) =>
 	});
 
 /**
+ * =============================================================================
+ * TOTAL COUNT QUERIES (for navigation/search placeholders)
+ * =============================================================================
+ * These are efficient COUNT queries used in navigation/search placeholders
+ * that are visible on all pages. Using SQL COUNT instead of fetching all records.
+ * Aggressive caching: 3-7 days stale time, 7-14 days garbage collection
+ */
+
+/**
+ * Total products count query options
+ * Used for: Navigation/search placeholder on dashboard and store pages
+ *
+ * Cache Strategy: Aggressive caching for counts
+ * - Count cached for 3 days (products change but counts are relatively static)
+ * - Kept in memory for 7 days
+ */
+export const totalProductsCountQueryOptions = () =>
+	queryOptions({
+		queryKey: ["totalProductsCount"],
+		queryFn: async () => getTotalProductsCount(),
+		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - counts are relatively static
+		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Total categories count query options
+ * Used for: Navigation/search placeholder on categories page
+ *
+ * Cache Strategy: Aggressive caching for counts
+ * - Count cached for 7 days (categories are very static)
+ * - Kept in memory for 14 days
+ */
+export const totalCategoriesCountQueryOptions = () =>
+	queryOptions({
+		queryKey: ["totalCategoriesCount"],
+		queryFn: async () => getTotalCategoriesCount(),
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - categories are very static
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Total brands count query options
+ * Used for: Navigation/search placeholder on brands page
+ *
+ * Cache Strategy: Aggressive caching for counts
+ * - Count cached for 7 days (brands are very static)
+ * - Kept in memory for 14 days
+ */
+export const totalBrandsCountQueryOptions = () =>
+	queryOptions({
+		queryKey: ["totalBrandsCount"],
+		queryFn: async () => getTotalBrandsCount(),
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - brands are very static
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Total collections count query options
+ * Used for: Navigation/search placeholder on collections page
+ *
+ * Cache Strategy: Aggressive caching for counts
+ * - Count cached for 7 days (collections are very static)
+ * - Kept in memory for 14 days
+ */
+export const totalCollectionsCountQueryOptions = () =>
+	queryOptions({
+		queryKey: ["totalCollectionsCount"],
+		queryFn: async () => getTotalCollectionsCount(),
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - collections are very static
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Total orders count query options
+ * Used for: Navigation/search placeholder on orders page
+ *
+ * Cache Strategy: Moderate caching for dynamic data
+ * - Count cached for 1 day (orders are dynamic but counts are cacheable)
+ * - Kept in memory for 3 days
+ */
+export const totalOrdersCountQueryOptions = () =>
+	queryOptions({
+		queryKey: ["totalOrdersCount"],
+		queryFn: async () => getTotalOrdersCount(),
+		staleTime: 1000 * 60 * 60 * 24, // 1 day - orders are dynamic but counts cacheable
+		gcTime: 1000 * 60 * 60 * 24 * 3, // 3 days - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Total attributes count query options
+ * Used for: Navigation/search placeholder on attributes page
+ *
+ * Cache Strategy: Aggressive caching for counts
+ * - Count cached for 7 days (attributes are very static)
+ * - Kept in memory for 14 days
+ */
+export const totalAttributesCountQueryOptions = () =>
+	queryOptions({
+		queryKey: ["totalAttributesCount"],
+		queryFn: async () => getTotalAttributesCount(),
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - attributes are very static
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Total store locations count query options
+ * Used for: Navigation/search placeholder on misc page
+ *
+ * Cache Strategy: Aggressive caching for counts
+ * - Count cached for 7 days (store locations are very static)
+ * - Kept in memory for 14 days
+ */
+export const totalStoreLocationsCountQueryOptions = () =>
+	queryOptions({
+		queryKey: ["totalStoreLocationsCount"],
+		queryFn: async () => getTotalStoreLocationsCount(),
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - store locations are very static
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
  * Discounted products infinite query options
  * Used for: ProductSlider component (simple mode) with pagination and infinite scrolling
  *
- * Cache Strategy: Optimized for infinite scrolling
- * - Each page cached for 12 hours
+ * Cache Strategy: Optimized for infinite scrolling with aggressive caching
+ * - Each page cached for 3 days
  * - Infinite query with 20 products per page
  * - Perfect for carousel implementation with progressive loading
  */
@@ -562,8 +759,8 @@ export const discountedProductsInfiniteQueryOptions = () =>
 					sort: "name",
 				},
 			}),
-		staleTime: 1000 * 60 * 60 * 12, // 12 hours
-		gcTime: 1000 * 60 * 60 * 24 * 3, // 3 days - keep in memory
+		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - products cached aggressively
+		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
@@ -578,4 +775,38 @@ export const discountedProductsInfiniteQueryOptions = () =>
 				? firstPage.pagination.page - 1
 				: undefined;
 		},
+	});
+
+/**
+ * User data query options
+ * Used for: NavBar and any component that needs authenticated user data
+ *
+ * Cache Strategy: Moderate caching for user data
+ * - User data cached for 5 minutes (fresh enough for UI, avoids excessive calls)
+ * - Kept in memory for 1 hour
+ * - Refetches on window focus to keep data fresh
+ * - Only fetches when user is authenticated (handled by server function)
+ */
+export const userDataQueryOptions = () =>
+	queryOptions({
+		queryKey: ["userData"],
+		queryFn: async () => {
+			const data = await getUserData();
+			// Return null if not authenticated to distinguish from loading state
+			if (!data.isAuthenticated) {
+				return null;
+			}
+			return {
+				userID: data.userID || "",
+				userName: data.userName || "",
+				userEmail: data.userEmail || "",
+				userAvatar: data.userAvatar || "",
+				isAdmin: data.isAdmin || false,
+			};
+		},
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - user data is relatively stable
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
+		retry: false, // Don't retry auth failures
+		refetchOnWindowFocus: false, // Refetch when returning to app
+		refetchOnMount: false, // Don't refetch on every mount if data is fresh
 	});

@@ -27,7 +27,10 @@ import { usePrefetch } from "~/hooks/usePrefetch";
 import { useSearchPlaceholderWithCount } from "~/hooks/useSearchPlaceholderWithCount";
 import { useCart } from "~/lib/cartContext";
 import { useClientSearch } from "~/lib/clientSearchContext";
-import { categoriesQueryOptions } from "~/lib/queryOptions";
+import {
+	categoriesQueryOptions,
+	userDataQueryOptions,
+} from "~/lib/queryOptions";
 import { signOut } from "~/utils/auth-client";
 import { cn } from "~/utils/utils";
 import { CartDrawerContent } from "../store/CartDrawerContent";
@@ -45,12 +48,6 @@ interface NavItem {
 interface NavBarProps {
 	items?: NavItem[];
 	className?: string;
-	userData?: {
-		userID: string;
-		userName: string;
-		userEmail: string;
-		userAvatar: string;
-	};
 	// Dashboard header props
 	searchTerm?: string;
 	onSearchChange?: (value: string) => void;
@@ -264,7 +261,7 @@ const DropdownNavMenu = ({
 									navigate({ to: "/" });
 								}
 							}}
-							className="flex w-full items-center gap-2 py-2 px-3 text-sm hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200 border-b border-border"
+							className="flex w-full items-center gap-2 py-2 px-3 text-sm hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200 border-b border-border cursor-pointer"
 						>
 							<LogOutIcon className="h-4 w-4" />
 							Выйти
@@ -278,7 +275,7 @@ const DropdownNavMenu = ({
 							href={item.url}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="relative flex w-full cursor-default select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200"
+							className="relative flex w-full cursor-pointer select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200"
 						>
 							{item.name}
 						</a>
@@ -286,7 +283,7 @@ const DropdownNavMenu = ({
 						<Link
 							key={item.url}
 							to={item.url}
-							className="relative flex w-full cursor-default select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200"
+							className="relative flex w-full cursor-pointer select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200"
 						>
 							{item.name}
 						</Link>
@@ -601,7 +598,6 @@ const CatalogDropdown = () => {
 
 export function NavBar({
 	className,
-	userData,
 	searchTerm,
 	onSearchChange,
 }: Omit<NavBarProps, "items">) {
@@ -609,6 +605,16 @@ export function NavBar({
 	const pathname = routerState.location.pathname;
 	const { prefetchDashboardOrders } = usePrefetch();
 	const dynamicPlaceholder = useSearchPlaceholderWithCount();
+
+	const isDashboard = pathname.startsWith("/dashboard");
+	const isMiscPage = pathname === "/dashboard/misc";
+
+	// Fetch userData when on dashboard routes using TanStack Query
+	// This is cached and shared across components, no prop drilling needed
+	const { data: userData } = useQuery({
+		...userDataQueryOptions(),
+		enabled: isDashboard, // Only fetch when on dashboard routes
+	});
 
 	// Hide-on-scroll state
 	const { cartOpen } = useCart();
@@ -625,9 +631,6 @@ export function NavBar({
 
 	// Client-side search context
 	const clientSearch = useClientSearch();
-
-	const isDashboard = pathname.startsWith("/dashboard");
-	const isMiscPage = pathname === "/dashboard/misc";
 
 	// Dashboard search state (self-managed when not provided by props)
 	const currentSearchParam = (
@@ -774,7 +777,7 @@ export function NavBar({
 								<DropdownNavMenu
 									items={dashboardSecondaryItems}
 									showUserInfo={true}
-									userData={userData}
+									userData={userData || undefined}
 								/>
 							</div>
 						</div>
@@ -822,7 +825,7 @@ export function NavBar({
 									<DropdownNavMenu
 										items={dashboardSecondaryItems}
 										showUserInfo={true}
-										userData={userData}
+										userData={userData || undefined}
 									/>
 								</div>
 							</div>
@@ -855,7 +858,7 @@ export function NavBar({
 				<BottomNavBar
 					isDashboard={true}
 					actionButton={actionButton}
-					userData={userData}
+					userData={userData || undefined}
 				/>
 			</>
 		);

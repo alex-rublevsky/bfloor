@@ -24,6 +24,7 @@ import {
 } from "~/components/ui/shared/MarkdownComponents";
 import { ProductPageSkeleton } from "~/components/ui/store/skeletons/ProductPageSkeleton";
 import { VariationSelector } from "~/components/ui/store/VariationSelector";
+import { ASSETS_BASE_URL } from "~/constants/urls";
 import { useProductAttributes } from "~/hooks/useProductAttributes";
 import { useVariationSelection } from "~/hooks/useVariationSelection";
 import { useCart } from "~/lib/cartContext";
@@ -481,13 +482,20 @@ function ProductPage() {
 										</div>
 									)}
 
-									{/* Country */}
+									{/* Country of Origin */}
 									{productWithDetails?.brand?.country && (
-										<div className="flex items-center gap-1">
-											<span className="text-gray-500">Страна:</span>
+										<div className="flex items-center gap-1.5">
+											{productWithDetails.brand.country.flagImage && (
+												<img
+													src={`${ASSETS_BASE_URL}/${productWithDetails.brand.country.flagImage}`}
+													alt={productWithDetails.brand.country.name}
+													className="h-4 w-auto"
+												/>
+											)}
 											<span className="font-semibold">
-												{productWithDetails.brand.country}
+												{productWithDetails.brand.country.name}
 											</span>
+											<span className="text-gray-500">родина бренда</span>
 										</div>
 									)}
 

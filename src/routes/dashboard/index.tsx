@@ -170,11 +170,11 @@ function useResponsiveColumns() {
 
 function RouteComponent() {
 	const queryClient = useQueryClient();
-	
+
 	// Get search params from URL using TanStack Router
 	const searchParams = Route.useSearch();
 	const navigate = Route.useNavigate();
-	
+
 	const normalizedSearch = (() => {
 		const value =
 			typeof searchParams.search === "string" ? searchParams.search : "";
@@ -207,7 +207,12 @@ function RouteComponent() {
 		setSelectedBrand(searchParams.brand ?? null);
 		setSelectedCollection(searchParams.collection ?? null);
 		setSortBy(searchParams.sort ?? "relevant");
-	}, [searchParams.category, searchParams.brand, searchParams.collection, searchParams.sort]);
+	}, [
+		searchParams.category,
+		searchParams.brand,
+		searchParams.collection,
+		searchParams.sort,
+	]);
 
 	const isValidSort = (v: string): v is typeof sortBy => {
 		return (
@@ -352,6 +357,14 @@ function RouteComponent() {
 		}
 		// If no slug info, don't remove individual product pages
 		// (they'll get fresh data from storeData when accessed)
+
+		// Invalidate brand and attribute counts since products changed
+		queryClient.invalidateQueries({
+			queryKey: ["productBrandCounts"],
+		});
+		queryClient.invalidateQueries({
+			queryKey: ["productAttributeCounts"],
+		});
 	};
 
 	// Generate unique IDs for form elements
@@ -802,6 +815,14 @@ function RouteComponent() {
 
 			// Refresh data
 			refetch();
+
+			// Invalidate brand and attribute counts since a product was created
+			queryClient.invalidateQueries({
+				queryKey: ["productBrandCounts"],
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["productAttributeCounts"],
+			});
 		} catch (err) {
 			const errorMessage =
 				err instanceof Error ? err.message : "An error occurred";
@@ -928,6 +949,14 @@ function RouteComponent() {
 
 			// Refresh data
 			refetch();
+
+			// Invalidate brand and attribute counts since a product was deleted
+			queryClient.invalidateQueries({
+				queryKey: ["productBrandCounts"],
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["productAttributeCounts"],
+			});
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "An error occurred");
 			toast.error(err instanceof Error ? err.message : "An error occurred");

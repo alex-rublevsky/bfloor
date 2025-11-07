@@ -2,10 +2,8 @@ import { Edit } from "lucide-react";
 import { Skeleton } from "~/components/ui/dashboard/skeleton";
 import { Badge } from "~/components/ui/shared/Badge";
 import { Icon } from "~/components/ui/shared/Icon";
-import { getBrandCountryName } from "~/constants/units";
 import { ASSETS_BASE_URL } from "~/constants/urls";
 import { usePrefetch } from "~/hooks/usePrefetch";
-import { useProductAttributes } from "~/hooks/useProductAttributes";
 import type { ProductWithVariations } from "~/types";
 import styles from "../store/productCard.module.css";
 
@@ -21,7 +19,6 @@ export function AdminProductCard({
 	formatPrice: _formatPrice,
 }: AdminProductCardProps) {
 	const { prefetchDashboardProduct } = usePrefetch();
-	const { data: availableAttributes } = useProductAttributes();
 	const imageArray = (() => {
 		if (!product.images) return [];
 		try {
@@ -48,26 +45,6 @@ export function AdminProductCard({
 		}
 		return product.price;
 	})();
-
-	// Get all shipping locations (product + variations)
-	const getAllShippingLocations = () => {
-		const locations = new Set<string>();
-
-		// Add variation-level shipping if available
-		if (
-			product.hasVariations &&
-			product.variations &&
-			product.variations.length > 0
-		) {
-			product.variations.forEach((_variation) => {
-				// No shipping locations to add anymore
-			});
-		}
-
-		return Array.from(locations);
-	};
-
-	const allShippingLocations = getAllShippingLocations();
 
 	// Prefetch on hover
 	const handleMouseEnter = () => {
@@ -221,21 +198,6 @@ export function AdminProductCard({
 							{/* Metadata */}
 							<div className="space-y-1 text-sm">
 								{/* Empty space for layout */}
-
-								{/* Shipping */}
-								{allShippingLocations.filter(
-									(code) => code !== "" && code !== "NONE",
-								).length > 0 && (
-									<div>
-										<span className="text-muted-foreground text-xs">
-											Ships from:{" "}
-											{allShippingLocations
-												.filter((code) => code !== "" && code !== "NONE")
-												.map((countryCode) => getBrandCountryName(countryCode))
-												.join(" ")}
-										</span>
-									</div>
-								)}
 							</div>
 						</div>
 					</div>

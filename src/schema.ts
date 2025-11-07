@@ -92,12 +92,23 @@ export const categories = sqliteTable("categories", {
 	order: integer("order").notNull().default(0), // For sorting categories
 });
 
+export const countries = sqliteTable("countries", {
+	id: integer("id").primaryKey({ autoIncrement: true }),
+	name: text("name").notNull(), // Display name: "Россия", "Германия"
+	code: text("code").notNull().unique(), // ISO country code: "RU", "DE", "IT", etc.
+	flagImage: text("flag_image"), // Path to flag image file (optional)
+	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+	createdAt: integer("created_at", { mode: "timestamp" }),
+});
+
 export const brands = sqliteTable("brands", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	name: text("name").notNull(),
 	slug: text("slug").notNull().unique(),
 	image: text("image"),
-	country: text("country"), // Страна происхождения бренда (ID) - опционально
+	countryId: integer("country_id").references(() => countries.id, {
+		onDelete: "set null",
+	}), // Страна происхождения бренда - опционально
 	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 });
 
@@ -251,6 +262,7 @@ export const schema = {
 	attributeValues,
 	variationAttributes,
 	categories,
+	countries,
 	brands,
 	collections,
 	storeLocations,

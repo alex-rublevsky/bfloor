@@ -52,6 +52,7 @@ export const updateBrand = createServerFn({ method: "POST" })
 					name: brandData.name,
 					slug: brandData.slug,
 					image: brandData.logo || null,
+					countryId: brandData.countryId || null,
 					isActive: brandData.isActive ?? true,
 				})
 				.where(eq(brands.id, id))

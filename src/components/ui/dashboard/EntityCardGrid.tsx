@@ -1,82 +1,79 @@
-import { Edit, Trash2 } from "lucide-react";
-import { Button } from "~/components/ui/shared/Button";
+import * as React from "react";
 import { cn } from "~/lib/utils";
 
 // Meta component that provides the exact look and feel of the categories page
 export interface EntityCardProps<T> {
 	entity: T;
 	onEdit: (entity: T) => void;
-	onDelete: (entity: T) => void;
 	children: React.ReactNode; // Entity-specific content
 }
 
 export function EntityCard<T>({
 	entity,
 	onEdit,
-	onDelete,
 	children,
 }: EntityCardProps<T>) {
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === "Enter" || e.key === " ") {
+			e.preventDefault();
+			onEdit(entity);
+		}
+	};
+
+	// Check if children is a vertical layout (has flex-col class)
+	const isVerticalLayout =
+		React.isValidElement(children) &&
+		children.props !== null &&
+		typeof children.props === "object" &&
+		"className" in children.props &&
+		typeof children.props.className === "string" &&
+		children.props.className.includes("flex-col");
+
 	return (
-		<div
+		<button
+			type="button"
+			onClick={() => onEdit(entity)}
+			onKeyDown={handleKeyDown}
 			className={cn(
-				"group flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-colors cursor-pointer",
-				"border border-transparent hover:border-border",
+				isVerticalLayout
+					? "group flex flex-col p-2 rounded-md hover:bg-muted transition-[var(--transition-standard)] cursor-pointer border border-transparent hover:border-border w-auto text-left bg-transparent"
+					: "group flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-[var(--transition-standard)] cursor-pointer border border-transparent hover:border-border w-full text-left bg-transparent",
 			)}
 		>
-			{/* Action Buttons - Icon only - Always visible on mobile/tablet, hover on desktop */}
-			<div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
-				<Button
-					size="sm"
-					variant="outline"
-					onClick={(e) => {
-						e.stopPropagation();
-						onEdit(entity);
-					}}
-					className="w-8 h-8 p-0"
-				>
-					<Edit className="w-4 h-4" />
-				</Button>
-				<Button
-					size="sm"
-					variant="destructive"
-					onClick={(e) => {
-						e.stopPropagation();
-						onDelete(entity);
-					}}
-					className="w-8 h-8 p-0"
-				>
-					<Trash2 className="w-4 h-4" />
-				</Button>
-			</div>
-
 			{/* Entity-specific content */}
 			{children}
-		</div>
+
+			{/* Hover indicator - Edit text on the right (only for horizontal layout) */}
+			{!isVerticalLayout && (
+				<div className="opacity-0 md:group-hover:opacity-100 transition-[var(--transition-standard)] flex-shrink-0 text-sm text-muted-foreground">
+					Редактировать
+				</div>
+			)}
+		</button>
 	);
 }
 
 export interface EntityCardGridProps<T> {
 	entities: T[];
 	onEdit: (entity: T) => void;
-	onDelete: (entity: T) => void;
 	renderEntity: (entity: T) => React.ReactNode;
+	gridClassName?: string; // Optional custom grid classes
 }
 
 export function EntityCardGrid<T>({
 	entities,
 	onEdit,
-	onDelete,
 	renderEntity,
+	gridClassName = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3",
 }: EntityCardGridProps<T>) {
 	return (
 		<div className="border border-border rounded-lg p-4 bg-transparent">
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+			<div className={gridClassName}>
 				{entities.map((entity) => (
 					<EntityCard
 						key={JSON.stringify(entity)}
 						entity={entity}
 						onEdit={onEdit}
-						onDelete={onDelete}
 					>
 						{renderEntity(entity)}
 					</EntityCard>

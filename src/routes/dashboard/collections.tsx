@@ -1,15 +1,12 @@
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useId, useState } from "react";
-import { toast } from "sonner";
-import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
-import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
-import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
-import { SlugField } from "~/components/ui/dashboard/SlugField";
+import {
+	DashboardEntityManager,
+	type EntityFormFieldsProps,
+	type EntityListProps,
+} from "~/components/ui/dashboard/DashboardEntityManager";
+import { EntityCardGrid } from "~/components/ui/dashboard/EntityCardGrid";
 import { Badge } from "~/components/ui/shared/Badge";
-import { Button } from "~/components/ui/shared/Button";
-import { EmptyState } from "~/components/ui/shared/EmptyState";
-import { Input } from "~/components/ui/shared/input";
 import {
 	Select,
 	SelectContent,
@@ -17,17 +14,97 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "~/components/ui/shared/Select";
-import { Switch } from "~/components/ui/shared/Switch";
-import { useDashboardForm } from "~/hooks/useDashboardForm";
-import { generateSlug, useSlugGeneration } from "~/hooks/useSlugGeneration";
 import {
 	brandsQueryOptions,
 	collectionsQueryOptions,
 } from "~/lib/queryOptions";
 import { createCollection } from "~/server_functions/dashboard/collections/createCollection";
 import { deleteCollection } from "~/server_functions/dashboard/collections/deleteCollection";
+import { getAllCollections } from "~/server_functions/dashboard/collections/getAllCollections";
 import { updateCollection } from "~/server_functions/dashboard/collections/updateCollection";
 import type { Collection, CollectionFormData } from "~/types";
+
+// Collection form fields component
+const CollectionFormFields = ({
+	formData,
+	onFieldChange,
+	idPrefix,
+}: EntityFormFieldsProps<Collection, CollectionFormData>) => {
+	// Get brands for the select dropdown (data is already loaded by loader)
+	const { data: brands = [] } = useQuery(brandsQueryOptions());
+
+	return (
+		<>
+			{/* Brand selection */}
+			<div>
+				<label
+					htmlFor={`${idPrefix}-collection-brand`}
+					className="block text-sm font-medium mb-1"
+				>
+					Бренд <span className="text-red-500">*</span>
+				</label>
+				<Select
+					value={(formData as CollectionFormData).brandSlug || ""}
+					onValueChange={(value: string) => {
+						onFieldChange("brandSlug", value);
+					}}
+					required
+				>
+					<SelectTrigger id={`${idPrefix}-collection-brand`}>
+						<SelectValue placeholder="Выберите бренд" />
+					</SelectTrigger>
+					<SelectContent>
+						{brands.map((brand) => (
+							<SelectItem key={brand.slug} value={brand.slug}>
+								{brand.name}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+			</div>
+		</>
+	);
+};
+
+// Collection list component using the reusable component
+const CollectionList = ({ entities, onEdit }: EntityListProps<Collection>) => {
+	const { data: brands } = useSuspenseQuery(brandsQueryOptions());
+
+	return (
+		<EntityCardGrid
+			entities={entities}
+			onEdit={onEdit}
+			renderEntity={(collection) => {
+				const brand = brands.find((b) => b.slug === collection.brandSlug);
+				return (
+					<>
+						{/* Collection Info */}
+						<div className="flex flex-col flex-1 min-w-0">
+							<div className="flex items-center gap-2">
+								<span className="text-sm font-medium truncate">
+									{collection.name}
+								</span>
+								{!collection.isActive && (
+									<Badge variant="secondary" className="text-xs flex-shrink-0">
+										Неактивна
+									</Badge>
+								)}
+							</div>
+							{brand && (
+								<span className="text-xs text-muted-foreground truncate">
+									Бренд: {brand.name}
+								</span>
+							)}
+							<span className="text-xs text-muted-foreground truncate">
+								{collection.slug}
+							</span>
+						</div>
+					</>
+				);
+			}}
+		/>
+	);
+};
 
 export const Route = createFileRoute("/dashboard/collections")({
 	component: RouteComponent,
@@ -41,404 +118,57 @@ export const Route = createFileRoute("/dashboard/collections")({
 });
 
 function RouteComponent() {
-	const queryClient = useQueryClient();
-	const createFormId = useId();
-	const editFormId = useId();
-	const createBrandId = useId();
-	const editBrandId = useId();
+	// Use suspense query - data is guaranteed to be loaded by the loader
+	const { data } = useSuspenseQuery(collectionsQueryOptions());
 
-	const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
-	const { data: brands } = useSuspenseQuery(brandsQueryOptions());
-
-	const { crud, createForm, editForm } = useDashboardForm<CollectionFormData>(
-		{
+	// Entity manager configuration
+	const entityManagerConfig = {
+		queryKey: ["bfloorCollections"],
+		queryFn: getAllCollections,
+		createFn: async (data: { data: CollectionFormData }) => {
+			await createCollection({
+				data: {
+					data: {
+						name: data.data.name,
+						slug: data.data.slug,
+						brandSlug: data.data.brandSlug,
+						isActive: data.data.isActive,
+					},
+				},
+			});
+		},
+		updateFn: async (data: { id: number; data: CollectionFormData }) => {
+			await updateCollection({
+				data: {
+					id: data.id,
+					data: {
+						name: data.data.name,
+						slug: data.data.slug,
+						brandSlug: data.data.brandSlug,
+						isActive: data.data.isActive,
+					},
+				},
+			});
+		},
+		deleteFn: async (data: { id: number }) => {
+			await deleteCollection({
+				data: { data: { id: data.id } },
+			});
+		},
+		entityName: "коллекция",
+		entityNamePlural: "коллекции",
+		emptyStateEntityType: "collections",
+		defaultFormData: {
 			name: "",
 			slug: "",
 			brandSlug: "",
 			isActive: true,
-		},
-		{ listenToActionButton: true },
-	);
-
-	const [isCreateAutoSlug, setIsCreateAutoSlug] = useState(true);
-	const [isEditAutoSlug, setIsEditAutoSlug] = useState(false);
-	const [editingCollectionId, setEditingCollectionId] = useState<number | null>(
-		null,
-	);
-	const [deletingCollectionId, setDeletingCollectionId] = useState<
-		number | null
-	>(null);
-
-	// Stable callbacks for slug generation
-	const handleCreateSlugChange = useCallback(
-		(slug: string) => createForm.updateField("slug", slug),
-		[createForm.updateField],
-	);
-
-	const handleEditSlugChange = useCallback(
-		(slug: string) => editForm.updateField("slug", slug),
-		[editForm.updateField],
-	);
-
-	// Auto-slug generation hooks
-	useSlugGeneration(
-		createForm.formData.name,
-		isCreateAutoSlug,
-		handleCreateSlugChange,
-	);
-	useSlugGeneration(
-		editForm.formData.name,
-		isEditAutoSlug,
-		handleEditSlugChange,
-	);
-
-	// Listen for action button clicks from navbar
-	useEffect(() => {
-		const handleAction = () => {
-			crud.openCreateDrawer();
-		};
-
-		window.addEventListener("dashboardAction", handleAction);
-		return () => window.removeEventListener("dashboardAction", handleAction);
-	}, [crud.openCreateDrawer]);
-
-	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		crud.startSubmitting();
-
-		try {
-			await createCollection({
-				data: {
-					data: createForm.formData,
-				},
-			});
-
-			toast.success("Коллекция создана успешно!");
-			closeCreateDrawer();
-			queryClient.invalidateQueries({
-				queryKey: ["bfloorDashboardCollections"],
-			});
-		} catch (err) {
-			const errorMsg = err instanceof Error ? err.message : "Произошла ошибка";
-			crud.setError(errorMsg);
-			toast.error(errorMsg);
-		} finally {
-			crud.stopSubmitting();
-		}
-	};
-
-	const closeCreateDrawer = () => {
-		crud.closeCreateDrawer();
-		createForm.resetForm();
-		setIsCreateAutoSlug(true);
-	};
-
-	const handleEditCollection = (collection: Collection) => {
-		setEditingCollectionId(collection.id);
-
-		const isCustomSlug = collection.slug !== generateSlug(collection.name);
-
-		editForm.setFormData({
-			name: collection.name,
-			slug: collection.slug,
-			brandSlug: collection.brandSlug || "",
-			isActive: collection.isActive,
-		});
-		setIsEditAutoSlug(!isCustomSlug);
-		crud.openEditDrawer();
-	};
-
-	const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		if (!editingCollectionId) return;
-
-		crud.startSubmitting();
-
-		try {
-			await updateCollection({
-				data: {
-					id: editingCollectionId,
-					data: editForm.formData,
-				},
-			});
-
-			toast.success("Коллекция обновлена успешно!");
-			closeEditDrawer();
-			queryClient.invalidateQueries({
-				queryKey: ["bfloorDashboardCollections"],
-			});
-		} catch (err) {
-			const errorMsg = err instanceof Error ? err.message : "Произошла ошибка";
-			crud.setError(errorMsg);
-			toast.error(errorMsg);
-		} finally {
-			crud.stopSubmitting();
-		}
-	};
-
-	const closeEditDrawer = () => {
-		crud.closeEditDrawer();
-		setEditingCollectionId(null);
-		editForm.resetForm();
-		setIsEditAutoSlug(false);
-	};
-
-	const handleDeleteClick = (collection: Collection) => {
-		setDeletingCollectionId(collection.id);
-		crud.openDeleteDialog();
-	};
-
-	const handleDeleteConfirm = async () => {
-		if (!deletingCollectionId) return;
-
-		crud.startDeleting();
-
-		try {
-			await deleteCollection({
-				data: { data: { id: deletingCollectionId } },
-			});
-
-			toast.success("Коллекция удалена успешно!");
-			crud.closeDeleteDialog();
-			setDeletingCollectionId(null);
-			queryClient.invalidateQueries({
-				queryKey: ["bfloorDashboardCollections"],
-			});
-		} catch (err) {
-			const errorMsg = err instanceof Error ? err.message : "Произошла ошибка";
-			crud.setError(errorMsg);
-			toast.error(errorMsg);
-		} finally {
-			crud.stopDeleting();
-		}
-	};
-
-	const handleDeleteCancel = () => {
-		crud.closeDeleteDialog();
-		setDeletingCollectionId(null);
+		} as CollectionFormData,
+		formFields: CollectionFormFields,
+		renderList: CollectionList,
 	};
 
 	return (
-		<div className="space-y-6 px-6">
-			{/* Collections Grid */}
-			{collections.length === 0 ? (
-				<EmptyState entityType="collections" />
-			) : (
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-					{collections.map((collection) => {
-						const brand = brands.find((b) => b.slug === collection.brandSlug);
-						return (
-							<div
-								key={collection.id}
-								className="border rounded-lg overflow-hidden bg-card hover:shadow-md transition-shadow"
-							>
-								{/* Collection Info */}
-								<div className="p-4 space-y-3">
-									<div>
-										<h3 className="font-medium truncate">{collection.name}</h3>
-										{brand && (
-											<p className="text-xs text-muted-foreground">
-												Бренд: {brand.name}
-											</p>
-										)}
-										{!collection.isActive && (
-											<Badge variant="secondary" className="mt-2">
-												Неактивна
-											</Badge>
-										)}
-									</div>
-
-									{/* Action Buttons */}
-									<div className="flex gap-2">
-										<Button
-											variant="outline"
-											size="sm"
-											className="flex-1"
-											onClick={() => handleEditCollection(collection)}
-										>
-											Изменить
-										</Button>
-										<Button
-											variant="destructive"
-											size="sm"
-											className="flex-1"
-											onClick={() => handleDeleteClick(collection)}
-										>
-											Удалить
-										</Button>
-									</div>
-								</div>
-							</div>
-						);
-					})}
-				</div>
-			)}
-
-			{/* Create Collection Drawer */}
-			<DashboardFormDrawer
-				isOpen={crud.showCreateDrawer}
-				onOpenChange={crud.setShowCreateDrawer}
-				title="Добавить новую коллекцию"
-				formId={createFormId}
-				isSubmitting={crud.isSubmitting}
-				submitButtonText="Создать коллекцию"
-				submittingText="Создание..."
-				onCancel={closeCreateDrawer}
-				error={crud.error && !crud.showEditDrawer ? crud.error : undefined}
-				layout="single-column"
-			>
-				<form onSubmit={handleSubmit} id={createFormId} className="contents">
-					<DrawerSection maxWidth title="Детали коллекции">
-						<div className="space-y-4">
-							<Input
-								label="Название коллекции"
-								type="text"
-								name="name"
-								value={createForm.formData.name}
-								onChange={createForm.handleChange}
-								required
-							/>
-
-							<SlugField
-								slug={createForm.formData.slug}
-								name={createForm.formData.name}
-								isAutoSlug={isCreateAutoSlug}
-								onSlugChange={(slug) => {
-									setIsCreateAutoSlug(false);
-									createForm.updateField("slug", slug);
-								}}
-								onAutoSlugChange={setIsCreateAutoSlug}
-								idPrefix="create"
-							/>
-
-							<div>
-								<label
-									htmlFor={createBrandId}
-									className="block text-sm font-medium mb-1"
-								>
-									Бренд <span className="text-red-500">*</span>
-								</label>
-								<Select
-									value={createForm.formData.brandSlug}
-									onValueChange={(value: string) => {
-										createForm.updateField("brandSlug", value);
-									}}
-									required
-								>
-									<SelectTrigger id={createBrandId}>
-										<SelectValue placeholder="Выберите бренд" />
-									</SelectTrigger>
-									<SelectContent>
-										{brands.map((brand) => (
-											<SelectItem key={brand.slug} value={brand.slug}>
-												{brand.name}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-							</div>
-
-							<div className="flex items-center gap-2">
-								<Switch
-									name="isActive"
-									checked={createForm.formData.isActive}
-									onChange={createForm.handleChange}
-								/>
-								<span className="text-sm">Активна</span>
-							</div>
-						</div>
-					</DrawerSection>
-				</form>
-			</DashboardFormDrawer>
-
-			{/* Edit Collection Drawer */}
-			<DashboardFormDrawer
-				isOpen={crud.showEditDrawer}
-				onOpenChange={crud.setShowEditDrawer}
-				title="Изменить коллекцию"
-				formId={editFormId}
-				isSubmitting={crud.isSubmitting}
-				submitButtonText="Обновить коллекцию"
-				submittingText="Обновление..."
-				onCancel={closeEditDrawer}
-				error={crud.error && crud.showEditDrawer ? crud.error : undefined}
-				layout="single-column"
-			>
-				<form onSubmit={handleUpdate} id={editFormId} className="contents">
-					<DrawerSection maxWidth title="Детали коллекции">
-						<div className="space-y-4">
-							<Input
-								label="Название коллекции"
-								type="text"
-								name="name"
-								value={editForm.formData.name}
-								onChange={editForm.handleChange}
-								required
-							/>
-
-							<SlugField
-								slug={editForm.formData.slug}
-								name={editForm.formData.name}
-								isAutoSlug={isEditAutoSlug}
-								onSlugChange={(slug) => {
-									setIsEditAutoSlug(false);
-									editForm.updateField("slug", slug);
-								}}
-								onAutoSlugChange={setIsEditAutoSlug}
-								idPrefix="edit"
-							/>
-
-							<div>
-								<label
-									htmlFor={editBrandId}
-									className="block text-sm font-medium mb-1"
-								>
-									Бренд <span className="text-red-500">*</span>
-								</label>
-								<Select
-									value={editForm.formData.brandSlug}
-									onValueChange={(value: string) => {
-										editForm.updateField("brandSlug", value);
-									}}
-									required
-								>
-									<SelectTrigger id={editBrandId}>
-										<SelectValue placeholder="Выберите бренд" />
-									</SelectTrigger>
-									<SelectContent>
-										{brands.map((brand) => (
-											<SelectItem key={brand.slug} value={brand.slug}>
-												{brand.name}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-							</div>
-
-							<div className="flex items-center gap-2">
-								<Switch
-									name="isActive"
-									checked={editForm.formData.isActive}
-									onChange={editForm.handleChange}
-								/>
-								<span className="text-sm">Активна</span>
-							</div>
-						</div>
-					</DrawerSection>
-				</form>
-			</DashboardFormDrawer>
-
-			{/* Delete Confirmation Dialog */}
-			{crud.showDeleteDialog && (
-				<DeleteConfirmationDialog
-					isOpen={crud.showDeleteDialog}
-					onClose={handleDeleteCancel}
-					onConfirm={handleDeleteConfirm}
-					title="Удалить коллекцию"
-					description="Вы уверены, что хотите удалить эту коллекцию? Это действие нельзя отменить."
-					isDeleting={crud.isDeleting}
-				/>
-			)}
-		</div>
+		<DashboardEntityManager config={entityManagerConfig} data={data || []} />
 	);
 }

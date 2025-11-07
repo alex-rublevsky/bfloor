@@ -1,5 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
+import { env } from "cloudflare:workers";
 import { authMiddleware } from "~/utils/auth-middleware";
 import { resolveSecret } from "~/utils/cloudflare-env";
 
@@ -15,6 +15,36 @@ type AuthContext = {
 };
 
 /**
+ * Check if a user email matches any of the admin emails.
+ * Checks SUPER_ADMIN_EMAIL, ADMIN_EMAIL, and ADMIN_EMAIL_2.
+ *
+ * @param userEmail - The user's email address (normalized)
+ * @returns true if the email matches any admin email, false otherwise
+ */
+async function isAdminEmail(userEmail: string | null): Promise<boolean> {
+	if (!userEmail) {
+		return false;
+	}
+
+	// Resolve all admin emails from secrets store
+	const [superAdminEmail, adminEmail, adminEmail2] = await Promise.all([
+		resolveSecret(env.SUPER_ADMIN_EMAIL),
+		resolveSecret(env.ADMIN_EMAIL),
+		resolveSecret(env.ADMIN_EMAIL_2),
+	]);
+
+	// Normalize all admin emails (trim and lowercase)
+	const adminEmails = [
+		superAdminEmail?.trim().toLowerCase(),
+		adminEmail?.trim().toLowerCase(),
+		adminEmail2?.trim().toLowerCase(),
+	].filter((email): email is string => !!email); // Filter out null/undefined
+
+	// Check if user email matches any admin email
+	return adminEmails.includes(userEmail);
+}
+
+/**
  * Get complete user data with admin status in a single call.
  * This is the most efficient way to get user info + auth status.
  * Use this for protected routes that need user data.
@@ -24,12 +54,10 @@ export const getUserData = createServerFn({ method: "GET" })
 	.handler(async ({ context }: { context: AuthContext }) => {
 		const user = context?.user;
 		const userEmailRaw = user?.email ?? null;
-		const adminEmailRaw = await resolveSecret(env.ADMIN_EMAIL);
 
 		const userEmail = userEmailRaw?.trim().toLowerCase() ?? null;
-		const adminEmail = adminEmailRaw?.trim().toLowerCase() ?? null;
 		const isAuthenticated = !!userEmail;
-		const isAdmin = !!userEmail && !!adminEmail && userEmail === adminEmail;
+		const isAdmin = isAuthenticated && (await isAdminEmail(userEmail));
 
 		return {
 			userID: user?.id ?? null,
@@ -49,12 +77,10 @@ export const getAuthStatus = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.handler(async ({ context }: { context: AuthContext }) => {
 		const userEmailRaw = context?.user?.email ?? null;
-		const adminEmailRaw = await resolveSecret(env.ADMIN_EMAIL);
 
 		const userEmail = userEmailRaw?.trim().toLowerCase() ?? null;
-		const adminEmail = adminEmailRaw?.trim().toLowerCase() ?? null;
 		const isAuthenticated = !!userEmail;
-		const isAdmin = !!userEmail && !!adminEmail && userEmail === adminEmail;
+		const isAdmin = isAuthenticated && (await isAdminEmail(userEmail));
 
 		return {
 			isAuthenticated,

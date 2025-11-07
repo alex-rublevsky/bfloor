@@ -1,106 +1,66 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-	brandsQueryOptions,
-	categoriesQueryOptions,
-	collectionsQueryOptions,
-	storeLocationsQueryOptions,
+	totalAttributesCountQueryOptions,
+	totalBrandsCountQueryOptions,
+	totalCategoriesCountQueryOptions,
+	totalCollectionsCountQueryOptions,
+	totalOrdersCountQueryOptions,
+	totalProductsCountQueryOptions,
+	totalStoreLocationsCountQueryOptions,
 } from "~/lib/queryOptions";
-import { getAllProductAttributes } from "~/server_functions/dashboard/attributes/getAllProductAttributes";
-import { getAllOrders } from "~/server_functions/dashboard/orders/getAllOrders";
-import { getAllProducts } from "~/server_functions/dashboard/store/getAllProducts";
 
 /**
- * Hook to get products count
+ * Hook to get products count (efficient SQL COUNT)
  */
 export function useProductsCount() {
-	const { data: productsData } = useQuery({
-		queryKey: ["bfloorDashboardProducts"],
-		queryFn: () => getAllProducts(),
-		staleTime: 1000 * 60 * 5,
-	});
-
-	// Return total products count from pagination info or products array length
-	if (productsData?.pagination?.totalCount) {
-		return productsData.pagination.totalCount;
-	}
-
-	return productsData?.products?.length || 0;
+	const { data } = useQuery(totalProductsCountQueryOptions());
+	return data ?? 0;
 }
 
 /**
- * Hook to get categories count
+ * Hook to get categories count (efficient SQL COUNT)
  */
 export function useCategoriesCount() {
-	const { data: categories } = useQuery({
-		...categoriesQueryOptions(),
-	});
-
-	return categories?.length || 0;
+	const { data } = useQuery(totalCategoriesCountQueryOptions());
+	return data ?? 0;
 }
 
 /**
- * Hook to get brands count
+ * Hook to get brands count (efficient SQL COUNT)
  */
 export function useBrandsCount() {
-	const { data: brands } = useQuery({
-		...brandsQueryOptions(),
-	});
-
-	return brands?.length || 0;
+	const { data } = useQuery(totalBrandsCountQueryOptions());
+	return data ?? 0;
 }
 
 /**
- * Hook to get collections count
+ * Hook to get collections count (efficient SQL COUNT)
  */
 export function useCollectionsCount() {
-	const { data: collections } = useQuery({
-		...collectionsQueryOptions(),
-	});
-
-	return collections?.length || 0;
+	const { data } = useQuery(totalCollectionsCountQueryOptions());
+	return data ?? 0;
 }
 
 /**
- * Hook to get orders count
+ * Hook to get orders count (efficient SQL COUNT)
  */
 export function useOrdersCount() {
-	const { data: ordersData } = useQuery({
-		queryKey: ["bfloorDashboardOrders"],
-		queryFn: () => getAllOrders(),
-		staleTime: 1000 * 60 * 5,
-	});
-
-	// Calculate total orders from grouped orders
-	let totalOrders = 0;
-	if (ordersData?.groupedOrders) {
-		for (const group of ordersData.groupedOrders) {
-			totalOrders += group.orders.length;
-		}
-	}
-
-	return totalOrders;
+	const { data } = useQuery(totalOrdersCountQueryOptions());
+	return data ?? 0;
 }
 
 /**
- * Hook to get attributes count
+ * Hook to get attributes count (efficient SQL COUNT)
  */
 export function useAttributesCount() {
-	const { data: attributes } = useQuery({
-		queryKey: ["productAttributes"],
-		queryFn: () => getAllProductAttributes(),
-		staleTime: 1000 * 60 * 5,
-	});
-
-	return attributes?.length || 0;
+	const { data } = useQuery(totalAttributesCountQueryOptions());
+	return data ?? 0;
 }
 
 /**
- * Hook to get store locations count
+ * Hook to get store locations count (efficient SQL COUNT)
  */
 export function useStoreLocationsCount() {
-	const { data: storeLocations } = useQuery({
-		...storeLocationsQueryOptions(),
-	});
-
-	return storeLocations?.length || 0;
+	const { data } = useQuery(totalStoreLocationsCountQueryOptions());
+	return data ?? 0;
 }

@@ -1,7 +1,7 @@
-import { env } from "cloudflare:workers";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { reactStartCookies } from "better-auth/react-start";
+import { env } from "cloudflare:workers";
 import { DB } from "~/db";
 import { schema } from "../schema";
 
@@ -12,8 +12,8 @@ import { schema } from "../schema";
  * must be set in .dev.vars for local development and as Wrangler secrets for production.
  * They need to be accessed synchronously at module initialization.
  *
- * ADMIN_EMAIL and RESEND_API_KEY can be in Secrets Store (production) or .dev.vars (dev)
- * because they're only accessed in async server functions.
+ * SUPER_ADMIN_EMAIL, ADMIN_EMAIL, ADMIN_EMAIL_2, and RESEND_API_KEY can be in Secrets Store
+ * (production) or .dev.vars (dev) because they're only accessed in async server functions.
  */
 export const auth = betterAuth({
 	database: drizzleAdapter(DB(), {

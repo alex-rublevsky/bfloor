@@ -4,7 +4,14 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import { ASSETS_BASE_URL } from "~/constants/urls";
 
 const MAX_FILE_SIZE = 1.5 * 1024 * 1024; // 1.5MB
-const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const MAX_SVG_SIZE = 5 * 1024 * 1024; // 5MB for SVG files (they can be larger)
+const ALLOWED_TYPES = [
+	"image/jpeg",
+	"image/jpg",
+	"image/png",
+	"image/webp",
+	"image/svg+xml",
+];
 
 interface UploadImageInput {
 	fileData: string; // base64 encoded file
@@ -39,19 +46,27 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 			}
 
 			// Validate file type
-			if (!ALLOWED_TYPES.includes(fileType)) {
+			// Also check file extension for SVG (some browsers may not set MIME type correctly)
+			const isSvg =
+				fileType === "image/svg+xml" || fileName.toLowerCase().endsWith(".svg");
+			if (!ALLOWED_TYPES.includes(fileType) && !isSvg) {
 				console.error("🖥️ Server: Invalid file type:", fileType);
 				setResponseStatus(400);
 				throw new Error(
-					"Invalid file type. Only JPEG, PNG, and WebP images are allowed.",
+					"Invalid file type. Only JPEG, PNG, WebP, and SVG images are allowed.",
 				);
 			}
 
-			// Validate file size
-			if (fileSize > MAX_FILE_SIZE) {
+			// Validate file size (SVG files can be larger)
+			const maxSize = isSvg ? MAX_SVG_SIZE : MAX_FILE_SIZE;
+			if (fileSize > maxSize) {
 				console.error("🖥️ Server: File too large:", fileSize, "bytes");
 				setResponseStatus(400);
-				throw new Error("File size must be less than 1.5MB");
+				throw new Error(
+					isSvg
+						? "SVG file size must be less than 5MB"
+						: "File size must be less than 1.5MB",
+				);
 			}
 
 			// File validation passed
@@ -78,16 +93,33 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 
 			// Use original filename, sanitized
 			const sanitizedFileName = sanitizeFilename(fileName);
-			const extension = sanitizedFileName.split(".").pop() || "jpg";
-			const nameWithoutExt = sanitizedFileName.substring(
-				0,
-				sanitizedFileName.lastIndexOf("."),
-			);
+			// For SVG files, always use .svg extension regardless of filename
+			let extension = sanitizedFileName.split(".").pop() || "jpg";
+			if (isSvg) {
+				extension = "svg";
+			}
+
+			// Handle empty filename case (e.g., when productName was empty)
+			const lastDotIndex = sanitizedFileName.lastIndexOf(".");
+			let nameWithoutExt =
+				lastDotIndex > 0
+					? sanitizedFileName.substring(0, lastDotIndex)
+					: sanitizedFileName;
+
+			// If nameWithoutExt is empty or only dots/dashes, use timestamp
+			if (!nameWithoutExt || nameWithoutExt.replace(/[.-]/g, "").length === 0) {
+				const timestamp = Date.now();
+				nameWithoutExt = `image-${timestamp}`;
+			}
 
 			// Create directory path with proper structure: products/category/productName
+			// Special cases: country-flags and brands should be stored in a single directory without subdirectories
 			let directoryPath = folder;
 
-			if (
+			if (folder === "country-flags" || folder === "brands") {
+				// Country flags and brand logos go directly in their respective folders, no subdirectories
+				directoryPath = folder;
+			} else if (
 				categorySlug &&
 				productName &&
 				categorySlug.trim() &&
@@ -97,7 +129,7 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 				const sanitizedProductName = sanitizeFilename(productName);
 				directoryPath = `${folder}/${sanitizedCategorySlug}/${sanitizedProductName}`;
 			} else if (slug?.trim()) {
-				// Fallback to old structure for backward compatibility
+				// Fallback to old structure for backward compatibility (only for products)
 				directoryPath = `${folder}/${slug}`;
 			} else {
 				// Use timestamp-based folder for new products without proper data
@@ -130,7 +162,8 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 			// Upload to R2
 			await bucket.put(filename, bytes.buffer, {
 				httpMetadata: {
-					contentType: fileType,
+					// Ensure SVG files get the correct content type
+					contentType: isSvg ? "image/svg+xml" : fileType,
 				},
 			});
 

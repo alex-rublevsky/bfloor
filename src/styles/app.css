@@ -115,9 +115,10 @@ input.field-sizing-content {
 	--color-discount-badge: var(--discount-badge);
 	--color-discount-badge-foreground: var(--discount-badge-foreground);
 
+	--radius-xl: calc(var(--radius) + 2rem);
 	--radius-lg: var(--radius);
-	--radius-md: calc(var(--radius) - 2px);
-	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 0.3rem);
+	--radius-sm: calc(var(--radius) - 0.1rem);
 
 	--font-family-sans: "Overused Grotesk", ui-sans-serif, system-ui, sans-serif;
 }
@@ -290,6 +291,15 @@ input.field-sizing-content {
 	/* Standard transition utility class */
 	.transition-standard {
 		transition: var(--transition-standard);
+	}
+
+	/* Fix Sonner toast overlay blocking interactions */
+	[data-sonner-toaster] {
+		pointer-events: none;
+	}
+
+	[data-sonner-toast] {
+		pointer-events: auto;
 	}
 }
 

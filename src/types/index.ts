@@ -3,6 +3,7 @@ import type {
 	brands,
 	categories,
 	collections,
+	countries,
 	orderItems,
 	orders,
 	productAttributes,
@@ -56,6 +57,10 @@ export interface CategoryTreeNode extends Category {
 // Brands
 export type Brand = InferSelectModel<typeof brands>;
 export type NewBrand = InferInsertModel<typeof brands>;
+
+// Countries
+export type Country = InferSelectModel<typeof countries>;
+export type NewCountry = InferInsertModel<typeof countries>;
 
 // Collections
 export type Collection = InferSelectModel<typeof collections>;
@@ -158,7 +163,15 @@ export interface BrandFormData {
 	name: string;
 	slug: string;
 	logo: string;
-	country?: string; // Country ID (e.g., "russia", "germany") - optional
+	countryId?: number | null; // Country ID reference - optional
+	isActive: boolean;
+	[key: string]: unknown; // Allow additional fields for EntityFormData compatibility
+}
+
+export interface CountryFormData {
+	name: string;
+	code: string; // ISO country code (e.g., "RU", "DE")
+	flagImage?: string; // Path to flag image - optional
 	isActive: boolean;
 	[key: string]: unknown; // Allow additional fields for EntityFormData compatibility
 }
@@ -238,7 +251,10 @@ export interface ProductWithDetails extends Omit<Product, "productAttributes"> {
 		name: string;
 		slug: string;
 		image?: string | null;
-		country?: string | null;
+		country?: {
+			name: string;
+			flagImage?: string | null;
+		} | null;
 	} | null;
 	collection?: {
 		name: string;

@@ -9,17 +9,19 @@ export default function cloudflareLoader({ src, width, quality }) {
 	// Remove leading slash if present to avoid double slashes
 	const cleanSrc = src.startsWith("/") ? src.slice(1) : src;
 
-	const params = [`width=${width}`];
-	if (quality) {
-		params.push(`quality=${quality}`);
+	// Check if the file is an SVG - SVGs should be served as-is without transformations
+	const isSvg = cleanSrc.toLowerCase().endsWith(".svg");
+
+	// For R2 storage, we serve files directly without Cloudflare Images transformations
+	// Cloudflare Images transformations (format=auto, width, etc.) only work with Cloudflare Images service
+	// Since we're using R2, we just return the direct URL
+	if (isSvg) {
+		// For SVG files, return the URL without any query parameters
+		return `${ASSETS_URL}/${cleanSrc}`;
 	}
 
-	// Add format=auto to let Cloudflare automatically choose the best format
-	params.push("format=auto");
-
-	// Add fit=cover to maintain aspect ratio when resizing
-	params.push("fit=cover");
-
-	const queryString = params.join("&");
-	return `${ASSETS_URL}/${cleanSrc}?${queryString}`;
+	// For other image formats in R2, also serve directly without transformations
+	// If you want to use Cloudflare Images transformations, you'd need to use Cloudflare Images service
+	// For now, serve R2 files directly
+	return `${ASSETS_URL}/${cleanSrc}`;
 }

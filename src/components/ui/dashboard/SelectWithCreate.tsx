@@ -1,3 +1,4 @@
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
@@ -11,8 +12,8 @@ import {
 	SelectValue,
 } from "~/components/ui/shared/Select";
 import { Switch } from "~/components/ui/shared/Switch";
-import { BRAND_COUNTRIES, getBrandCountryName } from "~/constants/units";
 import { useSlugGeneration } from "~/hooks/useSlugGeneration";
+import { countriesQueryOptions } from "~/lib/queryOptions";
 import { cn } from "~/lib/utils";
 import { createBrand } from "~/server_functions/dashboard/brands/createBrand";
 import { createProductCategory } from "~/server_functions/dashboard/categories/createProductCategory";
@@ -40,6 +41,51 @@ interface SelectWithCreateProps {
 	onEntityCreated?: (entity: Category | Brand | Collection) => void;
 }
 
+// Brand country select component that uses database countries
+function BrandCountrySelect({
+	formData,
+	setFormData,
+	entityType,
+}: {
+	formData: BrandFormData;
+	setFormData: React.Dispatch<
+		React.SetStateAction<CategoryFormData | BrandFormData | CollectionFormData>
+	>;
+	entityType: "brand";
+}) {
+	// Fetch countries from database
+	const { data: countries = [] } = useSuspenseQuery(countriesQueryOptions());
+
+	return (
+		<div>
+			<label
+				htmlFor={`${entityType}-country`}
+				className="block text-sm font-medium mb-1"
+			>
+				Страна
+			</label>
+			<select
+				id={`${entityType}-country`}
+				value={formData.countryId?.toString() || ""}
+				onChange={(e) =>
+					setFormData((prev) => ({
+						...prev,
+						countryId: e.target.value ? parseInt(e.target.value, 10) : null,
+					}))
+				}
+				className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+			>
+				<option value="">Не указано</option>
+				{countries.map((country) => (
+					<option key={country.id} value={country.id.toString()}>
+						{country.name} ({country.code})
+					</option>
+				))}
+			</select>
+		</div>
+	);
+}
+
 export function SelectWithCreate({
 	value,
 	onValueChange,
@@ -65,7 +111,7 @@ export function SelectWithCreate({
 		slug: "",
 		isActive: true,
 		...(entityType === "category" && { parentSlug: null, image: "", order: 0 }),
-		...(entityType === "brand" && { logo: "", country: "" }),
+		...(entityType === "brand" && { logo: "", countryId: null }),
 		...(entityType === "collection" && { brandSlug: "" }),
 	} as CategoryFormData | BrandFormData | CollectionFormData);
 
@@ -116,7 +162,7 @@ export function SelectWithCreate({
 							name: (formData as BrandFormData).name,
 							slug: (formData as BrandFormData).slug,
 							logo: (formData as BrandFormData).logo || "",
-							country: (formData as BrandFormData).country || "",
+							countryId: (formData as BrandFormData).countryId || null,
 							isActive: (formData as BrandFormData).isActive,
 						},
 					});
@@ -148,7 +194,7 @@ export function SelectWithCreate({
 					image: "",
 					order: 0,
 				}),
-				...(entityType === "brand" && { logo: "", country: "" }),
+				...(entityType === "brand" && { logo: "", countryId: null }),
 				...(entityType === "collection" && { brandSlug: "" }),
 			} as CategoryFormData | BrandFormData | CollectionFormData);
 
@@ -197,7 +243,7 @@ export function SelectWithCreate({
 				image: "",
 				order: 0,
 			}),
-			...(entityType === "brand" && { logo: "", country: "" }),
+			...(entityType === "brand" && { logo: "", countryId: null }),
 			...(entityType === "collection" && { brandSlug: "" }),
 		} as CategoryFormData | BrandFormData | CollectionFormData);
 		setIsAutoSlug(true);
@@ -283,36 +329,11 @@ export function SelectWithCreate({
 
 						{/* Country selection for brands */}
 						{entityType === "brand" && (
-							<div>
-								<label
-									htmlFor={`${entityType}-country`}
-									className="block text-sm font-medium mb-1"
-								>
-									Страна
-								</label>
-								<select
-									id={`${entityType}-country`}
-									value={(formData as BrandFormData).country || ""}
-									onChange={(e) =>
-										setFormData((prev) => ({
-											...prev,
-											country: e.target.value || undefined,
-										}))
-									}
-									className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-								>
-									{BRAND_COUNTRIES.map((countryCode) => (
-										<option
-											key={countryCode}
-											value={countryCode === "NONE" ? "" : countryCode}
-										>
-											{getBrandCountryName(
-												countryCode === "NONE" ? "" : countryCode,
-											)}
-										</option>
-									))}
-								</select>
-							</div>
+							<BrandCountrySelect
+								formData={formData as BrandFormData}
+								setFormData={setFormData}
+								entityType={entityType}
+							/>
 						)}
 
 						{/* Brand selection for collections */}

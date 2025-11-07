@@ -6,6 +6,7 @@ import {
 	brands,
 	categories,
 	collections,
+	countries,
 	productAttributes,
 	productStoreLocations,
 	products,
@@ -50,36 +51,47 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 		const baseProduct = firstRow.products;
 
 		// Fetch additional data in parallel
-		const [storeLocationsData, collectionData] = await Promise.all([
-			// Fetch store locations for this product
-			db
-				.select()
-				.from(productStoreLocations)
-				.where(eq(productStoreLocations.productId, baseProduct.id))
-				.all()
-				.then(async (relations) => {
-					if (relations.length === 0) return [];
-					const locationIds = relations
-						.map((r) => r.storeLocationId)
-						.filter((id): id is number => id !== null);
-					if (locationIds.length === 0) return [];
-					return db
-						.select()
-						.from(storeLocations)
-						.where(inArray(storeLocations.id, locationIds))
-						.all()
-						.catch(() => []);
-				}),
-			// Fetch collection if exists
-			baseProduct.collectionSlug
-				? db
-						.select()
-						.from(collections)
-						.where(eq(collections.slug, baseProduct.collectionSlug))
-						.limit(1)
-						.then((rows) => rows[0] || null)
-				: Promise.resolve(null),
-		]);
+		const [storeLocationsData, collectionData, countryData] = await Promise.all(
+			[
+				// Fetch store locations for this product
+				db
+					.select()
+					.from(productStoreLocations)
+					.where(eq(productStoreLocations.productId, baseProduct.id))
+					.all()
+					.then(async (relations) => {
+						if (relations.length === 0) return [];
+						const locationIds = relations
+							.map((r) => r.storeLocationId)
+							.filter((id): id is number => id !== null);
+						if (locationIds.length === 0) return [];
+						return db
+							.select()
+							.from(storeLocations)
+							.where(inArray(storeLocations.id, locationIds))
+							.all()
+							.catch(() => []);
+					}),
+				// Fetch collection if exists
+				baseProduct.collectionSlug
+					? db
+							.select()
+							.from(collections)
+							.where(eq(collections.slug, baseProduct.collectionSlug))
+							.limit(1)
+							.then((rows) => rows[0] || null)
+					: Promise.resolve(null),
+				// Fetch country if brand has countryId
+				firstRow.brands?.countryId
+					? db
+							.select()
+							.from(countries)
+							.where(eq(countries.id, firstRow.brands.countryId))
+							.limit(1)
+							.then((rows) => rows[0] || null)
+					: Promise.resolve(null),
+			],
+		);
 
 		const variationsMap = new Map();
 
@@ -197,7 +209,12 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 						name: firstRow.brands.name,
 						slug: firstRow.brands.slug,
 						image: firstRow.brands.image,
-						country: firstRow.brands.country,
+						country: countryData
+							? {
+									name: countryData.name,
+									flagImage: countryData.flagImage,
+								}
+							: null,
 					}
 				: null,
 			collection: collectionData

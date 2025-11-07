@@ -1,10 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
 import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
+import { Button } from "~/components/ui/shared/Button";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { Input } from "~/components/ui/shared/input";
 import { Switch } from "~/components/ui/shared/Switch";
@@ -67,7 +69,6 @@ export interface EntityFormFieldsProps<
 export interface EntityListProps<TEntity> {
 	entities: TEntity[];
 	onEdit: (entity: TEntity) => void;
-	onDelete: (entity: TEntity) => void;
 }
 
 interface DashboardEntityManagerProps<
@@ -180,9 +181,17 @@ export function DashboardEntityManager<
 		// Determine if slug is custom (doesn't match auto-generated)
 		const isCustomSlug = entity.slug !== generateSlug(entity.name);
 
+		// Map entity fields to form data
+		const entityData = { ...entity } as Record<string, unknown>;
+
+		// Map image to logo for brands (entity has image field, form expects logo)
+		if ("image" in entityData && !("logo" in entityData)) {
+			entityData.logo = entityData.image;
+		}
+
 		form.editForm.setFormData({
 			...config.defaultFormData,
-			...entity, // Copy all entity fields to preserve custom fields like parentSlug
+			...entityData, // Copy all entity fields to preserve custom fields like parentSlug
 			name: entity.name,
 			slug: entity.slug,
 			isActive: (entity as { isActive?: boolean }).isActive ?? true,
@@ -284,7 +293,6 @@ export function DashboardEntityManager<
 						{config.renderList({
 							entities: data,
 							onEdit: handleEditEntity,
-							onDelete: handleDeleteEntityClick,
 						})}
 					</div>
 				)}
@@ -428,6 +436,28 @@ export function DashboardEntityManager<
 							}
 							return null;
 						})()}
+
+						{/* Delete Button Section */}
+						<DrawerSection maxWidth>
+							<div className="pt-4 border-t border-border">
+								<Button
+									type="button"
+									variant="destructive"
+									onClick={() => {
+										if (editingEntityId) {
+											const entity = data.find((e) => e.id === editingEntityId);
+											if (entity) {
+												handleDeleteEntityClick(entity);
+											}
+										}
+									}}
+									className="w-full"
+								>
+									<Trash2 className="w-4 h-4 mr-2" />
+									Удалить {config.entityName}
+								</Button>
+							</div>
+						</DrawerSection>
 					</form>
 				</DashboardFormDrawer>
 

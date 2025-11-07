@@ -1,16 +1,20 @@
+import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { sql } from "drizzle-orm";
 import { DB } from "~/db";
-import { productAttributes, products } from "~/schema";
+import { productAttributes } from "~/schema";
 
 export type AttributeCounts = Record<number, number>;
 
 /**
- * Efficiently gets product counts per attribute
+ * Efficiently gets product counts per attribute using SQL COUNT with JSON functions
  * Optimized for Cloudflare D1:
- * - Single query to get attributes (for mapping)
- * - Single query to get products with attributes (only necessary columns)
- * - In-memory counting (faster than complex SQL JSON parsing)
+ * - Uses SQLite's json_each() to expand JSON in the database (requires raw SQL)
+ * - Single SQL query with COUNT(DISTINCT) and GROUP BY
+ * - Much more efficient than fetching all products and parsing in memory
+ * - Handles both array format [{"attributeId": "1", "value": "red"}]
+ *   and object format {"color": "red"} (where keys are slugs)
+ *
+ * Note: Uses raw SQL because Drizzle doesn't support json_each() in query builder
  *
  * Returns a map: attributeId -> productCount
  */
@@ -19,68 +23,63 @@ export const getProductAttributeCounts = createServerFn({ method: "GET" })
 	.handler(async (): Promise<AttributeCounts> => {
 		const db = DB();
 
-		// Get all attributes for mapping
+		// Get all attributes for slug-to-ID mapping (needed for object format)
 		const attributes = await db.select().from(productAttributes);
-
-		// Get all products that have attributes (only fetch necessary columns for efficiency)
-		const productsWithAttributes = await db
-			.select({
-				id: products.id,
-				productAttributes: products.productAttributes,
-			})
-			.from(products)
-			.where(sql`${products.productAttributes} IS NOT NULL`);
-
-		// Create unified lookup: attributeId (as string) or slug -> numeric ID
-		const attributeLookup = new Map<string, number>();
+		const slugToIdMap = new Map<string, number>();
 		attributes.forEach((attr) => {
-			attributeLookup.set(attr.id.toString(), attr.id);
-			attributeLookup.set(attr.slug, attr.id);
+			slugToIdMap.set(attr.slug, attr.id);
+			slugToIdMap.set(attr.id.toString(), attr.id); // Also map ID strings
 		});
 
-		// Count unique products per attribute (using Set to ensure each product is counted once)
-		const attributeProductSets = new Map<number, Set<number>>();
+		// Use SQL COUNT with json_each to count products per attribute
+		// Note: json_each() requires raw SQL as Drizzle doesn't support it in query builder
+		// This is the most efficient approach for JSON operations in SQLite/D1
+		const rawQuery = `
+			WITH expanded_attributes AS (
+				SELECT 
+					p.id as product_id,
+					CASE 
+						WHEN json_type(p.product_attributes) = 'array' THEN
+							json_extract(value.value, '$.attributeId')
+						WHEN json_type(p.product_attributes) = 'object' THEN
+							value.key
+						ELSE NULL
+					END as attribute_identifier
+				FROM products p
+				CROSS JOIN json_each(p.product_attributes) as value
+				WHERE p.product_attributes IS NOT NULL
+			)
+			SELECT 
+				attribute_identifier,
+				COUNT(DISTINCT product_id) as count
+			FROM expanded_attributes
+			WHERE attribute_identifier IS NOT NULL
+			GROUP BY attribute_identifier
+		`;
 
-		for (const product of productsWithAttributes) {
-			if (!product.productAttributes) continue;
+		// Use D1 database directly for raw SQL (required for json_each)
+		const result = await env.DB.prepare(rawQuery).all<{
+			attribute_identifier: string;
+			count: number;
+		}>();
 
-			try {
-				const parsed = JSON.parse(product.productAttributes);
-
-				// Normalize to array format
-				const attrs = Array.isArray(parsed)
-					? parsed
-					: typeof parsed === "object" && parsed !== null
-						? Object.entries(parsed).map(([key, value]) => ({
-								attributeId: key,
-								value: String(value),
-							}))
-						: [];
-
-				// Track unique attributes per product to avoid double-counting within same product
-				const seenAttributes = new Set<number>();
-
-				for (const attr of attrs) {
-					const attributeId = attributeLookup.get(attr.attributeId);
-
-					// Only count each attribute once per product (handles edge case of duplicate entries)
-					if (attributeId && !seenAttributes.has(attributeId)) {
-						seenAttributes.add(attributeId);
-
-						const productSet =
-							attributeProductSets.get(attributeId) ?? new Set<number>();
-						productSet.add(product.id);
-						attributeProductSets.set(attributeId, productSet);
-					}
-				}
-			} catch {}
-		}
-
-		// Convert to simple object: attributeId -> count
+		// Convert SQL result to our format: attributeId -> count
+		// Need to map slugs to IDs for object format
 		const counts: AttributeCounts = {};
-		attributeProductSets.forEach((productSet, attributeId) => {
-			counts[attributeId] = productSet.size;
-		});
+
+		if (result.results) {
+			for (const row of result.results) {
+				const identifier = String(row.attribute_identifier || "");
+				const count = Number(row.count || 0);
+				const attributeId = slugToIdMap.get(identifier);
+
+				if (attributeId && count > 0) {
+					// If we already have a count for this attribute, take the maximum
+					// (shouldn't happen, but defensive)
+					counts[attributeId] = Math.max(counts[attributeId] || 0, count);
+				}
+			}
+		}
 
 		return counts;
 	});

@@ -105,6 +105,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
 	const isStore = pathname.startsWith("/store");
 	const isDashboard = pathname.startsWith("/dashboard");
+	const isLogin = pathname === "/login";
 
 	return (
 		<html
@@ -119,7 +120,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<NavBar />
 
 				<main className="flex-1">{children}</main>
-				{!isStore && !isDashboard && <Footer />}
+				{!isStore && !isDashboard && !isLogin && <Footer />}
 				{/* <TanStackRouterDevtools position="bottom-right" /> */}
 				<Scripts />
 			</body>

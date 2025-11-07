@@ -58,12 +58,10 @@ const AttributeFormFields = ({
 const AttributeList = ({
 	entities,
 	onEdit,
-	onDelete,
 }: EntityListProps<ProductAttributeWithCount>) => (
 	<EntityCardGrid
 		entities={entities}
 		onEdit={onEdit}
-		onDelete={onDelete}
 		renderEntity={(attribute) => (
 			<div className="flex flex-col flex-1 min-w-0 gap-2">
 				<div className="flex items-center gap-2">

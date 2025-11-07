@@ -15,9 +15,10 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Trash2, Upload } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ASSETS_BASE_URL } from "~/constants/urls";
+import { getImageMetadata } from "~/server_functions/dashboard/store/getImageMetadata";
 import { uploadProductImage } from "~/server_functions/dashboard/store/uploadProductImage";
 import { Button } from "../shared/Button";
 import { Textarea } from "../shared/TextArea";
@@ -35,9 +36,15 @@ interface SortableImageItemProps {
 	image: string;
 	index: number;
 	onRemove: (index: number) => Promise<void>;
+	fileSize?: number; // File size in bytes
 }
 
-function SortableImageItem({ image, index, onRemove }: SortableImageItemProps) {
+function SortableImageItem({
+	image,
+	index,
+	onRemove,
+	fileSize,
+}: SortableImageItemProps) {
 	const {
 		attributes,
 		listeners,
@@ -51,6 +58,14 @@ function SortableImageItem({ image, index, onRemove }: SortableImageItemProps) {
 		transform: CSS.Transform.toString(transform),
 		transition,
 		opacity: isDragging ? 0.5 : 1,
+	};
+
+	// Format file size for display
+	const formatFileSize = (bytes?: number): string => {
+		if (!bytes) return "";
+		if (bytes < 1024) return `${bytes} B`;
+		if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+		return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 	};
 
 	return (
@@ -94,6 +109,11 @@ function SortableImageItem({ image, index, onRemove }: SortableImageItemProps) {
 				<p className="text-xs truncate font-mono text-muted-foreground">
 					{image.split("/").pop()}
 				</p>
+				{fileSize && (
+					<p className="text-xs text-muted-foreground mt-0.5">
+						{formatFileSize(fileSize)}
+					</p>
+				)}
 			</div>
 		</div>
 	);
@@ -115,12 +135,12 @@ export function ImageUpload({
 	const [deletedImages, setDeletedImages] = useState<string[]>([]);
 	const [isDragging, setIsDragging] = useState(false);
 	const [isPasting, setIsPasting] = useState(false);
+	const [imageSizes, setImageSizes] = useState<Map<string, number>>(new Map()); // File sizes fetched from R2 server
+	const fetchedImagesRef = useRef<Set<string>>(new Set()); // Track which images we've already fetched metadata for
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
-	const fileInputId =
-		typeof crypto !== "undefined" && crypto.randomUUID
-			? crypto.randomUUID()
-			: `file-input-${Date.now()}`;
+	const fileInputId = useId(); // Use React's useId for stable SSR-safe IDs
+	const isProcessingPasteRef = useRef(false); // Guard to prevent double-processing paste events
 
 	// Drag and drop sensors
 	const sensors = useSensors(
@@ -131,8 +151,8 @@ export function ImageUpload({
 	// Helper function to generate proper file name
 	const generateProperFileName = useCallback(
 		(extension: string = "webp"): string => {
-			// If we have categorySlug and productName, use the proper structure
-			if (categorySlug && productName) {
+			// If we have productName, use it (works for both products with categorySlug and countries without)
+			if (productName?.trim()) {
 				// Sanitize the product name for file system
 				const sanitizedProductName = productName
 					.toLowerCase()
@@ -140,18 +160,36 @@ export function ImageUpload({
 					.replace(/-+/g, "-")
 					.replace(/^-|-$/g, "");
 
-				return `${sanitizedProductName}.${extension}`;
+				// If sanitization resulted in empty string, fall back to timestamp
+				if (sanitizedProductName) {
+					return `${sanitizedProductName}.${extension}`;
+				}
 			}
 
-			// Fallback to original logic for backward compatibility
+			// Fallback to timestamp-based name
 			const timestamp = Date.now();
 			return `pasted-image-${timestamp}.${extension}`;
 		},
-		[categorySlug, productName],
+		[productName],
 	);
 
 	// Parse comma-separated string into array
+	// Use a ref to track previous currentImages to avoid unnecessary updates
+	const prevCurrentImagesRef = useRef<string>("");
+
 	useEffect(() => {
+		// Only update if currentImages actually changed
+		if (prevCurrentImagesRef.current === currentImages) {
+			return;
+		}
+
+		const wasEmpty =
+			!prevCurrentImagesRef.current ||
+			prevCurrentImagesRef.current.trim() === "";
+		const isEmpty = !currentImages || currentImages.trim() === "";
+
+		prevCurrentImagesRef.current = currentImages || "";
+
 		const images = currentImages
 			? currentImages
 					.split(",")
@@ -159,10 +197,82 @@ export function ImageUpload({
 					.filter(Boolean)
 			: [];
 
+		console.log("Syncing imageList from currentImages:", {
+			currentImages,
+			images,
+		});
+
 		setImageList(images);
-		// Reset deleted images when currentImages changes (e.g., modal reopened)
-		setDeletedImages([]);
+		// Clean up sizes and fetched tracking for images that are no longer in the list
+		setImageSizes((prev) => {
+			const newMap = new Map(prev);
+			// Remove sizes for images that are no longer in the list
+			for (const [imagePath] of newMap) {
+				if (!images.includes(imagePath)) {
+					newMap.delete(imagePath);
+					fetchedImagesRef.current.delete(imagePath);
+				}
+			}
+			return newMap;
+		});
+		// Only reset deleted images when currentImages changes from empty to non-empty or vice versa
+		// Don't reset if we're just syncing (e.g., after upload)
+		if (wasEmpty !== isEmpty) {
+			// Only reset if switching between empty and non-empty states
+			setDeletedImages([]);
+		}
 	}, [currentImages]);
+
+	// Fetch metadata from R2 server for all images in the list
+	useEffect(() => {
+		const fetchMetadataForImages = async () => {
+			// Only fetch for images that we haven't fetched yet
+			const imagesNeedingMetadata = imageList.filter(
+				(image) => !fetchedImagesRef.current.has(image),
+			);
+
+			if (imagesNeedingMetadata.length === 0) {
+				return;
+			}
+
+			// Mark these images as being fetched to prevent duplicate requests
+			imagesNeedingMetadata.forEach((image) => {
+				fetchedImagesRef.current.add(image);
+			});
+
+			// Fetch metadata for all images in parallel from R2
+			const metadataPromises = imagesNeedingMetadata.map(async (image) => {
+				try {
+					const metadata = await getImageMetadata({
+						data: { filename: image },
+					});
+					if (metadata) {
+						return { image, size: metadata.size };
+					}
+				} catch (error) {
+					console.warn(`Failed to fetch metadata from R2 for ${image}:`, error);
+					// Remove from fetched set on error so we can retry
+					fetchedImagesRef.current.delete(image);
+				}
+				return null;
+			});
+
+			const results = await Promise.all(metadataPromises);
+
+			// Update sizes map with metadata fetched from R2 server
+			setImageSizes((prev) => {
+				const newMap = new Map(prev);
+				results.forEach((result) => {
+					if (result) {
+						newMap.set(result.image, result.size);
+					}
+				});
+				return newMap;
+			});
+		};
+
+		fetchMetadataForImages();
+	}, [imageList]);
 
 	// --- Client-side image compression & WebP conversion ---
 	const compressToWebP = useCallback(async (file: File): Promise<File> => {
@@ -198,6 +308,14 @@ export function ImageUpload({
 			});
 
 		try {
+			// Never process SVG files - they should be uploaded as-is
+			const isSvg =
+				file.type === "image/svg+xml" ||
+				file.name.toLowerCase().endsWith(".svg");
+			if (isSvg) {
+				return file;
+			}
+
 			// If already WebP and reasonably small, skip heavy work
 			const alreadyWebp = file.type === "image/webp";
 			if (alreadyWebp && file.size <= 1.4 * 1024 * 1024) return file;
@@ -244,22 +362,52 @@ export function ImageUpload({
 
 	const validateAndUploadFile = useCallback(
 		async (file: File) => {
+			// Guard: prevent duplicate uploads if already processing
+			if (isUploading || isPasting) {
+				console.log("Skipping upload - already processing:", {
+					isUploading,
+					isPasting,
+					fileName: file.name,
+				});
+				return;
+			}
+
+			console.log("validateAndUploadFile called with file:", {
+				name: file.name,
+				type: file.type,
+				size: file.size,
+				currentDeletedImages: deletedImages,
+			});
+
 			// Validate file type
 			const allowedTypes = [
 				"image/jpeg",
 				"image/jpg",
 				"image/png",
 				"image/webp",
+				"image/svg+xml",
 			];
-			if (!allowedTypes.includes(file.type)) {
+			// Also check file extension for SVG (some browsers may not set MIME type correctly)
+			const isSvg =
+				file.type === "image/svg+xml" ||
+				file.name.toLowerCase().endsWith(".svg");
+
+			// If file type is empty or not recognized, but it's from clipboard, assume it's an image
+			if (!file.type && file.size > 0) {
+				console.warn(
+					"File type is empty, assuming image/png for clipboard paste",
+				);
+				// We'll proceed with the upload and let the server handle validation
+			} else if (!allowedTypes.includes(file.type) && !isSvg) {
+				console.error("Invalid file type:", file.type);
 				toast.error(
-					"Недопустимый тип файла. Разрешены только JPEG, PNG и WebP.",
+					"Недопустимый тип файла. Разрешены только JPEG, PNG, WebP и SVG.",
 				);
 				return;
 			}
 
-			// Validate file size
-			const defaultMaxSizeMB = 5;
+			// Validate file size (SVG files can be larger)
+			const defaultMaxSizeMB = isSvg ? 5 : 5; // Both can be 5MB, but SVG validation is more lenient
 			const maxSize = defaultMaxSizeMB * 1024 * 1024;
 			if (file.size > maxSize) {
 				toast.error(`File size must be less than ${defaultMaxSizeMB}MB`);
@@ -269,11 +417,16 @@ export function ImageUpload({
 			setIsUploading(true);
 
 			try {
-				// Compress & convert to WebP before uploading
-				const processed = await compressToWebP(file);
+				// Skip compression for SVG files (they're already optimized vector graphics)
+				// Also skip compression if file type is empty (clipboard paste issue)
+				const shouldSkipCompression = isSvg || !file.type;
+				const processed = shouldSkipCompression
+					? file
+					: await compressToWebP(file);
 
 				// Hard guard: if still above target, ask user to try a smaller image
-				if (processed.size > TARGET_MAX_BYTES) {
+				// Skip size check for SVG files (they're usually small and vector-based)
+				if (!shouldSkipCompression && processed.size > TARGET_MAX_BYTES) {
 					toast.error(
 						"Изображение слишком большое после сжатия. Используйте изображение меньшего размера (~700КБ макс.).",
 					);
@@ -287,11 +440,27 @@ export function ImageUpload({
 					try {
 						const base64String = reader.result as string;
 
+						if (!base64String) {
+							console.error("FileReader result is empty");
+							toast.error("Не удалось прочитать файл: пустые данные");
+							setIsUploading(false);
+							return;
+						}
+
+						console.log("Uploading image:", {
+							fileName: processed.name,
+							fileType: processed.type || "image/png",
+							fileSize: processed.size,
+							folder,
+							slug,
+							productName,
+						});
+
 						const result = await uploadProductImage({
 							data: {
 								fileData: base64String,
 								fileName: processed.name,
-								fileType: processed.type,
+								fileType: processed.type || "image/png", // Fallback to image/png if type is empty
 								fileSize: processed.size,
 								folder,
 								slug,
@@ -300,30 +469,59 @@ export function ImageUpload({
 							},
 						});
 
-						if (result.success) {
+						console.log("Upload result:", result);
+
+						if (result?.success && result?.filename) {
 							toast.success("Изображение успешно загружено!");
 							// Add new image to the list
 							const newImages = [...imageList, result.filename];
+							const newImagesString = newImages.join(", ");
 
-							setImageList(newImages); // Update local state immediately for instant preview
-							onImagesChange(newImages.join(", "));
+							console.log("Updating image list:", {
+								oldList: imageList,
+								newList: newImages,
+								newString: newImagesString,
+								deletedImages,
+							});
+
+							// Update local state immediately for instant preview
+							setImageList(newImages);
+							// File size will be fetched from R2 server via useEffect
+
+							// Update parent with new images AND preserve deleted images
+							// This ensures deleted images are tracked even when new images are added
+							onImagesChange(
+								newImagesString,
+								deletedImages.length > 0 ? deletedImages : undefined,
+							);
+
+							// IMPORTANT: Reset uploading state after successful upload
+							setIsUploading(false);
+
 							// Reset the form
 							if (fileInputRef.current) {
 								fileInputRef.current.value = "";
 							}
+						} else {
+							console.error("Upload failed - invalid result:", result);
+							toast.error(
+								"Загрузка изображения не удалась: файл не был загружен",
+							);
+							setIsUploading(false);
 						}
 					} catch (error) {
+						console.error("Error uploading image:", error);
 						toast.error(
 							error instanceof Error
 								? error.message
 								: "Не удалось загрузить изображение",
 						);
-					} finally {
 						setIsUploading(false);
 					}
 				};
 
-				reader.onerror = () => {
+				reader.onerror = (error) => {
+					console.error("FileReader error:", error);
 					toast.error("Не удалось прочитать файл");
 					setIsUploading(false);
 				};
@@ -346,12 +544,20 @@ export function ImageUpload({
 			categorySlug,
 			productName,
 			compressToWebP,
+			deletedImages,
+			isUploading,
+			isPasting,
 		],
 	);
 
-	// Handle clipboard paste
+	// Handle clipboard paste (document-level handler)
 	const handleClipboardPaste = useCallback(
 		async (event: ClipboardEvent) => {
+			// Guard: prevent double-processing if container handler already processed it
+			if (isProcessingPasteRef.current) {
+				return;
+			}
+
 			// Check if we're in the image upload context
 			const isInImageUploadContext =
 				containerRef.current?.contains(document.activeElement) ||
@@ -374,6 +580,8 @@ export function ImageUpload({
 
 				if (item.type.startsWith("image/")) {
 					event.preventDefault();
+					event.stopPropagation(); // Prevent container handler from also firing
+					isProcessingPasteRef.current = true;
 					setIsPasting(true);
 
 					try {
@@ -381,20 +589,44 @@ export function ImageUpload({
 
 						if (file) {
 							// Generate a proper filename based on product info
-							const extension = file.type.split("/")[1] || "png";
+							// Handle SVG files specially (type is "image/svg+xml")
+							let extension = "png";
+							let mimeType = file.type;
+
+							// If file type is empty or generic, use the clipboard item type
+							if (!mimeType || mimeType === "application/octet-stream") {
+								mimeType = item.type;
+							}
+
+							if (mimeType === "image/svg+xml") {
+								extension = "svg";
+							} else if (mimeType.startsWith("image/")) {
+								const typeParts = mimeType.split("/");
+								extension = typeParts[1] || "png";
+								// Normalize jpg to jpeg
+								if (extension === "jpg") extension = "jpeg";
+							}
+
 							const filename = generateProperFileName(extension);
 
-							// Create a new File object with the proper name
-							const namedFile = new File([file], filename, { type: file.type });
+							// Create a new File object with the proper name and type
+							const namedFile = new File([file], filename, {
+								type: mimeType || "image/png",
+							});
 
 							await validateAndUploadFile(namedFile);
 						} else {
 							toast.error("Не удалось извлечь изображение из буфера обмена");
 						}
-					} catch (_error) {
+					} catch (error) {
+						console.error("Error pasting image:", error);
 						toast.error("Не удалось вставить изображение из буфера обмена");
 					} finally {
 						setIsPasting(false);
+						// Reset guard after a short delay to allow for async operations
+						setTimeout(() => {
+							isProcessingPasteRef.current = false;
+						}, 100);
 					}
 					break;
 				}
@@ -412,12 +644,25 @@ export function ImageUpload({
 	}, [handleClipboardPaste]);
 
 	// Alternative: Add paste event directly to the container
+	// This handler should only fire if the document-level handler didn't catch it
 	const handleContainerPaste = useCallback(
 		async (event: React.ClipboardEvent) => {
+			// Guard: prevent double-processing if document handler already processed it
+			if (isProcessingPasteRef.current) {
+				event.preventDefault();
+				event.stopPropagation();
+				return;
+			}
+
 			event.preventDefault();
+			event.stopPropagation(); // Prevent document handler from also firing
+			isProcessingPasteRef.current = true;
 
 			const clipboardData = event.clipboardData;
-			if (!clipboardData) return;
+			if (!clipboardData) {
+				isProcessingPasteRef.current = false;
+				return;
+			}
 
 			const items = clipboardData.items;
 
@@ -433,20 +678,44 @@ export function ImageUpload({
 
 						if (file) {
 							// Generate a proper filename based on product info
-							const extension = file.type.split("/")[1] || "png";
+							// Handle SVG files specially (type is "image/svg+xml")
+							let extension = "png";
+							let mimeType = file.type;
+
+							// If file type is empty or generic, use the clipboard item type
+							if (!mimeType || mimeType === "application/octet-stream") {
+								mimeType = item.type;
+							}
+
+							if (mimeType === "image/svg+xml") {
+								extension = "svg";
+							} else if (mimeType.startsWith("image/")) {
+								const typeParts = mimeType.split("/");
+								extension = typeParts[1] || "png";
+								// Normalize jpg to jpeg
+								if (extension === "jpg") extension = "jpeg";
+							}
+
 							const filename = generateProperFileName(extension);
 
-							// Create a new File object with the proper name
-							const namedFile = new File([file], filename, { type: file.type });
+							// Create a new File object with the proper name and type
+							const namedFile = new File([file], filename, {
+								type: mimeType || "image/png",
+							});
 
 							await validateAndUploadFile(namedFile);
 						} else {
 							toast.error("Не удалось извлечь изображение из буфера обмена");
 						}
-					} catch (_error) {
+					} catch (error) {
+						console.error("Error pasting image:", error);
 						toast.error("Не удалось вставить изображение из буфера обмена");
 					} finally {
 						setIsPasting(false);
+						// Reset guard after a short delay to allow for async operations
+						setTimeout(() => {
+							isProcessingPasteRef.current = false;
+						}, 100);
 					}
 					break;
 				}
@@ -508,6 +777,14 @@ export function ImageUpload({
 		const newImages = imageList.filter((_, i) => i !== index);
 		const newImagesString = newImages.join(", ");
 
+		// Remove file size from map (cleanup)
+		setImageSizes((prev) => {
+			const newMap = new Map(prev);
+			newMap.delete(imageToRemove);
+			fetchedImagesRef.current.delete(imageToRemove);
+			return newMap;
+		});
+
 		// Update local state immediately for instant preview
 		setImageList(newImages);
 		// Update parent with new list and deleted images
@@ -516,7 +793,11 @@ export function ImageUpload({
 	};
 
 	const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-		onImagesChange(e.target.value);
+		// When manually editing via textarea, preserve deleted images
+		onImagesChange(
+			e.target.value,
+			deletedImages.length > 0 ? deletedImages : undefined,
+		);
 	};
 
 	const handleDragEnd = (event: DragEndEvent) => {
@@ -592,6 +873,7 @@ export function ImageUpload({
 											image={image}
 											index={index}
 											onRemove={handleRemoveImage}
+											fileSize={imageSizes.get(image)}
 										/>
 									);
 								})}
@@ -624,7 +906,8 @@ export function ImageUpload({
 					</DndContext>
 
 					<p className="text-xs text-muted-foreground mt-3 text-center">
-						JPEG, PNG, WebP • Макс. 700КБ • Вставка изображений Ctrl+V
+						JPEG, PNG, WebP, SVG • Макс. 700КБ (SVG: 1.5МБ) • Вставка
+						изображений Ctrl+V
 					</p>
 				</section>
 			)}
@@ -632,7 +915,7 @@ export function ImageUpload({
 			<input
 				ref={fileInputRef}
 				type="file"
-				accept="image/jpeg,image/jpg,image/png,image/webp"
+				accept="image/jpeg,image/jpg,image/png,image/webp,image/svg+xml,.svg"
 				id={fileInputId}
 				onChange={handleFileChange}
 				disabled={isUploading}
