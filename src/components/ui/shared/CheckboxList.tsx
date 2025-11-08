@@ -12,7 +12,7 @@ interface CheckboxListProps {
 	selectedIds: (string | number)[];
 	onItemChange: (itemId: string | number, checked: boolean) => void;
 	idPrefix: string;
-	columns?: 1 | 2; // Number of columns
+	columns?: 1 | 2 | 3 | 4; // Number of columns
 	showOnlyActive?: boolean; // Filter to show only active items
 }
 
@@ -30,7 +30,14 @@ export function CheckboxList({
 		: items;
 
 	// Determine grid columns
-	const gridCols = columns === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2";
+	const gridCols =
+		columns === 1
+			? "grid-cols-1"
+			: columns === 2
+				? "grid-cols-1 md:grid-cols-2"
+				: columns === 3
+					? "grid-cols-2 md:grid-cols-2 lg:grid-cols-3"
+					: "grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
 
 	return (
 		<div className={`grid ${gridCols} gap-0`}>

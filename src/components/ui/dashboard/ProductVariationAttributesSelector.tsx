@@ -1,4 +1,4 @@
-import { Switch } from "~/components/ui/shared/Switch";
+import { CheckboxList } from "~/components/ui/shared/CheckboxList";
 import { useProductAttributes } from "~/hooks/useProductAttributes";
 
 interface ProductVariationAttributesSelectorProps {
@@ -12,13 +12,14 @@ export default function ProductVariationAttributesSelector({
 }: ProductVariationAttributesSelectorProps) {
 	const { data: availableAttributes } = useProductAttributes();
 
-	const handleAttributeToggle = (attributeId: string) => {
-		if (selectedAttributes.includes(attributeId)) {
-			// Remove attribute
-			onChange(selectedAttributes.filter((id) => id !== attributeId));
-		} else {
+	const handleAttributeChange = (itemId: string | number, checked: boolean) => {
+		const attributeId = itemId.toString();
+		if (checked) {
 			// Add attribute
 			onChange([...selectedAttributes, attributeId]);
+		} else {
+			// Remove attribute
+			onChange(selectedAttributes.filter((id) => id !== attributeId));
 		}
 	};
 
@@ -36,48 +37,28 @@ export default function ProductVariationAttributesSelector({
 			<div>
 				<h3 className="text-sm font-medium text-foreground mb-3">
 					Выберите атрибуты для вариаций
+					{selectedAttributes.length > 0 && (
+						<sup className="ml-1 font-normal text-primary">
+							{selectedAttributes.length}
+						</sup>
+					)}
 				</h3>
 				<p className="text-sm text-muted-foreground mb-4">
 					Выбранные атрибуты будут использоваться для всех вариаций товара
 				</p>
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-				{availableAttributes.map((attribute) => {
-					const attributeIdStr = attribute.id.toString();
-					const isSelected = selectedAttributes.includes(attributeIdStr);
-
-					return (
-						<div
-							key={attribute.id}
-							className="flex items-center space-x-3 p-3 border border-border rounded-md hover:bg-muted/50 transition-colors"
-						>
-							<Switch
-								id={`attr-${attribute.id}`}
-								checked={isSelected}
-								onChange={() => handleAttributeToggle(attributeIdStr)}
-							/>
-							<label
-								htmlFor={`attr-${attribute.id}`}
-								className="flex-1 text-sm font-medium cursor-pointer"
-							>
-								{attribute.name}
-							</label>
-						</div>
-					);
-				})}
-			</div>
-
-			{selectedAttributes.length > 0 && (
-				<div className="mt-4 p-3 bg-muted/30 rounded-md">
-					<p className="text-sm text-muted-foreground">
-						Выбрано атрибутов:{" "}
-						<span className="font-medium text-foreground">
-							{selectedAttributes.length}
-						</span>
-					</p>
-				</div>
-			)}
+			<CheckboxList
+				items={availableAttributes.map((attribute) => ({
+					id: attribute.id.toString(),
+					label: attribute.name,
+					isActive: attribute.isActive,
+				}))}
+				selectedIds={selectedAttributes}
+				onItemChange={handleAttributeChange}
+				idPrefix="variation-attr"
+				columns={3}
+			/>
 		</div>
 	);
 }

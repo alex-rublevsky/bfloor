@@ -636,16 +636,25 @@ export function NavBar({
 	const currentSearchParam = (
 		routerState.location.search as unknown as Record<string, unknown>
 	)?.search;
-	const [typedDashboardSearch, setTypedDashboardSearch] = useState(
-		typeof currentSearchParam === "string" ? currentSearchParam : "",
-	);
+	const [typedDashboardSearch, setTypedDashboardSearch] = useState(() => {
+		// Handle both string and number (numeric strings can be parsed as numbers by the router)
+		if (typeof currentSearchParam === "string") return currentSearchParam;
+		if (typeof currentSearchParam === "number")
+			return String(currentSearchParam);
+		return "";
+	});
 
 	// Keep internal input in sync with URL changes
 	useEffect(() => {
 		if (!isDashboard) return;
-		setTypedDashboardSearch(
-			typeof currentSearchParam === "string" ? currentSearchParam : "",
-		);
+		// Handle both string and number (numeric strings can be parsed as numbers by the router)
+		const searchValue =
+			typeof currentSearchParam === "string"
+				? currentSearchParam
+				: typeof currentSearchParam === "number"
+					? String(currentSearchParam)
+					: "";
+		setTypedDashboardSearch(searchValue);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isDashboard, currentSearchParam]);
 

@@ -76,11 +76,11 @@ function SortableImageItem({
 			style={style}
 			className="relative group bg-background rounded-lg border border-border overflow-hidden"
 		>
-			<div className="aspect-square relative">
+			<div className="relative w-full">
 				<img
 					src={`${ASSETS_BASE_URL}/${image}`}
 					alt={`Product ${index + 1}`}
-					className="w-full h-full object-cover"
+					className="w-full h-auto object-contain"
 					onLoad={() => {}}
 					onError={(e) => {
 						e.currentTarget.src =
@@ -963,7 +963,7 @@ export function ImageUpload({
 										<>
 											<Upload className="w-6 h-6 group-hover:scale-110 transition-transform" />
 											<span className="text-xs text-center px-2">
-												Перетащите файлы, выберите файл или вставьте (Ctrl+V)
+												Выберите файлы
 											</span>
 										</>
 									)}
@@ -973,8 +973,7 @@ export function ImageUpload({
 					</DndContext>
 
 					<p className="text-xs text-muted-foreground mt-3 text-center">
-						JPEG, PNG, WebP, SVG • Макс. 700КБ (SVG: 1.5МБ) • Вставка
-						изображений Ctrl+V
+						Перетащите файлы или вставьте (Ctrl+V)
 					</p>
 				</section>
 			)}

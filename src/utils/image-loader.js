@@ -1,6 +1,6 @@
 const ASSETS_URL = "https://pub-aecfacef31684b0aa951c03db5f14d4e.r2.dev";
 
-export default function cloudflareLoader({ src, width, quality }) {
+export default function cloudflareLoader({ src }) {
 	// If the source is already a full URL, use it as is
 	if (src.startsWith("https://")) {
 		return src;

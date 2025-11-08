@@ -23,9 +23,9 @@ import { ProductSettingsFields } from "~/components/ui/dashboard/ProductSettings
 import ProductVariationAttributesSelector from "~/components/ui/dashboard/ProductVariationAttributesSelector";
 import ProductVariationForm from "~/components/ui/dashboard/ProductVariationForm";
 import { SelectWithCreate } from "~/components/ui/dashboard/SelectWithCreate";
-import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
 import { StoreLocationsSelector } from "~/components/ui/dashboard/StoreLocationsSelector";
+import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
 import { Button } from "~/components/ui/shared/Button";
 import { CheckboxList } from "~/components/ui/shared/CheckboxList";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
@@ -96,8 +96,12 @@ const validateSearch = (search: Record<string, unknown>) => {
 			| "oldest";
 	} = {};
 
+	// Handle both string and number (numeric strings can be parsed as numbers by the router)
 	if (typeof search.search === "string") {
 		result.search = search.search;
+	} else if (typeof search.search === "number") {
+		// Convert number back to string (e.g., "12345" might be parsed as 12345)
+		result.search = String(search.search);
 	}
 
 	if (typeof search.category === "string") {
@@ -176,9 +180,14 @@ function RouteComponent() {
 	const navigate = Route.useNavigate();
 
 	const normalizedSearch = (() => {
-		const value =
-			typeof searchParams.search === "string" ? searchParams.search : "";
-		const trimmed = value.trim().replace(/\s+/g, " ");
+		// Handle both string and number (numeric strings can be parsed as numbers by the router)
+		const rawValue =
+			typeof searchParams.search === "string"
+				? searchParams.search
+				: typeof searchParams.search === "number"
+					? String(searchParams.search)
+					: "";
+		const trimmed = rawValue.trim().replace(/\s+/g, " ");
 		return trimmed.length >= 2 ? trimmed : undefined;
 	})();
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -332,10 +341,20 @@ function RouteComponent() {
 
 	// Function to invalidate specific product cache (for updates)
 	const invalidateProductCache = (
-		_productId: number,
+		productId: number,
 		oldSlug?: string,
 		newSlug?: string,
 	) => {
+		// Invalidate dashboard products infinite query - this will trigger a refetch
+		queryClient.invalidateQueries({
+			queryKey: ["bfloorDashboardProductsInfinite"],
+		});
+
+		// Invalidate the specific dashboard product query by ID - this ensures the drawer shows fresh data
+		queryClient.invalidateQueries({
+			queryKey: ["bfloorDashboardProduct", productId],
+		});
+
 		// Remove store data cache completely - forces fresh fetch on all clients
 		queryClient.removeQueries({
 			queryKey: ["bfloorStoreDataInfinite"],
@@ -1518,50 +1537,52 @@ function RouteComponent() {
 						isSearchResult={!!normalizedSearch}
 					/>
 				) : (
-					<div
-						className="relative px-4 py-4"
-						style={{
-							height: `${virtualizer.getTotalSize()}px`,
-							width: "100%",
-							position: "relative",
-						}}
-					>
-						{/* Following TanStack Virtual dynamic example pattern for useWindowVirtualizer */}
-						{virtualizer.getVirtualItems().map((virtualRow) => {
-							const rowProducts = getProductsForRow(virtualRow.index);
-							return (
-								<div
-									key={virtualRow.key}
-									data-index={virtualRow.index}
-									ref={virtualizer.measureElement}
-									style={{
-										position: "absolute",
-										top: 0,
-										left: 0,
-										width: "100%",
-										transform: `translateY(${virtualRow.start}px)`,
-									}}
-								>
-									<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
-										{rowProducts.map((product: ProductWithVariations) => (
-											<AdminProductCard
-												key={product.id}
-												product={product}
-												onEdit={handleEdit}
-												formatPrice={formatPrice}
-											/>
-										))}
+					<>
+						<div
+							className="relative px-4 py-4"
+							style={{
+								height: `${virtualizer.getTotalSize()}px`,
+								width: "100%",
+								position: "relative",
+							}}
+						>
+							{/* Following TanStack Virtual dynamic example pattern for useWindowVirtualizer */}
+							{virtualizer.getVirtualItems().map((virtualRow) => {
+								const rowProducts = getProductsForRow(virtualRow.index);
+								return (
+									<div
+										key={virtualRow.key}
+										data-index={virtualRow.index}
+										ref={virtualizer.measureElement}
+										style={{
+											position: "absolute",
+											top: 0,
+											left: 0,
+											width: "100%",
+											transform: `translateY(${virtualRow.start}px)`,
+										}}
+									>
+										<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
+											{rowProducts.map((product: ProductWithVariations) => (
+												<AdminProductCard
+													key={product.id}
+													product={product}
+													onEdit={handleEdit}
+													formatPrice={formatPrice}
+												/>
+											))}
+										</div>
 									</div>
-								</div>
-							);
-						})}
+								);
+							})}
+						</div>
 						{/* Loading indicator for next page */}
 						{isFetchingNextPage && (
-							<div className="absolute top-0 left-0 w-full flex items-center justify-center p-8">
+							<div className="w-full flex items-center justify-center p-8">
 								<p className="text-muted-foreground">Загрузка...</p>
 							</div>
 						)}
-					</div>
+					</>
 				)}
 			</div>
 			{/* Replace Edit Modal with Drawer */}
@@ -1695,7 +1716,6 @@ function RouteComponent() {
 									name="sku"
 									value={editFormData.sku || ""}
 									onChange={handleEditChange}
-									placeholder="Опционально - уникальный артикул товара"
 								/>
 
 								{/* Settings Fields */}
@@ -1741,21 +1761,21 @@ function RouteComponent() {
 											onChange={handleEditChange}
 											min="0"
 											max="100"
-											placeholder="Опционально"
 										/>
 									</div>
 
 									{/* Square Meters Per Pack (for flooring products) */}
-									<Input
-										label="Площадь упаковки (м²)"
-										type="number"
-										name="squareMetersPerPack"
-										value={editFormData.squareMetersPerPack || ""}
-										onChange={handleEditChange}
-										step="0.001"
-										min="0"
-										placeholder="Опционально"
-									/>
+									<div>
+										<Input
+											label="Площадь упаковки (м²)"
+											type="number"
+											name="squareMetersPerPack"
+											value={editFormData.squareMetersPerPack || ""}
+											onChange={handleEditChange}
+											step="0.001"
+											min="0"
+										/>
+									</div>
 
 									{/* Unit of Measurement */}
 									<div>
@@ -2064,7 +2084,6 @@ function RouteComponent() {
 									name="sku"
 									value={formData.sku || ""}
 									onChange={handleChange}
-									placeholder="Опционально - уникальный артикул товара"
 								/>
 
 								{/* Settings Fields */}
@@ -2111,21 +2130,21 @@ function RouteComponent() {
 											onChange={handleChange}
 											min="0"
 											max="100"
-											placeholder="Опционально"
 										/>
 									</div>
 
 									{/* Square Meters Per Pack (for flooring products) */}
-									<Input
-										label="Площадь упаковки (м²)"
-										type="number"
-										name="squareMetersPerPack"
-										value={formData.squareMetersPerPack || ""}
-										onChange={handleChange}
-										step="0.001"
-										min="0"
-										placeholder="Опционально"
-									/>
+									<div>
+										<Input
+											label="Площадь упаковки (м²)"
+											type="number"
+											name="squareMetersPerPack"
+											value={formData.squareMetersPerPack || ""}
+											onChange={handleChange}
+											step="0.001"
+											min="0"
+										/>
+									</div>
 
 									{/* Unit of Measurement */}
 									<div>

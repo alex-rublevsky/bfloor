@@ -76,6 +76,8 @@ export const getStoreData = createServerFn({ method: "GET" })
 					LOWER(${products.name}) LIKE ${searchPattern}
 					OR LOWER(${products.slug}) LIKE ${searchPattern}
 					OR LOWER(${products.sku}) LIKE ${searchPattern}
+					OR LOWER(${products.description}) LIKE ${searchPattern}
+					OR LOWER(${products.importantNote}) LIKE ${searchPattern}
 					OR LOWER(${products.brandSlug}) LIKE ${searchPattern}
 					OR LOWER(${products.collectionSlug}) LIKE ${searchPattern}
 					OR LOWER(${products.categorySlug}) LIKE ${searchPattern}

@@ -12,7 +12,11 @@ const SelectValue = React.forwardRef<
 	React.ElementRef<typeof SelectPrimitive.Value>,
 	React.ComponentPropsWithoutRef<typeof SelectPrimitive.Value>
 >(({ className, ...props }, ref) => (
-	<SelectPrimitive.Value ref={ref} className={cn("", className)} {...props} />
+	<SelectPrimitive.Value
+		ref={ref}
+		className={cn("text-sm", className)}
+		{...props}
+	/>
 ));
 SelectValue.displayName = SelectPrimitive.Value.displayName;
 
@@ -37,8 +41,9 @@ const SelectTrigger = React.forwardRef<
 			<SelectPrimitive.Trigger
 				ref={ref}
 				className={cn(
-					"relative flex rounded-full border border-input bg-background hover:border-primary hover:bg-primary/5 active:border-primary active:bg-primary/5 transition-all duration-200 field-sizing-content",
-					"focus:outline-hidden focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+					"flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-standard",
+					"hover:border-primary hover:bg-primary/5 active:border-primary active:bg-primary/5",
+					"focus:outline-none focus:border-ring focus:ring-[3px] focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50",
 					// Custom cursor styles - always cursor-pointer
 					"cursor-pointer",
 					className,
@@ -47,12 +52,12 @@ const SelectTrigger = React.forwardRef<
 				onMouseLeave={onMouseLeave}
 				{...props}
 			>
-				<span className="relative z-10 px-1.5 flex items-center justify-between w-full cursor-pointer text-foreground">
+				<span className="relative z-10 flex items-center justify-between w-full cursor-pointer text-foreground text-sm">
 					<span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-left [filter:none] [mix-blend-normal]">
 						{children}
 					</span>
 					<SelectPrimitive.Icon asChild>
-						<ChevronDown className="h-3 w-3 md:h-4 md:w-4 ml-2 opacity-50 flex-shrink-0" />
+						<ChevronDown className="h-4 w-4 ml-2 opacity-50 flex-shrink-0" />
 					</SelectPrimitive.Icon>
 				</span>
 			</SelectPrimitive.Trigger>
@@ -111,7 +116,7 @@ const SelectItem = React.forwardRef<
 		<SelectPrimitive.Item
 			ref={ref}
 			className={cn(
-				"relative flex w-full cursor-default select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-priamry active:text-primary-foreground transition-colors duration-200",
+				"relative flex w-full cursor-default select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-priamry active:text-primary-foreground transition-standard",
 				// Custom cursor styles - always cursor-pointer
 				"cursor-pointer",
 				className,
@@ -148,11 +153,11 @@ SelectSeparator.displayName = SelectPrimitive.Separator.displayName;
 
 export {
 	Select,
-	SelectGroup,
-	SelectValue,
-	SelectTrigger,
 	SelectContent,
-	SelectLabel,
+	SelectGroup,
 	SelectItem,
+	SelectLabel,
 	SelectSeparator,
+	SelectTrigger,
+	SelectValue,
 };

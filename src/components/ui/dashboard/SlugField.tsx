@@ -61,18 +61,8 @@ export function SlugField({
 	if (!showResetButton) {
 		return (
 			<div>
-				<div className="flex items-center justify-between mb-1">
+				<div className="flex items-center justify-between mb-2">
 					<div className="flex items-center gap-2">
-						<label htmlFor={slugId} className="block text-sm font-medium">
-							<span className="flex items-center gap-2">
-								ярлык
-								{error && (
-									<span className="text-red-500 text-xs font-medium">
-										{error}
-									</span>
-								)}
-							</span>
-						</label>
 						{isCustomSlug && (
 							<Badge className="" variant="default">
 								пользовательский
@@ -98,6 +88,7 @@ export function SlugField({
 				<Input
 					id={slugId}
 					name="slug"
+					label="Ярлык"
 					value={slug}
 					onChange={(e) => onSlugChange(e.target.value)}
 					required={required}

@@ -143,7 +143,8 @@ section.embla.product-slider-section .embla__slide:last-child > div {
 }
 
 /* Dot indicators - override testimonial styles for product slider */
-section.embla.product-slider-section .embla__dots-container {
+/* Commented out - dots are hidden */
+/* section.embla.product-slider-section .embla__dots-container {
 	padding: 0;
 	display: flex;
 	justify-content: center;
@@ -154,14 +155,14 @@ section.embla.product-slider-section .embla__dots-container {
 }
 
 .embla__dots-container .embla__dot {
-	width: 1.733rem; /* 2.6rem / 1.5 */
-	height: 1.733rem; /* 2.6rem / 1.5 */
+	width: 1.733rem;
+	height: 1.733rem;
 }
 
 .embla__dots-container .embla__dot:after {
-	width: 0.8rem; /* 1.2rem / 1.5 */
-	height: 0.8rem; /* 1.2rem / 1.5 */
-}
+	width: 0.8rem;
+	height: 0.8rem;
+} */
 
 /* Responsive adjustments */
 @media (max-width: 640px) {
@@ -190,18 +191,18 @@ section.embla.product-slider-section .embla__dots-container {
 		max-width: 12rem; /* Smaller on mobile */
 	}
 
-	.embla__dots-container .embla__dot {
-		width: 1.333rem; /* 2rem / 1.5 */
-		height: 1.333rem; /* 2rem / 1.5 */
+	/* Dot indicators - Commented out - dots are hidden */
+	/* .embla__dots-container .embla__dot {
+		width: 1.333rem;
+		height: 1.333rem;
 	}
 
 	.embla__dots-container .embla__dot:after {
-		width: 0.8rem; /* 1.2rem / 1.5 */
-		height: 0.8rem; /* 1.2rem / 1.5 */
+		width: 0.8rem;
+		height: 0.8rem;
 	}
 
-	/* Hide dots on mobile */
 	.embla__dots-container {
 		display: none;
-	}
+	} */
 }

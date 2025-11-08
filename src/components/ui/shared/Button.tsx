@@ -21,7 +21,7 @@ const buttonVariants = cva(
 				secondary:
 					"bg-transparent border-1 border-accent text-secondary-foreground hover:bg-accent active:bg-accent hover:text-accent-foreground",
 				destructive:
-					"bg-backgorund text-destructive border border-destructive shadow-2xs hover:bg-destructive/90 hover:text-destructive-foreground active:bg-destructive/90 active:text-destructive-foreground",
+					"bg-backgorund text-destructive border-[1.5px] border-destructive hover:bg-destructive hover:text-destructive-foreground active:bg-destructive active:text-destructive-foreground",
 				green:
 					//TODO: update with hover and active styles. create the colors using oklch in css variables.
 					"bg-discount-badge text-discount-badge-foreground hover:bg-destructive/90",

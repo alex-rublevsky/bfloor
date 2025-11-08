@@ -1,8 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
+import { AlertCircle, Trash2 } from "lucide-react";
+import { Button } from "~/components/ui/shared/Button";
 import { CheckboxList } from "~/components/ui/shared/CheckboxList";
 import { Input } from "~/components/ui/shared/input";
 import { useProductAttributes } from "~/hooks/useProductAttributes";
 import { allAttributeValuesByAttributeQueryOptions } from "~/lib/queryOptions";
+import { cn } from "~/lib/utils";
 import type { ProductAttributeFormData } from "~/types";
 
 interface ProductAttributesFormProps {
@@ -166,6 +169,28 @@ export default function ProductAttributesForm({
 		return selectedIds;
 	};
 
+	const handleDeleteAttribute = (attributeId: string) => {
+		const currentAttributes = attributes || [];
+		onChange(
+			currentAttributes.filter((attr) => attr.attributeId !== attributeId),
+		);
+	};
+
+	// Check if an attribute is out of scope (not in predefined attributes)
+	const isOutOfScopeAttribute = (attributeId: string) => {
+		return !availableAttributes?.some(
+			(attr) => attr.id.toString() === attributeId,
+		);
+	};
+
+	// Get the display name for an attribute
+	const getAttributeDisplayName = (attributeId: string) => {
+		const attribute = availableAttributes?.find(
+			(attr) => attr.id.toString() === attributeId,
+		);
+		return attribute ? attribute.name : attributeId;
+	};
+
 	// Get standardized values for an attribute
 	const getStandardizedValues = (attributeId: number) => {
 		return allAttributeValues?.[attributeId] || [];
@@ -179,37 +204,6 @@ export default function ProductAttributesForm({
 		return (
 			attribute?.valueType === "standardized" || attribute?.valueType === "both"
 		);
-	};
-
-	// Validate if a value is valid for a standardized attribute
-	const isValidStandardizedValue = (
-		attributeId: number,
-		value: string,
-	): boolean => {
-		if (!value) return true; // Empty values are allowed
-		const standardizedValues = getStandardizedValues(attributeId);
-		return standardizedValues.some((stdValue) => stdValue.value === value);
-	};
-
-	// Get validation error for an attribute
-	const getAttributeValidationError = (
-		attributeId: string,
-		value: string,
-	): string | null => {
-		const attributeInfo = availableAttributes?.find(
-			(a) => a.id.toString() === attributeId,
-		);
-		if (!attributeInfo) return null;
-
-		const isStandardized = isStandardizedAttribute(attributeInfo.id);
-		if (
-			isStandardized &&
-			value &&
-			!isValidStandardizedValue(attributeInfo.id, value)
-		) {
-			return `Значение "${value}" не входит в список стандартизированных значений для этого атрибута`;
-		}
-		return null;
 	};
 
 	if (isLoading) {
@@ -237,49 +231,137 @@ export default function ProductAttributesForm({
 		);
 	}
 
-	// Use all attributes directly
-	const allAttributes = attributes || [];
+	// Separate out-of-scope attributes (from old database)
+	const outOfScopeAttributes =
+		attributes?.filter((attr) => isOutOfScopeAttribute(attr.attributeId)) || [];
+
+	// Separate available attributes into input and checkbox groups
+	// Maintain fixed order based on availableAttributes list, not based on whether they have values
+	const availableInputAttributes = availableAttributes.filter(
+		(attributeInfo) => {
+			const isStandardized = isStandardizedAttribute(attributeInfo.id);
+			const standardizedValues = isStandardized
+				? getStandardizedValues(attributeInfo.id)
+				: [];
+			return !(isStandardized && standardizedValues.length > 0);
+		},
+	);
+
+	const availableCheckboxAttributes = availableAttributes.filter(
+		(attributeInfo) => {
+			const isStandardized = isStandardizedAttribute(attributeInfo.id);
+			const standardizedValues = isStandardized
+				? getStandardizedValues(attributeInfo.id)
+				: [];
+			return isStandardized && standardizedValues.length > 0;
+		},
+	);
+
+	// Create a map of attribute values for quick lookup
+	const attributeValueMap = new Map<string, string>();
+	(attributes || []).forEach((attr) => {
+		attributeValueMap.set(attr.attributeId, attr.value);
+	});
+
+	// Render all input attributes in fixed order based on availableInputAttributes
+	// This ensures positions don't change when values are added
+	const allInputAttributes = availableInputAttributes.map((attributeInfo) => {
+		const currentValue =
+			attributeValueMap.get(attributeInfo.id.toString()) || "";
+		return {
+			attributeId: attributeInfo.id.toString(),
+			value: currentValue,
+			attributeInfo,
+		};
+	});
 
 	return (
-		<div className="space-y-4">
+		<div className="space-y-6">
 			<h3 className="text-sm font-medium text-foreground mb-2">
 				Атрибуты товара
 			</h3>
 
-			{/* Attributes */}
-			{allAttributes.length > 0 &&
-				(() => {
-					const leftCount = Math.ceil(allAttributes.length / 2);
-					const left = allAttributes.slice(0, leftCount);
-					const right = allAttributes.slice(leftCount);
-					const renderItem = (attr: (typeof allAttributes)[number]) => {
-						const attributeInfo = availableAttributes?.find(
-							(a) => a.id.toString() === attr.attributeId,
-						);
-						if (!attributeInfo) return null;
+			{/* Out-of-scope attributes (from old database) */}
+			{outOfScopeAttributes.length > 0 && (
+				<div className="space-y-3">
+					<div className="flex items-center gap-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+						<AlertCircle className="h-4 w-4" />
+						<span>Атрибуты из старой базы данных</span>
+					</div>
+					{outOfScopeAttributes.map((attr) => (
+						<div
+							key={attr.attributeId}
+							className="rounded-md border border-destructive/40 bg-destructive/10 p-3 shadow-sm"
+						>
+							<div className="flex items-start justify-between gap-2 mb-2">
+								<div className="flex items-center gap-2 text-destructive">
+									<AlertCircle className="h-4 w-4" />
+									<span className="text-sm font-medium">
+										Атрибут из старой базы данных
+									</span>
+								</div>
+								<Button
+									type="button"
+									variant="destructive"
+									size="sm"
+									onClick={() => handleDeleteAttribute(attr.attributeId)}
+									className="shrink-0"
+								>
+									<Trash2 className="h-4 w-4 mr-1" />
+									<span>Удалить</span>
+								</Button>
+							</div>
+							<Input
+								id={`out-of-scope-${attr.attributeId}`}
+								label={getAttributeDisplayName(attr.attributeId)}
+								value={attr.value}
+								onChange={(e) =>
+									handleUpdateAttributeValue(attr.attributeId, e.target.value)
+								}
+								className={cn(
+									"text-sm",
+									"bg-destructive/5 border-destructive/30 focus-visible:ring-destructive",
+								)}
+							/>
+						</div>
+					))}
+					<div className="border-t border-amber-200 dark:border-amber-900" />
+				</div>
+			)}
 
-						const attributeId = attributeInfo.id;
-						const isStandardized = isStandardizedAttribute(attributeId);
-						const standardizedValues = isStandardized
-							? getStandardizedValues(attributeId)
-							: [];
-						const validationError = getAttributeValidationError(
-							attr.attributeId,
-							attr.value,
+			{/* First sub-block: Input fields (text inputs) in two columns on mobile, three on desktop */}
+			{allInputAttributes.length > 0 && (
+				<div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+					{allInputAttributes.map((item) => {
+						return (
+							<Input
+								key={item.attributeId}
+								id={`attr-${item.attributeId}`}
+								label={item.attributeInfo.name}
+								value={item.value}
+								onChange={(e) =>
+									handleUpdateAttributeValue(item.attributeId, e.target.value)
+								}
+								className="text-sm"
+							/>
 						);
-						const hasInvalidValue =
-							isStandardized &&
-							attr.value &&
-							!isValidStandardizedValue(attributeId, attr.value);
+					})}
+				</div>
+			)}
+
+			{/* Second sub-block: Checkbox lists (standardized attributes) in full width */}
+			{/* Always show all standardized attributes (like "Вид профиля") */}
+			{availableCheckboxAttributes.length > 0 && (
+				<div className="space-y-4">
+					{availableCheckboxAttributes.map((attributeInfo) => {
 						const allowMultiple = attributeInfo.allowMultipleValues === true;
-						const selectedValues = isStandardized
-							? getSelectedValues(attributeId)
-							: [];
+						const selectedValues = getSelectedValues(attributeInfo.id);
+						const standardizedValues = getStandardizedValues(attributeInfo.id);
 
 						return (
-							<div key={attr.attributeId} className="space-y-2">
+							<div key={attributeInfo.id} className="space-y-2">
 								<label
-									htmlFor={`attr-${attr.attributeId}`}
+									htmlFor={`attr-${attributeInfo.id}`}
 									className="block text-sm font-medium text-foreground"
 								>
 									{attributeInfo.name}
@@ -289,101 +371,6 @@ export default function ProductAttributesForm({
 										</span>
 									)}
 								</label>
-								{isStandardized && standardizedValues.length > 0 ? (
-									// Use CheckboxList for standardized attributes
-									<div className="space-y-1">
-										<CheckboxList
-											items={standardizedValues.map((stdValue) => ({
-												id: stdValue.id.toString(),
-												label: stdValue.value,
-												isActive: stdValue.isActive,
-											}))}
-											selectedIds={selectedValues}
-											onItemChange={(valueId, checked) => {
-												handleAttributeValueToggle(
-													attr.attributeId,
-													valueId as string,
-													checked,
-													allowMultiple,
-												);
-											}}
-											idPrefix={`attr-${attr.attributeId}-value`}
-											columns={1}
-											showOnlyActive={true}
-										/>
-										{hasInvalidValue && (
-											<p className="text-xs text-destructive mt-1">
-												⚠️{" "}
-												{validationError ||
-													"Неверное значение. Выберите из списка."}
-											</p>
-										)}
-									</div>
-								) : (
-									// Use Input for free-text attributes
-									<Input
-										id={`attr-${attr.attributeId}`}
-										value={attr.value}
-										onChange={(e) =>
-											handleUpdateAttributeValue(
-												attr.attributeId,
-												e.target.value,
-											)
-										}
-										className="text-sm"
-										placeholder="Введите значение"
-									/>
-								)}
-							</div>
-						);
-					};
-					return (
-						<div className="grid grid-cols-2 gap-3">
-							<div className="space-y-3">
-								{left.map((attr) => renderItem(attr))}
-							</div>
-							<div className="space-y-3">
-								{right.map((attr) => renderItem(attr))}
-							</div>
-						</div>
-					);
-				})()}
-
-			{/* Show all available attributes to allow adding them */}
-			<div className="grid grid-cols-2 gap-3">
-				{availableAttributes.map((attributeInfo) => {
-					// Find the current value for this attribute
-					const currentAttribute = (attributes || []).find(
-						(attr) => attr.attributeId === attributeInfo.id.toString(),
-					);
-
-					// Only show attributes that aren't already in the product
-					if (currentAttribute) return null;
-
-					const isStandardized = isStandardizedAttribute(attributeInfo.id);
-					const standardizedValues = isStandardized
-						? getStandardizedValues(attributeInfo.id)
-						: [];
-					const allowMultiple = attributeInfo.allowMultipleValues === true;
-					const selectedValues = isStandardized
-						? getSelectedValues(attributeInfo.id)
-						: [];
-
-					return (
-						<div key={attributeInfo.id} className="space-y-2">
-							<label
-								htmlFor={`attr-${attributeInfo.id}`}
-								className="block text-sm font-medium text-foreground"
-							>
-								{attributeInfo.name}
-								{allowMultiple && (
-									<span className="text-xs text-muted-foreground ml-2">
-										(можно выбрать несколько)
-									</span>
-								)}
-							</label>
-							{isStandardized && standardizedValues.length > 0 ? (
-								// Use CheckboxList for standardized attributes
 								<CheckboxList
 									items={standardizedValues.map((stdValue) => ({
 										id: stdValue.id.toString(),
@@ -400,28 +387,14 @@ export default function ProductAttributesForm({
 										);
 									}}
 									idPrefix={`attr-${attributeInfo.id}-value`}
-									columns={1}
+									columns={3}
 									showOnlyActive={true}
 								/>
-							) : (
-								// Use Input for free-text attributes
-								<Input
-									id={`attr-${attributeInfo.id}`}
-									value=""
-									onChange={(e) =>
-										handleUpdateAttributeValue(
-											attributeInfo.id.toString(),
-											e.target.value,
-										)
-									}
-									className="text-sm"
-									placeholder="Введите значение"
-								/>
-							)}
-						</div>
-					);
-				})}
-			</div>
+							</div>
+						);
+					})}
+				</div>
+			)}
 		</div>
 	);
 }

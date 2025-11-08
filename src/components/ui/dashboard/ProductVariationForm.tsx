@@ -116,7 +116,7 @@ function SortableVariationItem({
 			style={style}
 			{...attributes}
 			{...listeners}
-			className={`relative border border-border rounded-md p-3 bg-background space-y-3 cursor-grab active:cursor-grabbing ${
+			className={`relative border-1 border-border rounded-md p-3 bg-muted space-y-3 cursor-grab active:cursor-grabbing ${
 				isDragging ? "opacity-50" : ""
 			}`}
 		>
@@ -131,6 +131,7 @@ function SortableVariationItem({
 						placeholder="Автоматически генерируется на основе атрибутов"
 						disabled
 						onPointerDown={(e) => e.stopPropagation()}
+						labelBackgroundColor="bg-muted"
 						className="text-sm bg-muted/50"
 					/>
 				</div>
@@ -143,7 +144,7 @@ function SortableVariationItem({
 					onPointerDown={(e) => e.stopPropagation()}
 					variant="destructive"
 					size="sm"
-					className="bg-destructive/20 hover:bg-destructive/90 shrink-0"
+					className=""
 				>
 					Удалить
 				</Button>
@@ -161,7 +162,7 @@ function SortableVariationItem({
 							onUpdate(variation.id, "price", parseFloat(e.target.value) || 0)
 						}
 						onPointerDown={(e) => e.stopPropagation()}
-						placeholder="0"
+						labelBackgroundColor="bg-muted"
 						className="text-sm"
 					/>
 				</div>
@@ -179,7 +180,7 @@ function SortableVariationItem({
 							)
 						}
 						onPointerDown={(e) => e.stopPropagation()}
-						placeholder="0"
+						labelBackgroundColor="bg-muted"
 						className="text-sm"
 					/>
 				</div>
@@ -211,7 +212,7 @@ function SortableVariationItem({
 										}}
 										onPointerDown={(e) => e.stopPropagation()}
 										onClick={(e) => e.stopPropagation()}
-										placeholder="Значение"
+										labelBackgroundColor="bg-muted"
 										className="text-sm"
 									/>
 								</div>

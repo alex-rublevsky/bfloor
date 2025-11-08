@@ -367,45 +367,47 @@ function StorePage() {
 						isSearchResult={!!normalizedSearch}
 					/>
 				) : (
-					<div
-						className="relative px-4 py-4"
-						style={{
-							height: `${virtualizer.getTotalSize()}px`,
-							width: "100%",
-							position: "relative",
-						}}
-					>
-						{/* Following TanStack Virtual dynamic example pattern for useWindowVirtualizer */}
-						{virtualizer.getVirtualItems().map((virtualRow) => {
-							const rowProducts = getProductsForRow(virtualRow.index);
-							return (
-								<div
-									key={virtualRow.key}
-									data-index={virtualRow.index}
-									ref={virtualizer.measureElement}
-									style={{
-										position: "absolute",
-										top: 0,
-										left: 0,
-										width: "100%",
-										transform: `translateY(${virtualRow.start}px)`,
-									}}
-								>
-									<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
-										{rowProducts.map((product) => (
-											<ProductCard key={product.id} product={product} />
-										))}
+					<>
+						<div
+							className="relative px-4 py-4"
+							style={{
+								height: `${virtualizer.getTotalSize()}px`,
+								width: "100%",
+								position: "relative",
+							}}
+						>
+							{/* Following TanStack Virtual dynamic example pattern for useWindowVirtualizer */}
+							{virtualizer.getVirtualItems().map((virtualRow) => {
+								const rowProducts = getProductsForRow(virtualRow.index);
+								return (
+									<div
+										key={virtualRow.key}
+										data-index={virtualRow.index}
+										ref={virtualizer.measureElement}
+										style={{
+											position: "absolute",
+											top: 0,
+											left: 0,
+											width: "100%",
+											transform: `translateY(${virtualRow.start}px)`,
+										}}
+									>
+										<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
+											{rowProducts.map((product) => (
+												<ProductCard key={product.id} product={product} />
+											))}
+										</div>
 									</div>
-								</div>
-							);
-						})}
+								);
+							})}
+						</div>
 						{/* Loading indicator for next page */}
 						{isFetchingNextPage && (
-							<div className="absolute top-0 left-0 w-full flex items-center justify-center p-8">
+							<div className="w-full flex items-center justify-center p-8">
 								<p className="text-muted-foreground">Загрузка...</p>
 							</div>
 						)}
-					</div>
+					</>
 				)}
 			</div>
 		</>

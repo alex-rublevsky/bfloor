@@ -18,10 +18,10 @@ import {
 	PrevButton,
 	usePrevNextButtons,
 } from "../home/testimonial/TestimonialArrows";
-import {
-	DotButton,
-	useDotButton,
-} from "../home/testimonial/TestimonialDotButton";
+// import {
+// 	DotButton,
+// 	useDotButton,
+// } from "../home/testimonial/TestimonialDotButton";
 import ProductCard from "../store/ProductCard";
 import "./product-slider.css";
 
@@ -182,8 +182,8 @@ export default function ProductSlider({
 		onNextButtonClick,
 	} = usePrevNextButtons(emblaApi);
 
-	const { selectedIndex, scrollSnaps, onDotButtonClick } =
-		useDotButton(emblaApi);
+	// const { selectedIndex, scrollSnaps, onDotButtonClick } =
+	// 	useDotButton(emblaApi);
 
 	return (
 		<section className="embla pb-42 product-slider-section no-padding">
@@ -281,8 +281,8 @@ export default function ProductSlider({
 						</div>
 					</div>
 
-					{/* Dot Indicators */}
-					{products.length > 1 && (
+					{/* Dot Indicators - Commented out */}
+					{/* {products.length > 1 && (
 						<div className="embla__dots-container">
 							<div className="embla__dots">
 								{scrollSnaps.map((_, index) => (
@@ -296,7 +296,7 @@ export default function ProductSlider({
 								))}
 							</div>
 						</div>
-					)}
+					)} */}
 				</>
 			)}
 		</section>

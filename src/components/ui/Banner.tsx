@@ -254,7 +254,7 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 	justify-content: flex-start;
 	text-decoration: none;
 	cursor: pointer;
-	border: 1.5px solid transparent;
+	border: 3px solid transparent;
 	padding: 0;
 	margin: 0;
 	box-shadow: inset 0 0 0 0.2rem var(--detail-medium-contrast);
