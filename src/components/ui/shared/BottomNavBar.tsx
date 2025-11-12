@@ -1,15 +1,17 @@
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { MoreVertical, Plus } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import { useState } from "react";
 import {
 	Drawer,
 	DrawerContent,
 	DrawerTrigger,
 } from "~/components/ui/shared/Drawer";
+import type { ActionButtonConfig } from "~/config/dashboardActionButtons";
 import { useCart } from "~/lib/cartContext";
 import { signOut } from "~/utils/auth-client";
 import { cn } from "~/utils/utils";
 import { CartDrawerContent } from "../store/CartDrawerContent";
+import { MobileActionButtons } from "./nav/NavBarActionButtons";
 
 interface BottomNavBarProps {
 	className?: string;
@@ -19,6 +21,7 @@ interface BottomNavBarProps {
 		label: string;
 		onClick: () => void;
 	} | null;
+	actionButtons?: ActionButtonConfig[];
 	// User data for dashboard menu
 	userData?: {
 		userID: string;
@@ -39,7 +42,7 @@ function CartButton() {
 					type="button"
 					onClick={() => setCartOpen(true)}
 					className={cn(
-						"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors relative",
+						"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-standard relative",
 						cartOpen
 							? "text-primary bg-primary/10"
 							: "text-muted-foreground hover:text-foreground hover:bg-muted",
@@ -83,12 +86,18 @@ export function BottomNavBar({
 	className,
 	isDashboard = false,
 	actionButton,
+	actionButtons,
 	userData,
 }: BottomNavBarProps) {
 	const router = useRouter();
 	const navigate = useNavigate();
 	const pathname = router.state.location.pathname;
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+	// Use actionButtons if provided, otherwise fall back to single actionButton
+	const buttons: ActionButtonConfig[] =
+		actionButtons ||
+		(actionButton ? [{ ...actionButton, variant: "default" as const }] : []);
 
 	// Dashboard navigation items for mobile bottom bar - only Products and Orders
 	const dashboardMobileItems = [
@@ -129,7 +138,7 @@ export function BottomNavBar({
 			{/* Bottom Navigation Bar - Mobile only */}
 			<nav
 				className={cn(
-					"fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-t border-border md:hidden",
+					"fixed bottom-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-sm border-t border-border md:hidden",
 					className,
 				)}
 			>
@@ -143,7 +152,7 @@ export function BottomNavBar({
 									key={item.url}
 									to={item.url}
 									className={cn(
-										"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors min-w-0",
+										"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-standard min-w-0",
 										pathname === item.url
 											? "text-primary bg-primary/10"
 											: "text-muted-foreground hover:text-foreground hover:bg-muted",
@@ -162,7 +171,7 @@ export function BottomNavBar({
 									type="button"
 									onClick={() => setIsMenuOpen(!isMenuOpen)}
 									className={cn(
-										"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors",
+										"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-standard",
 										isMenuOpen
 											? "text-primary bg-primary/10"
 											: "text-muted-foreground hover:text-foreground hover:bg-muted",
@@ -201,7 +210,7 @@ export function BottomNavBar({
 													key={item.url}
 													to={item.url}
 													onClick={() => setIsMenuOpen(false)}
-													className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+													className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-standard"
 												>
 													<span className="text-base">{item.icon}</span>
 													<span>{item.name}</span>
@@ -218,7 +227,7 @@ export function BottomNavBar({
 													setIsMenuOpen(false);
 													handleLogout();
 												}}
-												className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors w-full text-left"
+												className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-standard w-full text-left"
 											>
 												<span className="text-base">🚪</span>
 												<span>Выйти</span>
@@ -235,7 +244,7 @@ export function BottomNavBar({
 							<Link
 								to="/"
 								className={cn(
-									"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors",
+									"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-standard",
 									pathname === "/"
 										? "text-primary bg-primary/10"
 										: "text-muted-foreground hover:text-foreground hover:bg-muted",
@@ -264,7 +273,7 @@ export function BottomNavBar({
 							<Link
 								to="/store"
 								className={cn(
-									"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors",
+									"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-standard",
 									pathname === "/store"
 										? "text-primary bg-primary/10"
 										: "text-muted-foreground hover:text-foreground hover:bg-muted",
@@ -296,17 +305,9 @@ export function BottomNavBar({
 				</div>
 			</nav>
 
-			{/* Floating Action Button - Dashboard only, Mobile only */}
-			{isDashboard && actionButton && (
-				<button
-					type="button"
-					onClick={actionButton.onClick}
-					className="md:hidden fixed bottom-20 right-4 z-50 rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground shadow-lg hover:shadow-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex items-center gap-1.5 px-3 py-2 text-xs whitespace-nowrap"
-					aria-label={actionButton.label}
-				>
-					<Plus className="w-4 h-4" />
-					<span>{actionButton.label}</span>
-				</button>
+			{/* Floating Action Button(s) - Dashboard only, Mobile only */}
+			{isDashboard && buttons.length > 0 && (
+				<MobileActionButtons buttons={buttons} />
 			)}
 		</>
 	);

@@ -32,6 +32,7 @@ interface ImageUploadProps {
 	slug?: string; // product slug for subdirectory organization
 	categorySlug?: string; // category slug for proper path structure
 	productName?: string; // product name for proper file naming
+	productId?: number | string; // product ID for view transition
 }
 
 interface SortableImageItemProps {
@@ -39,6 +40,7 @@ interface SortableImageItemProps {
 	index: number;
 	onRemove: (index: number) => Promise<void>;
 	fileSize?: number; // File size in bytes
+	productId?: number | string; // product ID for view transition
 }
 
 function SortableImageItem({
@@ -46,6 +48,7 @@ function SortableImageItem({
 	index,
 	onRemove,
 	fileSize,
+	productId,
 }: SortableImageItemProps) {
 	const {
 		attributes,
@@ -70,6 +73,12 @@ function SortableImageItem({
 		return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 	};
 
+	// Apply view transition to first image if productId is provided
+	const viewTransitionStyle =
+		index === 0 && productId
+			? { viewTransitionName: `product-image-${productId}` }
+			: undefined;
+
 	return (
 		<div
 			ref={setNodeRef}
@@ -81,6 +90,7 @@ function SortableImageItem({
 					src={`${ASSETS_BASE_URL}/${image}`}
 					alt={`Product ${index + 1}`}
 					className="w-full h-auto object-contain"
+					style={viewTransitionStyle}
 					onLoad={() => {}}
 					onError={(e) => {
 						e.currentTarget.src =
@@ -128,6 +138,7 @@ export function ImageUpload({
 	slug,
 	categorySlug,
 	productName,
+	productId,
 }: ImageUploadProps) {
 	// Target max uploaded size (~700KB)
 	const TARGET_MAX_BYTES = 700 * 1024;
@@ -941,6 +952,7 @@ export function ImageUpload({
 											index={index}
 											onRemove={handleRemoveImage}
 											fileSize={imageSizes.get(image)}
+											productId={productId}
 										/>
 									);
 								})}

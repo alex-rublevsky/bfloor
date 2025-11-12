@@ -75,7 +75,7 @@ export interface EntityListProps<TEntity> {
 function toAccusativeCase(noun: string): string {
 	// For feminine nouns ending in "а", change to "у"
 	if (noun.endsWith("а")) {
-		return noun.slice(0, -1) + "у";
+		return `${noun.slice(0, -1)}у`;
 	}
 	// For other cases (masculine, neuter), return as is
 	return noun;

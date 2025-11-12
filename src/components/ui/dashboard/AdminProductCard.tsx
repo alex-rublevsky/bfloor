@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Edit } from "lucide-react";
 import { Skeleton } from "~/components/ui/dashboard/skeleton";
 import { Badge } from "~/components/ui/shared/Badge";
@@ -9,13 +10,11 @@ import styles from "../store/productCard.module.css";
 
 interface AdminProductCardProps {
 	product: ProductWithVariations;
-	onEdit: (product: ProductWithVariations) => void;
 	formatPrice: (price: number) => string;
 }
 
 export function AdminProductCard({
 	product,
-	onEdit,
 	formatPrice: _formatPrice,
 }: AdminProductCardProps) {
 	const { prefetchDashboardProduct } = usePrefetch();
@@ -52,11 +51,11 @@ export function AdminProductCard({
 	};
 
 	return (
-		<button
-			type="button"
+		<Link
+			to="/dashboard/products/$productId/edit"
+			params={{ productId: product.id.toString() }}
 			className="block h-full relative cursor-pointer w-full text-left border-none bg-transparent p-0"
 			onMouseEnter={handleMouseEnter}
-			onClick={() => onEdit(product)}
 			aria-label={`Edit product ${product.name}`}
 		>
 			<div
@@ -88,6 +87,9 @@ export function AdminProductCard({
 											alt={product.name}
 											loading="eager"
 											className="absolute inset-0 w-full h-full object-cover object-center"
+											style={{
+												viewTransitionName: `product-image-${product.id}`,
+											}}
 											onLoad={(e) => {
 												const parent = e.currentTarget.parentElement;
 												const sk = parent?.querySelector<HTMLDivElement>(
@@ -159,7 +161,12 @@ export function AdminProductCard({
 										{product.discount ? (
 											<>
 												<div className="whitespace-nowrap flex items-baseline gap-0.5">
-													<span className="text-xl font-light">
+													<span
+														className="text-xl font-light"
+														style={{
+															viewTransitionName: `product-price-${product.id}`,
+														}}
+													>
 														{(
 															displayPrice *
 															(1 - product.discount / 100)
@@ -180,7 +187,12 @@ export function AdminProductCard({
 											</>
 										) : (
 											<div className="whitespace-nowrap flex items-baseline gap-0.5">
-												<span className="text-xl font-light">
+												<span
+													className="text-xl font-light"
+													style={{
+														viewTransitionName: `product-price-${product.id}`,
+													}}
+												>
 													{displayPrice.toFixed(2)}
 												</span>
 												<span className="text-xs font-light text-muted-foreground">
@@ -193,7 +205,14 @@ export function AdminProductCard({
 							</div>
 
 							{/* Product Name */}
-							<p className="mb-3">{product.name}</p>
+							<p
+								className="mb-3"
+								style={{
+									viewTransitionName: `product-name-${product.id}`,
+								}}
+							>
+								{product.name}
+							</p>
 
 							{/* Metadata */}
 							<div className="space-y-1 text-sm">
@@ -203,6 +222,6 @@ export function AdminProductCard({
 					</div>
 				</div>
 			</div>
-		</button>
+		</Link>
 	);
 }

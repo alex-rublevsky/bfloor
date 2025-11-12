@@ -2,13 +2,9 @@ import useEmblaCarousel from "embla-carousel-react";
 import { ExternalLink } from "lucide-react";
 import { Icon } from "~/components/ui/shared/Icon";
 import { Image } from "~/components/ui/shared/Image";
+import { EmblaArrowButtons } from "../../shared/EmblaArrowButtons";
+import { EmblaDotButtons } from "../../shared/EmblaDotButtons";
 import "./testimonial.css";
-import {
-	NextButton,
-	PrevButton,
-	usePrevNextButtons,
-} from "./TestimonialArrows";
-import { DotButton, useDotButton } from "./TestimonialDotButton";
 
 type TestimonialSource = "Google" | "Yandex" | "2GIS";
 
@@ -86,15 +82,7 @@ export default function TestimonialSliderSection() {
 		loop: true,
 	});
 
-	const {
-		prevBtnDisabled,
-		nextBtnDisabled,
-		onPrevButtonClick,
-		onNextButtonClick,
-	} = usePrevNextButtons(emblaApi);
-
-	const { selectedIndex, scrollSnaps, onDotButtonClick } =
-		useDotButton(emblaApi);
+	// Navigation handled by EmblaArrowButtons and EmblaDotButtons components
 
 	const getIconName = (
 		source: TestimonialSource,
@@ -118,10 +106,7 @@ export default function TestimonialSliderSection() {
 			<h2>Отзывы</h2>
 			{/* Arrow controls positioned above carousel on the right */}
 			<div className="embla__controls">
-				<div className="embla__buttons">
-					<PrevButton onClick={onPrevButtonClick} disabled={prevBtnDisabled} />
-					<NextButton onClick={onNextButtonClick} disabled={nextBtnDisabled} />
-				</div>
+				<EmblaArrowButtons emblaApi={emblaApi} />
 			</div>
 
 			<div className="embla__viewport" ref={emblaRef}>
@@ -176,17 +161,11 @@ export default function TestimonialSliderSection() {
 
 			{/* Dot indicators positioned below the carousel */}
 			<div className="embla__dots-container">
-				<div className="embla__dots">
-					{scrollSnaps.map((_, index) => (
-						<DotButton
-							key={testimonials[index].id}
-							onClick={() => onDotButtonClick(index)}
-							className={"embla__dot".concat(
-								index === selectedIndex ? " embla__dot--selected" : "",
-							)}
-						/>
-					))}
-				</div>
+				<EmblaDotButtons
+					emblaApi={emblaApi}
+					containerClassName="embla__dots"
+					itemKey={(index) => testimonials[index].id}
+				/>
 			</div>
 		</section>
 	);

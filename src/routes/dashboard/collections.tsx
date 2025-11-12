@@ -7,8 +7,8 @@ import {
 	type EntityListProps,
 	type EntityManagerConfig,
 } from "~/components/ui/dashboard/DashboardEntityManager";
+import { EntityCardContent } from "~/components/ui/dashboard/EntityCardContent";
 import { EntityCardGrid } from "~/components/ui/dashboard/EntityCardGrid";
-import { Badge } from "~/components/ui/shared/Badge";
 import {
 	Select,
 	SelectContent,
@@ -79,29 +79,12 @@ const CollectionList = ({ entities, onEdit }: EntityListProps<Collection>) => {
 			renderEntity={(collection) => {
 				const brand = brands.find((b) => b.slug === collection.brandSlug);
 				return (
-					<>
-						{/* Collection Info */}
-						<div className="flex flex-col flex-1 min-w-0">
-							<div className="flex items-center gap-2">
-								<span className="text-sm font-medium truncate">
-									{collection.name}
-								</span>
-								{!collection.isActive && (
-									<Badge variant="secondary" className="text-xs flex-shrink-0">
-										Неактивна
-									</Badge>
-								)}
-							</div>
-							{brand && (
-								<span className="text-xs text-muted-foreground truncate">
-									Бренд: {brand.name}
-								</span>
-							)}
-							<span className="text-xs text-muted-foreground truncate">
-								{collection.slug}
-							</span>
-						</div>
-					</>
+					<EntityCardContent
+						name={collection.name}
+						slug={collection.slug}
+						isActive={collection.isActive}
+						secondaryInfo={brand ? `Бренд: ${brand.name}` : undefined}
+					/>
 				);
 			}}
 		/>

@@ -1,10 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { eq, type SQL, sql } from "drizzle-orm";
+import { eq, inArray, isNull, like, or, type SQL, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import type * as schema from "~/schema";
-import { products, productVariations, variationAttributes } from "~/schema";
+import {
+	attributeValues,
+	productAttributes,
+	products,
+	productVariations,
+	variationAttributes,
+} from "~/schema";
 import type {
 	ProductVariationWithAttributes,
 	ProductWithVariations,
@@ -27,8 +33,14 @@ export const getAllProducts = createServerFn({ method: "GET" })
 				categorySlug?: string;
 				brandSlug?: string;
 				collectionSlug?: string;
+				attributeFilters?: Record<number, string[]>; // attributeId -> array of value IDs
+				uncategorizedOnly?: boolean;
+				withoutBrandOnly?: boolean;
+				withoutCollectionOnly?: boolean;
 				tag?: string;
 				hasDiscount?: boolean;
+				isFeatured?: boolean;
+				productIds?: number[]; // Filter by specific product IDs
 				sort?:
 					| "relevant"
 					| "name"
@@ -63,8 +75,17 @@ export const getAllProducts = createServerFn({ method: "GET" })
 				data.collectionSlug && data.collectionSlug.length > 0
 					? data.collectionSlug
 					: undefined;
+			const attributeFilters = data.attributeFilters || {};
+			const uncategorizedOnlyFilter = data.uncategorizedOnly === true;
+			const withoutBrandOnlyFilter = data.withoutBrandOnly === true;
+			const withoutCollectionOnlyFilter = data.withoutCollectionOnly === true;
 			const tagFilter = data.tag && data.tag.length > 0 ? data.tag : undefined;
 			const hasDiscountFilter = data.hasDiscount === true;
+			const isFeaturedFilter = data.isFeatured === true;
+			const productIdsFilter =
+				Array.isArray(data.productIds) && data.productIds.length > 0
+					? data.productIds
+					: undefined;
 			const sort = data.sort;
 
 			// Calculate pagination if provided
@@ -75,17 +96,21 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			// Build where clause (search + filters)
 			const conditions: SQL[] = [];
 			if (effectiveSearch) {
-				const searchPattern = `%${effectiveSearch.toLowerCase()}%`;
-				conditions.push(sql`(
-					LOWER(${products.name}) LIKE ${searchPattern}
-					OR LOWER(${products.slug}) LIKE ${searchPattern}
-					OR LOWER(${products.sku}) LIKE ${searchPattern}
-					OR LOWER(${products.description}) LIKE ${searchPattern}
-					OR LOWER(${products.importantNote}) LIKE ${searchPattern}
-					OR LOWER(${products.brandSlug}) LIKE ${searchPattern}
-					OR LOWER(${products.collectionSlug}) LIKE ${searchPattern}
-					OR LOWER(${products.categorySlug}) LIKE ${searchPattern}
-				)`);
+				const searchTerm = effectiveSearch.toLowerCase();
+				const searchPattern = `%${searchTerm}%`;
+				// Use Drizzle's like() function directly - simplest approach
+				conditions.push(
+					or(
+						like(sql`LOWER(${products.name})`, searchPattern),
+						like(sql`LOWER(${products.slug})`, searchPattern),
+						like(sql`LOWER(${products.sku})`, searchPattern),
+						like(sql`LOWER(${products.description})`, searchPattern),
+						like(sql`LOWER(${products.importantNote})`, searchPattern),
+						like(sql`LOWER(${products.brandSlug})`, searchPattern),
+						like(sql`LOWER(${products.collectionSlug})`, searchPattern),
+						like(sql`LOWER(${products.categorySlug})`, searchPattern),
+					) ?? sql`1=0`,
+				);
 			}
 			if (categoryFilter) {
 				conditions.push(eq(products.categorySlug, categoryFilter));
@@ -95,6 +120,29 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			}
 			if (collectionFilter) {
 				conditions.push(eq(products.collectionSlug, collectionFilter));
+			}
+			if (uncategorizedOnlyFilter) {
+				// Filter products where categorySlug is null or empty
+				conditions.push(
+					or(isNull(products.categorySlug), eq(products.categorySlug, "")) ??
+						sql`1=0`,
+				);
+			}
+			if (withoutBrandOnlyFilter) {
+				// Filter products where brandSlug is null or empty
+				conditions.push(
+					or(isNull(products.brandSlug), eq(products.brandSlug, "")) ??
+						sql`1=0`,
+				);
+			}
+			if (withoutCollectionOnlyFilter) {
+				// Filter products where collectionSlug is null or empty
+				conditions.push(
+					or(
+						isNull(products.collectionSlug),
+						eq(products.collectionSlug, ""),
+					) ?? sql`1=0`,
+				);
 			}
 			if (tagFilter) {
 				// Filter products where tags JSON array contains the tag
@@ -107,14 +155,146 @@ export const getAllProducts = createServerFn({ method: "GET" })
 					sql`${products.discount} IS NOT NULL AND ${products.discount} > 0`,
 				);
 			}
+			if (isFeaturedFilter) {
+				// Filter products where isFeatured is true
+				conditions.push(eq(products.isFeatured, true));
+			}
+			if (productIdsFilter) {
+				// Filter products by specific IDs
+				conditions.push(inArray(products.id, productIdsFilter));
+			}
 			const whereCondition =
+				conditions.length > 0 ? sql.join(conditions, sql` AND `) : sql`1=1`;
+
+			// Get all products matching basic filters first
+			let allMatchingProducts = await db
+				.select()
+				.from(products)
+				.where(whereCondition)
+				.all();
+
+			// Filter by attributes if provided
+			if (Object.keys(attributeFilters).length > 0) {
+				// Get attribute slugs and value mappings
+				const allAttributes = await db.select().from(productAttributes);
+				const attributeIdToSlug = new Map<number, string>();
+				for (const attr of allAttributes) {
+					attributeIdToSlug.set(attr.id, attr.slug);
+				}
+
+				// Get standardized values for the selected attribute values
+				const allValueIds = new Set<number>();
+				for (const valueIds of Object.values(attributeFilters)) {
+					for (const valueId of valueIds) {
+						const numId = parseInt(valueId, 10);
+						if (!Number.isNaN(numId)) {
+							allValueIds.add(numId);
+						}
+					}
+				}
+
+				const stdValues =
+					allValueIds.size > 0
+						? await db
+								.select()
+								.from(attributeValues)
+								.where(inArray(attributeValues.id, Array.from(allValueIds)))
+						: [];
+
+				// Create a map of attributeId -> Set of value strings
+				const attributeValueMap = new Map<number, Set<string>>();
+				for (const stdValue of stdValues) {
+					if (!attributeValueMap.has(stdValue.attributeId)) {
+						attributeValueMap.set(stdValue.attributeId, new Set());
+					}
+					attributeValueMap.get(stdValue.attributeId)?.add(stdValue.value);
+				}
+
+				// Filter products by attribute values
+				allMatchingProducts = allMatchingProducts.filter((product) => {
+					if (!product.productAttributes) return false;
+
+					try {
+						const parsed = JSON.parse(product.productAttributes);
+						let productAttrs: Array<{ attributeId: string; value: string }> =
+							[];
+
+						// Handle both object and array formats
+						if (typeof parsed === "object" && parsed !== null) {
+							if (Array.isArray(parsed)) {
+								productAttrs = parsed;
+							} else {
+								// Convert object to array format
+								productAttrs = Object.entries(parsed).map(([key, value]) => ({
+									attributeId: key,
+									value: String(value),
+								}));
+							}
+						}
+
+						// Check if product matches all attribute filters
+						for (const [attributeId, _valueIds] of Object.entries(
+							attributeFilters,
+						)) {
+							const attrIdNum = parseInt(attributeId, 10);
+							if (Number.isNaN(attrIdNum)) continue;
+
+							const expectedValues = attributeValueMap.get(attrIdNum);
+							if (!expectedValues || expectedValues.size === 0) continue;
+
+							// Find product's attribute value
+							const productAttr = productAttrs.find((attr) => {
+								const numericId = parseInt(attr.attributeId, 10);
+								if (!Number.isNaN(numericId) && numericId === attrIdNum) {
+									return true;
+								}
+								const slug = attributeIdToSlug.get(attrIdNum);
+								return slug && attr.attributeId === slug;
+							});
+
+							if (!productAttr) return false;
+
+							// Check if product's value matches any of the selected values
+							const productValues = productAttr.value
+								.split(",")
+								.map((v) => v.trim())
+								.filter(Boolean);
+
+							const hasMatch = productValues.some((pv) =>
+								expectedValues.has(pv),
+							);
+							if (!hasMatch) return false;
+						}
+
+						return true;
+					} catch {
+						// Invalid JSON, exclude product
+						return false;
+					}
+				});
+
+				// Get product IDs after attribute filtering
+				const filteredProductIds = new Set(
+					allMatchingProducts.map((p) => p.id),
+				);
+
+				// Update where condition to include product IDs
+				if (filteredProductIds.size > 0) {
+					conditions.push(inArray(products.id, Array.from(filteredProductIds)));
+				} else {
+					// No products match, return empty result
+					conditions.push(sql`1 = 0`);
+				}
+			}
+
+			const finalWhereCondition =
 				conditions.length > 0 ? sql.join(conditions, sql` AND `) : sql`1=1`;
 
 			// Get total count for pagination info (respecting search)
 			const totalCountResult = await db
 				.select({ count: sql<number>`COUNT(*)` })
 				.from(products)
-				.where(whereCondition)
+				.where(finalWhereCondition)
 				.all();
 			const totalCount = totalCountResult[0]?.count ?? 0;
 
@@ -135,7 +315,7 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			}
 
 			const subquery = sql`select ${products.id} from ${products}
-				where ${whereCondition}
+				where ${finalWhereCondition}
 				order by ${orderSql}
 				limit ${hasPagination ? pageLimit : totalCount}
 				offset ${hasPagination ? offsetValue : 0}`;

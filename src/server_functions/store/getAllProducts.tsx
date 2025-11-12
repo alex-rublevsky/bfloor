@@ -1,10 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { eq, type SQL, sql } from "drizzle-orm";
+import { eq, inArray, like, or, type SQL, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import type * as schema from "~/schema";
-import { products, productVariations, variationAttributes } from "~/schema";
+import {
+	attributeValues,
+	productAttributes,
+	products,
+	productVariations,
+	variationAttributes,
+} from "~/schema";
 import type { Product, ProductVariation } from "~/types";
 
 // Type for variation attributes from database result
@@ -27,6 +33,7 @@ export const getStoreData = createServerFn({ method: "GET" })
 				categorySlug?: string;
 				brandSlug?: string;
 				collectionSlug?: string;
+				attributeFilters?: Record<number, string[]>; // attributeId -> array of value IDs
 				sort?:
 					| "relevant"
 					| "name"
@@ -61,6 +68,7 @@ export const getStoreData = createServerFn({ method: "GET" })
 				data.collectionSlug && data.collectionSlug.length > 0
 					? data.collectionSlug
 					: undefined;
+			const attributeFilters = data.attributeFilters || {};
 			const sort = data.sort;
 
 			// Calculate pagination if provided
@@ -71,17 +79,21 @@ export const getStoreData = createServerFn({ method: "GET" })
 			// Build where clause (always filter by isActive, plus search + filters)
 			const conditions: SQL[] = [eq(products.isActive, true)];
 			if (effectiveSearch) {
-				const searchPattern = `%${effectiveSearch.toLowerCase()}%`;
-				conditions.push(sql`(
-					LOWER(${products.name}) LIKE ${searchPattern}
-					OR LOWER(${products.slug}) LIKE ${searchPattern}
-					OR LOWER(${products.sku}) LIKE ${searchPattern}
-					OR LOWER(${products.description}) LIKE ${searchPattern}
-					OR LOWER(${products.importantNote}) LIKE ${searchPattern}
-					OR LOWER(${products.brandSlug}) LIKE ${searchPattern}
-					OR LOWER(${products.collectionSlug}) LIKE ${searchPattern}
-					OR LOWER(${products.categorySlug}) LIKE ${searchPattern}
-				)`);
+				const searchTerm = effectiveSearch.toLowerCase();
+				const searchPattern = `%${searchTerm}%`;
+				// Use Drizzle's like() function directly - simplest approach
+				conditions.push(
+					or(
+						like(sql`LOWER(${products.name})`, searchPattern),
+						like(sql`LOWER(${products.slug})`, searchPattern),
+						like(sql`LOWER(${products.sku})`, searchPattern),
+						like(sql`LOWER(${products.description})`, searchPattern),
+						like(sql`LOWER(${products.importantNote})`, searchPattern),
+						like(sql`LOWER(${products.brandSlug})`, searchPattern),
+						like(sql`LOWER(${products.collectionSlug})`, searchPattern),
+						like(sql`LOWER(${products.categorySlug})`, searchPattern),
+					) ?? sql`1=0`,
+				);
 			}
 			if (categoryFilter) {
 				conditions.push(eq(products.categorySlug, categoryFilter));
@@ -94,11 +106,134 @@ export const getStoreData = createServerFn({ method: "GET" })
 			}
 			const whereCondition = sql.join(conditions, sql` AND `);
 
+			// Get all products matching basic filters first
+			let allMatchingProducts = await db
+				.select()
+				.from(products)
+				.where(whereCondition)
+				.all();
+
+			// Filter by attributes if provided
+			if (Object.keys(attributeFilters).length > 0) {
+				// Get attribute slugs and value mappings
+				const allAttributes = await db.select().from(productAttributes);
+				const attributeIdToSlug = new Map<number, string>();
+				for (const attr of allAttributes) {
+					attributeIdToSlug.set(attr.id, attr.slug);
+				}
+
+				// Get standardized values for the selected attribute values
+				const allValueIds = new Set<number>();
+				for (const valueIds of Object.values(attributeFilters)) {
+					for (const valueId of valueIds) {
+						const numId = parseInt(valueId, 10);
+						if (!Number.isNaN(numId)) {
+							allValueIds.add(numId);
+						}
+					}
+				}
+
+				const stdValues =
+					allValueIds.size > 0
+						? await db
+								.select()
+								.from(attributeValues)
+								.where(inArray(attributeValues.id, Array.from(allValueIds)))
+						: [];
+
+				// Create a map of attributeId -> Set of value strings
+				const attributeValueMap = new Map<number, Set<string>>();
+				for (const stdValue of stdValues) {
+					if (!attributeValueMap.has(stdValue.attributeId)) {
+						attributeValueMap.set(stdValue.attributeId, new Set());
+					}
+					attributeValueMap.get(stdValue.attributeId)?.add(stdValue.value);
+				}
+
+				// Filter products by attribute values
+				allMatchingProducts = allMatchingProducts.filter((product) => {
+					if (!product.productAttributes) return false;
+
+					try {
+						const parsed = JSON.parse(product.productAttributes);
+						let productAttrs: Array<{ attributeId: string; value: string }> =
+							[];
+
+						// Handle both object and array formats
+						if (typeof parsed === "object" && parsed !== null) {
+							if (Array.isArray(parsed)) {
+								productAttrs = parsed;
+							} else {
+								// Convert object to array format
+								productAttrs = Object.entries(parsed).map(([key, value]) => ({
+									attributeId: key,
+									value: String(value),
+								}));
+							}
+						}
+
+						// Check if product matches all attribute filters
+						for (const [attributeId, _valueIds] of Object.entries(
+							attributeFilters,
+						)) {
+							const attrIdNum = parseInt(attributeId, 10);
+							if (Number.isNaN(attrIdNum)) continue;
+
+							const expectedValues = attributeValueMap.get(attrIdNum);
+							if (!expectedValues || expectedValues.size === 0) continue;
+
+							// Find product's attribute value
+							const productAttr = productAttrs.find((attr) => {
+								const numericId = parseInt(attr.attributeId, 10);
+								if (!Number.isNaN(numericId) && numericId === attrIdNum) {
+									return true;
+								}
+								const slug = attributeIdToSlug.get(attrIdNum);
+								return slug && attr.attributeId === slug;
+							});
+
+							if (!productAttr) return false;
+
+							// Check if product's value matches any of the selected values
+							const productValues = productAttr.value
+								.split(",")
+								.map((v) => v.trim())
+								.filter(Boolean);
+
+							const hasMatch = productValues.some((pv) =>
+								expectedValues.has(pv),
+							);
+							if (!hasMatch) return false;
+						}
+
+						return true;
+					} catch {
+						// Invalid JSON, exclude product
+						return false;
+					}
+				});
+
+				// Get product IDs after attribute filtering
+				const filteredProductIds = new Set(
+					allMatchingProducts.map((p) => p.id),
+				);
+
+				// Update where condition to include product IDs
+				if (filteredProductIds.size > 0) {
+					conditions.push(inArray(products.id, Array.from(filteredProductIds)));
+				} else {
+					// No products match, return empty result
+					conditions.push(sql`1 = 0`);
+				}
+			}
+
+			const finalWhereCondition = sql.join(conditions, sql` AND `);
+
 			// Get total count for pagination info (respecting filters)
 			const totalCountResult = await db
 				.select({ count: sql<number>`COUNT(*)` })
 				.from(products)
-				.where(whereCondition)
+				.where(finalWhereCondition)
 				.all();
 			const totalCount = totalCountResult[0]?.count ?? 0;
 
@@ -122,7 +257,7 @@ export const getStoreData = createServerFn({ method: "GET" })
 			const productsQuery = db
 				.select()
 				.from(products)
-				.where(whereCondition)
+				.where(finalWhereCondition)
 				.orderBy(orderSql);
 
 			const productsResult =

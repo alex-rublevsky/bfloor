@@ -35,6 +35,9 @@ export default defineConfig(() => {
 				client: {
 					base: "https://bfloor.romavg.workers.dev",
 				},
+				// Note: Static server functions (staticFunctionMiddleware) work automatically
+				// during production builds. The middleware caches results to static JSON files
+				// in the build output directory (TSS_CLIENT_OUTPUT_DIR is set automatically).
 			}),
 			tanstackRouter({
 				target: "react",

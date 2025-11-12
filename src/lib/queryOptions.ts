@@ -33,7 +33,9 @@ import { getAllOrders } from "~/server_functions/dashboard/orders/getAllOrders";
 import { getAllProducts } from "~/server_functions/dashboard/store/getAllProducts";
 import { getAllStoreLocations } from "~/server_functions/dashboard/storeLocations/getAllStoreLocations";
 import { getStoreData } from "~/server_functions/store/getAllProducts";
+import { getAttributeValuesForFiltering } from "~/server_functions/store/getAttributeValuesForFiltering";
 import { getProductBySlug } from "~/server_functions/store/getProductBySlug";
+import { getRecommendedProducts } from "~/server_functions/store/getRecommendedProducts";
 import { getUserData } from "~/utils/auth-server-func";
 
 /**
@@ -85,6 +87,7 @@ export const storeDataInfiniteQueryOptions = (
 		categorySlug?: string | null;
 		brandSlug?: string | null;
 		collectionSlug?: string | null;
+		attributeFilters?: Record<number, string[]>; // attributeId -> array of value IDs
 		sort?:
 			| "relevant"
 			| "name"
@@ -102,6 +105,7 @@ export const storeDataInfiniteQueryOptions = (
 				categorySlug: filters?.categorySlug ?? null,
 				brandSlug: filters?.brandSlug ?? null,
 				collectionSlug: filters?.collectionSlug ?? null,
+				attributeFilters: filters?.attributeFilters ?? {},
 				sort: filters?.sort ?? "relevant",
 			},
 		],
@@ -114,6 +118,7 @@ export const storeDataInfiniteQueryOptions = (
 					categorySlug: filters?.categorySlug ?? undefined,
 					brandSlug: filters?.brandSlug ?? undefined,
 					collectionSlug: filters?.collectionSlug ?? undefined,
+					attributeFilters: filters?.attributeFilters ?? undefined,
 					sort: filters?.sort ?? undefined,
 				},
 			}),
@@ -132,6 +137,47 @@ export const storeDataInfiniteQueryOptions = (
 				? firstPage.pagination.page - 1
 				: undefined;
 		},
+	});
+
+/**
+ * Attribute values for filtering query options
+ * Used for: Store and dashboard pages to show available attribute filter options
+ *
+ * Cache Strategy: Moderate caching for dynamic data
+ * - Attribute values cached for 1 hour (changes based on current filters)
+ * - Kept in memory for 3 hours
+ * - Query key includes attributeFilters so cache invalidates when filters change
+ */
+export const attributeValuesForFilteringQueryOptions = (
+	categorySlug?: string,
+	brandSlug?: string,
+	collectionSlug?: string,
+	attributeFilters?: Record<number, string[]>,
+) =>
+	queryOptions({
+		queryKey: [
+			"attributeValuesForFiltering",
+			{
+				categorySlug: categorySlug ?? null,
+				brandSlug: brandSlug ?? null,
+				collectionSlug: collectionSlug ?? null,
+				attributeFilters: attributeFilters ?? {},
+			},
+		],
+		queryFn: async () =>
+			getAttributeValuesForFiltering({
+				data: {
+					categorySlug,
+					brandSlug,
+					collectionSlug,
+					attributeFilters: attributeFilters ?? undefined,
+				},
+			}),
+		staleTime: 1000 * 60 * 60, // 1 hour - values change based on filters
+		gcTime: 1000 * 60 * 60 * 3, // 3 hours - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
 	});
 
 /**
@@ -201,6 +247,10 @@ export const productsInfiniteQueryOptions = (
 		categorySlug?: string | null;
 		brandSlug?: string | null;
 		collectionSlug?: string | null;
+		attributeFilters?: Record<number, string[]>; // attributeId -> array of value IDs
+		uncategorizedOnly?: boolean;
+		withoutBrandOnly?: boolean;
+		withoutCollectionOnly?: boolean;
 		sort?:
 			| "relevant"
 			| "name"
@@ -218,6 +268,10 @@ export const productsInfiniteQueryOptions = (
 				categorySlug: filters?.categorySlug ?? null,
 				brandSlug: filters?.brandSlug ?? null,
 				collectionSlug: filters?.collectionSlug ?? null,
+				attributeFilters: filters?.attributeFilters ?? {},
+				uncategorizedOnly: filters?.uncategorizedOnly ?? false,
+				withoutBrandOnly: filters?.withoutBrandOnly ?? false,
+				withoutCollectionOnly: filters?.withoutCollectionOnly ?? false,
 				sort: filters?.sort ?? "relevant",
 			},
 		],
@@ -230,6 +284,10 @@ export const productsInfiniteQueryOptions = (
 					categorySlug: filters?.categorySlug ?? undefined,
 					brandSlug: filters?.brandSlug ?? undefined,
 					collectionSlug: filters?.collectionSlug ?? undefined,
+					attributeFilters: filters?.attributeFilters ?? undefined,
+					uncategorizedOnly: filters?.uncategorizedOnly ?? undefined,
+					withoutBrandOnly: filters?.withoutBrandOnly ?? undefined,
+					withoutCollectionOnly: filters?.withoutCollectionOnly ?? undefined,
 					sort: filters?.sort ?? undefined,
 				},
 			}),
@@ -764,6 +822,87 @@ export const discountedProductsInfiniteQueryOptions = () =>
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
+		initialPageParam: 1,
+		getNextPageParam: (lastPage: PaginatedResponse) => {
+			return lastPage?.pagination?.hasNextPage
+				? lastPage.pagination.page + 1
+				: undefined;
+		},
+		getPreviousPageParam: (firstPage: PaginatedResponse) => {
+			return firstPage?.pagination?.hasPreviousPage
+				? firstPage.pagination.page - 1
+				: undefined;
+		},
+	});
+
+/**
+ * Recommended products infinite query options
+ * Used for: ProductSlider component (recommended mode) - shows featured products
+ *
+ * Cache Strategy: EXTREME caching for static-like data
+ * - Each page cached for 30 days (recommended products change rarely)
+ * - Infinite query with 20 products per page
+ * - Perfect for carousel implementation with progressive loading
+ * - Uses dedicated getRecommendedProducts server function (optimized for featured products)
+ */
+export const recommendedProductsInfiniteQueryOptions = () =>
+	infiniteQueryOptions({
+		queryKey: ["bfloorRecommendedProductsInfinite"],
+		queryFn: ({ pageParam = 1 }) =>
+			getRecommendedProducts({
+				data: {
+					page: pageParam as number,
+					limit: 20,
+				},
+			}),
+		staleTime: 1000 * 60 * 60 * 24 * 30, // 30 days - extreme caching for static-like data
+		gcTime: 1000 * 60 * 60 * 24 * 60, // 60 days - keep in memory for a long time
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+		refetchOnReconnect: false, // Don't refetch on reconnect (static data)
+		initialPageParam: 1,
+		getNextPageParam: (lastPage: PaginatedResponse) => {
+			return lastPage?.pagination?.hasNextPage
+				? lastPage.pagination.page + 1
+				: undefined;
+		},
+		getPreviousPageParam: (firstPage: PaginatedResponse) => {
+			return firstPage?.pagination?.hasPreviousPage
+				? firstPage.pagination.page - 1
+				: undefined;
+		},
+	});
+
+/**
+ * Recently visited products infinite query options
+ * Used for: ProductSlider component (recommended mode) - shows recently visited products
+ *
+ * Cache Strategy: Short caching since this is user-specific data
+ * - Each page cached for 5 minutes (user-specific, changes frequently)
+ * - Infinite query with 20 products per page
+ * - Perfect for carousel implementation with progressive loading
+ */
+export const recentlyVisitedProductsInfiniteQueryOptions = (
+	productIds: number[],
+) =>
+	infiniteQueryOptions({
+		queryKey: ["bfloorRecentlyVisitedProductsInfinite", productIds],
+		queryFn: ({ pageParam = 1 }) =>
+			getAllProducts({
+				data: {
+					productIds,
+					page: pageParam as number,
+					limit: 20,
+					sort: "newest", // Show most recently visited first
+				},
+			}),
+		staleTime: 1000 * 60 * 5, // 5 minutes - user-specific data changes frequently
+		gcTime: 1000 * 60 * 60, // 1 hour - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+		enabled: productIds.length > 0, // Only run if we have product IDs
 		initialPageParam: 1,
 		getNextPageParam: (lastPage: PaginatedResponse) => {
 			return lastPage?.pagination?.hasNextPage

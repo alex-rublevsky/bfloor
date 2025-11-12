@@ -108,6 +108,30 @@ export const updateProduct = createServerFn({ method: "POST" })
 						: null;
 			}
 
+			// Preserve existing values for optional fields if empty strings are provided
+			// This prevents accidentally clearing fields when form data contains empty strings
+			// The form may send empty strings due to initialization, but we should preserve
+			// existing values unless a non-empty value is explicitly provided
+			const existingProductData = existingProduct[0];
+
+			// Helper to preserve existing value if new value is empty string
+			// Empty strings typically indicate form initialization, not intentional clearing
+			const preserveIfEmpty = (
+				newValue: string | null | undefined,
+				existingValue: string | null | undefined,
+			): string | null => {
+				// If new value is explicitly provided (non-empty string), use it
+				if (newValue && newValue.trim() !== "") {
+					return newValue;
+				}
+				// If new value is empty string (form initialization artifact), preserve existing
+				if (newValue === "") {
+					return existingValue || null;
+				}
+				// If new value is null/undefined, allow clearing the field (explicit clear)
+				return null;
+			};
+
 			// Update product and related data
 			await Promise.all([
 				// Update main product
@@ -126,9 +150,19 @@ export const updateProduct = createServerFn({ method: "POST" })
 						squareMetersPerPack: productData.squareMetersPerPack
 							? parseFloat(productData.squareMetersPerPack)
 							: null,
-						categorySlug: productData.categorySlug || null,
-						brandSlug: productData.brandSlug || null,
-						collectionSlug: productData.collectionSlug || null,
+						// Preserve existing values if empty strings are provided
+						categorySlug: preserveIfEmpty(
+							productData.categorySlug,
+							existingProductData.categorySlug,
+						),
+						brandSlug: preserveIfEmpty(
+							productData.brandSlug,
+							existingProductData.brandSlug,
+						),
+						collectionSlug: preserveIfEmpty(
+							productData.collectionSlug,
+							existingProductData.collectionSlug,
+						),
 						storeLocationId: productData.storeLocationId || null,
 						isActive: productData.isActive,
 						isFeatured: productData.isFeatured,

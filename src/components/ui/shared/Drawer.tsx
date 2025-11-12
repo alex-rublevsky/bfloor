@@ -30,7 +30,7 @@ const DrawerOverlay = React.forwardRef<
 	<DrawerPrimitive.Overlay
 		ref={ref}
 		className={cn(
-			"fixed inset-0 z-50 bg-primary/40 backdrop-blur-xs transition-all duration-300",
+			"fixed inset-0 z-[100] bg-primary/40 backdrop-blur-xs transition-all duration-300",
 			className,
 		)}
 		{...props}
@@ -66,7 +66,7 @@ const DrawerContent = React.forwardRef<
 		<DrawerPrimitive.Content
 			ref={ref}
 			className={cn(
-				"fixed inset-x-0 bottom-0 z-50 mt-24 flex flex-col rounded-t-[10px] border bg-background",
+				"fixed inset-x-0 bottom-0 z-[100] mt-24 flex flex-col rounded-t-[10px] border bg-background",
 				"max-h-[95dvh] transition-transform duration-300 ease-in-out",
 				className,
 			)}
@@ -148,14 +148,14 @@ DrawerDescription.displayName = DrawerPrimitive.Description.displayName;
 
 export {
 	Drawer,
-	DrawerPortal,
-	DrawerOverlay,
-	DrawerTrigger,
+	DrawerBody,
 	DrawerClose,
 	DrawerContent,
-	DrawerHeader,
-	DrawerBody,
-	DrawerFooter,
-	DrawerTitle,
 	DrawerDescription,
+	DrawerFooter,
+	DrawerHeader,
+	DrawerOverlay,
+	DrawerPortal,
+	DrawerTitle,
+	DrawerTrigger,
 };

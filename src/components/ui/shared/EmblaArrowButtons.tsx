@@ -51,18 +51,25 @@ export const usePrevNextButtons = (
 	};
 };
 
-type PropType = ComponentPropsWithRef<"button">;
+type PropType = ComponentPropsWithRef<"button"> & {
+	size?: "default" | "small";
+};
 
-export const PrevButton: React.FC<PropType> = (props) => {
-	const { children, ...restProps } = props;
+export const PrevButton: React.FC<PropType> = ({
+	size = "default",
+	children,
+	...restProps
+}) => {
+	const sizeClasses =
+		size === "small" ? "w-[2.7rem] h-[2.7rem]" : "w-[3.6rem] h-[3.6rem]";
 
 	return (
 		<button
-			className="embla__button embla__button--prev"
+			className={`embla__button embla__button--prev border-2 border-input bg-transparent flex no-underline cursor-pointer p-0 m-0 z-[1] rounded-full items-center justify-center transition-standard ${sizeClasses}`}
 			type="button"
 			{...restProps}
 		>
-			<svg className="embla__button__svg" viewBox="0 0 532 532">
+			<svg className="w-[35%] h-[35%]" viewBox="0 0 532 532">
 				<title>Previous slide</title>
 				<path
 					fill="currentColor"
@@ -74,16 +81,21 @@ export const PrevButton: React.FC<PropType> = (props) => {
 	);
 };
 
-export const NextButton: React.FC<PropType> = (props) => {
-	const { children, ...restProps } = props;
+export const NextButton: React.FC<PropType> = ({
+	size = "default",
+	children,
+	...restProps
+}) => {
+	const sizeClasses =
+		size === "small" ? "w-[2.7rem] h-[2.7rem]" : "w-[3.6rem] h-[3.6rem]";
 
 	return (
 		<button
-			className="embla__button embla__button--next"
+			className={`embla__button embla__button--next border-2 border-input bg-transparent flex no-underline cursor-pointer p-0 m-0 z-[1] rounded-full items-center justify-center transition-standard ${sizeClasses}`}
 			type="button"
 			{...restProps}
 		>
-			<svg className="embla__button__svg" viewBox="0 0 532 532">
+			<svg className="w-[35%] h-[35%]" viewBox="0 0 532 532">
 				<title>Next slide</title>
 				<path
 					fill="currentColor"
@@ -94,3 +106,50 @@ export const NextButton: React.FC<PropType> = (props) => {
 		</button>
 	);
 };
+
+type EmblaArrowButtonsProps = {
+	emblaApi: UseEmblaCarouselType[1] | undefined;
+	className?: string;
+	variant?: "default" | "grid";
+	size?: "default" | "small";
+};
+
+/**
+ * Standardized arrow buttons component for Embla carousels
+ * Used across product sliders, testimonials, and image galleries
+ */
+export function EmblaArrowButtons({
+	emblaApi,
+	className = "",
+	variant = "default",
+	size = "default",
+}: EmblaArrowButtonsProps) {
+	const {
+		prevBtnDisabled,
+		nextBtnDisabled,
+		onPrevButtonClick,
+		onNextButtonClick,
+	} = usePrevNextButtons(emblaApi);
+
+	const containerClass =
+		variant === "grid"
+			? size === "small"
+				? "grid grid-cols-2 gap-1.5 items-center flex-shrink-0"
+				: "grid grid-cols-2 gap-2.5 items-center flex-shrink-0"
+			: "embla__buttons";
+
+	return (
+		<div className={`${containerClass} ${className}`}>
+			<PrevButton
+				onClick={onPrevButtonClick}
+				disabled={prevBtnDisabled}
+				size={size}
+			/>
+			<NextButton
+				onClick={onNextButtonClick}
+				disabled={nextBtnDisabled}
+				size={size}
+			/>
+		</div>
+	);
+}

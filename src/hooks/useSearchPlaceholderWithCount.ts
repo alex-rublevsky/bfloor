@@ -25,25 +25,33 @@ export function useSearchPlaceholderWithCount() {
 	const storeLocationsCount = useStoreLocationsCount();
 
 	// Generate placeholder based on current route
-	switch (pathname) {
-		case "/dashboard":
-			return `искать среди ${productsCount} товаров`;
-		case "/dashboard/categories":
+	// For dashboard routes, show specific entity counts based on the base route
+	if (pathname.startsWith("/dashboard")) {
+		// Check for specific dashboard routes that have their own entity types
+		if (pathname.startsWith("/dashboard/categories")) {
 			return `искать среди ${categoriesCount} категорий`;
-		case "/dashboard/brands":
+		}
+		if (pathname.startsWith("/dashboard/brands")) {
 			return `искать среди ${brandsCount} брендов`;
-		case "/dashboard/collections":
+		}
+		if (pathname.startsWith("/dashboard/collections")) {
 			return `искать среди ${collectionsCount} коллекций`;
-		case "/dashboard/attributes":
+		}
+		if (pathname.startsWith("/dashboard/attributes")) {
 			return `искать среди ${attributesCount} атрибутов`;
-		case "/dashboard/orders":
+		}
+		if (pathname.startsWith("/dashboard/orders")) {
 			return `искать среди ${ordersCount} заказов`;
-		case "/dashboard/misc":
+		}
+		if (pathname.startsWith("/dashboard/misc")) {
 			return `искать среди ${storeLocationsCount} адресов`;
-		case "/store":
-			// Store page uses the same products as dashboard
-			return `искать среди ${productsCount} товаров`;
-		default:
-			return "искать...";
+		}
+		// For all other dashboard routes (including /dashboard, /dashboard/products.*, etc.)
+		// default to products count
+		return `искать среди ${productsCount} товаров`;
 	}
+
+	// For all other routes (including store and index), show product count
+	// This allows users to see product count when searching from any page
+	return `искать среди ${productsCount} товаров`;
 }

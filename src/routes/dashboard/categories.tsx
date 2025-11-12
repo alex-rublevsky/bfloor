@@ -1,13 +1,13 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
 import { toast } from "sonner";
-import { CategoryTreeView } from "~/components/ui/dashboard/CategoryTreeView";
 import {
 	DashboardEntityManager,
 	type EntityFormFieldsProps,
 	type EntityListProps,
 } from "~/components/ui/dashboard/DashboardEntityManager";
+import { EntityCardContent } from "~/components/ui/dashboard/EntityCardContent";
+import { EntityCardGrid } from "~/components/ui/dashboard/EntityCardGrid";
 import { ImageUpload } from "~/components/ui/dashboard/ImageUpload";
 import { CategoriesPageSkeleton } from "~/components/ui/dashboard/skeletons/CategoriesPageSkeleton";
 import {
@@ -17,7 +17,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "~/components/ui/shared/Select";
-import { buildCategoryTree } from "~/lib/categoryTree";
 import { categoriesQueryOptions } from "~/lib/queryOptions";
 import { createProductCategory } from "~/server_functions/dashboard/categories/createProductCategory";
 import { deleteProductCategory } from "~/server_functions/dashboard/categories/deleteProductCategory";
@@ -84,25 +83,30 @@ const CategoryFormFields = ({
 	);
 };
 
-// Category list component
-const CategoryList = ({
-	entities,
-	onEdit,
-	onDelete,
-}: EntityListProps<Category>) => {
-	const categoryTree = useMemo(
-		() => buildCategoryTree(entities || []),
-		[entities],
-	);
+// Category list component using the reusable component
+const CategoryList = ({ entities, onEdit }: EntityListProps<Category>) => {
+	const { data: categories } = useSuspenseQuery(categoriesQueryOptions());
 
 	return (
-		<div className="border border-muted rounded-lg p-4 bg-card">
-			<CategoryTreeView
-				tree={categoryTree}
-				onEdit={onEdit}
-				onDelete={onDelete}
-			/>
-		</div>
+		<EntityCardGrid
+			entities={entities}
+			onEdit={onEdit}
+			renderEntity={(category) => {
+				const parentCategory = category.parentSlug
+					? categories.find((c) => c.slug === category.parentSlug)
+					: null;
+				return (
+					<EntityCardContent
+						name={category.name}
+						slug={category.slug}
+						isActive={category.isActive}
+						secondaryInfo={
+							parentCategory ? `Родитель: ${parentCategory.name}` : undefined
+						}
+					/>
+				);
+			}}
+		/>
 	);
 };
 

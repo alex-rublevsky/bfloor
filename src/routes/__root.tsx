@@ -119,7 +119,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			<body className={"min-h-screen flex flex-col"} suppressHydrationWarning>
 				<NavBar />
 
-				<main className="flex-1">{children}</main>
+				<main className="flex-1 min-h-0 flex flex-col">{children}</main>
 				{!isStore && !isDashboard && !isLogin && <Footer />}
 				{/* <TanStackRouterDevtools position="bottom-right" /> */}
 				<Scripts />

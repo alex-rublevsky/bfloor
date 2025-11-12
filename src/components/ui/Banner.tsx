@@ -1,5 +1,6 @@
 import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "~/components/ui/shared/Link";
 import { ASSETS_BASE_URL } from "~/constants/urls";
 
 type EmblaOptionsType = Parameters<typeof useEmblaCarousel>[0];
@@ -7,6 +8,7 @@ type EmblaOptionsType = Parameters<typeof useEmblaCarousel>[0];
 type SlideImage = {
 	desktop: string;
 	mobile: string;
+	url?: string;
 };
 
 type EmblaPropType = {
@@ -83,14 +85,36 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 						{slides.map((slide, index) => (
 							<div className="embla__slide" key={slide.desktop}>
 								<div className="embla__slide__number">
-									<picture>
-										<source media="(min-width: 768px)" srcSet={slide.desktop} />
-										<img
-											src={slide.mobile}
-											alt={`banner ${index + 1}`}
-											className="embla__slide__image"
-										/>
-									</picture>
+									{slide.url ? (
+										<Link
+											href={slide.url}
+											className="block w-full h-full no-underline hover:no-underline"
+										>
+											<picture>
+												<source
+													media="(min-width: 768px)"
+													srcSet={slide.desktop}
+												/>
+												<img
+													src={slide.mobile}
+													alt={`banner ${index + 1}`}
+													className="embla__slide__image"
+												/>
+											</picture>
+										</Link>
+									) : (
+										<picture>
+											<source
+												media="(min-width: 768px)"
+												srcSet={slide.desktop}
+											/>
+											<img
+												src={slide.mobile}
+												alt={`banner ${index + 1}`}
+												className="embla__slide__image"
+											/>
+										</picture>
+									)}
 								</div>
 							</div>
 						))}
@@ -285,10 +309,13 @@ export function Banner() {
 		{
 			desktop: `${ASSETS_BASE_URL}/banners/elochka.webp`,
 			mobile: `${ASSETS_BASE_URL}/banners/elochka-mobile.webp`,
+			// TODO: make it elochka
+			url: "/store?category=laminate",
 		},
 		{
 			desktop: `${ASSETS_BASE_URL}/banners/cork.webp`,
 			mobile: `${ASSETS_BASE_URL}/banners/cork-mobile.webp`,
+			//TODO: add url
 		},
 	];
 	const OPTIONS: EmblaOptionsType = { loop: true };

@@ -7,15 +7,9 @@ import {
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import {
-	ArrowLeftFromLine,
-	LogOutIcon,
-	MoreVertical,
-	Plus,
-} from "lucide-react";
-import { motion, useMotionValueEvent, useScroll } from "motion/react";
+import { ArrowLeftFromLine, LogOutIcon, MoreVertical } from "lucide-react";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
 	Drawer,
@@ -23,6 +17,8 @@ import {
 	DrawerTrigger,
 } from "~/components/ui/shared/Drawer";
 import { SearchInput } from "~/components/ui/shared/SearchInput";
+import { getActionButtonsForRoute } from "~/config/dashboardActionButtons";
+import { useHoverDropdown } from "~/hooks/useHoverDropdown";
 import { usePrefetch } from "~/hooks/usePrefetch";
 import { useSearchPlaceholderWithCount } from "~/hooks/useSearchPlaceholderWithCount";
 import { useCart } from "~/lib/cartContext";
@@ -36,7 +32,9 @@ import { cn } from "~/utils/utils";
 import { CartDrawerContent } from "../store/CartDrawerContent";
 import { BottomNavBar } from "./BottomNavBar";
 import { Button } from "./Button";
+import { Icon } from "./Icon";
 import { Logo } from "./Logo";
+import { ActionButton, ActionButtons } from "./nav/NavBarActionButtons";
 import { SafeArea } from "./SafeArea";
 
 interface NavItem {
@@ -97,7 +95,7 @@ const DashboardNavLinks = ({
 					}
 				}}
 				className={cn(
-					"relative z-10 block cursor-pointer px-3 py-1.5 text-xs text-foreground rounded-full transition-colors hover:bg-primary/20 whitespace-nowrap flex-shrink-0",
+					"relative z-10 block cursor-pointer px-3 py-1.5 text-xs text-foreground rounded-full transition-standard hover:bg-primary/20 whitespace-nowrap flex-shrink-0",
 					pathname === item.url &&
 						"bg-primary text-primary-foreground mix-blend-normal hover:bg-primary",
 				)}
@@ -107,33 +105,6 @@ const DashboardNavLinks = ({
 		))}
 	</div>
 );
-
-// Reusable action button component
-const ActionButton = ({
-	actionButton,
-	className = "",
-}: {
-	actionButton: { label: string; onClick: () => void } | null;
-	className?: string;
-}) => {
-	if (!actionButton) return null;
-
-	return (
-		<button
-			type="button"
-			onClick={actionButton.onClick}
-			className={cn(
-				"relative flex rounded-full border border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground transition-all duration-300 p-[0.3rem] focus:outline-hidden focus:ring-1 focus:ring-ring whitespace-nowrap min-w-fit",
-				className,
-			)}
-		>
-			<span className="relative z-10 flex items-center gap-1.5 cursor-pointer px-3 py-1.5 text-xs">
-				<Plus className="w-4 h-4" />
-				{actionButton.label}
-			</span>
-		</button>
-	);
-};
 
 const DropdownNavMenu = ({
 	items,
@@ -150,37 +121,18 @@ const DropdownNavMenu = ({
 	};
 }) => {
 	const navigate = useNavigate();
-	const [open, setOpen] = useState<boolean>(false);
-	const parent = useRef<HTMLDivElement>(null);
-	const child = useRef<HTMLDivElement>(null);
-	const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	const {
+		isOpen: open,
+		parentRef: parent,
+		childRef: child,
+		handleMouseEnter,
+		handleMouseLeave,
+	} = useHoverDropdown();
 
 	const userID = userData?.userID || "";
 	const userName = userData?.userName || "";
 	const userEmail = userData?.userEmail || "";
 	const userAvatar = userData?.userAvatar || "";
-
-	const handleMouseLeave = () => {
-		closeTimeoutRef.current = setTimeout(() => {
-			setOpen(false);
-		}, 200);
-	};
-
-	const handleMouseEnter = () => {
-		if (closeTimeoutRef.current) {
-			clearTimeout(closeTimeoutRef.current);
-			closeTimeoutRef.current = null;
-		}
-		setOpen(true);
-	};
-
-	useEffect(() => {
-		return () => {
-			if (closeTimeoutRef.current) {
-				clearTimeout(closeTimeoutRef.current);
-			}
-		};
-	}, []);
 
 	return (
 		<div
@@ -261,7 +213,7 @@ const DropdownNavMenu = ({
 									navigate({ to: "/" });
 								}
 							}}
-							className="flex w-full items-center gap-2 py-2 px-3 text-sm hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200 border-b border-border cursor-pointer"
+							className="flex w-full items-center gap-2 py-2 px-3 text-sm hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-standard border-b border-border cursor-pointer"
 						>
 							<LogOutIcon className="h-4 w-4" />
 							Выйти
@@ -275,7 +227,7 @@ const DropdownNavMenu = ({
 							href={item.url}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="relative flex w-full cursor-pointer select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200"
+							className="relative flex w-full cursor-pointer select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-standard"
 						>
 							{item.name}
 						</a>
@@ -283,7 +235,7 @@ const DropdownNavMenu = ({
 						<Link
 							key={item.url}
 							to={item.url}
-							className="relative flex w-full cursor-pointer select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200"
+							className="relative flex w-full cursor-pointer select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-standard"
 						>
 							{item.name}
 						</Link>
@@ -304,12 +256,12 @@ const CartButton = () => {
 				<button
 					type="button"
 					onClick={() => setCartOpen(true)}
-					className="relative flex items-center justify-center w-10 h-10 rounded-full border border-black bg-background hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-all duration-300 cursor-pointer"
+					className="relative flex items-center justify-center text-accent hover:text-accent transition-standard cursor-pointer"
 				>
 					{/* Cart SVG Icon */}
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
-						className="w-5 h-5"
+						className="w-6 h-6"
 						fill="none"
 						viewBox="0 0 33 30"
 						aria-label="Корзина"
@@ -340,37 +292,20 @@ const HoverDropdown = ({
 	trigger,
 	children,
 	className = "",
+	menuClassName = "",
 }: {
-	trigger: React.ReactNode;
+	trigger: React.ReactNode | ((isOpen: boolean) => React.ReactNode);
 	children: React.ReactNode;
 	className?: string;
+	menuClassName?: string;
 }) => {
-	const [open, setOpen] = useState<boolean>(false);
-	const parent = useRef<HTMLDivElement>(null);
-	const child = useRef<HTMLDivElement>(null);
-	const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-	const handleMouseLeave = () => {
-		closeTimeoutRef.current = setTimeout(() => {
-			setOpen(false);
-		}, 200);
-	};
-
-	const handleMouseEnter = () => {
-		if (closeTimeoutRef.current) {
-			clearTimeout(closeTimeoutRef.current);
-			closeTimeoutRef.current = null;
-		}
-		setOpen(true);
-	};
-
-	useEffect(() => {
-		return () => {
-			if (closeTimeoutRef.current) {
-				clearTimeout(closeTimeoutRef.current);
-			}
-		};
-	}, []);
+	const {
+		isOpen: open,
+		parentRef: parent,
+		childRef: child,
+		handleMouseEnter,
+		handleMouseLeave,
+	} = useHoverDropdown();
 
 	return (
 		<div
@@ -380,7 +315,7 @@ const HoverDropdown = ({
 			onMouseLeave={handleMouseLeave}
 			role="menu"
 		>
-			{trigger}
+			{typeof trigger === "function" ? trigger(open) : trigger}
 			{open && parent.current && child.current && (
 				<SafeArea
 					anchor={parent.current}
@@ -397,8 +332,12 @@ const HoverDropdown = ({
 					left: 0,
 					top: "100%",
 					marginTop: "0.5rem",
+					...(menuClassName.includes("!w-fit") && {
+						width: "fit-content",
+						minWidth: "fit-content",
+					}),
 				}}
-				className="catalog-dropdown-menu"
+				className={cn("catalog-dropdown-menu", menuClassName)}
 				onMouseEnter={handleMouseEnter}
 				onMouseLeave={handleMouseLeave}
 				role="menu"
@@ -413,31 +352,73 @@ const HoverDropdown = ({
 const AddressDropdown = () => {
 	return (
 		<HoverDropdown
-			trigger={
+			menuClassName="!w-fit !min-w-fit columns-1"
+			trigger={(isOpen) => (
 				<a
 					href="/contacts"
-					className="text-foreground hover:text-primary transition-colors whitespace-nowrap cursor-pointer"
+					className="flex items-center gap-1.5 text-foreground hover:text-primary transition-standard whitespace-nowrap cursor-pointer"
 				>
-					Владивосток, ул. Русская, д. 78
+					<Icon
+						name="chevron-down"
+						size={16}
+						className={cn(
+							"text-accent transition-faster",
+							isOpen && "rotate-180",
+						)}
+					/>
+					ул. Русская, 78
 				</a>
-			}
+			)}
 		>
 			<div className="px-4 py-3">
-				<div className="text-sm font-medium mb-2">Наши адреса</div>
-				<div className="space-y-2 text-sm">
-					<div>
-						<div className="font-medium">Основной магазин</div>
-						<div className="text-muted-foreground">
-							Владивосток, ул. Русская, д. 78
+				<div className="space-y-3 text-sm">
+					<div className="flex gap-3">
+						<div>
+							<div className="font-medium mb-1 whitespace-nowrap">
+								ул. Русская, 78
+							</div>
+							<div className="text-muted-foreground space-y-0.5">
+								<div className="flex justify-between items-center gap-2">
+									<span className="whitespace-nowrap">Пн — Пт</span>
+									<span className="whitespace-nowrap">10 — 18</span>
+								</div>
+								<div className="flex justify-between items-center gap-2">
+									<span className="whitespace-nowrap">Сб</span>
+									<span className="whitespace-nowrap">11 — 17</span>
+								</div>
+								<div className="flex justify-between items-center gap-2">
+									<span className="whitespace-nowrap">Вс</span>
+									<span className="whitespace-nowrap">Выходной</span>
+								</div>
+							</div>
 						</div>
-						<div className="text-muted-foreground">Пн-Вс: 10:00 - 20:00</div>
+						<div>
+							<div className="font-medium mb-1 whitespace-nowrap">
+								ул. 100 летия, 30
+							</div>
+							<div className="text-muted-foreground space-y-0.5">
+								<div className="flex justify-between items-center gap-2">
+									<span className="whitespace-nowrap">Пн — Пт</span>
+									<span className="whitespace-nowrap">10 — 18</span>
+								</div>
+								<div className="flex justify-between items-center gap-2">
+									<span className="whitespace-nowrap">Сб</span>
+									<span className="whitespace-nowrap">11 — 17</span>
+								</div>
+								<div className="flex justify-between items-center gap-2">
+									<span className="whitespace-nowrap">Вс</span>
+									<span className="whitespace-nowrap">Выходной</span>
+								</div>
+							</div>
+						</div>
 					</div>
-					<div className="pt-2 border-t border-border">
-						<div className="font-medium">Склад</div>
-						<div className="text-muted-foreground">
-							Владивосток, ул. Примерная, д. 10
-						</div>
-						<div className="text-muted-foreground">Пн-Пт: 9:00 - 18:00</div>
+					<div className="pt-3 border-t border-border">
+						<Link
+							to="/contacts"
+							className="block text-center py-2 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-standard"
+						>
+							Адреса
+						</Link>
 					</div>
 				</div>
 			</div>
@@ -449,48 +430,90 @@ const AddressDropdown = () => {
 const PhoneDropdown = () => {
 	return (
 		<HoverDropdown
-			trigger={
+			menuClassName="!w-fit !min-w-fit columns-1"
+			trigger={(isOpen) => (
 				<a
-					href="tel:+79025559405"
-					className="text-foreground hover:text-primary transition-colors whitespace-nowrap cursor-pointer"
+					href="tel:+79084466740"
+					className="flex items-center gap-1.5 text-foreground hover:text-primary transition-standard whitespace-nowrap cursor-pointer"
 				>
-					8 902 555 9405
+					<Icon
+						name="chevron-down"
+						size={16}
+						className={cn(
+							"text-accent transition-faster",
+							isOpen && "rotate-180",
+						)}
+					/>
+					8 908 446 6740
 				</a>
-			}
+			)}
 		>
 			<div className="px-4 py-3">
-				<div className="text-sm font-medium mb-2">Контакты</div>
-				<div className="space-y-2 text-sm">
-					<div>
-						<div className="font-medium">Телефон</div>
-						<a href="tel:+79025559405" className="text-primary hover:underline">
-							+7 (902) 555-94-05
-						</a>
+				<div className="flex gap-4 items-start">
+					{/* Left column - Contact info */}
+					<div className="space-y-2 text-sm">
+						<div>
+							<a
+								href="tel:+79084466740"
+								className="text-primary hover:underline block"
+							>
+								8 908 446 6740
+							</a>
+						</div>
+						<div>
+							<a
+								href="tel:+79025559405"
+								className="text-primary hover:underline block"
+							>
+								8 902 555 9405
+							</a>
+						</div>
+						<div>
+							<a
+								href="tel:+79084486785"
+								className="text-primary hover:underline block"
+							>
+								8 908 448 6785
+							</a>
+						</div>
+						<div>
+							<a
+								href="mailto:romavg@mail.ru"
+								className="text-primary hover:underline block"
+							>
+								romavg@mail.ru
+							</a>
+						</div>
 					</div>
-					<div>
-						<div className="font-medium">WhatsApp</div>
+					{/* Right column - Social icons */}
+					<div className="flex flex-col gap-2 items-center">
 						<a
-							href="https://wa.me/79025559405"
-							className="text-primary hover:underline"
+							href="https://t.me/your_telegram"
 							target="_blank"
 							rel="noopener noreferrer"
+							className="text-accent hover:opacity-80 transition-faster"
+							aria-label="Telegram"
 						>
-							+7 (902) 555-94-05
+							<Icon name="telegram" size={36} className="text-accent" />
 						</a>
-					</div>
-					<div>
-						<div className="font-medium">Email</div>
 						<a
-							href="mailto:info@example.com"
-							className="text-primary hover:underline"
+							href="https://instagram.com/your_instagram"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-accent hover:opacity-80 transition-faster"
+							aria-label="Instagram"
 						>
-							info@example.com
+							<Icon name="instagram" size={36} className="text-accent" />
 						</a>
-					</div>
-					<div className="pt-2 border-t border-border">
-						<div className="text-muted-foreground">
-							Время работы: Пн-Вс 10:00 - 20:00
-						</div>
+						<a
+							href="https://wa.me/79084466740"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-accent hover:opacity-80 transition-faster"
+							aria-label="WhatsApp"
+						>
+							<Icon name="whatsapp" size={36} className="text-accent" />
+						</a>
 					</div>
 				</div>
 			</div>
@@ -500,10 +523,13 @@ const PhoneDropdown = () => {
 
 // Catalog Dropdown Component with safe triangle
 const CatalogDropdown = () => {
-	const [open, setOpen] = useState<boolean>(false);
-	const parent = useRef<HTMLDivElement>(null);
-	const child = useRef<HTMLDivElement>(null);
-	const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	const {
+		isOpen: open,
+		parentRef: parent,
+		childRef: child,
+		handleMouseEnter,
+		handleMouseLeave,
+	} = useHoverDropdown();
 
 	const { data: categories = [] } = useQuery({
 		...categoriesQueryOptions(),
@@ -513,32 +539,6 @@ const CatalogDropdown = () => {
 	const activeCategories = categories
 		.filter((cat) => cat.isActive)
 		.sort((a, b) => a.order - b.order);
-
-	const handleMouseLeave = () => {
-		// Delay closing to allow mouse to reach safe area or menu
-		// Increased to 200ms to accommodate slower mouse movements
-		closeTimeoutRef.current = setTimeout(() => {
-			setOpen(false);
-		}, 200);
-	};
-
-	const handleMouseEnter = () => {
-		// Cancel any pending close
-		if (closeTimeoutRef.current) {
-			clearTimeout(closeTimeoutRef.current);
-			closeTimeoutRef.current = null;
-		}
-		setOpen(true);
-	};
-
-	// Cleanup timeout on unmount
-	useEffect(() => {
-		return () => {
-			if (closeTimeoutRef.current) {
-				clearTimeout(closeTimeoutRef.current);
-			}
-		};
-	}, []);
 
 	return (
 		<div
@@ -585,7 +585,7 @@ const CatalogDropdown = () => {
 							key={category.slug}
 							to="/store"
 							search={{ category: category.slug }}
-							className="block px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+							className="block px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-standard"
 						>
 							{category.name}
 						</Link>
@@ -609,28 +609,18 @@ export function NavBar({
 	const isDashboard = pathname.startsWith("/dashboard");
 	const isMiscPage = pathname === "/dashboard/misc";
 
-	// Fetch userData when on dashboard routes using TanStack Query
+	// Fetch userData using TanStack Query
 	// This is cached and shared across components, no prop drilling needed
 	const { data: userData } = useQuery({
 		...userDataQueryOptions(),
-		enabled: isDashboard, // Only fetch when on dashboard routes
 	});
 
-	// Hide-on-scroll state
-	const { cartOpen } = useCart();
-	const { scrollY } = useScroll();
-	const lastYRef = useRef(0);
-	const [isHidden, setIsHidden] = useState(false);
-	useMotionValueEvent(scrollY, "change", (y) => {
-		const difference = y - lastYRef.current;
-		if (Math.abs(difference) > 200 && !cartOpen) {
-			setIsHidden(difference > 0);
-			lastYRef.current = y;
-		}
-	});
+	// Check if user is admin
+	const isAdmin = userData?.isAdmin ?? false;
 
 	// Client-side search context
 	const clientSearch = useClientSearch();
+	const navigate = useNavigate();
 
 	// Dashboard search state (self-managed when not provided by props)
 	const currentSearchParam = (
@@ -684,63 +674,17 @@ export function NavBar({
 		onSearchChange,
 	]);
 
-	// Handle action button clicks directly
-	const handleActionClick = () => {
-		// Dispatch a custom event that child routes can listen to
-		window.dispatchEvent(new CustomEvent("dashboardAction"));
-	};
-
-	// Configure action button based on current route
-	const getActionButton = () => {
-		if (pathname === "/dashboard") {
-			return {
-				label: "Добавить товар",
-				onClick: handleActionClick,
-			};
-		}
-		if (pathname === "/dashboard/categories") {
-			return {
-				label: "Добавить категорию",
-				onClick: handleActionClick,
-			};
-		}
-		if (pathname === "/dashboard/brands") {
-			return {
-				label: "Добавить бренд",
-				onClick: handleActionClick,
-			};
-		}
-		if (pathname === "/dashboard/collections") {
-			return {
-				label: "Добавить коллекцию",
-				onClick: handleActionClick,
-			};
-		}
-		if (pathname === "/dashboard/attributes") {
-			return {
-				label: "Добавить атрибут",
-				onClick: handleActionClick,
-			};
-		}
-		// Misc page no longer needs navbar action button - it has its own create button
-		return null;
-	};
-
-	const actionButton = getActionButton();
+	// Get action buttons from configuration
+	const actionButtons = getActionButtonsForRoute(pathname);
+	const actionButton = actionButtons.length === 1 ? actionButtons[0] : null;
 
 	// Dashboard navigation layout
 	if (isDashboard) {
 		return (
 			<>
-				<motion.nav
-					animate={isHidden ? "hidden" : "visible"}
-					whileHover="visible"
-					onClick={() => setIsHidden(false)}
-					onFocusCapture={() => setIsHidden(false)}
-					transition={{ duration: 0.5, ease: [0.215, 0.61, 0.355, 1] }}
-					variants={{ hidden: { y: "-100%" }, visible: { y: "0%" } }}
+				<nav
 					className={cn(
-						"sticky top-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border",
+						"sticky top-0 z-[100] bg-background/95 backdrop-blur-sm border-b border-border",
 						className,
 					)}
 				>
@@ -776,9 +720,13 @@ export function NavBar({
 								</div>
 							)}
 
-							{/* Action button - fixed width */}
+							{/* Action button(s) - fixed width */}
 							<div className="flex-shrink-0">
-								<ActionButton actionButton={actionButton} />
+								{actionButtons.length > 1 ? (
+									<ActionButtons buttons={actionButtons} />
+								) : actionButton ? (
+									<ActionButton button={actionButton} />
+								) : null}
 							</div>
 
 							{/* Menu dropdown - fixed width */}
@@ -824,9 +772,13 @@ export function NavBar({
 									</div>
 								)}
 
-								{/* Action button - fixed width */}
+								{/* Action button(s) - fixed width */}
 								<div className="flex-shrink-0">
-									<ActionButton actionButton={actionButton} />
+									{actionButtons.length > 1 ? (
+										<ActionButtons buttons={actionButtons} />
+									) : actionButton ? (
+										<ActionButton button={actionButton} />
+									) : null}
 								</div>
 
 								{/* Menu dropdown - fixed width */}
@@ -861,12 +813,12 @@ export function NavBar({
 							)}
 						</div>
 					</div>
-				</motion.nav>
+				</nav>
 
 				{/* Bottom Navigation Bar - Mobile only */}
 				<BottomNavBar
 					isDashboard={true}
-					actionButton={actionButton}
+					actionButtons={actionButtons}
 					userData={userData || undefined}
 				/>
 			</>
@@ -876,15 +828,10 @@ export function NavBar({
 	// Client navigation layout
 	return (
 		<>
-			<motion.nav
-				animate={isHidden ? "hidden" : "visible"}
-				whileHover="visible"
-				onClick={() => setIsHidden(false)}
-				onFocusCapture={() => setIsHidden(false)}
-				transition={{ duration: 0.5, ease: [0.215, 0.61, 0.355, 1] }}
-				variants={{ hidden: { y: "-100%" }, visible: { y: "0%" } }}
+			<nav
+				style={{ viewTransitionName: "--persist-nav" }}
 				className={cn(
-					"sticky top-0 z-[40] bg-background/95 backdrop-blur-sm border-b border-border",
+					"sticky top-0 z-[100] bg-background/95 backdrop-blur-sm border-b border-border",
 					className,
 				)}
 			>
@@ -898,19 +845,19 @@ export function NavBar({
 							<div className="flex items-center gap-3">
 								<a
 									href="/delivery"
-									className="text-foreground hover:text-primary transition-colors whitespace-nowrap"
+									className="text-foreground hover:text-primary transition-standard whitespace-nowrap"
 								>
 									Доставка и оплата
 								</a>
 								<a
 									href="/contacts"
-									className="text-foreground hover:text-primary transition-colors whitespace-nowrap"
+									className="text-foreground hover:text-primary transition-standard whitespace-nowrap"
 								>
 									Контакты и адреса
 								</a>
 								<a
 									href="/about"
-									className="text-foreground hover:text-primary transition-colors whitespace-nowrap"
+									className="text-foreground hover:text-primary transition-standard whitespace-nowrap"
 								>
 									О компании
 								</a>
@@ -921,7 +868,7 @@ export function NavBar({
 						<div className="flex items-center gap-4">
 							{/* Logo - fixed width */}
 							<div className="flex-shrink-0">
-								<Link to="/" className="hover:opacity-80 transition-opacity">
+								<Link to="/" className="hover:opacity-80 transition-standard">
 									<Logo className="h-8 w-auto" />
 								</Link>
 							</div>
@@ -937,6 +884,15 @@ export function NavBar({
 									placeholder={dynamicPlaceholder || "Поиск..."}
 									value={clientSearch.searchTerm}
 									onChange={clientSearch.setSearchTerm}
+									onSubmit={(value) => {
+										const trimmed = value.trim();
+										if (trimmed.length >= 2) {
+											// Navigate to store page if not already there
+											if (pathname !== "/store") {
+												navigate({ to: "/store" });
+											}
+										}
+									}}
 									className="w-full"
 								/>
 							</div>
@@ -946,12 +902,14 @@ export function NavBar({
 								<CartButton />
 							</div>
 
-							{/* Dashboard button - fixed width */}
-							<div className="flex-shrink-0">
-								<Button to="/dashboard" variant="outline" size="sm">
-									Админка
-								</Button>
-							</div>
+							{/* Dashboard button - fixed width (only for admins) */}
+							{isAdmin && (
+								<div className="flex-shrink-0">
+									<Button to="/dashboard" variant="secondary" size="sm">
+										Админка
+									</Button>
+								</div>
+							)}
 						</div>
 					</div>
 
@@ -960,7 +918,7 @@ export function NavBar({
 						{/* First row: Logo + Catalog button */}
 						<div className="flex items-center gap-4">
 							<div className="flex-shrink-0">
-								<Link to="/" className="hover:opacity-80 transition-opacity">
+								<Link to="/" className="hover:opacity-80 transition-standard">
 									<Logo className="h-8 w-auto" />
 								</Link>
 							</div>
@@ -976,17 +934,28 @@ export function NavBar({
 									placeholder={dynamicPlaceholder || "Поиск..."}
 									value={clientSearch.searchTerm}
 									onChange={clientSearch.setSearchTerm}
+									onSubmit={(value) => {
+										const trimmed = value.trim();
+										if (trimmed.length >= 2) {
+											// Navigate to store page if not already there
+											if (pathname !== "/store") {
+												navigate({ to: "/store" });
+											}
+										}
+									}}
 									className="w-full"
 								/>
 							</div>
 							<div className="flex-shrink-0">
 								<CartButton />
 							</div>
-							<div className="flex-shrink-0">
-								<Button to="/dashboard" variant="outline" size="sm">
-									Админка
-								</Button>
-							</div>
+							{isAdmin && (
+								<div className="flex-shrink-0">
+									<Button to="/dashboard" variant="secondary" size="sm">
+										Админка
+									</Button>
+								</div>
+							)}
 						</div>
 					</div>
 
@@ -998,24 +967,30 @@ export function NavBar({
 								placeholder={dynamicPlaceholder || "Поиск..."}
 								value={clientSearch.searchTerm}
 								onChange={clientSearch.setSearchTerm}
+								onSubmit={(value) => {
+									const trimmed = value.trim();
+									if (trimmed.length >= 2) {
+										// Navigate to store page if not already there
+										if (pathname !== "/store") {
+											navigate({ to: "/store" });
+										}
+									}
+								}}
 								className="w-full"
 							/>
 						</div>
 
-						{/* Cart button - fixed width */}
-						<div className="flex-shrink-0">
-							<CartButton />
-						</div>
-
-						{/* Dashboard button - fixed width */}
-						<div className="flex-shrink-0">
-							<Button to="/dashboard" variant="outline" size="sm">
-								Админка
-							</Button>
-						</div>
+						{/* Dashboard button - fixed width (only for admins) */}
+						{isAdmin && (
+							<div className="flex-shrink-0">
+								<Button to="/dashboard" variant="secondary" size="sm">
+									Админка
+								</Button>
+							</div>
+						)}
 					</div>
 				</div>
-			</motion.nav>
+			</nav>
 
 			{/* Bottom Navigation Bar - Mobile only */}
 			<BottomNavBar />

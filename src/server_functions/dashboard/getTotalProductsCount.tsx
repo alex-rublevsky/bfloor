@@ -22,3 +22,4 @@ export const getTotalProductsCount = createServerFn({ method: "GET" })
 
 		return result[0]?.count ?? 0;
 	});
+

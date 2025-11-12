@@ -30,7 +30,9 @@ import { Route as DashboardCollectionsRouteImport } from './routes/dashboard/col
 import { Route as DashboardCategoriesRouteImport } from './routes/dashboard/categories'
 import { Route as DashboardBrandsRouteImport } from './routes/dashboard/brands'
 import { Route as DashboardAttributesRouteImport } from './routes/dashboard/attributes'
+import { Route as DashboardProductsNewRouteImport } from './routes/dashboard/products.new'
 import { Route as ApiAuthSplatRouteImport } from './routes/api.auth.$'
+import { Route as DashboardProductsProductIdEditRouteImport } from './routes/dashboard/products.$productId.edit'
 
 const RedirectRoute = RedirectRouteImport.update({
   id: '/redirect',
@@ -137,11 +139,22 @@ const DashboardAttributesRoute = DashboardAttributesRouteImport.update({
   path: '/attributes',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardProductsNewRoute = DashboardProductsNewRouteImport.update({
+  id: '/products/new',
+  path: '/products/new',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardProductsProductIdEditRoute =
+  DashboardProductsProductIdEditRouteImport.update({
+    id: '/products/$productId/edit',
+    path: '/products/$productId/edit',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -166,6 +179,8 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof DashboardIndexRoute
   '/store/': typeof StoreIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/dashboard/products/new': typeof DashboardProductsNewRoute
+  '/dashboard/products/$productId/edit': typeof DashboardProductsProductIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -188,6 +203,8 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardIndexRoute
   '/store': typeof StoreIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/dashboard/products/new': typeof DashboardProductsNewRoute
+  '/dashboard/products/$productId/edit': typeof DashboardProductsProductIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -213,6 +230,8 @@ export interface FileRoutesById {
   '/dashboard/': typeof DashboardIndexRoute
   '/store/': typeof StoreIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/dashboard/products/new': typeof DashboardProductsNewRoute
+  '/dashboard/products/$productId/edit': typeof DashboardProductsProductIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -239,6 +258,8 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/store/'
     | '/api/auth/$'
+    | '/dashboard/products/new'
+    | '/dashboard/products/$productId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -261,6 +282,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/store'
     | '/api/auth/$'
+    | '/dashboard/products/new'
+    | '/dashboard/products/$productId/edit'
   id:
     | '__root__'
     | '/'
@@ -285,6 +308,8 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/store/'
     | '/api/auth/$'
+    | '/dashboard/products/new'
+    | '/dashboard/products/$productId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -451,12 +476,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAttributesRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/products/new': {
+      id: '/dashboard/products/new'
+      path: '/products/new'
+      fullPath: '/dashboard/products/new'
+      preLoaderRoute: typeof DashboardProductsNewRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/products/$productId/edit': {
+      id: '/dashboard/products/$productId/edit'
+      path: '/products/$productId/edit'
+      fullPath: '/dashboard/products/$productId/edit'
+      preLoaderRoute: typeof DashboardProductsProductIdEditRouteImport
+      parentRoute: typeof DashboardRouteRoute
     }
   }
 }
@@ -469,6 +508,8 @@ interface DashboardRouteRouteChildren {
   DashboardMiscRoute: typeof DashboardMiscRoute
   DashboardOrdersRoute: typeof DashboardOrdersRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardProductsNewRoute: typeof DashboardProductsNewRoute
+  DashboardProductsProductIdEditRoute: typeof DashboardProductsProductIdEditRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
@@ -479,6 +520,8 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardMiscRoute: DashboardMiscRoute,
   DashboardOrdersRoute: DashboardOrdersRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardProductsNewRoute: DashboardProductsNewRoute,
+  DashboardProductsProductIdEditRoute: DashboardProductsProductIdEditRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
@@ -518,12 +561,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

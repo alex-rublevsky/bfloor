@@ -1,0 +1,77 @@
+/* Image Gallery Styles - Only complex styles that can't be done with Tailwind */
+
+/* ============================================
+   EMBLA BUTTON & DOT STYLES
+   (Shared with testimonials, needed here)
+============================================ */
+
+/* Button styles - only complex vendor-specific properties */
+.embla__button {
+	-webkit-tap-highlight-color: rgba(var(--text-high-contrast-rgb-value), 0.5);
+	-webkit-appearance: none;
+	appearance: none;
+	touch-action: manipulation;
+}
+
+.embla__button:hover {
+	background-color: var(--muted);
+	border-color: var(--primary);
+}
+
+.embla__button:disabled {
+	color: oklch(var(--muted));
+}
+
+.embla__dot {
+	-webkit-tap-highlight-color: oklch(var(--primary));
+	-webkit-appearance: none;
+	appearance: none;
+	touch-action: manipulation;
+}
+
+.embla__dot:after {
+	width: 1.2rem;
+	height: 1.2rem;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	content: "";
+	background-color: oklch(from var(--secondary) l c h / 0.7);
+	transition: var(--transition-standard);
+}
+
+.embla__dot:hover {
+	background-color: var(--muted);
+}
+
+.embla__dot--selected:after {
+	background-color: var(--primary);
+}
+
+/* Small size variant for dots */
+.embla__dot--small:after {
+	width: 0.8rem;
+	height: 0.8rem;
+}
+
+/* ============================================
+   MOBILE THUMBNAIL STYLES
+============================================ */
+
+.image-gallery-mobile__thumb {
+	-webkit-tap-highlight-color: rgba(var(--text-high-contrast-rgb-value), 0.5);
+	-webkit-appearance: none;
+	appearance: none;
+	touch-action: manipulation;
+}
+
+/* ============================================
+   PRODUCT INFO OVERLAY (Desktop)
+============================================ */
+
+.product-info-overlay {
+	background: oklch(from var(--background) l c h / 0.85);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	border: 1px solid oklch(from var(--border) l c h / 0.5);
+}

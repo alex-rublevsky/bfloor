@@ -41,6 +41,11 @@ input.field-sizing-content {
 	max-inline-size: 25ch;
 }
 
+/* Quantity inputs should be able to grow larger */
+input.field-sizing-content[type="number"] {
+	max-inline-size: none;
+}
+
 /* Product Description HTML Styles */
 /* These styles handle HTML content imported from external sources */
 .detail-catalog-chars-item {
@@ -514,7 +519,7 @@ p {
 /* Custom Scrollbar Styling - Cross-platform support */
 /* Firefox */
 * {
-	scrollbar-width: auto;
+	scrollbar-width: thin;
 	scrollbar-color: var(--primary) transparent;
 }
 
@@ -573,12 +578,6 @@ p {
 	animation: slide-in-up 0.5s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
 }
 
-.gallery-thumbnail-enter {
-	animation: gallery-thumb-in 0.3s ease-out forwards;
-	opacity: 0;
-	transform: scale(0.8);
-}
-
 @keyframes slide-in-up {
 	from {
 		transform: translateY(60px);
@@ -590,17 +589,8 @@ p {
 		opacity: 1;
 	}
 }
-
-@keyframes gallery-thumb-in {
-	from {
-		opacity: 0;
-		transform: scale(0.8);
-	}
-
-	to {
-		opacity: 1;
-		transform: scale(1);
-	}
+::view-transition {
+	navigation: auto;
 }
 
 /* View transition for elements that actually transition */
@@ -637,10 +627,6 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
 	-moz-appearance: textfield;
 	appearance: textfield;
-}
-
-::view-transition {
-	navigation: auto;
 }
 
 /* Catalog Dropdown Menu - Pure CSS hover with hover triangle (desktop only) */
@@ -692,5 +678,13 @@ input[type="number"] {
 @media (max-width: 1023px) {
 	.catalog-dropdown-menu {
 		display: none;
+	}
+}
+
+/* Virtualized product rows - ensure hovered cards appear above other rows */
+/* When a link inside a row is hovered, raise the entire row's z-index */
+@media (min-width: 768px) and (hover: hover) {
+	.virtualized-row:has(a:hover) {
+		z-index: 50;
 	}
 }

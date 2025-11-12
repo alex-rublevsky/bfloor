@@ -5,9 +5,9 @@ import { toast } from "sonner";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
 import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
+import { EntityCardContent } from "~/components/ui/dashboard/EntityCardContent";
 import { EntityCardGrid } from "~/components/ui/dashboard/EntityCardGrid";
 import { ImageUpload } from "~/components/ui/dashboard/ImageUpload";
-import { Badge } from "~/components/ui/shared/Badge";
 import { Button } from "~/components/ui/shared/Button";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { Image } from "~/components/ui/shared/Image";
@@ -385,49 +385,34 @@ export function CountriesManager({ className }: CountriesManagerProps) {
 				<EntityCardGrid
 					entities={countries}
 					onEdit={handleEditCountry}
-					renderEntity={(country) => (
-						<>
-							{/* Country Flag/Icon */}
-							<div className="flex-shrink-0">
-								{country.flagImage ? (
-									<div className="h-8 w-8 relative">
-										<Image
-											src={country.flagImage}
-											alt={country.name}
-											className="object-contain rounded"
-											width={32}
-										/>
-									</div>
-								) : (
-									<div className="h-8 w-8 bg-muted rounded flex items-center justify-center">
-										<span className="text-xs text-muted-foreground">
-											{country.code}
-										</span>
-									</div>
-								)}
+					renderEntity={(country) => {
+						const flagIcon = country.flagImage ? (
+							<div className="h-8 w-8 relative">
+								<Image
+									src={country.flagImage}
+									alt={country.name}
+									className="object-contain rounded"
+									width={32}
+								/>
 							</div>
-
-							{/* Country Info */}
-							<div className="flex flex-col flex-1 min-w-0">
-								<div className="flex items-center gap-2">
-									<span className="text-sm font-medium truncate">
-										{country.name}
-									</span>
-									{!country.isActive && (
-										<Badge
-											variant="secondary"
-											className="text-xs flex-shrink-0"
-										>
-											Inactive
-										</Badge>
-									)}
-								</div>
-								<span className="text-xs text-muted-foreground truncate">
+						) : (
+							<div className="h-8 w-8 bg-muted rounded flex items-center justify-center">
+								<span className="text-xs text-muted-foreground">
 									{country.code}
 								</span>
 							</div>
-						</>
-					)}
+						);
+
+						return (
+							<EntityCardContent
+								name={country.name}
+								slug={country.code}
+								isActive={country.isActive}
+								icon={flagIcon}
+								inactiveLabel="Inactive"
+							/>
+						);
+					}}
 				/>
 			)}
 

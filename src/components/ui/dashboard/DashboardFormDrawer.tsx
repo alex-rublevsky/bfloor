@@ -48,7 +48,10 @@ export function DashboardFormDrawer({
 }: DashboardFormDrawerProps) {
 	return (
 		<Drawer open={isOpen} onOpenChange={onOpenChange}>
-			<DrawerContent width={fullWidth ? "full" : undefined}>
+			<DrawerContent
+				width={fullWidth ? "full" : undefined}
+				className="border-primary"
+			>
 				<DrawerHeader className="px-4 sm:px-6 lg:px-8">
 					<DrawerTitle>{title}</DrawerTitle>
 				</DrawerHeader>

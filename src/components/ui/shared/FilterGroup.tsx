@@ -89,8 +89,11 @@ function FilterButton({
 interface FilterGroupProps {
 	title?: string;
 	options: (FilterOption | string)[];
-	selectedOptions: string | null;
-	onOptionChange: (option: string | null) => void;
+	selectedOptions: string | null | string[];
+	onOptionChange:
+		| ((option: string | null) => void)
+		| ((option: string) => void)
+		| ((options: string[]) => void);
 	className?: string;
 	showAllOption?: boolean;
 	allOptionLabel?: string;
@@ -107,6 +110,11 @@ interface FilterGroupProps {
 	 * Force a single row with no wrapping (used for mobile multi-row scroller rows)
 	 */
 	noWrap?: boolean;
+	/**
+	 * Enable multi-select mode. When true, selectedOptions should be string[] and
+	 * onOptionChange will be called with the updated array of selected values.
+	 */
+	multiSelect?: boolean;
 }
 
 export function FilterGroup({
@@ -122,12 +130,30 @@ export function FilterGroup({
 	titleClassName,
 	layout = "wrap",
 	noWrap = false,
+	multiSelect = false,
 }: FilterGroupProps) {
 	const handleOptionClick = (optionSlug: string) => {
-		onOptionChange(optionSlug === selectedOptions ? null : optionSlug);
+		if (multiSelect) {
+			const currentSelection = Array.isArray(selectedOptions)
+				? selectedOptions
+				: [];
+			const newSelection = currentSelection.includes(optionSlug)
+				? currentSelection.filter((s) => s !== optionSlug)
+				: [...currentSelection, optionSlug];
+			(onOptionChange as (options: string[]) => void)(newSelection);
+		} else {
+			(onOptionChange as (option: string | null) => void)(
+				selectedOptions === optionSlug ? null : optionSlug,
+			);
+		}
 	};
 
 	const isSelected = (optionSlug: string) => {
+		if (multiSelect) {
+			return Array.isArray(selectedOptions)
+				? selectedOptions.includes(optionSlug)
+				: false;
+		}
 		return selectedOptions === optionSlug;
 	};
 
@@ -160,10 +186,18 @@ export function FilterGroup({
 				</div>
 			)}
 			<div className={cn(containerBase, className)}>
-				{showAllOption && (
+				{showAllOption && !multiSelect && (
 					<FilterButton
-						onClick={() => onOptionChange(null)}
-						isSelected={selectedOptions === null}
+						onClick={() =>
+							(onOptionChange as (option: string | null) => void)(null)
+						}
+						isSelected={
+							multiSelect
+								? false
+								: selectedOptions === null ||
+									(Array.isArray(selectedOptions) &&
+										selectedOptions.length === 0)
+						}
 						variant={variant}
 					>
 						{allOptionLabel}

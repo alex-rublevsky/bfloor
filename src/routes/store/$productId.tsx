@@ -18,17 +18,20 @@ import {
 import { Button } from "~/components/ui/shared/Button";
 import { Icon } from "~/components/ui/shared/Icon";
 import ImageGallery from "~/components/ui/shared/ImageGallery";
+import { Input } from "~/components/ui/shared/input";
 import {
 	markdownComponents,
 	rehypePlugins,
 } from "~/components/ui/shared/MarkdownComponents";
+import ProductSlider from "~/components/ui/shared/ProductSlider";
 import { ProductPageSkeleton } from "~/components/ui/store/skeletons/ProductPageSkeleton";
 import { VariationSelector } from "~/components/ui/store/VariationSelector";
 import { ASSETS_BASE_URL } from "~/constants/urls";
 import { useProductAttributes } from "~/hooks/useProductAttributes";
+import { useRecentlyVisitedProducts } from "~/hooks/useRecentlyVisitedProducts";
 import { useVariationSelection } from "~/hooks/useVariationSelection";
 import { useCart } from "~/lib/cartContext";
-import { productQueryOptions } from "~/lib/queryOptions";
+import { productQueryOptions, userDataQueryOptions } from "~/lib/queryOptions";
 import type {
 	Product,
 	ProductWithDetails,
@@ -144,6 +147,15 @@ function ProductPage() {
 
 	const { addProductToCart, cart } = useCart();
 	const { data: attributes } = useProductAttributes();
+	const {
+		addRecentlyVisited,
+		getRecentlyVisitedProductIds,
+		hasRecentlyVisited,
+	} = useRecentlyVisitedProducts();
+
+	// Check if user is admin
+	const { data: userData } = useQuery(userDataQueryOptions());
+	const isAdmin = userData?.isAdmin ?? false;
 
 	// Use query to track loading state
 	const {
@@ -157,6 +169,29 @@ function ProductPage() {
 
 	// Type assertion for product with all details
 	const productWithDetails = product as ProductWithDetails | undefined;
+
+	// Track product visit when route param changes and product data is available
+	// The hook handles deduplication automatically, so we don't need a ref
+	useEffect(() => {
+		if (productId && productWithDetails?.id && productWithDetails?.slug) {
+			addRecentlyVisited(productWithDetails.id, productWithDetails.slug);
+		}
+	}, [
+		productId,
+		productWithDetails?.id,
+		productWithDetails?.slug,
+		addRecentlyVisited,
+	]);
+
+	// Get recently visited product IDs (excluding current product)
+	const recentlyVisitedProductIds = useMemo(() => {
+		const allIds = getRecentlyVisitedProductIds();
+		// Exclude current product from recently visited list
+		if (productWithDetails?.id) {
+			return allIds.filter((id) => id !== productWithDetails.id);
+		}
+		return allIds;
+	}, [getRecentlyVisitedProductIds, productWithDetails?.id]);
 
 	// Determine if product is flooring (sold in packs with area in m²)
 	const isFlooringProduct = Boolean(productWithDetails?.squareMetersPerPack);
@@ -310,6 +345,22 @@ function ProductPage() {
 		}
 	}, [quantity]);
 
+	const handleQuantityChange = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			const value = e.target.value;
+			// Allow empty input while typing
+			if (value === "") {
+				setQuantity(1);
+				return;
+			}
+			const numValue = parseInt(value, 10);
+			if (!Number.isNaN(numValue) && numValue > 0) {
+				setQuantity(numValue);
+			}
+		},
+		[],
+	);
+
 	// Handle add to cart
 	const handleAttributeChange = useCallback(
 		(attributeId: string, value: string) => {
@@ -390,22 +441,501 @@ function ProductPage() {
 
 	return (
 		<div className="min-h-screen bg-background">
-			{/* First Section - Product Info */}
-			<div className="max-w-7xl mx-auto px-4 py-8">
-				<div className="flex flex-col lg:flex-row gap-8">
-					{/* Left Section - Image Gallery (60% width) */}
-					<div className="w-full lg:w-3/5">
+			{/* Desktop: Full-width gallery with overlay sticky product info */}
+			<div className="hidden lg:block">
+				{/* Wrapper that spans full height for sticky positioning */}
+				<div className="relative">
+					{/* Full-width Image Gallery */}
+					<div className="w-full">
 						<ImageGallery
 							images={productImages}
 							alt={productWithDetails?.name || "Product"}
 							productSlug={productWithDetails?.slug}
 							size="default"
-							className="rounded-lg"
 						/>
 					</div>
 
-					{/* Right Section - Product Info (40% width) */}
-					<div className="w-full lg:w-2/5">
+					{/* Sticky Product Info Panel - Overlay on top of gallery, then sticks */}
+					<div className="absolute top-0 right-0 w-full h-full pointer-events-none">
+						<div className="sticky top-16 w-full lg:w-2/5 min-w-0 h-fit ml-auto pointer-events-auto">
+							<div className="flex items-start justify-end p-8 min-w-0">
+								<div className="product-info-overlay p-6 max-w-[45vw] rounded-lg shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] min-w-0 w-fit border border-border bg-background/95 backdrop-blur-sm relative">
+									{/* Admin Edit Button - Top Right Corner */}
+									{isAdmin && productWithDetails?.id && (
+										<div className="absolute top-4 right-4">
+											<Button
+												asChild
+												variant="outline"
+												size="sm"
+												className="flex items-center gap-2"
+											>
+												<Link
+													to="/dashboard/products/$productId/edit"
+													params={{
+														productId: productWithDetails.id.toString(),
+													}}
+												>
+													<Icon name="edit" size={16} />
+													<span>Редактировать</span>
+												</Link>
+											</Button>
+										</div>
+									)}
+									<div className="space-y-6">
+										{/* Breadcrumb Navigation */}
+										<div>
+											<Breadcrumb>
+												<BreadcrumbList>
+													<BreadcrumbItem>
+														<BreadcrumbLink asChild>
+															<Link
+																to="/"
+																className="text-gray-400 hover:text-gray-600"
+															>
+																Главная
+															</Link>
+														</BreadcrumbLink>
+													</BreadcrumbItem>
+													<BreadcrumbSeparator />
+													<BreadcrumbItem>
+														<BreadcrumbLink asChild>
+															<Link
+																to="/store"
+																className="text-gray-400 hover:text-gray-600"
+																viewTransition={true}
+																resetScroll={false}
+															>
+																Ламинат
+															</Link>
+														</BreadcrumbLink>
+													</BreadcrumbItem>
+													<BreadcrumbSeparator />
+													<BreadcrumbItem>
+														<BreadcrumbPage className="text-gray-400">
+															{productWithDetails?.name}
+														</BreadcrumbPage>
+													</BreadcrumbItem>
+												</BreadcrumbList>
+											</Breadcrumb>
+										</div>
+
+										{/* Product Title */}
+										<div>
+											<h1
+												className=""
+												style={{
+													viewTransitionName: `product-name-${productWithDetails?.slug}`,
+												}}
+											>
+												{productWithDetails?.name || "Product"}
+											</h1>
+											<div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm">
+												{/* Brand Logo/Name */}
+												{productWithDetails?.brand && (
+													<Link
+														to="/store"
+														search={{ brand: productWithDetails.brand.slug }}
+														className="flex items-center gap-2 hover:underline"
+													>
+														{productWithDetails.brand.image ? (
+															<img
+																src={productWithDetails.brand.image}
+																alt={productWithDetails.brand.name}
+																className="h-6 w-auto"
+															/>
+														) : (
+															<span className="font-medium">
+																{productWithDetails.brand.name}
+															</span>
+														)}
+													</Link>
+												)}
+
+												{/* SKU */}
+												{productWithDetails?.sku && (
+													<div className="flex items-center gap-1">
+														<span className="text-foreground-muted">
+															Артикул:
+														</span>
+
+														{productWithDetails.sku}
+													</div>
+												)}
+
+												{/* Country of Origin */}
+												{productWithDetails?.brand?.country && (
+													<div className="flex items-center gap-1.5">
+														{productWithDetails.brand.country.flagImage && (
+															<img
+																src={`${ASSETS_BASE_URL}/${productWithDetails.brand.country.flagImage}`}
+																alt={productWithDetails.brand.country.name}
+																className="h-4 w-auto"
+															/>
+														)}
+														<span className="font-semibold">
+															{productWithDetails.brand.country.name}
+														</span>
+														<span className="text-gray-500">родина бренда</span>
+													</div>
+												)}
+
+												{/* Collection */}
+												{productWithDetails?.collection && (
+													<div className="flex items-center gap-1">
+														<span className="text-foreground-muted">
+															Коллекция:
+														</span>
+														<Link
+															to="/store"
+															search={{
+																collection: productWithDetails.collection.slug,
+															}}
+															className="font-semibold hover:underline"
+														>
+															{productWithDetails.collection.name}
+														</Link>
+													</div>
+												)}
+											</div>
+										</div>
+
+										{/* Wrapper for Price, Quantity, and Add to Cart */}
+										<div className="border border-border rounded-lg p-2 space-y-4 min-w-0 max-w-full">
+											{/* Price and Quantity */}
+											<div className="flex items-stretch gap-0 min-w-0 w-full">
+												{/* Price Box */}
+												<div className="bg-muted px-4 py-3 rounded-lg flex-shrink-0">
+													<div className="text-sm text-gray-500 mb-1">
+														Цена за{" "}
+														<span className="whitespace-nowrap">
+															{isFlooringProduct
+																? "м²"
+																: getUnitShortLabel(
+																		productWithDetails?.unitOfMeasurement,
+																	)}
+														</span>
+													</div>
+													<div
+														className="text-2xl font-bold text-gray-800"
+														style={{
+															viewTransitionName: `product-price-${productWithDetails?.slug}`,
+														}}
+													>
+														{currentPrice.toLocaleString()} р
+													</div>
+												</div>
+
+												{/* Icon divider */}
+												<div className="flex-shrink-0 mx-2 flex items-center">
+													<Icon
+														name="plus"
+														size={28}
+														className="text-foreground-muted rotate-45"
+													/>
+												</div>
+
+												{/* Quantity Selector */}
+												<div className="flex flex-col min-w-0 flex-1 overflow-hidden">
+													<div className="flex gap-1 items-stretch min-w-0">
+														<button
+															type="button"
+															onClick={decrementQuantity}
+															disabled={quantity <= 1}
+															className="flex-shrink-0 w-10 h-full flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+														>
+															<Icon name="minus" size={20} />
+														</button>
+														<div className="text-center bg-muted rounded-lg p-2 flex items-center justify-center min-w-0 w-fit max-w-full">
+															<div className="flex flex-col items-center gap-0 min-w-0">
+																{productWithDetails?.squareMetersPerPack && (
+																	<div className="flex items-baseline gap-1 justify-center min-w-0">
+																		<div className="text-sm font-normal flex-shrink-0">
+																			Площадь
+																		</div>
+																		<div className="text-xl font-normal whitespace-nowrap">
+																			{(
+																				quantity *
+																				productWithDetails.squareMetersPerPack
+																			).toFixed(2)}{" "}
+																			м²
+																		</div>
+																	</div>
+																)}
+																<div className="flex items-baseline gap-1 justify-center min-w-0">
+																	{isFlooringProduct && (
+																		<div className="text-sm font-normal whitespace-nowrap flex-shrink-0">
+																			Упаковок
+																		</div>
+																	)}
+																	<Input
+																		type="number"
+																		min={1}
+																		value={quantity}
+																		onChange={handleQuantityChange}
+																		className="text-xl font-normal text-center border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto min-w-0 field-sizing-content [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+																	/>
+																</div>
+															</div>
+														</div>
+														<button
+															type="button"
+															onClick={incrementQuantity}
+															className="flex-shrink-0 w-10 h-full flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] cursor-pointer"
+														>
+															<Icon name="plus" size={20} />
+														</button>
+													</div>
+												</div>
+											</div>
+
+											{/* Variation Selector */}
+											{product?.hasVariations && (
+												<VariationSelector
+													product={product as unknown as ProductWithVariations}
+													selectedAttributes={selectedAttributes}
+													search={search}
+													onAttributeChange={handleAttributeChange}
+												/>
+											)}
+
+											{/* Price and Add to Cart */}
+											<div className="bg-muted rounded-lg p-2 flex flex-col md:flex-row gap-4 items-baseline">
+												{/* Price Display */}
+												<div className="flex flex-col gap-2">
+													{/* Discount Row */}
+													{currentDiscount && originalPrice && (
+														<div className="flex items-baseline justify-between gap-6">
+															<div className="text-left">Скидка</div>
+															<div className="flex items-baseline gap-3 text-right">
+																<span className="text-lg line-through ">
+																	{originalPrice.toLocaleString()} р
+																</span>
+																<span className="px-2 py-1 bg-accent text-accent-foreground text-sm font-semibold rounded-[5px]">
+																	{currentDiscount}%
+																</span>
+															</div>
+														</div>
+													)}
+
+													{/* Total Row */}
+													<div className="flex items-baseline justify-between gap-6">
+														<div className="text-left">Итого</div>
+														<span className="text-3xl font-bold text-right">
+															{totalPrice.toLocaleString()} р
+														</span>
+													</div>
+												</div>
+
+												{/* Add to Cart Button */}
+												<div className="flex-1 flex">
+													<Button
+														onClick={handleAddToCart}
+														disabled={!canAddToCart}
+														size="lg"
+														className="w-full h-full"
+													>
+														{!canAddToCart ? "Недоступно" : "В корзину"}
+													</Button>
+												</div>
+											</div>
+
+											{/* Store Locations */}
+											{productWithDetails?.storeLocations &&
+												productWithDetails.storeLocations.length > 0 && (
+													<div className="text-sm">
+														<span className="text-foreground-muted">
+															Доступно в магазинах:{" "}
+														</span>
+														<span className="text-foreground">
+															{productWithDetails.storeLocations?.map(
+																(location, index) => (
+																	<span key={location.id}>
+																		<Link
+																			to="/contacts"
+																			className="text-accent hover:underline"
+																		>
+																			{location.address}
+																		</Link>
+																		{index <
+																			(productWithDetails.storeLocations
+																				?.length ?? 0) -
+																				1 && ", "}
+																	</span>
+																),
+															)}
+														</span>
+													</div>
+												)}
+										</div>
+
+										{/* Important Note */}
+										{product?.importantNote && (
+											<div className="prose prose-sm max-w-none">
+												<ReactMarkdown
+													components={markdownComponents}
+													rehypePlugins={rehypePlugins}
+												>
+													{productWithDetails?.importantNote?.replace(
+														/\\n/g,
+														"\n",
+													) ?? ""}
+												</ReactMarkdown>
+											</div>
+										)}
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					{/* Description and Characteristics Section */}
+					{(product?.description ||
+						product?.hasVariations ||
+						(product?.productAttributes &&
+							Array.isArray(productWithDetails.productAttributes) &&
+							productWithDetails.productAttributes.length > 0)) && (
+						<div className="max-w-7xl mx-auto px-4 py-8 lg:pr-[45%]">
+							<div className="flex flex-col gap-8">
+								{/* Characteristics */}
+								{(product?.hasVariations ||
+									(product?.productAttributes &&
+										Array.isArray(productWithDetails.productAttributes) &&
+										productWithDetails.productAttributes.length > 0)) && (
+									<div className="space-y-4">
+										<h2>Характеристики</h2>
+										<div>
+											{/* Product-level attributes - only show standardized attributes */}
+											{(productWithDetails?.productAttributes ?? [])
+												// Filter to only show attributes that exist in the standardized list
+												.filter(
+													(attr: { attributeId: string; value: string }) => {
+														if (!attributes || !attributes.length) return false;
+														// Check if attribute is in the standardized list
+														const attribute = attributes.find(
+															(a) =>
+																a.id.toString() === attr.attributeId ||
+																a.slug === attr.attributeId ||
+																a.name === attr.attributeId,
+														);
+														// Only show if it's a standardized attribute
+														return attribute !== undefined;
+													},
+												)
+												.map((attr: { attributeId: string; value: string }) => {
+													const attribute = attributes?.find(
+														(a) =>
+															a.id.toString() === attr.attributeId ||
+															a.slug === attr.attributeId ||
+															a.name === attr.attributeId,
+													);
+													const displayName = attribute
+														? attribute.name
+														: attr.attributeId;
+
+													return (
+														<div
+															key={attr.attributeId}
+															className="flex justify-between items-center py-2"
+														>
+															<span className="text-foreground-muted">
+																{displayName}
+															</span>
+															<span>{attr.value}</span>
+														</div>
+													);
+												})}
+
+											{/* Variation attributes */}
+											{product?.hasVariations &&
+												(() => {
+													// Find the variation with attributes that matches the selected variation
+													const productWithVariations =
+														product as unknown as ProductWithVariations;
+													let variationToShow = null;
+
+													if (selectedVariation) {
+														// Find the variation with attributes that matches the selected variation ID
+														variationToShow =
+															productWithVariations.variations?.find(
+																(v) => v.id === selectedVariation.id,
+															);
+													}
+
+													// Fallback to first variation if no match found
+													if (!variationToShow) {
+														variationToShow =
+															productWithVariations.variations?.[0];
+													}
+
+													if (!variationToShow?.attributes) return null;
+
+													return variationToShow.attributes.map(
+														(attr: VariationAttribute) => {
+															const attribute = attributes?.find(
+																(a) => a.id.toString() === attr.attributeId,
+															);
+															const displayName = attribute
+																? attribute.name
+																: attr.attributeId;
+
+															return (
+																<div
+																	key={attr.attributeId}
+																	className="flex justify-between items-center py-2"
+																>
+																	<span className="text-foreground-muted font-normal">
+																		{displayName}
+																	</span>
+																	<span className="text-foreground font-normal">
+																		{attr.value}
+																	</span>
+																</div>
+															);
+														},
+													);
+												})()}
+										</div>
+									</div>
+								)}
+
+								{/* Description */}
+								{product?.description && (
+									<div className="space-y-4">
+										<h2>Описание</h2>
+										<div className="prose max-w-none">
+											<ReactMarkdown
+												components={markdownComponents}
+												rehypePlugins={rehypePlugins}
+											>
+												{productWithDetails?.description?.replace(
+													/\\n/g,
+													"\n",
+												) ?? ""}
+											</ReactMarkdown>
+										</div>
+									</div>
+								)}
+							</div>
+						</div>
+					)}
+				</div>
+			</div>
+
+			{/* Mobile: Standard layout */}
+			<div className="lg:hidden max-w-7xl mx-auto px-4 py-8">
+				<div className="flex flex-col gap-8">
+					{/* Image Gallery */}
+					<div className="w-full">
+						<ImageGallery
+							images={productImages}
+							alt={productWithDetails?.name || "Product"}
+							productSlug={productWithDetails?.slug}
+							size="default"
+						/>
+					</div>
+
+					{/* Product Info */}
+					<div className="w-full">
 						<div className="space-y-6">
 							{/* Breadcrumb Navigation */}
 							<div>
@@ -457,7 +987,11 @@ function ProductPage() {
 								<div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600">
 									{/* Brand Logo/Name */}
 									{productWithDetails?.brand && (
-										<div className="flex items-center gap-2">
+										<Link
+											to="/store"
+											search={{ brand: productWithDetails.brand.slug }}
+											className="flex items-center gap-2 hover:underline"
+										>
 											{productWithDetails.brand.image ? (
 												<img
 													src={productWithDetails.brand.image}
@@ -469,16 +1003,15 @@ function ProductPage() {
 													{productWithDetails.brand.name}
 												</span>
 											)}
-										</div>
+										</Link>
 									)}
 
 									{/* SKU */}
 									{productWithDetails?.sku && (
 										<div className="flex items-center gap-1">
 											<span className="text-gray-500">Артикул:</span>
-											<span className="font-semibold">
-												{productWithDetails.sku}
-											</span>
+
+											{productWithDetails.sku}
 										</div>
 									)}
 
@@ -503,21 +1036,36 @@ function ProductPage() {
 									{productWithDetails?.collection && (
 										<div className="flex items-center gap-1">
 											<span className="text-gray-500">Коллекция:</span>
-											<span className="font-semibold">
+											<Link
+												to="/store"
+												search={{
+													collection: productWithDetails.collection.slug,
+												}}
+												className="font-semibold hover:underline"
+											>
 												{productWithDetails.collection.name}
-											</span>
+											</Link>
 										</div>
 									)}
 								</div>
 							</div>
 
 							{/* Wrapper for Price, Quantity, and Add to Cart */}
-							<div className="border border-border rounded-lg p-2 space-y-4">
+							<div className="border border-border rounded-lg p-2 space-y-4 min-w-0">
 								{/* Price and Quantity */}
-								<div className="flex items-stretch gap-0">
+								<div className="flex items-stretch gap-0 min-w-0">
 									{/* Price Box */}
-									<div className="bg-muted px-4 py-3 rounded-lg">
-										<div className="text-sm text-gray-500 mb-1">{`Цена за ${isFlooringProduct ? "м²" : getUnitShortLabel(productWithDetails?.unitOfMeasurement)}`}</div>
+									<div className="bg-muted px-4 py-3 rounded-lg flex-shrink-0">
+										<div className="text-sm text-gray-500 mb-1">
+											Цена за{" "}
+											<span className="whitespace-nowrap">
+												{isFlooringProduct
+													? "м²"
+													: getUnitShortLabel(
+															productWithDetails?.unitOfMeasurement,
+														)}
+											</span>
+										</div>
 										<div
 											className="text-2xl font-bold text-gray-800"
 											style={{
@@ -538,44 +1086,52 @@ function ProductPage() {
 									</div>
 
 									{/* Quantity Selector */}
-									<div className="flex-1 flex flex-col">
-										<div className="flex gap-1 items-stretch flex-1">
+									<div className="flex-1 flex flex-col min-w-0">
+										<div className="flex gap-1 items-stretch flex-1 min-w-0">
 											<button
 												type="button"
 												onClick={decrementQuantity}
 												disabled={quantity <= 1}
-												className="aspect-square flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex-shrink-0 h-full"
+												className="flex-shrink-0 w-10 h-full flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
 											>
 												<Icon name="minus" size={20} />
 											</button>
-											<div className="text-center bg-muted rounded-lg p-2 flex items-center justify-center flex-grow h-full">
-												<div className="space-y-1">
+											<div className="text-center bg-muted rounded-lg p-2 flex items-center justify-center min-w-0 w-fit max-w-full">
+												<div className="flex flex-col items-center gap-0 min-w-0">
 													{productWithDetails?.squareMetersPerPack && (
-														<div className="flex items-baseline gap-1 flex-wrap justify-center">
-															<div className="text-sm font-normal">Площадь</div>
-															<div className="text-2xl font-normal">
-																{quantity *
-																	productWithDetails.squareMetersPerPack}{" "}
+														<div className="flex items-baseline gap-1 justify-center min-w-0">
+															<div className="text-sm font-normal flex-shrink-0">
+																Площадь
+															</div>
+															<div className="text-xl font-normal whitespace-nowrap">
+																{(
+																	quantity *
+																	productWithDetails.squareMetersPerPack
+																).toFixed(2)}{" "}
 																м²
 															</div>
 														</div>
 													)}
-													<div className="flex items-baseline gap-1 flex-wrap justify-center">
+													<div className="flex items-baseline gap-1 justify-center min-w-0 w-full">
 														{isFlooringProduct && (
-															<div className="text-sm  font-normal">
+															<div className="text-sm font-normal whitespace-nowrap flex-shrink-0">
 																Упаковок
 															</div>
 														)}
-														<div className="text-2xl font-normal">
-															{quantity}
-														</div>
+														<Input
+															type="number"
+															min={1}
+															value={quantity}
+															onChange={handleQuantityChange}
+															className="text-xl font-normal text-center border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto min-w-0 field-sizing-content [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+														/>
 													</div>
 												</div>
 											</div>
 											<button
 												type="button"
 												onClick={incrementQuantity}
-												className="aspect-square flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] cursor-pointer flex-shrink-0 h-full"
+												className="flex-shrink-0 w-10 h-full flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] cursor-pointer"
 											>
 												<Icon name="plus" size={20} />
 											</button>
@@ -677,91 +1233,43 @@ function ProductPage() {
 							)}
 						</div>
 					</div>
-				</div>
-			</div>
 
-			{/* Second Section - Description and Characteristics */}
-			{(product?.description ||
-				product?.hasVariations ||
-				(product?.productAttributes &&
-					Array.isArray(productWithDetails.productAttributes) &&
-					productWithDetails.productAttributes.length > 0)) && (
-				<div className="max-w-7xl mx-auto px-4 py-8">
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-						{/* Left Column - Characteristics */}
-						{(product?.hasVariations ||
-							(product?.productAttributes &&
-								Array.isArray(productWithDetails.productAttributes) &&
-								productWithDetails.productAttributes.length > 0)) && (
-							<div className="space-y-4">
-								<h2>Характеристики</h2>
-								<div>
-									{/* Product-level attributes - only show standardized attributes */}
-									{(productWithDetails?.productAttributes ?? [])
-										// Filter to only show attributes that exist in the standardized list
-										.filter((attr: { attributeId: string; value: string }) => {
-											if (!attributes || !attributes.length) return false;
-											// Check if attribute is in the standardized list
-											const attribute = attributes.find(
-												(a) =>
-													a.id.toString() === attr.attributeId ||
-													a.slug === attr.attributeId ||
-													a.name === attr.attributeId,
-											);
-											// Only show if it's a standardized attribute
-											return attribute !== undefined;
-										})
-										.map((attr: { attributeId: string; value: string }) => {
-											const attribute = attributes?.find(
-												(a) =>
-													a.id.toString() === attr.attributeId ||
-													a.slug === attr.attributeId ||
-													a.name === attr.attributeId,
-											);
-											const displayName = attribute
-												? attribute.name
-												: attr.attributeId;
-
-											return (
-												<div
-													key={attr.attributeId}
-													className="flex justify-between items-center py-2"
-												>
-													<span className="text-foreground-muted">
-														{displayName}
-													</span>
-													<span>{attr.value}</span>
-												</div>
-											);
-										})}
-
-									{/* Variation attributes */}
-									{product?.hasVariations &&
-										(() => {
-											// Find the variation with attributes that matches the selected variation
-											const productWithVariations =
-												product as unknown as ProductWithVariations;
-											let variationToShow = null;
-
-											if (selectedVariation) {
-												// Find the variation with attributes that matches the selected variation ID
-												variationToShow =
-													productWithVariations.variations?.find(
-														(v) => v.id === selectedVariation.id,
-													);
-											}
-
-											// Fallback to first variation if no match found
-											if (!variationToShow) {
-												variationToShow = productWithVariations.variations?.[0];
-											}
-
-											if (!variationToShow?.attributes) return null;
-
-											return variationToShow.attributes.map(
-												(attr: VariationAttribute) => {
+					{/* Description and Characteristics Section */}
+					{(product?.description ||
+						product?.hasVariations ||
+						(product?.productAttributes &&
+							Array.isArray(productWithDetails.productAttributes) &&
+							productWithDetails.productAttributes.length > 0)) && (
+						<div className="w-full">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+								{/* Left Column - Characteristics */}
+								{(product?.hasVariations ||
+									(product?.productAttributes &&
+										Array.isArray(productWithDetails.productAttributes) &&
+										productWithDetails.productAttributes.length > 0)) && (
+									<div className="space-y-4">
+										<h2>Характеристики</h2>
+										<div>
+											{/* Product-level attributes - only show standardized attributes */}
+											{(productWithDetails?.productAttributes ?? [])
+												.filter(
+													(attr: { attributeId: string; value: string }) => {
+														if (!attributes || !attributes.length) return false;
+														const attribute = attributes.find(
+															(a) =>
+																a.id.toString() === attr.attributeId ||
+																a.slug === attr.attributeId ||
+																a.name === attr.attributeId,
+														);
+														return attribute !== undefined;
+													},
+												)
+												.map((attr: { attributeId: string; value: string }) => {
 													const attribute = attributes?.find(
-														(a) => a.id.toString() === attr.attributeId,
+														(a) =>
+															a.id.toString() === attr.attributeId ||
+															a.slug === attr.attributeId ||
+															a.name === attr.attributeId,
 													);
 													const displayName = attribute
 														? attribute.name
@@ -772,39 +1280,97 @@ function ProductPage() {
 															key={attr.attributeId}
 															className="flex justify-between items-center py-2"
 														>
-															<span className="text-foreground-muted font-normal">
+															<span className="text-foreground-muted">
 																{displayName}
 															</span>
-															<span className="text-foreground font-normal">
-																{attr.value}
-															</span>
+															<span>{attr.value}</span>
 														</div>
 													);
-												},
-											);
-										})()}
-								</div>
-							</div>
-						)}
+												})}
 
-						{/* Right Column - Description */}
-						{product?.description && (
-							<div className="space-y-4">
-								<h2>Описание</h2>
-								<div className="prose max-w-none">
-									<ReactMarkdown
-										components={markdownComponents}
-										rehypePlugins={rehypePlugins}
-									>
-										{productWithDetails?.description?.replace(/\\n/g, "\n") ??
-											""}
-									</ReactMarkdown>
-								</div>
+											{/* Variation attributes */}
+											{product?.hasVariations &&
+												(() => {
+													const productWithVariations =
+														product as unknown as ProductWithVariations;
+													let variationToShow = null;
+
+													if (selectedVariation) {
+														variationToShow =
+															productWithVariations.variations?.find(
+																(v) => v.id === selectedVariation.id,
+															);
+													}
+
+													if (!variationToShow) {
+														variationToShow =
+															productWithVariations.variations?.[0];
+													}
+
+													if (!variationToShow?.attributes) return null;
+
+													return variationToShow.attributes.map(
+														(attr: VariationAttribute) => {
+															const attribute = attributes?.find(
+																(a) => a.id.toString() === attr.attributeId,
+															);
+															const displayName = attribute
+																? attribute.name
+																: attr.attributeId;
+
+															return (
+																<div
+																	key={attr.attributeId}
+																	className="flex justify-between items-center py-2"
+																>
+																	<span className="text-foreground-muted font-normal">
+																		{displayName}
+																	</span>
+																	<span className="text-foreground font-normal">
+																		{attr.value}
+																	</span>
+																</div>
+															);
+														},
+													);
+												})()}
+										</div>
+									</div>
+								)}
+
+								{/* Right Column - Description */}
+								{product?.description && (
+									<div className="space-y-4">
+										<h2>Описание</h2>
+										<div className="prose max-w-none">
+											<ReactMarkdown
+												components={markdownComponents}
+												rehypePlugins={rehypePlugins}
+											>
+												{productWithDetails?.description?.replace(
+													/\\n/g,
+													"\n",
+												) ?? ""}
+											</ReactMarkdown>
+										</div>
+									</div>
+								)}
 							</div>
-						)}
-					</div>
+						</div>
+					)}
 				</div>
-			)}
+			</div>
+
+			{/* Recommended/Recently Visited Products Slider */}
+			<div className="w-full max-w-7xl mx-auto px-4 py-8">
+				<ProductSlider
+					mode="recommended"
+					title={
+						hasRecentlyVisited ? "Вы недавно смотрели" : "Рекомендуемые товары"
+					}
+					recentlyVisitedProductIds={recentlyVisitedProductIds}
+				/>
+			</div>
 		</div>
 	);
 }

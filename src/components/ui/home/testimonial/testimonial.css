@@ -61,20 +61,7 @@ section.embla {
 	-webkit-tap-highlight-color: rgba(var(--text-high-contrast-rgb-value), 0.5);
 	-webkit-appearance: none;
 	appearance: none;
-	background-color: transparent;
 	touch-action: manipulation;
-	display: flex;
-	text-decoration: none;
-	cursor: pointer;
-	padding: 0;
-	margin: 0;
-	width: 3.6rem;
-	height: 3.6rem;
-	z-index: 1;
-	border-radius: 50%;
-	align-items: center;
-	justify-content: center;
-	transition: var(--transition-standard);
 }
 .embla__button:hover {
 	background-color: var(--muted);
@@ -100,41 +87,8 @@ section.embla {
 	align-items: center;
 	gap: 0.2rem;
 }
-.embla__dot {
-	-webkit-tap-highlight-color: oklch(var(--primary));
-	-webkit-appearance: none;
-	appearance: none;
-	background-color: transparent;
-	touch-action: manipulation;
-	display: flex;
-	text-decoration: none;
-	cursor: pointer;
-	border: 0;
-	padding: 0;
-	margin: 0;
-	width: 2.6rem;
-	height: 2.6rem;
-	align-items: center;
-	justify-content: center;
-	border-radius: 50%;
-	transition: var(--transition-standard);
-}
-.embla__dot:after {
-	width: 1.2rem;
-	height: 1.2rem;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	content: "";
-	background-color: oklch(from var(--secondary) l c h / 0.7);
-	transition: var(--transition-standard);
-}
-.embla__dot:hover {
-	background-color: var(--muted);
-}
-.embla__dot--selected:after {
-	background-color: var(--primary);
-}
+
+/* Dot styles moved to shared image-gallery.css - using EmblaDotButtons component */
 
 .testimonial-card {
 	border-radius: var(--radius);
@@ -173,20 +127,9 @@ section.embla {
 }
 
 @media (max-width: 640px) {
-	.embla__dot {
-		width: 2rem;
-		height: 2rem;
-	}
-	.embla__dot:after {
-		width: 1.2rem;
-		height: 1.2rem;
-	}
+	/* Dot responsive styles moved to shared image-gallery.css */
 
-	/* Smaller buttons on mobile for better touch targets */
-	.embla__button {
-		width: 3rem;
-		height: 3rem;
-	}
+	/* Button sizes now handled by Tailwind classes in EmblaArrowButtons component */
 
 	/* Adjust spacing for mobile */
 	.embla__buttons {

@@ -4,7 +4,6 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import AttributeValuesManager from "~/components/ui/dashboard/AttributeValuesManager";
 import {
@@ -14,6 +13,7 @@ import {
 	type EntityListProps,
 } from "~/components/ui/dashboard/DashboardEntityManager";
 import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
+import { EntityCardContent } from "~/components/ui/dashboard/EntityCardContent";
 import { EntityCardGrid } from "~/components/ui/dashboard/EntityCardGrid";
 import { AttributesPageSkeleton } from "~/components/ui/dashboard/skeletons/AttributesPageSkeleton";
 import {
@@ -54,7 +54,7 @@ const AttributeFormFields = ({
 	);
 };
 
-// Attribute list component using the meta component
+// Attribute list component using the reusable component
 const AttributeList = ({
 	entities,
 	onEdit,
@@ -63,42 +63,13 @@ const AttributeList = ({
 		entities={entities}
 		onEdit={onEdit}
 		renderEntity={(attribute) => (
-			<div className="flex flex-col flex-1 min-w-0 gap-2">
-				<div className="flex items-center gap-2">
-					<span className="text-sm font-medium truncate">{attribute.name}</span>
-					{attribute.productCount === null ? (
-						<span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded flex items-center gap-1">
-							<Loader2 className="w-3 h-3 animate-spin" />
-						</span>
-					) : attribute.productCount > 0 ? (
-						<span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-							{attribute.productCount}
-						</span>
-					) : null}
-				</div>
-				<span className="text-xs text-muted-foreground truncate">
-					{attribute.slug}
-				</span>
-				{/* Show standardized values as pills if they exist */}
-				{attribute.values && attribute.values.length > 0 && (
-					<div className="flex flex-wrap gap-1 mt-1">
-						{attribute.values.slice(0, 5).map((value) => (
-							<span
-								key={value.id}
-								className="text-[10px] leading-tight px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-medium"
-								title={value.value}
-							>
-								{value.value}
-							</span>
-						))}
-						{attribute.values.length > 5 && (
-							<span className="text-[10px] leading-tight px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-								+{attribute.values.length - 5}
-							</span>
-						)}
-					</div>
-				)}
-			</div>
+			<EntityCardContent
+				name={attribute.name}
+				slug={attribute.slug}
+				isActive={attribute.isActive}
+				count={attribute.productCount}
+				tags={attribute.values}
+			/>
 		)}
 	/>
 );

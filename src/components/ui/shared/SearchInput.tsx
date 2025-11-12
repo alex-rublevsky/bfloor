@@ -4,10 +4,14 @@ import { cn } from "~/lib/utils";
 import { Button } from "./Button";
 
 interface SearchInputProps
-	extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange"> {
+	extends Omit<
+		React.InputHTMLAttributes<HTMLInputElement>,
+		"onChange" | "onSubmit"
+	> {
 	value: string;
 	onChange: (value: string) => void;
 	onClear?: () => void;
+	onSubmit?: (value: string) => void;
 	placeholder?: string;
 	className?: string;
 }
@@ -18,6 +22,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 			value,
 			onChange,
 			onClear,
+			onSubmit,
 			placeholder = "Search...",
 			className,
 			...props
@@ -27,6 +32,15 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 		const handleClear = () => {
 			onChange("");
 			onClear?.();
+		};
+
+		const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+			if (e.key === "Enter" && onSubmit) {
+				e.preventDefault();
+				onSubmit(value);
+			}
+			// Call original onKeyDown if provided
+			props.onKeyDown?.(e);
 		};
 
 		return (
@@ -48,6 +62,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 					type="text"
 					value={value}
 					onChange={(e) => onChange(e.target.value)}
+					onKeyDown={handleKeyDown}
 					placeholder={placeholder}
 					className={cn(
 						"flex h-9 w-full min-w-[15ch] rounded-md border-[1.5px] border-input bg-background px-3 py-1 text-base shadow-xs transition-standard file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-accent hover:border-accent disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",

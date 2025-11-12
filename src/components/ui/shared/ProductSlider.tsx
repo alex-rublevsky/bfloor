@@ -11,32 +11,28 @@ import {
 import {
 	discountedProductsInfiniteQueryOptions,
 	productsByTagInfiniteQueryOptions,
+	recentlyVisitedProductsInfiniteQueryOptions,
+	recommendedProductsInfiniteQueryOptions,
 } from "~/lib/queryOptions";
 import type { ProductWithVariations } from "~/types";
-import {
-	NextButton,
-	PrevButton,
-	usePrevNextButtons,
-} from "../home/testimonial/TestimonialArrows";
-// import {
-// 	DotButton,
-// 	useDotButton,
-// } from "../home/testimonial/TestimonialDotButton";
+import { EmblaArrowButtons } from "../shared/EmblaArrowButtons";
 import ProductCard from "../store/ProductCard";
 import "./product-slider.css";
 
-type ProductSliderMode = "simple" | "tabs";
+type ProductSliderMode = "simple" | "tabs" | "recommended";
 
 interface ProductSliderProps {
 	mode?: ProductSliderMode;
 	title: string;
 	tags?: readonly ProductTag[];
+	recentlyVisitedProductIds?: number[]; // For recommended mode - show recently visited if available
 }
 
 export default function ProductSlider({
 	mode = "simple",
 	title,
 	tags = PRODUCT_TAGS,
+	recentlyVisitedProductIds = [],
 }: ProductSliderProps) {
 	const [selectedTag, setSelectedTag] = useState<ProductTag | null>(
 		mode === "tabs" ? tags[0] : null,
@@ -50,11 +46,22 @@ export default function ProductSlider({
 		if (mode === "tabs" && selectedTag) {
 			return productsByTagInfiniteQueryOptions(selectedTag);
 		}
+		if (mode === "recommended") {
+			// Show recently visited if available, otherwise show recommended
+			if (recentlyVisitedProductIds.length > 0) {
+				return recentlyVisitedProductsInfiniteQueryOptions(
+					recentlyVisitedProductIds,
+				);
+			}
+			return recommendedProductsInfiniteQueryOptions();
+		}
 		return discountedProductsInfiniteQueryOptions();
-	}, [mode, selectedTag]);
+	}, [mode, selectedTag, recentlyVisitedProductIds]);
 
 	const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-		useInfiniteQuery(queryOptions);
+		useInfiniteQuery(
+			queryOptions as ReturnType<typeof discountedProductsInfiniteQueryOptions>,
+		);
 
 	// Merge products from all pages
 	const products = useMemo(() => {
@@ -175,12 +182,7 @@ export default function ProductSlider({
 		}
 	}, [emblaApi, selectedTag, mode]);
 
-	const {
-		prevBtnDisabled,
-		nextBtnDisabled,
-		onPrevButtonClick,
-		onNextButtonClick,
-	} = usePrevNextButtons(emblaApi);
+	// Navigation handled by EmblaArrowButtons component
 
 	// const { selectedIndex, scrollSnaps, onDotButtonClick } =
 	// 	useDotButton(emblaApi);
@@ -225,16 +227,7 @@ export default function ProductSlider({
 				{/* Carousel Controls - shown when products are loaded */}
 				{!isLoading && products.length > 0 && (
 					<div className="product-slider__controls">
-						<div className="embla__buttons">
-							<PrevButton
-								onClick={onPrevButtonClick}
-								disabled={prevBtnDisabled}
-							/>
-							<NextButton
-								onClick={onNextButtonClick}
-								disabled={nextBtnDisabled}
-							/>
-						</div>
+						<EmblaArrowButtons emblaApi={emblaApi} />
 					</div>
 				)}
 			</div>
@@ -252,7 +245,9 @@ export default function ProductSlider({
 					<p className="text-muted-foreground">
 						{mode === "tabs"
 							? "Нет товаров для выбранной категории"
-							: "Нет товаров"}
+							: mode === "recommended"
+								? "Нет рекомендуемых товаров"
+								: "Нет товаров"}
 					</p>
 				</div>
 			)}

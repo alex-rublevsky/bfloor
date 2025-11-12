@@ -2,8 +2,6 @@ import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { Toaster } from "~/components/ui/shared/sonner";
 import { userDataQueryOptions } from "~/lib/queryOptions";
 
-// import { getUserData } from "~/utils/auth-server-func";
-
 const validateSearch = (search: Record<string, unknown>) => {
 	const result: { search?: string } = {};
 	// Handle both string and number (numeric strings can be parsed as numbers by the router)
@@ -52,12 +50,10 @@ export const Route = createFileRoute("/dashboard")({
 
 function DashboardLayout() {
 	return (
-		<div className="h-screen bg-background flex flex-col">
-			<div className="flex-1">
-				<Outlet />
-			</div>
+		<>
+			<Outlet />
 			<Toaster className="fixed top-4 right-4 z-50" />
-		</div>
+		</>
 	);
 }
 

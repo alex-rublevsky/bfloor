@@ -5,13 +5,14 @@ import {
 	useElementScrollRestoration,
 } from "@tanstack/react-router";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
 import ProductCard from "~/components/ui/store/ProductCard";
 import ProductFilters from "~/components/ui/store/ProductFilters";
 import { StorePageSkeleton } from "~/components/ui/store/skeletons/StorePageSkeleton";
 import { useClientSearch } from "~/lib/clientSearchContext";
 import {
+	attributeValuesForFilteringQueryOptions,
 	brandsQueryOptions,
 	categoriesQueryOptions,
 	collectionsQueryOptions,
@@ -26,6 +27,7 @@ const validateSearch = (search: Record<string, unknown>) => {
 		category?: string;
 		brand?: string;
 		collection?: string;
+		attributeFilters?: string; // JSON string of Record<number, string[]>
 		sort?:
 			| "relevant"
 			| "name"
@@ -45,6 +47,10 @@ const validateSearch = (search: Record<string, unknown>) => {
 
 	if (typeof search.collection === "string") {
 		result.collection = search.collection;
+	}
+
+	if (typeof search.attributeFilters === "string") {
+		result.attributeFilters = search.attributeFilters;
 	}
 
 	if (
@@ -130,6 +136,31 @@ function StorePage() {
 		return trimmed.length >= 2 ? trimmed : undefined;
 	})();
 
+	// Parse attribute filters from URL - defined outside component to avoid dependency issues
+	const parseAttributeFilters = useCallback(
+		(attrFiltersStr?: string): Record<number, string[]> => {
+			if (!attrFiltersStr) return {};
+			try {
+				const parsed = JSON.parse(attrFiltersStr);
+				if (typeof parsed === "object" && parsed !== null) {
+					// Convert string keys to numbers
+					const result: Record<number, string[]> = {};
+					for (const [key, value] of Object.entries(parsed)) {
+						const numKey = parseInt(key, 10);
+						if (!Number.isNaN(numKey) && Array.isArray(value)) {
+							result[numKey] = value.map(String);
+						}
+					}
+					return result;
+				}
+			} catch {
+				// Invalid JSON, return empty object
+			}
+			return {};
+		},
+		[],
+	);
+
 	// Initialize filter state from URL search params
 	const [selectedCategory, setSelectedCategory] = useState<string | null>(
 		search.category ?? null,
@@ -140,6 +171,9 @@ function StorePage() {
 	const [selectedCollection, setSelectedCollection] = useState<string | null>(
 		search.collection ?? null,
 	);
+	const [selectedAttributeFilters, setSelectedAttributeFilters] = useState<
+		Record<number, string[]>
+	>(parseAttributeFilters(search.attributeFilters));
 	const [sortBy, setSortBy] = useState<
 		"relevant" | "name" | "price-asc" | "price-desc" | "newest" | "oldest"
 	>(search.sort ?? "relevant");
@@ -152,8 +186,16 @@ function StorePage() {
 		setSelectedCategory(search.category ?? null);
 		setSelectedBrand(search.brand ?? null);
 		setSelectedCollection(search.collection ?? null);
+		setSelectedAttributeFilters(parseAttributeFilters(search.attributeFilters));
 		setSortBy(search.sort ?? "relevant");
-	}, [search.category, search.brand, search.collection, search.sort]);
+	}, [
+		search.category,
+		search.brand,
+		search.collection,
+		search.attributeFilters,
+		search.sort,
+		parseAttributeFilters,
+	]);
 
 	const isValidSort = (v: string): v is typeof sortBy => {
 		return (
@@ -211,6 +253,29 @@ function StorePage() {
 		});
 	};
 
+	const updateAttributeFilter = (attributeId: number, valueIds: string[]) => {
+		const newFilters = { ...selectedAttributeFilters };
+		if (valueIds.length === 0) {
+			delete newFilters[attributeId];
+		} else {
+			newFilters[attributeId] = valueIds;
+		}
+		setSelectedAttributeFilters(newFilters);
+
+		// Update URL
+		const filtersStr =
+			Object.keys(newFilters).length > 0
+				? JSON.stringify(newFilters)
+				: undefined;
+		navigate({
+			search: {
+				...search,
+				attributeFilters: filtersStr,
+			},
+			replace: true,
+		});
+	};
+
 	// Use infinite query to track loading state (same as dashboard)
 	const {
 		data: storeData,
@@ -224,10 +289,22 @@ function StorePage() {
 			categorySlug: selectedCategory ?? undefined,
 			brandSlug: selectedBrand ?? undefined,
 			collectionSlug: selectedCollection ?? undefined,
+			attributeFilters: selectedAttributeFilters,
 			sort: sortBy,
 		}),
 		// Preserve previous data while new search/filters load
 		placeholderData: (prev) => prev,
+	});
+
+	// Fetch attribute filters based on current filters (including attribute filters)
+	// This ensures only values available in the current filtered product set are shown
+	const { data: attributeFilters = [] } = useQuery({
+		...attributeValuesForFilteringQueryOptions(
+			selectedCategory ?? undefined,
+			selectedBrand ?? undefined,
+			selectedCollection ?? undefined,
+			selectedAttributeFilters,
+		),
 	});
 
 	// Fetch all reference data separately with aggressive caching (3-day stale time)
@@ -359,6 +436,9 @@ function StorePage() {
 					onSortChange={(v) => {
 						if (isValidSort(v)) updateSort(v);
 					}}
+					attributeFilters={attributeFilters}
+					selectedAttributeFilters={selectedAttributeFilters}
+					onAttributeFilterChange={updateAttributeFilter}
 				/>
 				{/* Products List - Virtualized for performance */}
 				{displayProducts.length === 0 && !isFetching ? (
@@ -367,47 +447,45 @@ function StorePage() {
 						isSearchResult={!!normalizedSearch}
 					/>
 				) : (
-					<>
-						<div
-							className="relative px-4 py-4"
-							style={{
-								height: `${virtualizer.getTotalSize()}px`,
-								width: "100%",
-								position: "relative",
-							}}
-						>
-							{/* Following TanStack Virtual dynamic example pattern for useWindowVirtualizer */}
-							{virtualizer.getVirtualItems().map((virtualRow) => {
-								const rowProducts = getProductsForRow(virtualRow.index);
-								return (
-									<div
-										key={virtualRow.key}
-										data-index={virtualRow.index}
-										ref={virtualizer.measureElement}
-										style={{
-											position: "absolute",
-											top: 0,
-											left: 0,
-											width: "100%",
-											transform: `translateY(${virtualRow.start}px)`,
-										}}
-									>
-										<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
-											{rowProducts.map((product) => (
-												<ProductCard key={product.id} product={product} />
-											))}
-										</div>
+					<div
+						className="relative px-4 py-4"
+						style={{
+							height: `${virtualizer.getTotalSize()}px`,
+							width: "100%",
+							position: "relative",
+						}}
+					>
+						{/* Following TanStack Virtual dynamic example pattern for useWindowVirtualizer */}
+						{virtualizer.getVirtualItems().map((virtualRow) => {
+							const rowProducts = getProductsForRow(virtualRow.index);
+							return (
+								<div
+									key={virtualRow.key}
+									data-index={virtualRow.index}
+									ref={virtualizer.measureElement}
+									style={{
+										position: "absolute",
+										top: 0,
+										left: 0,
+										width: "100%",
+										transform: `translateY(${virtualRow.start}px)`,
+									}}
+								>
+									<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
+										{rowProducts.map((product) => (
+											<ProductCard key={product.id} product={product} />
+										))}
 									</div>
-								);
-							})}
-						</div>
+								</div>
+							);
+						})}
 						{/* Loading indicator for next page */}
 						{isFetchingNextPage && (
-							<div className="w-full flex items-center justify-center p-8">
+							<div className="absolute top-0 left-0 w-full flex items-center justify-center p-8">
 								<p className="text-muted-foreground">Загрузка...</p>
 							</div>
 						)}
-					</>
+					</div>
 				)}
 			</div>
 		</>

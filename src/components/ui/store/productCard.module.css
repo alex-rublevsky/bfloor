@@ -1,5 +1,6 @@
 #productCard {
 	transition: var(--transition-standard);
+	position: relative;
 }
 
 #productCard img {

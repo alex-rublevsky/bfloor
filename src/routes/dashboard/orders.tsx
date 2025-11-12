@@ -62,20 +62,14 @@ export const Route = createFileRoute("/dashboard/orders")({
 	},
 	errorComponent: ({ error }) => {
 		return (
-			<div className="h-full w-full flex flex-col justify-center items-center gap-4 p-8">
-				<h2 className="text-2xl font-semibold">Failed to load orders</h2>
+			<div className="flex-1 flex flex-col justify-center items-center gap-4 p-8">
+				<h2 className="text-2xl font-semibold">Не удалось загрузить заказы</h2>
 				<p className="text-muted-foreground text-center max-w-md">
 					{error instanceof Error
 						? error.message
-						: "An unexpected error occurred"}
+						: "Произошла непредвиденная ошибка"}
 				</p>
-				<button
-					type="button"
-					onClick={() => window.location.reload()}
-					className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-				>
-					Retry
-				</button>
+				<Button onClick={() => window.location.reload()}>Повторить</Button>
 			</div>
 		);
 	},
