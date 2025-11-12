@@ -22,4 +22,3 @@ export const getTotalAttributesCount = createServerFn({ method: "GET" })
 
 		return result[0]?.count ?? 0;
 	});
-
