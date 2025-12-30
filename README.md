@@ -1,1 +1,1 @@
-My portfolio, store, and blog
+Online flooring materials store made with React, Tanstack Start, Drizzle, Turso, Vercel, Tailwind

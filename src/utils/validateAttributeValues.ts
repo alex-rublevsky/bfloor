@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
+import type { LibSQLDatabase } from "drizzle-orm/libsql";
 import type * as schema from "~/schema";
 import { attributeValues, productAttributes } from "~/schema";
 
@@ -8,7 +8,7 @@ import { attributeValues, productAttributes } from "~/schema";
  * Returns array of validation errors (empty if all valid)
  */
 export async function validateAttributeValues(
-	db: DrizzleD1Database<typeof schema>,
+	db: LibSQLDatabase<typeof schema>,
 	attributes: Array<{ attributeId: string; value: string }>,
 ): Promise<{ attributeId: string; value: string; error: string }[]> {
 	const errors: { attributeId: string; value: string; error: string }[] = [];

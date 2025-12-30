@@ -1,5 +1,5 @@
 import { eq, sql } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
+import type { LibSQLDatabase } from "drizzle-orm/libsql";
 import type * as schema from "~/schema";
 import { productAttributes, products } from "~/schema";
 
@@ -14,7 +14,7 @@ import { productAttributes, products } from "~/schema";
  * @returns Number of products updated
  */
 export async function updateAttributeValueInProducts(
-	db: DrizzleD1Database<typeof schema>,
+	db: LibSQLDatabase<typeof schema>,
 	attributeId: number,
 	oldValue: string,
 	newValue: string,

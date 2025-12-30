@@ -44,12 +44,7 @@ section.embla {
 .embla__controls {
 	display: flex;
 	justify-content: flex-end;
-	padding: 0 1rem 1rem 1rem;
-}
-@media (min-width: 640px) {
-	.embla__controls {
-		padding: 0 1.5rem 1rem 1.5rem;
-	}
+	padding: 0 var(--section-padding-x) 1rem var(--section-padding-x);
 }
 .embla__buttons {
 	display: grid;

@@ -35,7 +35,8 @@ export interface LogoLoopProps {
 	width?: number | string;
 	logoHeight?: number;
 	gap?: number;
-	pauseOnHover?: boolean;
+	pauseOnHover?: boolean; // If true, slows down on hover instead of stopping
+	speedOnHover?: number; // Speed when hovered (defaults to 30% of normal speed)
 	fadeOut?: boolean;
 	fadeOutColor?: string;
 	scaleOnHover?: boolean;
@@ -46,8 +47,10 @@ export interface LogoLoopProps {
 
 const ANIMATION_CONFIG = {
 	SMOOTH_TAU: 0.25,
+	HOVER_TRANSITION_TAU: 0.1, // Faster transition for hover state changes
 	MIN_COPIES: 2,
 	COPY_HEADROOM: 2,
+	DEFAULT_HOVER_SPEED_RATIO: 0.3, // Slow down to 30% of normal speed on hover
 } as const;
 
 const toCssLength = (value?: number | string): string | undefined =>
@@ -132,6 +135,7 @@ const useAnimationLoop = (
 	seqWidth: number,
 	isHovered: boolean,
 	pauseOnHover: boolean,
+	hoverVelocity: number,
 ) => {
 	const rafRef = useRef<number | null>(null);
 	const lastTimestampRef = useRef<number | null>(null);
@@ -169,10 +173,20 @@ const useAnimationLoop = (
 				Math.max(0, timestamp - lastTimestampRef.current) / 1000;
 			lastTimestampRef.current = timestamp;
 
-			const target = pauseOnHover && isHovered ? 0 : targetVelocity;
+			// Determine target velocity: slow down on hover instead of stopping
+			const target = pauseOnHover && isHovered ? hoverVelocity : targetVelocity;
 
-			const easingFactor =
-				1 - Math.exp(-deltaTime / ANIMATION_CONFIG.SMOOTH_TAU);
+			// Check if we're transitioning (velocity hasn't reached target yet)
+			// Use a small threshold to avoid jitter when near target
+			const velocityDifference = Math.abs(velocityRef.current - target);
+			const isTransitioning = velocityDifference > 1;
+
+			// Use faster tau when actively transitioning for snappier response
+			const tau = isTransitioning
+				? ANIMATION_CONFIG.HOVER_TRANSITION_TAU
+				: ANIMATION_CONFIG.SMOOTH_TAU;
+
+			const easingFactor = 1 - Math.exp(-deltaTime / tau);
 			velocityRef.current += (target - velocityRef.current) * easingFactor;
 
 			if (seqWidth > 0) {
@@ -196,7 +210,14 @@ const useAnimationLoop = (
 			}
 			lastTimestampRef.current = null;
 		};
-	}, [targetVelocity, seqWidth, isHovered, pauseOnHover, trackRef]);
+	}, [
+		targetVelocity,
+		seqWidth,
+		isHovered,
+		pauseOnHover,
+		hoverVelocity,
+		trackRef,
+	]);
 };
 
 export const LogoLoop = React.memo<LogoLoopProps>(
@@ -209,6 +230,7 @@ export const LogoLoop = React.memo<LogoLoopProps>(
 		logoHeight = 28,
 		gap = 32,
 		pauseOnHover = true,
+		speedOnHover,
 		fadeOut = false,
 		fadeOutColor,
 		scaleOnHover = false,
@@ -257,6 +279,17 @@ export const LogoLoop = React.memo<LogoLoopProps>(
 			return magnitude * directionMultiplier * speedMultiplier;
 		}, [speed, direction]);
 
+		const hoverVelocity = useMemo(() => {
+			if (speedOnHover !== undefined) {
+				const magnitude = Math.abs(speedOnHover);
+				const directionMultiplier = direction === "left" ? 1 : -1;
+				const speedMultiplier = speedOnHover < 0 ? -1 : 1;
+				return magnitude * directionMultiplier * speedMultiplier;
+			}
+			// Default to 30% of normal speed
+			return targetVelocity * ANIMATION_CONFIG.DEFAULT_HOVER_SPEED_RATIO;
+		}, [speedOnHover, direction, targetVelocity]);
+
 		const updateDimensions = useCallback(() => {
 			const containerWidth = containerRef.current?.clientWidth ?? 0;
 			const sequenceWidth =
@@ -285,6 +318,7 @@ export const LogoLoop = React.memo<LogoLoopProps>(
 			seqWidth,
 			isHovered,
 			pauseOnHover,
+			hoverVelocity,
 		);
 
 		const cssVariables = useMemo(
@@ -326,7 +360,7 @@ export const LogoLoop = React.memo<LogoLoopProps>(
 				const content = isNodeItem ? (
 					<span
 						className={cx(
-							"inline-flex items-center w-full",
+							"inline-flex items-center max-w-full max-h-full",
 							"motion-reduce:transition-none",
 							scaleOnHover &&
 								"transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover/item:scale-120",
@@ -338,7 +372,7 @@ export const LogoLoop = React.memo<LogoLoopProps>(
 				) : (
 					<img
 						className={cx(
-							"w-full h-auto block object-contain",
+							"max-w-full max-h-full w-auto h-auto block object-contain",
 							"[-webkit-user-drag:none] pointer-events-none",
 							"[image-rendering:-webkit-optimize-contrast]",
 							"motion-reduce:transition-none",
@@ -375,6 +409,8 @@ export const LogoLoop = React.memo<LogoLoopProps>(
 							scaleOnHover && "overflow-visible group/item",
 						)}
 						key={key}
+						onMouseEnter={pauseOnHover ? handleMouseEnter : undefined}
+						onMouseLeave={pauseOnHover ? handleMouseLeave : undefined}
 					>
 						{item.href ? (
 							<a
@@ -388,17 +424,19 @@ export const LogoLoop = React.memo<LogoLoopProps>(
 								target="_blank"
 								rel="noreferrer noopener"
 							>
-								<div className="relative z-20">{content}</div>
+								<div className="relative z-20 p-2 flex items-center justify-center w-full h-full overflow-hidden">
+									{content}
+								</div>
 							</a>
 						) : (
-							<div className="flex items-center justify-center w-full h-full">
+							<div className="flex items-center justify-center w-full h-full p-2 overflow-hidden">
 								{content}
 							</div>
 						)}
 					</li>
 				);
 			},
-			[scaleOnHover],
+			[scaleOnHover, pauseOnHover, handleMouseEnter, handleMouseLeave],
 		);
 
 		const logoLists = useMemo(
@@ -436,9 +474,8 @@ export const LogoLoop = React.memo<LogoLoopProps>(
 				className={rootClasses}
 				style={containerStyle}
 				aria-label={ariaLabel}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
 			>
+				<h2 className="pb-8">Наши партнёры</h2>
 				{fadeOut && (
 					<>
 						<div

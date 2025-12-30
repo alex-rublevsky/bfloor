@@ -33,7 +33,6 @@ export function StoreLocationsSelector({
 				onLocationChange(itemId as number, checked);
 			}}
 			idPrefix={`${idPrefix}-store-location`}
-			columns={2}
 			showOnlyActive={true}
 		/>
 	);

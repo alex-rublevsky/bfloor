@@ -68,7 +68,7 @@ function CartButton() {
 						<circle cx="26.4453" cy="27.3013" r="2.5" fill="currentColor" />
 					</svg>
 					{itemCount > 0 && (
-						<span className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs w-4 h-4 flex items-center justify-center rounded-full">
+						<span className="absolute top-0 right-0 bg-primary text-background text-xs font-medium w-5 h-5 flex items-center justify-center rounded-full -translate-y-1 translate-x-1">
 							{itemCount}
 						</span>
 					)}
