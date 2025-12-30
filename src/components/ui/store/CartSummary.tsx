@@ -27,26 +27,26 @@ export function CartSummary() {
 	return (
 		<div className="space-y-2 pb-0">
 			<div className="flex justify-between text-sm">
-				<p>Subtotal</p>
-				<p>${subtotal.toFixed(2)}</p>
+				<p>Промежуточный итог</p>
+				<p>{subtotal.toFixed(2)} р</p>
 			</div>
 
 			{discountTotal > 0 && (
 				<div className="flex justify-between text-sm text-foreground">
-					<p>Discount</p>
+					<p>Скидка</p>
 					<Badge variant="green" className="text-sm translate-x-2">
-						-${discountTotal.toFixed(2)}
+						-{discountTotal.toFixed(2)} р
 					</Badge>
 				</div>
 			)}
 
 			<div className="flex justify-between">
-				<span>Total</span>
-				<h4>${total.toFixed(2)}</h4>
+				<span>Итого</span>
+				<h4>{total.toFixed(2)} р</h4>
 			</div>
 
 			<p className="text-xs text-muted-foreground text-center pt-2">
-				Shipping will be calculated at checkout
+				Доставка будет рассчитана при оформлении заказа
 			</p>
 		</div>
 	);
@@ -97,7 +97,7 @@ export function CartCheckoutButton() {
 			disabled={cart.items.length === 0 || isLoading}
 			className="w-full"
 		>
-			{isLoading ? "Processing..." : `Checkout $${total.toFixed(2)}`}
+			{isLoading ? "Обработка..." : `Оформить заказ ${total.toFixed(2)} р`}
 		</Button>
 	);
 }

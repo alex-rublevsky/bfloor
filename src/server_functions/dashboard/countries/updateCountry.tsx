@@ -1,9 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
-import type * as schema from "~/schema";
 import { countries } from "~/schema";
 import type { CountryFormData } from "~/types";
 
@@ -11,7 +9,7 @@ export const updateCountry = createServerFn({ method: "POST" })
 	.inputValidator((data: { id: number; data: CountryFormData }) => data)
 	.handler(async ({ data }) => {
 		try {
-			const db: DrizzleD1Database<typeof schema> = DB();
+			const db = DB();
 			const { id, data: countryData } = data;
 
 			if (!countryData.name || !countryData.code) {

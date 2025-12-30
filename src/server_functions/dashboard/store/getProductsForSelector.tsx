@@ -1,8 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
-import type * as schema from "~/schema";
 import { products } from "~/schema";
 import { authMiddleware } from "~/utils/auth-middleware";
 
@@ -31,7 +29,7 @@ export const getProductsForSelector = createServerFn({ method: "GET" })
 		}
 
 		try {
-			const db: DrizzleD1Database<typeof schema> = DB();
+			const db = DB();
 
 			// Fetch only the fields we need for the selector
 			const productsResult = await db

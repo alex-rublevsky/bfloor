@@ -4,7 +4,6 @@
  */
 
 import { Plus } from "lucide-react";
-import type React from "react";
 import type { ActionButtonConfig } from "~/config/dashboardActionButtons";
 import { cn } from "~/utils/utils";
 

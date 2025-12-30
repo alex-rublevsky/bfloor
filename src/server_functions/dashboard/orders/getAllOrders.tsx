@@ -1,15 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
-import type * as schema from "~/schema";
 import { orderItems, orders, products, productVariations } from "~/schema";
 
 export const getAllOrders = createServerFn({ method: "GET" }).handler(
 	async () => {
 		try {
-			const db: DrizzleD1Database<typeof schema> = DB();
+			const db = DB();
 
 			// Fetch all orders
 			const ordersResult = await db.select().from(orders).all();

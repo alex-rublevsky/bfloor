@@ -1,17 +1,15 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
-import type * as schema from "~/schema";
 import { brands, countries } from "~/schema";
+import { getStorageBucket } from "~/utils/storage";
 
 export const deleteCountry = createServerFn({ method: "POST" })
 	.inputValidator((data: { id: number }) => data)
 	.handler(async ({ data }) => {
 		try {
-			const db: DrizzleD1Database<typeof schema> = DB();
+			const db = DB();
 			const { id } = data;
 
 			// Check if country exists and get flag image
@@ -40,27 +38,23 @@ export const deleteCountry = createServerFn({ method: "POST" })
 				);
 			}
 
-			// Delete flag image from R2 if it exists
+			// Delete flag image from storage if it exists
 			if (existingCountry[0].flagImage) {
 				try {
-					const bucket = env.BFLOOR_STORAGE as R2Bucket;
-					if (bucket) {
-						try {
-							await bucket.delete(existingCountry[0].flagImage);
-							console.log(
-								`Deleted flag image: ${existingCountry[0].flagImage}`,
-							);
-						} catch (error) {
-							// Log but don't fail if image deletion fails
-							console.warn(
-								`Failed to delete flag image ${existingCountry[0].flagImage}:`,
-								error,
-							);
-						}
+					const bucket = getStorageBucket();
+					try {
+						await bucket.delete(existingCountry[0].flagImage);
+						console.log(`Deleted flag image: ${existingCountry[0].flagImage}`);
+					} catch (error) {
+						// Log but don't fail if image deletion fails
+						console.warn(
+							`Failed to delete flag image ${existingCountry[0].flagImage}:`,
+							error,
+						);
 					}
 				} catch (error) {
 					// Log but don't fail if image deletion fails
-					console.warn("Failed to delete flag image from R2:", error);
+					console.warn("Failed to delete flag image from storage:", error);
 				}
 			}
 

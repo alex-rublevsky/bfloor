@@ -44,8 +44,8 @@ export function CartItem({ item }: CartItemProps) {
 							className="w-full h-auto object-contain"
 						/>
 					) : (
-						<div className="aspect-square w-full h-full flex items-center justify-center text-muted-foreground">
-							No image
+						<div className="aspect-square w-full h-full flex items-center justify-center text-muted-foreground text-xs px-1">
+							нет картинки
 						</div>
 					)}
 				</div>
@@ -80,7 +80,6 @@ export function CartItem({ item }: CartItemProps) {
 						quantity={item.quantity}
 						onIncrement={handleIncrement}
 						onDecrement={handleDecrement}
-						maxQuantity={effectiveMaxQuantity}
 						size="compact"
 					/>
 				</div>
@@ -91,20 +90,20 @@ export function CartItem({ item }: CartItemProps) {
 				{item.discount ? (
 					<div className="flex flex-col items-end">
 						<Badge variant="greenOutline" className="translate-x-2">
-							{item.discount}% OFF
+							Скидка {item.discount}%
 						</Badge>
 						<span className="line-through text-sm text-muted-foreground">
-							${(item.price * item.quantity).toFixed(2)}
+							{(item.price * item.quantity).toFixed(2)} р
 						</span>
 						<h6>
-							$
 							{(item.price * (1 - item.discount / 100) * item.quantity).toFixed(
 								2,
-							)}
+							)}{" "}
+							р
 						</h6>
 					</div>
 				) : (
-					<h6>${(item.price * item.quantity).toFixed(2)}</h6>
+					<h6>{(item.price * item.quantity).toFixed(2)} р</h6>
 				)}
 			</div>
 		</div>

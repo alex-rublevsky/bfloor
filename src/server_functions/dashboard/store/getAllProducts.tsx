@@ -1,9 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq, inArray, isNull, like, or, type SQL, sql } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
-import type * as schema from "~/schema";
 import {
 	attributeValues,
 	productAttributes,
@@ -53,7 +51,7 @@ export const getAllProducts = createServerFn({ method: "GET" })
 	)
 	.handler(async ({ data = {} }) => {
 		try {
-			const db: DrizzleD1Database<typeof schema> = DB();
+			const db = DB();
 			const { page, limit: pageLimit } = data;
 			const rawSearch =
 				typeof data.search === "string" ? data.search : undefined;

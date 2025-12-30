@@ -1,16 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq, inArray } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
-import type * as schema from "~/schema";
 import { orderItems, orders } from "~/schema";
 
 export const deleteOrder = createServerFn({ method: "POST" })
 	.inputValidator((data: { id: number }) => data)
 	.handler(async ({ data }) => {
 		try {
-			const db: DrizzleD1Database<typeof schema> = DB();
+			const db = DB();
 			const orderId = data.id;
 
 			if (Number.isNaN(orderId)) {
@@ -51,7 +49,7 @@ export const deleteOrders = createServerFn({ method: "POST" })
 	.inputValidator((data: { ids: number[] }) => data)
 	.handler(async ({ data }) => {
 		try {
-			const db: DrizzleD1Database<typeof schema> = DB();
+			const db = DB();
 			const orderIds = data.ids;
 
 			if (!Array.isArray(orderIds) || orderIds.length === 0) {
