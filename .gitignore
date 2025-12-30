@@ -43,3 +43,4 @@ env.local
 scripts
 migration/data
 .env.development.local
+.vercelignore

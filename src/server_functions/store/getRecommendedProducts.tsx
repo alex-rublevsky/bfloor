@@ -1,9 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { inArray, sql } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
-import type * as schema from "~/schema";
 import { products, productVariations, variationAttributes } from "~/schema";
 import type { ProductVariation } from "~/types";
 
@@ -33,7 +31,7 @@ export const getRecommendedProducts = createServerFn({ method: "GET" })
 	.inputValidator((data: { page?: number; limit?: number } = {}) => data)
 	.handler(async ({ data = {} }) => {
 		try {
-			const db: DrizzleD1Database<typeof schema> = DB();
+			const db = DB();
 			const { page = 1, limit: pageLimit = 20 } = data;
 			const offsetValue = (page - 1) * pageLimit;
 

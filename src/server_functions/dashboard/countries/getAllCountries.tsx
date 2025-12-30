@@ -1,15 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { asc, eq } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
-import type * as schema from "~/schema";
 import { countries } from "~/schema";
 
 export const getAllCountries = createServerFn({ method: "GET" }).handler(
 	async () => {
 		try {
-			const db: DrizzleD1Database<typeof schema> = DB();
+			const db = DB();
 			const countriesResult = await db
 				.select()
 				.from(countries)
@@ -32,7 +30,7 @@ export const getAllCountriesForDashboard = createServerFn({
 	method: "GET",
 }).handler(async () => {
 	try {
-		const db: DrizzleD1Database<typeof schema> = DB();
+		const db = DB();
 		const countriesResult = await db
 			.select()
 			.from(countries)

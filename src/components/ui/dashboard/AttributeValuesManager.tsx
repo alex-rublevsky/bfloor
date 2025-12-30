@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Edit, Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/shared/Button";
@@ -159,7 +159,7 @@ export default function AttributeValuesManager({
 
 			{/* Existing values list */}
 			{values && values.length > 0 ? (
-				<div className="space-y-2">
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
 					{values.map((value) => (
 						<ValueItem
 							key={value.id}
@@ -176,33 +176,36 @@ export default function AttributeValuesManager({
 			)}
 
 			{/* Add new value */}
-			<div className="flex gap-2">
-				<Input
-					value={newValue}
-					onChange={(e) => setNewValue(e.target.value)}
-					onKeyDown={(e) => {
-						if (e.key === "Enter") {
-							e.preventDefault();
-							handleCreateValue();
-						}
-					}}
-					placeholder="Введите новое значение..."
-					className="text-sm flex-1"
-					disabled={isCreating}
-				/>
-				<Button
-					type="button"
-					variant="outline"
-					size="sm"
-					onClick={handleCreateValue}
-					disabled={isCreating || !newValue.trim()}
-				>
-					{isCreating ? (
-						<Loader2 className="w-4 h-4 animate-spin" />
-					) : (
-						<Plus className="w-4 h-4" />
-					)}
-				</Button>
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+				<div className="flex items-center gap-2 p-2 rounded-md border border-border bg-card hover:bg-muted transition-colors">
+					<Input
+						value={newValue}
+						onChange={(e) => setNewValue(e.target.value)}
+						onKeyDown={(e) => {
+							if (e.key === "Enter") {
+								e.preventDefault();
+								handleCreateValue();
+							}
+						}}
+						placeholder="Введите новое значение..."
+						className="text-sm flex-1 h-8"
+						disabled={isCreating}
+					/>
+					<Button
+						type="button"
+						variant="secondary"
+						size="sm"
+						onClick={handleCreateValue}
+						disabled={isCreating || !newValue.trim()}
+						className="h-8 px-2"
+					>
+						{isCreating ? (
+							<Loader2 className="w-4 h-4 animate-spin" />
+						) : (
+							"Создать"
+						)}
+					</Button>
+				</div>
 			</div>
 		</div>
 	);
@@ -234,7 +237,7 @@ function ValueItem({
 	};
 
 	return (
-		<div className="flex items-center gap-2 p-2 rounded-md border border-border bg-card hover:bg-accent/50 transition-colors">
+		<div className="flex items-center gap-2 p-2 rounded-md border border-border bg-card hover:bg-muted transition-colors">
 			{isEditing ? (
 				<>
 					<Input
@@ -292,14 +295,14 @@ function ValueItem({
 						onClick={() => setIsEditing(true)}
 						className="h-8 px-2"
 					>
-						Редактировать
+						<Edit className="w-4 h-4" />
 					</Button>
 					<Button
 						type="button"
-						variant="secondary"
+						variant="destructive"
 						size="sm"
 						onClick={onDelete}
-						className="h-8 px-2 text-destructive hover:text-destructive"
+						className="h-8 px-2"
 					>
 						<Trash2 className="w-4 h-4" />
 					</Button>

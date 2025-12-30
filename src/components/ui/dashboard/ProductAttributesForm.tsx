@@ -352,17 +352,20 @@ export default function ProductAttributesForm({
 			{/* Second sub-block: Checkbox lists (standardized attributes) in full width */}
 			{/* Always show all standardized attributes (like "Вид профиля") */}
 			{availableCheckboxAttributes.length > 0 && (
-				<div className="space-y-4">
+				<div className="flex flex-wrap items-start gap-4 justify-between">
 					{availableCheckboxAttributes.map((attributeInfo) => {
 						const allowMultiple = attributeInfo.allowMultipleValues === true;
 						const selectedValues = getSelectedValues(attributeInfo.id);
 						const standardizedValues = getStandardizedValues(attributeInfo.id);
 
 						return (
-							<div key={attributeInfo.id} className="space-y-2">
+							<div
+								key={attributeInfo.id}
+								className="space-y-2 min-w-fit flex-shrink-0"
+							>
 								<label
 									htmlFor={`attr-${attributeInfo.id}`}
-									className="block text-sm font-medium text-foreground"
+									className="block text-sm font-medium text-foreground whitespace-nowrap"
 								>
 									{attributeInfo.name}
 									{allowMultiple && (
@@ -387,7 +390,6 @@ export default function ProductAttributesForm({
 										);
 									}}
 									idPrefix={`attr-${attributeInfo.id}-value`}
-									columns={3}
 									showOnlyActive={true}
 								/>
 							</div>

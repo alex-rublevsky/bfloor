@@ -1,15 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
-import { orderItems, orders, products, type schema } from "~/schema";
+import { orderItems, orders, products } from "~/schema";
 
 export const getOrderBySlug = createServerFn({ method: "GET" })
 	.inputValidator((data: { orderId: string }) => data)
 	.handler(async ({ data }) => {
 		try {
-			const db: DrizzleD1Database<typeof schema> = DB();
+			const db = DB();
 			const { orderId } = data;
 			const orderIdNum = parseInt(orderId, 10);
 
@@ -58,7 +57,8 @@ export const getOrderBySlug = createServerFn({ method: "GET" })
 			]);
 
 			if (!orderResult[0]) {
-				setResponseStatus(404);
+				// Don't set response status - let TanStack Router handle 404s via notFound()
+				// Setting status here causes Vercel to return platform-level NOT_FOUND error
 				throw new Error("Order not found");
 			}
 

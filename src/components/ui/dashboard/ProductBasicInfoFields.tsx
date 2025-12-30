@@ -152,18 +152,16 @@ export function ProductBasicInfoFields({
 				/>
 
 				<div>
-					<label htmlFor={unitId} className="block text-sm font-medium mb-1">
-						Единица количества
-					</label>
 					<Select
-						value={formData.unitOfMeasurement}
+						value={formData.unitOfMeasurement || "упаковка"}
 						onValueChange={(value) => {
 							onChange({
 								target: { name: "unitOfMeasurement", value },
 							} as React.ChangeEvent<HTMLSelectElement>);
 						}}
+						required
 					>
-						<SelectTrigger id={unitId}>
+						<SelectTrigger id={unitId} label="Единица количества" required>
 							<SelectValue placeholder="Выберите единицу" />
 						</SelectTrigger>
 						<SelectContent>
@@ -174,6 +172,9 @@ export function ProductBasicInfoFields({
 							))}
 						</SelectContent>
 					</Select>
+					{hasAttemptedSubmit && !formData.unitOfMeasurement && (
+						<p className="text-sm text-red-500 mt-1">обязательно</p>
+					)}
 				</div>
 
 				<div className="col-span-2 flex flex-wrap gap-4">

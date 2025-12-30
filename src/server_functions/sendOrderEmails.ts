@@ -1,7 +1,6 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
 import { Resend } from "resend";
-import { resolveSecret } from "~/utils/cloudflare-env";
+import { env, resolveSecret } from "~/utils/env";
 
 interface CartItem {
 	productId: number;
@@ -10,8 +9,6 @@ interface CartItem {
 	variationId?: number;
 	quantity: number;
 	price: number;
-	maxStock: number;
-	unlimitedStock: boolean;
 	discount?: number | null;
 	image?: string;
 	attributes?: Record<string, string>;

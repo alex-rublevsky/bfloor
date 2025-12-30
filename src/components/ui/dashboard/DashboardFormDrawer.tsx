@@ -56,7 +56,7 @@ export function DashboardFormDrawer({
 					<DrawerTitle>{title}</DrawerTitle>
 				</DrawerHeader>
 
-				<DrawerBody className="w-full p-0">
+				<DrawerBody className="w-full">
 					{error && (
 						<div className="bg-destructive/20 border border-destructive text-destructive-foreground px-4 sm:px-6 lg:px-8 py-3 mb-4">
 							{error}
@@ -66,7 +66,7 @@ export function DashboardFormDrawer({
 						className={
 							layout === "two-column"
 								? "grid grid-cols-1 lg:grid-cols-2 gap-4"
-								: "space-y-4 px-4 sm:px-6 lg:px-8"
+								: "space-y-4"
 						}
 					>
 						{children}

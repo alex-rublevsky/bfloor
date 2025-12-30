@@ -1,8 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
-import type * as schema from "~/schema";
 import { orderItems, orders } from "~/schema";
 import type { ProductWithVariations } from "~/types";
 
@@ -15,8 +13,6 @@ interface CartItem {
 	quantity: number;
 	addedAt: number; // From minimal CartItem
 	price: number;
-	maxStock: number;
-	unlimitedStock: boolean;
 	discount?: number | null;
 	image?: string;
 	attributes?: Record<string, string>;
@@ -94,7 +90,7 @@ async function createOrderInternal(
 	cartItems: CartItem[],
 	products: ProductWithVariations[],
 ) {
-	const db: DrizzleD1Database<typeof schema> = DB();
+	const db = DB();
 	// Create a map for O(1) lookups
 	const productMap = new Map(products.map((p) => [p.id, p]));
 
@@ -105,6 +101,11 @@ async function createOrderInternal(
 			const product = productMap.get(item.productId);
 			if (!product) {
 				throw new Error(`Product not found: ${item.productName}`);
+			}
+
+			// 1.5. Validate product is active
+			if (!product.isActive) {
+				throw new Error(`Product is no longer available: ${item.productName}`);
 			}
 
 			// 2. Validate variation and price

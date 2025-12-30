@@ -6,6 +6,7 @@ import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDial
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
 import { DescriptionField } from "~/components/ui/dashboard/DescriptionField";
 import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
+import { EntityCardContent } from "~/components/ui/dashboard/EntityCardContent";
 import { Button } from "~/components/ui/shared/Button";
 import { Input } from "~/components/ui/shared/input";
 import { Switch } from "~/components/ui/shared/Switch";
@@ -147,11 +148,11 @@ function RouteComponent() {
 	};
 
 	return (
-		<div className="space-y-6 px-6">
+		<div className="space-y-6 px-6 py-6">
 			{/* Main grid layout - 3 columns on desktop, 1 column on mobile */}
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 				{/* Store Addresses Card */}
-				<div className="border rounded-lg p-6 bg-card space-y-4">
+				<div className="space-y-4">
 					<div className="flex items-center justify-between">
 						<h3 className="text-lg font-semibold">Адреса магазинов</h3>
 						<Button variant="outline" size="sm" onClick={crud.openCreateDrawer}>
@@ -159,50 +160,55 @@ function RouteComponent() {
 						</Button>
 					</div>
 
-					<div className="space-y-3">
-						{locations.map((loc) => (
-							<div
-								key={loc.id}
-								className="border rounded-lg p-4 bg-background space-y-3"
-							>
-								<div className="space-y-1">
-									<div className="font-medium break-words">{loc.address}</div>
-									{loc.description && (
-										<div className="text-sm text-muted-foreground break-words">
-											{loc.description}
+					{/* Use EntityCardGrid container styling but with custom cards */}
+					<div className="border border-border rounded-lg p-4 bg-transparent">
+						<div className="grid grid-cols-1 gap-3">
+							{locations.map((location) => (
+								<div
+									key={location.id}
+									className="group flex flex-col p-2 rounded-md hover:bg-muted border border-transparent hover:border-border w-full text-left bg-transparent"
+									style={{ transition: "var(--transition-standard)" }}
+								>
+									<div className="flex items-center space-x-2">
+										<EntityCardContent
+											name={location.address}
+											secondaryInfo={location.description || undefined}
+											isActive={location.isActive}
+											inactiveLabel="Неактивен"
+										/>
+									</div>
+									{location.openingHours && (
+										<div className="text-xs text-muted-foreground whitespace-pre-line break-words mt-2 ml-0">
+											{location.openingHours}
 										</div>
 									)}
-									{loc.openingHours && (
-										<div className="text-sm text-muted-foreground break-words whitespace-pre-line">
-											{loc.openingHours}
-										</div>
-									)}
-									{!loc.isActive && (
-										<div className="text-xs text-muted-foreground">
-											Неактивен
-										</div>
-									)}
+									<div className="flex gap-2 pt-2 mt-2 border-t border-border">
+										<Button
+											variant="outline"
+											size="sm"
+											className="flex-1"
+											onClick={(e) => {
+												e.stopPropagation();
+												handleEdit(location);
+											}}
+										>
+											Редактировать
+										</Button>
+										<Button
+											variant="destructive"
+											size="sm"
+											className="flex-1"
+											onClick={(e) => {
+												e.stopPropagation();
+												handleDeleteClick(location);
+											}}
+										>
+											Удалить
+										</Button>
+									</div>
 								</div>
-								<div className="flex gap-2">
-									<Button
-										variant="outline"
-										size="sm"
-										className="flex-1"
-										onClick={() => handleEdit(loc)}
-									>
-										Редактировать
-									</Button>
-									<Button
-										variant="destructive"
-										size="sm"
-										className="flex-1"
-										onClick={() => handleDeleteClick(loc)}
-									>
-										Удалить
-									</Button>
-								</div>
-							</div>
-						))}
+							))}
+						</div>
 					</div>
 				</div>
 

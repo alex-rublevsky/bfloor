@@ -1,9 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
-import type * as schema from "~/schema";
 import { categories } from "~/schema";
 import type { CategoryFormData } from "~/types";
 
@@ -11,7 +9,7 @@ export const createProductCategory = createServerFn({ method: "POST" })
 	.inputValidator((data: CategoryFormData) => data)
 	.handler(async ({ data }) => {
 		try {
-			const db: DrizzleD1Database<typeof schema> = DB();
+			const db = DB();
 			const categoryData = data;
 
 			if (!categoryData.name || !categoryData.slug) {

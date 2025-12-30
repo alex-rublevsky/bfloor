@@ -12,7 +12,6 @@ interface CheckboxListProps {
 	selectedIds: (string | number)[];
 	onItemChange: (itemId: string | number, checked: boolean) => void;
 	idPrefix: string;
-	columns?: 1 | 2 | 3 | 4; // Number of columns
 	showOnlyActive?: boolean; // Filter to show only active items
 	scrollable?: boolean; // Enable scrollable container with limited height
 	maxHeight?: string; // Max height for scrollable container (default: "200px")
@@ -23,7 +22,6 @@ export function CheckboxList({
 	selectedIds,
 	onItemChange,
 	idPrefix,
-	columns = 2,
 	showOnlyActive = false,
 	scrollable = false,
 	maxHeight = "200px",
@@ -33,18 +31,8 @@ export function CheckboxList({
 		? items.filter((item) => item.isActive !== false)
 		: items;
 
-	// Determine grid columns
-	const gridCols =
-		columns === 1
-			? "grid-cols-1"
-			: columns === 2
-				? "grid-cols-1 md:grid-cols-2"
-				: columns === 3
-					? "grid-cols-2 md:grid-cols-2 lg:grid-cols-3"
-					: "grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
-
 	const content = (
-		<div className={`grid ${gridCols} gap-0`}>
+		<div className="grid grid-cols-1 gap-0 w-fit">
 			{filteredItems.map((item) => {
 				const isChecked = selectedIds.includes(item.id);
 
@@ -78,7 +66,7 @@ export function CheckboxList({
 
 	if (scrollable) {
 		return (
-			<div className="overflow-y-auto pr-2" style={{ maxHeight }}>
+			<div className="overflow-y-auto pr-2 w-fit" style={{ maxHeight }}>
 				{content}
 			</div>
 		);
