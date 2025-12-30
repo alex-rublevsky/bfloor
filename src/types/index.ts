@@ -128,6 +128,7 @@ export interface ProductFormData {
 	images: string;
 	attributes?: ProductAttributeFormData[]; // Product-level attributes
 	variations: ProductVariationFormData[];
+	dimensions?: string; // Product dimensions (габариты) - text field
 }
 
 export interface ProductVariationFormData {

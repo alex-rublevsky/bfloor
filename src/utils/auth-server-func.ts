@@ -1,7 +1,6 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "~/utils/auth-middleware";
-import { resolveSecret } from "~/utils/cloudflare-env";
+import { env, resolveSecret } from "~/utils/env";
 
 type User = {
 	id?: string;
@@ -26,7 +25,7 @@ async function isAdminEmail(userEmail: string | null): Promise<boolean> {
 		return false;
 	}
 
-	// Resolve all admin emails from secrets store
+	// Resolve all admin emails from environment variables
 	const [superAdminEmail, adminEmail, adminEmail2, adminEmail3] =
 		await Promise.all([
 			resolveSecret(env.SUPER_ADMIN_EMAIL),
