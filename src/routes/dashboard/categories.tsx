@@ -78,6 +78,7 @@ const CategoryFormFields = ({
 				folder="categories"
 				slug={(formData as CategoryFormData).slug}
 				productName={(formData as CategoryFormData).name}
+				label="Изображение категории"
 			/>
 		</>
 	);

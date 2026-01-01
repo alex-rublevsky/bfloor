@@ -1,4 +1,4 @@
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus } from "./Icon";
 
 interface QuantitySelectorButtonProps {
 	onClick: () => void;

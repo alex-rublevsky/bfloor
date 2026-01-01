@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { CheckCircle, Clock } from "lucide-react";
 import { Badge } from "~/components/ui/shared/Badge";
 import { Button } from "~/components/ui/shared/Button";
+import { CheckCircle, Clock } from "~/components/ui/shared/Icon";
 import { Image } from "~/components/ui/shared/Image";
 import {
 	getAttributeDisplayName,

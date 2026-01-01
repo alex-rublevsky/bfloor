@@ -1,9 +1,8 @@
 import useEmblaCarousel from "embla-carousel-react";
-import { ExternalLink } from "lucide-react";
-import { Icon } from "~/components/ui/shared/Icon";
 import { Image } from "~/components/ui/shared/Image";
 import { EmblaArrowButtons } from "../../shared/EmblaArrowButtons";
 import { EmblaDotButtons } from "../../shared/EmblaDotButtons";
+import { ExternalLink, Google, TwoGis, Yandex } from "../../shared/Icon";
 import "./testimonial.css";
 
 type TestimonialSource = "Google" | "Yandex" | "2GIS";
@@ -84,12 +83,16 @@ export default function TestimonialSliderSection() {
 
 	// Navigation handled by EmblaArrowButtons and EmblaDotButtons components
 
-	const getIconName = (
-		source: TestimonialSource,
-	): "google" | "yandex" | "2gis" => {
-		if (source === "Yandex") return "yandex";
-		if (source === "2GIS") return "2gis";
-		return "google"; // default to google
+	const renderSourceIcon = (source: TestimonialSource) => {
+		switch (source) {
+			case "Yandex":
+				return <Yandex size={24} className="flex-shrink-0" />;
+			case "2GIS":
+				return <TwoGis size={24} className="flex-shrink-0" />;
+			case "Google":
+			default:
+				return <Google size={24} className="flex-shrink-0" />;
+		}
 	};
 
 	const formatDate = (dateString: string): string => {
@@ -137,13 +140,8 @@ export default function TestimonialSliderSection() {
 										<div className="flex flex-col">
 											<div className="flex items-center gap-3">
 												<p className="font-medium">{testimonial.name}</p>
-												{testimonial.source && (
-													<Icon
-														name={getIconName(testimonial.source)}
-														size={24}
-														className="flex-shrink-0"
-													/>
-												)}
+												{testimonial.source &&
+													renderSourceIcon(testimonial.source)}
 											</div>
 											{testimonial.date && (
 												<p className="text-sm text-muted-foreground mt-1">

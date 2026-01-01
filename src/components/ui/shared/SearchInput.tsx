@@ -1,7 +1,7 @@
-import { X } from "lucide-react";
 import { forwardRef } from "react";
 import { cn } from "~/lib/utils";
 import { Button } from "./Button";
+import { Search, X } from "./Icon";
 
 interface SearchInputProps
 	extends Omit<
@@ -57,19 +57,24 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 						<X className="h-4 w-4" style={{ color: "currentColor" }} />
 					</Button>
 				)}
-				<input
-					ref={ref}
-					type="text"
-					value={value}
-					onChange={(e) => onChange(e.target.value)}
-					onKeyDown={handleKeyDown}
-					placeholder={placeholder}
-					className={cn(
-						"flex h-9 w-full min-w-[15ch] rounded-md border-[1.5px] border-input bg-background px-3 py-1 text-base shadow-xs transition-standard file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-accent hover:border-accent disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-						className,
-					)}
-					{...props}
-				/>
+				<div className="relative w-full">
+					<input
+						ref={ref}
+						type="text"
+						value={value}
+						onChange={(e) => onChange(e.target.value)}
+						onKeyDown={handleKeyDown}
+						placeholder={placeholder}
+						className={cn(
+							"flex h-9 w-full min-w-[15ch] rounded-md border-[1.5px] border-input bg-background px-3 pr-10 py-1 text-base shadow-xs transition-standard file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-accent hover:border-accent disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+							className,
+						)}
+						{...props}
+					/>
+					<div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+						<Search size={18} className="text-accent" />
+					</div>
+				</div>
 			</div>
 		);
 	},

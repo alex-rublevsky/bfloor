@@ -14,7 +14,6 @@ import {
 	useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ASSETS_BASE_URL } from "~/constants/urls";
@@ -23,6 +22,7 @@ import { deleteProductImage } from "~/server_functions/dashboard/store/deletePro
 import { getImageMetadata } from "~/server_functions/dashboard/store/getImageMetadata";
 import { uploadProductImage } from "~/server_functions/dashboard/store/uploadProductImage";
 import { Button } from "../shared/Button";
+import { GripVertical, Trash, Upload } from "../shared/Icon";
 import { Textarea } from "../shared/TextArea";
 
 interface ImageUploadProps {
@@ -33,6 +33,7 @@ interface ImageUploadProps {
 	categorySlug?: string; // category slug for proper path structure
 	productName?: string; // product name for proper file naming
 	productId?: number | string; // product ID for view transition
+	label?: string; // custom label for the upload section (defaults to "Изображения товара")
 }
 
 interface SortableImageItemProps {
@@ -121,7 +122,7 @@ function SortableImageItem({
 					className="absolute top-1 right-1 p-1.5 bg-destructive text-destructive-foreground rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90 cursor-pointer"
 					title="Убрать изображение"
 				>
-					<Trash2 className="w-3 h-3" />
+					<Trash size={12} />
 				</button>
 			</div>
 			<div className="p-2 bg-background border-t border-border">
@@ -146,6 +147,7 @@ export function ImageUpload({
 	categorySlug,
 	productName,
 	productId,
+	label = "Изображения товара",
 }: ImageUploadProps) {
 	// Target max uploaded size (~700KB)
 	const TARGET_MAX_BYTES = 700 * 1024;
@@ -922,18 +924,16 @@ export function ImageUpload({
 					className="block text-sm font-medium"
 					id={`${fileInputId}-label`}
 				>
-					Изображения товара {imageList.length > 0 && `(${imageList.length})`}
+					{label} {imageList.length > 0 && `(${imageList.length})`}
 				</label>
-				{imageList.length > 0 && (
-					<Button
-						type="button"
-						onClick={() => setShowTextarea(!showTextarea)}
-						variant="outline"
-						size="sm"
-					>
-						{showTextarea ? "Скрыть" : "Редактировать"} Raw
-					</Button>
-				)}
+				<Button
+					type="button"
+					onClick={() => setShowTextarea(!showTextarea)}
+					variant="outline"
+					size="sm"
+				>
+					{showTextarea ? "Скрыть" : "Редактировать"} Raw
+				</Button>
 			</div>
 
 			{showTextarea ? (

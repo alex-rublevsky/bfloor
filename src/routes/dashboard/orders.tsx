@@ -1,6 +1,5 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckSquare, Square, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
@@ -9,6 +8,7 @@ import { OrderDrawer } from "~/components/ui/dashboard/OrderDrawer";
 import { OrdersPageSkeleton } from "~/components/ui/dashboard/skeletons/OrdersPageSkeleton";
 import { Button } from "~/components/ui/shared/Button";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
+import { CheckSquare, Square, Trash } from "~/components/ui/shared/Icon";
 import { useDashboardSearch } from "~/lib/dashboardSearchContext";
 import { dashboardOrdersQueryOptions } from "~/lib/queryOptions";
 import {
@@ -279,7 +279,7 @@ function OrderList() {
 						disabled={isDeleting}
 						className="flex items-center gap-1"
 					>
-						<Trash2 className="h-4 w-4" />
+						<Trash size={16} />
 						Удалить ({selectedOrders.size})
 					</Button>
 				)}

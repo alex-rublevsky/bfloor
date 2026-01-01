@@ -1,4 +1,3 @@
-import { X } from "lucide-react";
 import { Badge } from "~/components/ui/shared/Badge";
 import { Image } from "~/components/ui/shared/Image";
 import { Link } from "~/components/ui/shared/Link";
@@ -10,6 +9,7 @@ import {
 	useProductAttributes,
 } from "~/hooks/useProductAttributes";
 import { useCart } from "~/lib/cartContext";
+import { X } from "../shared/Icon";
 
 interface CartItemProps {
 	item: EnrichedCartItem;

@@ -1,5 +1,4 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
@@ -12,6 +11,7 @@ import { Input } from "~/components/ui/shared/input";
 import { Switch } from "~/components/ui/shared/Switch";
 import { useDashboardForm } from "~/hooks/useDashboardForm";
 import { generateSlug, useSlugGeneration } from "~/hooks/useSlugGeneration";
+import { Trash } from "../shared/Icon";
 
 // Generic types for the entity manager
 export interface EntityFormData {
@@ -463,7 +463,7 @@ export function DashboardEntityManager<
 									}}
 									className="w-full"
 								>
-									<Trash2 className="w-4 h-4 mr-2" />
+									<Trash size={16} className="mr-2" />
 									Удалить {toAccusativeCase(config.entityName)}
 								</Button>
 							</div>

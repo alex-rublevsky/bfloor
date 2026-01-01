@@ -1,5 +1,5 @@
-import { Plus, Search } from "lucide-react";
 import { Button } from "./Button";
+import { Plus, Search } from "./Icon";
 
 interface EmptyStateProps {
 	/** The type of entity that is empty (e.g., "brands", "collections", "products") */

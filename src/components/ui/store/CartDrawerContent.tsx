@@ -1,4 +1,3 @@
-import { ShoppingBag } from "lucide-react";
 import {
 	DrawerBody,
 	DrawerDescription,
@@ -8,6 +7,7 @@ import {
 } from "~/components/ui/shared/Drawer";
 import { useEnrichedCart } from "~/hooks/useEnrichedCart";
 import { useCart } from "~/lib/cartContext";
+import { ShoppingBag } from "../shared/Icon";
 import { CartItem } from "./CartItem";
 import { CartCheckoutButton, CartSummary } from "./CartSummary";
 

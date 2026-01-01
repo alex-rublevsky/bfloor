@@ -3,9 +3,9 @@
  * Provides consistent styling and behavior across desktop and mobile
  */
 
-import { Plus } from "lucide-react";
 import type { ActionButtonConfig } from "~/config/dashboardActionButtons";
 import { cn } from "~/utils/utils";
+import { Plus } from "../Icon";
 
 interface ActionButtonProps {
 	button: ActionButtonConfig;

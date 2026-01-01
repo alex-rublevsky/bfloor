@@ -59,30 +59,27 @@ function BrandCountrySelect({
 
 	return (
 		<div>
-			<label
-				htmlFor={`${entityType}-country`}
-				className="block text-sm font-medium mb-1"
-			>
-				Страна
-			</label>
-			<select
-				id={`${entityType}-country`}
+			<Select
 				value={formData.countryId?.toString() || ""}
-				onChange={(e) =>
+				onValueChange={(value) =>
 					setFormData((prev) => ({
 						...prev,
-						countryId: e.target.value ? parseInt(e.target.value, 10) : null,
+						countryId: value ? parseInt(value, 10) : null,
 					}))
 				}
-				className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
 			>
-				<option value="">Не указано</option>
-				{countries.map((country) => (
-					<option key={country.id} value={country.id.toString()}>
-						{country.name} ({country.code})
-					</option>
-				))}
-			</select>
+				<SelectTrigger id={`${entityType}-country`} label="Страна">
+					<SelectValue placeholder="Не указано" />
+				</SelectTrigger>
+				<SelectContent>
+					<SelectItem value="">Не указано</SelectItem>
+					{countries.map((country) => (
+						<SelectItem key={country.id} value={country.id.toString()}>
+							{country.name} ({country.code})
+						</SelectItem>
+					))}
+				</SelectContent>
+			</Select>
 		</div>
 	);
 }
@@ -253,53 +250,54 @@ export function SelectWithCreate({
 
 	return (
 		<div className="space-y-2">
-			<label htmlFor={id} className="block text-sm font-medium mb-1">
-				<span className="flex items-center gap-2">
-					{label}
-					{error && (
-						<span className="text-red-500 text-xs font-medium">{error}</span>
-					)}
-				</span>
-			</label>
-
-			<Select
-				value={value || "none"}
-				onValueChange={(newValue) => {
-					if (newValue === "create-new") {
-						setIsCreating(true);
-					} else {
-						onValueChange(newValue === "none" ? null : newValue);
-					}
-				}}
-				required={required}
-			>
-				<SelectTrigger
-					id={id}
-					className={cn("w-full", error && "border-red-500", className)}
+			<div className="relative">
+				<Select
+					value={value || "none"}
+					onValueChange={(newValue) => {
+						if (newValue === "create-new") {
+							setIsCreating(true);
+						} else {
+							onValueChange(newValue === "none" ? null : newValue);
+						}
+					}}
+					required={required}
 				>
-					<SelectValue placeholder={placeholder} />
-				</SelectTrigger>
-				<SelectContent>
-					{entityType !== "category" && (
-						<SelectItem value="none">
-							{entityType === "brand" ? "Нет" : "Нет"}
+					<SelectTrigger
+						id={id}
+						label={label}
+						required={required}
+						className={cn("w-full", error && "border-red-500", className)}
+					>
+						<SelectValue placeholder={placeholder} />
+					</SelectTrigger>
+					<SelectContent>
+						{entityType !== "category" && (
+							<SelectItem value="none">
+								{entityType === "brand" ? "Нет" : "Нет"}
+							</SelectItem>
+						)}
+						{options.map((option) => (
+							<SelectItem key={option.slug} value={option.slug}>
+								{option.name}
+							</SelectItem>
+						))}
+						<SelectItem value="create-new" className="text-primary font-medium">
+							+ Создать новый{" "}
+							{entityType === "category"
+								? "категорию"
+								: entityType === "brand"
+									? "бренд"
+									: "коллекцию"}
 						</SelectItem>
-					)}
-					{options.map((option) => (
-						<SelectItem key={option.slug} value={option.slug}>
-							{option.name}
-						</SelectItem>
-					))}
-					<SelectItem value="create-new" className="text-primary font-medium">
-						+ Создать новый{" "}
-						{entityType === "category"
-							? "категорию"
-							: entityType === "brand"
-								? "бренд"
-								: "коллекцию"}
-					</SelectItem>
-				</SelectContent>
-			</Select>
+					</SelectContent>
+				</Select>
+
+				{error && (
+					<span className="absolute -bottom-5 left-0 text-red-500 text-xs font-medium">
+						{error}
+					</span>
+				)}
+			</div>
 
 			{/* Inline creation form */}
 			{isCreating && (
@@ -349,12 +347,6 @@ export function SelectWithCreate({
 						{/* Brand selection for collections */}
 						{entityType === "collection" && (
 							<div>
-								<label
-									htmlFor={`${entityType}-brand`}
-									className="block text-sm font-medium mb-1"
-								>
-									Бренд <span className="text-red-500">*</span>
-								</label>
 								<Select
 									value={(formData as CollectionFormData).brandSlug}
 									onValueChange={(brandSlug) =>
@@ -362,7 +354,11 @@ export function SelectWithCreate({
 									}
 									required
 								>
-									<SelectTrigger id={`${entityType}-brand`}>
+									<SelectTrigger
+										id={`${entityType}-brand`}
+										label="Бренд"
+										required
+									>
 										<SelectValue placeholder="Выберите бренд" />
 									</SelectTrigger>
 									<SelectContent>

@@ -1,5 +1,5 @@
-import { Loader2 } from "lucide-react";
 import { Badge } from "~/components/ui/shared/Badge";
+import { Loader2 } from "~/components/ui/shared/Icon";
 
 export interface EntityCardContentProps {
 	name: string;

@@ -5,7 +5,9 @@ import {
 	useElementScrollRestoration,
 } from "@tanstack/react-router";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
+import { zodValidator } from "@tanstack/zod-adapter";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { z } from "zod";
 import { AdminProductCard } from "~/components/ui/dashboard/AdminProductCard";
 import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
@@ -24,90 +26,48 @@ import type {
 	ProductWithVariations,
 } from "~/types";
 
-// Search params validation for all filter options and search
-const validateSearch = (search: Record<string, unknown>) => {
-	const result: {
-		search?: string;
-		category?: string;
-		brand?: string;
-		collection?: string;
-		attributeFilters?: string; // JSON string of Record<number, string[]>
-		uncategorizedOnly?: boolean;
-		withoutBrandOnly?: boolean;
-		withoutCollectionOnly?: boolean;
-		sort?:
-			| "relevant"
-			| "name"
-			| "price-asc"
-			| "price-desc"
-			| "newest"
-			| "oldest";
-	} = {};
+// Zod schema for search params validation
+const searchParamsSchema = z.object({
+	search: z
+		.union([z.string(), z.number()])
+		.transform((val) => (typeof val === "number" ? String(val) : val))
+		.optional(),
+	category: z.string().optional(),
+	brand: z.string().optional(),
+	collection: z.string().optional(),
+	attributeFilters: z.string().optional(), // JSON string of Record<number, string[]>
+	uncategorizedOnly: z
+		.union([z.boolean(), z.string()])
+		.transform((val) => (typeof val === "string" ? val === "true" : val))
+		.optional(),
+	withoutBrandOnly: z
+		.union([z.boolean(), z.string()])
+		.transform((val) => (typeof val === "string" ? val === "true" : val))
+		.optional(),
+	withoutCollectionOnly: z
+		.union([z.boolean(), z.string()])
+		.transform((val) => (typeof val === "string" ? val === "true" : val))
+		.optional(),
+	sort: z
+		.enum(["relevant", "name", "price-asc", "price-desc", "newest", "oldest"])
+		.optional(),
+});
 
-	// Handle both string and number (numeric strings can be parsed as numbers by the router)
-	if (typeof search.search === "string") {
-		result.search = search.search;
-	} else if (typeof search.search === "number") {
-		// Convert number back to string (e.g., "12345" might be parsed as 12345)
-		result.search = String(search.search);
-	}
-
-	if (typeof search.category === "string") {
-		result.category = search.category;
-	}
-
-	if (typeof search.brand === "string") {
-		result.brand = search.brand;
-	}
-
-	if (typeof search.collection === "string") {
-		result.collection = search.collection;
-	}
-
-	if (typeof search.attributeFilters === "string") {
-		result.attributeFilters = search.attributeFilters;
-	}
-
-	if (
-		typeof search.sort === "string" &&
-		(search.sort === "relevant" ||
-			search.sort === "name" ||
-			search.sort === "price-asc" ||
-			search.sort === "price-desc" ||
-			search.sort === "newest" ||
-			search.sort === "oldest")
-	) {
-		result.sort = search.sort;
-	}
-
-	if (typeof search.uncategorizedOnly === "boolean") {
-		result.uncategorizedOnly = search.uncategorizedOnly;
-	} else if (typeof search.uncategorizedOnly === "string") {
-		result.uncategorizedOnly = search.uncategorizedOnly === "true";
-	}
-
-	if (typeof search.withoutBrandOnly === "boolean") {
-		result.withoutBrandOnly = search.withoutBrandOnly;
-	} else if (typeof search.withoutBrandOnly === "string") {
-		result.withoutBrandOnly = search.withoutBrandOnly === "true";
-	}
-
-	if (typeof search.withoutCollectionOnly === "boolean") {
-		result.withoutCollectionOnly = search.withoutCollectionOnly;
-	} else if (typeof search.withoutCollectionOnly === "string") {
-		result.withoutCollectionOnly = search.withoutCollectionOnly === "true";
-	}
-
-	return result;
+// Default values for search params (used for stripping defaults from URL)
+const defaultSearchValues = {
+	sort: "relevant" as const,
+	uncategorizedOnly: false,
+	withoutBrandOnly: false,
+	withoutCollectionOnly: false,
 };
 
 export const Route = createFileRoute("/dashboard/")({
 	component: RouteComponent,
 	pendingComponent: ProductsPageSkeleton,
-	validateSearch,
-	// Strip undefined values from URL to keep it clean
+	validateSearch: zodValidator(searchParamsSchema),
+	// Strip default values from URL to keep it clean
 	search: {
-		middlewares: [stripSearchParams({})],
+		middlewares: [stripSearchParams(defaultSearchValues)],
 	},
 });
 
@@ -147,14 +107,9 @@ function RouteComponent() {
 	const searchParams = Route.useSearch();
 	const navigate = Route.useNavigate();
 
+	// Normalize search term - Zod schema ensures search is always a string (or undefined)
 	const normalizedSearch = (() => {
-		// Handle both string and number (numeric strings can be parsed as numbers by the router)
-		const rawValue =
-			typeof searchParams.search === "string"
-				? searchParams.search
-				: typeof searchParams.search === "number"
-					? String(searchParams.search)
-					: "";
+		const rawValue = searchParams.search ?? "";
 		const trimmed = rawValue.trim().replace(/\s+/g, " ");
 		return trimmed.length >= 2 ? trimmed : undefined;
 	})();
@@ -249,14 +204,14 @@ function RouteComponent() {
 		);
 	};
 
-	// Update URL when filters change
+	// Update URL when filters change - using functional form as recommended by TanStack Router
 	const updateCategory = (category: string | null) => {
 		setSelectedCategory(category);
 		navigate({
-			search: {
-				...searchParams,
+			search: (prev) => ({
+				...prev,
 				category: category ?? undefined,
-			},
+			}),
 			replace: true,
 		});
 	};
@@ -264,10 +219,10 @@ function RouteComponent() {
 	const updateBrand = (brand: string | null) => {
 		setSelectedBrand(brand);
 		navigate({
-			search: {
-				...searchParams,
+			search: (prev) => ({
+				...prev,
 				brand: brand ?? undefined,
-			},
+			}),
 			replace: true,
 		});
 	};
@@ -275,10 +230,10 @@ function RouteComponent() {
 	const updateCollection = (collection: string | null) => {
 		setSelectedCollection(collection);
 		navigate({
-			search: {
-				...searchParams,
+			search: (prev) => ({
+				...prev,
 				collection: collection ?? undefined,
-			},
+			}),
 			replace: true,
 		});
 	};
@@ -286,10 +241,10 @@ function RouteComponent() {
 	const updateSort = (sort: typeof sortBy) => {
 		setSortBy(sort);
 		navigate({
-			search: {
-				...searchParams,
+			search: (prev) => ({
+				...prev,
 				sort: sort !== "relevant" ? sort : undefined,
-			},
+			}),
 			replace: true,
 		});
 	};
@@ -303,16 +258,16 @@ function RouteComponent() {
 		}
 		setSelectedAttributeFilters(newFilters);
 
-		// Update URL
+		// Update URL using functional form
 		const filtersStr =
 			Object.keys(newFilters).length > 0
 				? JSON.stringify(newFilters)
 				: undefined;
 		navigate({
-			search: {
-				...searchParams,
+			search: (prev) => ({
+				...prev,
 				attributeFilters: filtersStr,
-			},
+			}),
 			replace: true,
 		});
 	};
@@ -320,10 +275,10 @@ function RouteComponent() {
 	const updateUncategorizedOnly = (checked: boolean) => {
 		setShowUncategorizedOnly(checked);
 		navigate({
-			search: {
-				...searchParams,
+			search: (prev) => ({
+				...prev,
 				uncategorizedOnly: checked ? true : undefined,
-			},
+			}),
 			replace: true,
 		});
 	};
@@ -331,10 +286,10 @@ function RouteComponent() {
 	const updateWithoutBrandOnly = (checked: boolean) => {
 		setShowWithoutBrandOnly(checked);
 		navigate({
-			search: {
-				...searchParams,
+			search: (prev) => ({
+				...prev,
 				withoutBrandOnly: checked ? true : undefined,
-			},
+			}),
 			replace: true,
 		});
 	};
@@ -342,10 +297,10 @@ function RouteComponent() {
 	const updateWithoutCollectionOnly = (checked: boolean) => {
 		setShowWithoutCollectionOnly(checked);
 		navigate({
-			search: {
-				...searchParams,
+			search: (prev) => ({
+				...prev,
 				withoutCollectionOnly: checked ? true : undefined,
-			},
+			}),
 			replace: true,
 		});
 	};

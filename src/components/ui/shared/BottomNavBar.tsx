@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { MoreVertical } from "lucide-react";
 import { useState } from "react";
+import { MoreVertical } from "./Icon";
 import {
 	Drawer,
 	DrawerContent,
@@ -188,16 +188,16 @@ export function BottomNavBar({
 											{/* User Info */}
 											{userData && (
 												<div className="flex items-center gap-2 px-4 py-2 border-b border-border">
-													<div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
+													<div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium flex-shrink-0">
 														{userData.userName
 															? userData.userName.charAt(0).toUpperCase()
 															: "U"}
 													</div>
-													<div className="flex-1 min-w-0">
-														<div className="text-sm font-medium truncate">
+													<div className="text-sm leading-tight whitespace-nowrap">
+														<div className="font-medium">
 															{userData.userName || userData.userID}
 														</div>
-														<div className="text-xs text-muted-foreground truncate">
+														<div className="text-xs text-muted-foreground">
 															{userData.userEmail}
 														</div>
 													</div>

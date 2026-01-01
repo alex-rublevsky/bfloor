@@ -1,5 +1,4 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit, Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/shared/Button";
@@ -9,6 +8,7 @@ import { createAttributeValue } from "~/server_functions/dashboard/attributes/cr
 import { deleteAttributeValue } from "~/server_functions/dashboard/attributes/deleteAttributeValue";
 import type { AttributeValue } from "~/server_functions/dashboard/attributes/getAttributeValues";
 import { updateAttributeValue } from "~/server_functions/dashboard/attributes/updateAttributeValue";
+import { Edit, Loader2, Trash } from "../shared/Icon";
 
 interface AttributeValuesManagerProps {
 	attributeId: number;
@@ -304,7 +304,7 @@ function ValueItem({
 						onClick={onDelete}
 						className="h-8 px-2"
 					>
-						<Trash2 className="w-4 h-4" />
+						<Trash size={16} />
 					</Button>
 				</>
 			)}

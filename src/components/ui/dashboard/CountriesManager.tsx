@@ -1,5 +1,4 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
@@ -21,6 +20,7 @@ import { updateCountry } from "~/server_functions/dashboard/countries/updateCoun
 import { deleteProductImage } from "~/server_functions/dashboard/store/deleteProductImage";
 import { moveStagingImages } from "~/server_functions/dashboard/store/moveStagingImages";
 import type { Country, CountryFormData } from "~/types";
+import { Trash } from "../shared/Icon";
 
 interface CountriesManagerProps {
 	className?: string;
@@ -457,23 +457,16 @@ export function CountriesManager({ className }: CountriesManagerProps) {
 
 							{/* Flag Image Upload */}
 							<div>
-								<label
-									htmlFor={`${createFormId}-flag-image`}
-									className="block text-sm font-medium mb-1"
-								>
-									Флаг страны (опционально)
-								</label>
-								<div id={`${createFormId}-flag-image`}>
-									<ImageUpload
-										currentImages={form.createForm.formData.flagImage || ""}
-										onImagesChange={(images) =>
-											form.createForm.updateField("flagImage", images)
-										}
-										folder="country-flags"
-										slug={form.createForm.formData.code}
-										productName={form.createForm.formData.name}
-									/>
-								</div>
+								<ImageUpload
+									currentImages={form.createForm.formData.flagImage || ""}
+									onImagesChange={(images) =>
+										form.createForm.updateField("flagImage", images)
+									}
+									folder="country-flags"
+									slug={form.createForm.formData.code}
+									productName={form.createForm.formData.name}
+									label="Флаг страны (опционально)"
+								/>
 							</div>
 
 							<div className="flex items-center gap-2">
@@ -530,41 +523,34 @@ export function CountriesManager({ className }: CountriesManagerProps) {
 
 							{/* Flag Image Upload */}
 							<div>
-								<label
-									htmlFor={`${editFormId}-flag-image`}
-									className="block text-sm font-medium mb-1"
-								>
-									Флаг страны (опционально)
-								</label>
-								<div id={`${editFormId}-flag-image`}>
-									<ImageUpload
-										currentImages={form.editForm.formData.flagImage || ""}
-										onImagesChange={(images, deletedImages) => {
-											console.log("ImageUpload onImagesChange:", {
-												images,
-												deletedImages,
-												currentDeletedFlagImages: deletedFlagImages,
-											});
-											form.editForm.updateField("flagImage", images);
-											if (deletedImages && deletedImages.length > 0) {
-												setDeletedFlagImages((prev) => {
-													const combined = [
-														...new Set([...prev, ...deletedImages]),
-													];
-													console.log("Updated deletedFlagImages:", {
-														prev,
-														newDeleted: deletedImages,
-														combined,
-													});
-													return combined;
+								<ImageUpload
+									currentImages={form.editForm.formData.flagImage || ""}
+									onImagesChange={(images, deletedImages) => {
+										console.log("ImageUpload onImagesChange:", {
+											images,
+											deletedImages,
+											currentDeletedFlagImages: deletedFlagImages,
+										});
+										form.editForm.updateField("flagImage", images);
+										if (deletedImages && deletedImages.length > 0) {
+											setDeletedFlagImages((prev) => {
+												const combined = [
+													...new Set([...prev, ...deletedImages]),
+												];
+												console.log("Updated deletedFlagImages:", {
+													prev,
+													newDeleted: deletedImages,
+													combined,
 												});
-											}
-										}}
-										folder="country-flags"
-										slug={form.editForm.formData.code}
-										productName={form.editForm.formData.name}
-									/>
-								</div>
+												return combined;
+											});
+										}
+									}}
+									folder="country-flags"
+									slug={form.editForm.formData.code}
+									productName={form.editForm.formData.name}
+									label="Флаг страны (опционально)"
+								/>
 							</div>
 
 							<div className="flex items-center gap-2">
@@ -596,7 +582,7 @@ export function CountriesManager({ className }: CountriesManagerProps) {
 								}}
 								className="w-full"
 							>
-								<Trash2 className="w-4 h-4 mr-2" />
+								<Trash size={16} className="mr-2" />
 								Удалить страну
 							</Button>
 						</div>

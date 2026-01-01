@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { AlertCircle, Trash2 } from "lucide-react";
 import { Button } from "~/components/ui/shared/Button";
 import { CheckboxList } from "~/components/ui/shared/CheckboxList";
 import { Input } from "~/components/ui/shared/input";
@@ -7,6 +6,7 @@ import { useProductAttributes } from "~/hooks/useProductAttributes";
 import { allAttributeValuesByAttributeQueryOptions } from "~/lib/queryOptions";
 import { cn } from "~/lib/utils";
 import type { ProductAttributeFormData } from "~/types";
+import { AlertCircle, Trash } from "../shared/Icon";
 
 interface ProductAttributesFormProps {
 	attributes?: ProductAttributeFormData[];
@@ -307,7 +307,7 @@ export default function ProductAttributesForm({
 									onClick={() => handleDeleteAttribute(attr.attributeId)}
 									className="shrink-0"
 								>
-									<Trash2 className="h-4 w-4 mr-1" />
+									<Trash size={16} className="mr-1" />
 									<span>Удалить</span>
 								</Button>
 							</div>

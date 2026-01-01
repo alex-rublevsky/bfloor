@@ -1,4 +1,3 @@
-import { X } from "lucide-react";
 import { DrawerSection } from "~/components/ui/dashboard/DrawerSection";
 import { Button } from "~/components/ui/shared/Button";
 import {
@@ -9,6 +8,7 @@ import {
 	DrawerTitle,
 } from "~/components/ui/shared/Drawer";
 import { Image } from "~/components/ui/shared/Image";
+import { X } from "../shared/Icon";
 
 interface OrderItem {
 	id: number;

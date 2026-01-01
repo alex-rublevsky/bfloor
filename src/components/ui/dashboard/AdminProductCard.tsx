@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { Edit } from "lucide-react";
 import { Skeleton } from "~/components/ui/dashboard/skeleton";
 import { Badge } from "~/components/ui/shared/Badge";
 import { Icon } from "~/components/ui/shared/Icon";
 import { ASSETS_BASE_URL } from "~/constants/urls";
 import { usePrefetch } from "~/hooks/usePrefetch";
 import type { ProductWithVariations } from "~/types";
+import { Edit } from "../shared/Icon";
 import styles from "../store/productCard.module.css";
 
 interface AdminProductCardProps {

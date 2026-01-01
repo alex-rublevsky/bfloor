@@ -1,9 +1,9 @@
-import { Trash2 } from "lucide-react";
 import { Button } from "~/components/ui/shared/Button";
 import { Checkbox } from "~/components/ui/shared/Checkbox";
 import { Image } from "~/components/ui/shared/Image";
 import { Switch } from "~/components/ui/shared/Switch";
 import { ASSETS_BASE_URL } from "~/constants/urls";
+import { Trash } from "../shared/Icon";
 
 interface OrderItem {
 	id: number;
@@ -112,7 +112,7 @@ export function OrderCard({
 							}}
 							className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
 						>
-							<Trash2 className="h-4 w-4" />
+							<Trash size={16} />
 						</Button>
 					)}
 				</div>
