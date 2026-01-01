@@ -122,8 +122,9 @@ input.field-sizing-content[type="number"] {
 
 	--radius-xl: calc(var(--radius) + 2rem);
 	--radius-lg: var(--radius);
-	--radius-md: calc(var(--radius) - 0.3rem);
-	--radius-sm: calc(var(--radius) - 0.1rem);
+	--radius-md: calc(var(--radius) - 0.1rem);
+	--radius-sm: calc(var(--radius) - 3rem);
+	--radius-xs: calc(var(--radius) - 0.7rem);
 
 	--font-family-sans: "Overused Grotesk", ui-sans-serif, system-ui, sans-serif;
 }
@@ -216,6 +217,17 @@ input.field-sizing-content[type="number"] {
 	--transition-faster-easing: ease-out;
 	--transition-faster: all var(--transition-faster-duration)
 		var(--transition-faster-easing);
+
+	/* Section horizontal padding - standardized across the project */
+	/* Mobile default */
+	--section-padding-x: 1rem;
+}
+
+@media (width >= 640px) {
+	:root {
+		/* Desktop padding */
+		--section-padding-x: 1.5rem;
+	}
 }
 
 @layer base {
@@ -233,9 +245,9 @@ input.field-sizing-content[type="number"] {
 	section {
 		background-color: oklch(var(--background));
 		padding-bottom: 6rem;
-		padding-left: 1rem;
+		padding-left: var(--section-padding-x);
 		z-index: 1;
-		padding-right: 1rem;
+		padding-right: var(--section-padding-x);
 		position: relative;
 	}
 
@@ -244,16 +256,10 @@ input.field-sizing-content[type="number"] {
 		padding-right: 0;
 	}
 
-	@media (width >= 640px) {
-		section {
-			padding-left: 1.5rem;
-			padding-right: 1.5rem;
-		}
-
-		section.no-padding {
-			padding-left: 0;
-			padding-right: 0;
-		}
+	/* Add padding to titles and controls in sections with no-padding */
+	section.no-padding > h2 {
+		padding-left: var(--section-padding-x);
+		padding-right: var(--section-padding-x);
 	}
 
 	/* GENERAL */
@@ -471,6 +477,17 @@ p {
 .prose p {
 	margin-top: 0;
 	margin-bottom: 1rem;
+}
+
+.prose a {
+	color: var(--color-accent);
+	text-decoration: underline;
+	text-underline-offset: 0.3rem;
+	text-decoration-thickness: 0.1rem;
+}
+
+.prose a:hover {
+	opacity: 0.8;
 }
 
 .prose {
