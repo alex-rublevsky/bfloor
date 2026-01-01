@@ -1,5 +1,5 @@
 import { eq, sql } from "drizzle-orm";
-import type { LibSQLDatabase } from "drizzle-orm/libsql";
+import type { SqliteRemoteDatabase } from "drizzle-orm/sqlite-proxy";
 import type * as schema from "~/schema";
 import { productAttributes, products } from "~/schema";
 
@@ -13,7 +13,7 @@ import { productAttributes, products } from "~/schema";
  * @returns Number of products updated
  */
 export async function cleanupAttributeValueFromProducts(
-	db: LibSQLDatabase<typeof schema>,
+	db: SqliteRemoteDatabase<typeof schema>,
 	attributeId: number,
 	valueToRemove: string,
 ): Promise<{ updatedCount: number; productIds: number[] }> {
