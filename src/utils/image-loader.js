@@ -1,4 +1,4 @@
-const ASSETS_URL = "https://pub-aecfacef31684b0aa951c03db5f14d4e.r2.dev";
+import { ASSETS_BASE_URL } from "~/constants/urls";
 
 export default function cloudflareLoader({ src }) {
 	// If the source is already a full URL, use it as is
@@ -17,11 +17,11 @@ export default function cloudflareLoader({ src }) {
 	// Since we're using R2, we just return the direct URL
 	if (isSvg) {
 		// For SVG files, return the URL without any query parameters
-		return `${ASSETS_URL}/${cleanSrc}`;
+		return `${ASSETS_BASE_URL}/${cleanSrc}`;
 	}
 
 	// For other image formats in R2, also serve directly without transformations
 	// If you want to use Cloudflare Images transformations, you'd need to use Cloudflare Images service
 	// For now, serve R2 files directly
-	return `${ASSETS_URL}/${cleanSrc}`;
+	return `${ASSETS_BASE_URL}/${cleanSrc}`;
 }
