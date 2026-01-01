@@ -1,0 +1,9 @@
+{
+	"buildCommand": "pnpm build",
+	"installCommand": "pnpm install --no-optional",
+	"functions": {
+		"dist/server/**": {
+			"maxDuration": 19
+		}
+	}
+}

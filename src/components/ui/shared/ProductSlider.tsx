@@ -182,6 +182,18 @@ export default function ProductSlider({
 		}
 	}, [emblaApi, selectedTag, mode]);
 
+	// Reinitialize Embla when products load to ensure proper layout
+	// This fixes issues where items stack vertically due to initialization timing
+	useEffect(() => {
+		if (emblaApi && products.length > 0 && !isLoading) {
+			// Small delay to ensure DOM has proper dimensions
+			const timeoutId = setTimeout(() => {
+				emblaApi.reInit();
+			}, 0);
+			return () => clearTimeout(timeoutId);
+		}
+	}, [emblaApi, products.length, isLoading]);
+
 	// Navigation handled by EmblaArrowButtons component
 
 	// const { selectedIndex, scrollSnaps, onDotButtonClick } =

@@ -182,19 +182,22 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 			setIsAddingToCart(true);
 
 			try {
-				// Get products from TanStack Query cache for validation
+				// Try to get products from TanStack Query cache for validation (optional)
+				// If cache is empty, the function will use the product directly
 				const storeData = queryClient.getQueryData(
 					storeDataQueryOptions().queryKey,
 				);
 				const products = storeData?.products || [];
 
 				// Use the context function directly
+				// Products array is optional - if empty, validation uses product directly
 				await addProductToCart(
 					product as Product,
 					1, // Default quantity of 1 when adding from product card
 					selectedVariation,
-					selectedAttributes,
-					products as unknown as ProductWithVariations[],
+					products.length > 0
+						? (products as unknown as ProductWithVariations[])
+						: undefined,
 				);
 			} catch (error) {
 				console.error("Error adding to cart:", error);
@@ -202,14 +205,7 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 				setIsAddingToCart(false);
 			}
 		},
-		[
-			isAvailable,
-			addProductToCart,
-			product,
-			selectedVariation,
-			selectedAttributes,
-			queryClient,
-		],
+		[isAvailable, addProductToCart, product, selectedVariation, queryClient],
 	);
 
 	// Check if product is coming soon (not in the type, so we'll use a placeholder)
@@ -431,7 +427,7 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 													selectedOptions={
 														selectedAttributes[attributeId] || null
 													}
-													onOptionChange={(value) => {
+													onOptionChange={(value: string | null) => {
 														if (value) {
 															selectVariation(attributeId, value);
 														}

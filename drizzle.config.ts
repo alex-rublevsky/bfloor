@@ -1,26 +1,24 @@
 import { defineConfig } from "drizzle-kit";
 
-const requiredEnvVars = {
-	CLOUDFLARE_D1_ACCOUNT_ID: process.env.CLOUDFLARE_D1_ACCOUNT_ID,
-	DATABASE: process.env.DATABASE,
-	CLOUDFLARE_D1_API_TOKEN: process.env.CLOUDFLARE_D1_API_TOKEN,
-} as const;
-
 // Validate required environment variables
-for (const [key, value] of Object.entries(requiredEnvVars)) {
-	if (!value) {
-		throw new Error(`Missing required environment variable: ${key}`);
-	}
+if (!process.env.TURSO_DATABASE_URL) {
+	throw new Error("Missing required environment variable: TURSO_DATABASE_URL");
+}
+if (!process.env.TURSO_AUTH_TOKEN) {
+	throw new Error("Missing required environment variable: TURSO_AUTH_TOKEN");
 }
 
+const requiredEnvVars = {
+	TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL,
+	TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN,
+};
+
 export default defineConfig({
-	dialect: "sqlite",
+	dialect: "turso",
 	schema: "./src/schema.ts",
 	out: "./drizzle",
-	driver: "d1-http",
 	dbCredentials: {
-		accountId: requiredEnvVars.CLOUDFLARE_D1_ACCOUNT_ID,
-		databaseId: requiredEnvVars.DATABASE,
-		token: requiredEnvVars.CLOUDFLARE_D1_API_TOKEN,
+		url: requiredEnvVars.TURSO_DATABASE_URL,
+		authToken: requiredEnvVars.TURSO_AUTH_TOKEN,
 	},
 });

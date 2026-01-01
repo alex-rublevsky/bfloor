@@ -1,21 +1,22 @@
 /* Reuse testimonial carousel styles - most styles are shared */
 /* Product-specific adjustments */
 
+/* Ensure section takes full width */
+section.embla.product-slider-section {
+	width: 100%;
+	max-width: none;
+	min-width: 0; /* Allow flex shrinking */
+}
+
 /* Header row - contains title/tags and arrows */
 .product-slider__header {
 	display: flex;
 	align-items: flex-start;
 	justify-content: space-between;
 	margin-bottom: 1.5rem;
-	padding: 0 1rem;
+	padding: 0 var(--section-padding-x);
 	gap: 1rem;
 	flex-wrap: wrap; /* Allow wrapping only when needed */
-}
-
-@media (min-width: 640px) {
-	.product-slider__header {
-		padding: 0 1.5rem;
-	}
 }
 
 /* Header content wrapper - contains title and tags */
@@ -106,16 +107,38 @@
 	align-items: flex-start;
 	flex-shrink: 0;
 	padding-top: 0.25rem; /* Align with h2 top */
+	min-width: 0; /* Prevent flex overflow issues */
+}
+
+/* Ensure embla buttons stay in a row */
+.product-slider__controls .embla__buttons {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 0.6rem;
+	align-items: center;
+	flex-wrap: nowrap;
 }
 
 /* Carousel viewport - add bottom padding to allow hover shadows to show */
 section.embla.product-slider-section .embla__viewport {
 	padding-bottom: 1.5rem; /* Space for hover shadow (20px shadow + some margin) */
+	width: 100%;
+	min-width: 0; /* Allow flex shrinking */
+}
+
+/* Ensure container displays slides in a row */
+section.embla.product-slider-section .embla__container {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
 }
 
 /* Adjust slide size for products - products are wider than testimonials */
 section.embla.product-slider-section .embla__slide {
+	flex: 0 0 16rem; /* Don't grow, don't shrink, fixed basis */
 	max-width: 16rem; /* Wider than testimonials (50ch) for product cards */
+	width: 16rem;
+	min-width: 0;
 }
 
 /* Remove left padding from first slide to eliminate gap */
@@ -188,7 +211,9 @@ section.embla.product-slider-section .embla__slide:last-child > div {
 	}
 
 	section.embla.product-slider-section .embla__slide {
+		flex: 0 0 12rem; /* Don't grow, don't shrink, fixed basis */
 		max-width: 12rem; /* Smaller on mobile */
+		width: 12rem;
 	}
 
 	/* Dot indicators - Commented out - dots are hidden */

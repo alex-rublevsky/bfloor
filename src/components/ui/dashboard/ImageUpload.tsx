@@ -41,6 +41,7 @@ interface SortableImageItemProps {
 	onRemove: (index: number) => Promise<void>;
 	fileSize?: number; // File size in bytes
 	productId?: number | string; // product ID for view transition
+	previewData?: string; // Base64 data URL for staging images
 }
 
 function SortableImageItem({
@@ -49,6 +50,7 @@ function SortableImageItem({
 	onRemove,
 	fileSize,
 	productId,
+	previewData,
 }: SortableImageItemProps) {
 	const {
 		attributes,
@@ -79,6 +81,11 @@ function SortableImageItem({
 			? { viewTransitionName: `product-image-${productId}` }
 			: undefined;
 
+	// Determine the image source:
+	// 1. If we have preview data (base64), use it
+	// 2. Otherwise, use the R2 public URL
+	const imageSrc = previewData || `${ASSETS_BASE_URL}/${image}`;
+
 	return (
 		<div
 			ref={setNodeRef}
@@ -87,7 +94,7 @@ function SortableImageItem({
 		>
 			<div className="relative w-full">
 				<img
-					src={`${ASSETS_BASE_URL}/${image}`}
+					src={imageSrc}
 					alt={`Product ${index + 1}`}
 					className="w-full h-auto object-contain"
 					style={viewTransitionStyle}
@@ -158,6 +165,11 @@ export function ImageUpload({
 	const stagedImagesRef = useRef<Set<string>>(new Set());
 	const sessionIdRef = useRef<string>(
 		`session-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+	);
+
+	// Store base64 preview data for staging images
+	const [previewDataMap, setPreviewDataMap] = useState<Map<string, string>>(
+		new Map(),
 	);
 
 	// Drag and drop sensors
@@ -495,6 +507,13 @@ export function ImageUpload({
 							// Track staged image if it's in staging folder
 							if (result.filename.startsWith("staging/")) {
 								stagedImagesRef.current.add(result.filename);
+
+								// Store base64 preview data for staging images
+								setPreviewDataMap((prev) => {
+									const newMap = new Map(prev);
+									newMap.set(result.filename, base64String);
+									return newMap;
+								});
 							}
 
 							console.log("Updating image list:", {
@@ -953,6 +972,7 @@ export function ImageUpload({
 											onRemove={handleRemoveImage}
 											fileSize={imageSizes.get(image)}
 											productId={productId}
+											previewData={previewDataMap.get(image)}
 										/>
 									);
 								})}
