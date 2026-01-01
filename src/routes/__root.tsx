@@ -9,12 +9,14 @@ import {
 	Scripts,
 	useRouterState,
 } from "@tanstack/react-router";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import type * as React from "react";
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import { NotFound } from "~/components/NotFound";
-
 import { Footer } from "~/components/ui/shared/Footer";
 import { NavBar } from "~/components/ui/shared/NavBar";
+import { Toaster } from "~/components/ui/shared/sonner";
 import { CartProvider } from "~/lib/cartContext";
 import { ClientSearchProvider } from "~/lib/clientSearchContext";
 import { seo } from "~/utils/seo";
@@ -121,8 +123,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
 				<main className="flex-1 min-h-0 flex flex-col">{children}</main>
 				{!isStore && !isDashboard && !isLogin && <Footer />}
+				<Toaster className="fixed top-4 right-4 z-50" />
 				{/* <TanStackRouterDevtools position="bottom-right" /> */}
 				<Scripts />
+				<SpeedInsights />
+				<Analytics />
 			</body>
 		</html>
 	);
