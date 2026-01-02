@@ -61,7 +61,7 @@ export function OrderDrawer({ order, isOpen, onClose }: OrderDrawerProps) {
 				<DrawerHeader className="px-4 sm:px-6 lg:px-8">
 					<div className="flex items-center justify-between">
 						<DrawerTitle>Order #{order.id}</DrawerTitle>
-						<Button variant="ghost" size="icon" onClick={onClose}>
+						<Button size="icon" onClick={onClose}>
 							<X className="h-5 w-5" />
 						</Button>
 					</div>

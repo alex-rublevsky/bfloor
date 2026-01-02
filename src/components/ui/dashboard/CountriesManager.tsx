@@ -434,7 +434,7 @@ export function CountriesManager({ className }: CountriesManagerProps) {
 				layout="single-column"
 			>
 				<form onSubmit={handleSubmit} id={createFormId} className="contents">
-					<DrawerSection maxWidth title="Детали страны">
+					<DrawerSection maxWidth>
 						<div className="space-y-4">
 							<Input
 								label="Название страны"
@@ -500,7 +500,7 @@ export function CountriesManager({ className }: CountriesManagerProps) {
 				layout="single-column"
 			>
 				<form onSubmit={handleUpdate} id={editFormId} className="contents">
-					<DrawerSection maxWidth title="Детали страны">
+					<DrawerSection maxWidth>
 						<div className="space-y-4">
 							<Input
 								label="Название страны"

@@ -325,7 +325,7 @@ export function DashboardEntityManager<
 					layout="single-column"
 				>
 					<form onSubmit={handleSubmit} id={createFormId} className="contents">
-						<DrawerSection maxWidth title={`Детали ${config.entityName}`}>
+						<DrawerSection maxWidth>
 							<div className="space-y-4">
 								<Input
 									label={`Название ${config.entityName}`}
@@ -390,7 +390,7 @@ export function DashboardEntityManager<
 					layout="single-column"
 				>
 					<form onSubmit={handleUpdate} id={editFormId} className="contents">
-						<DrawerSection maxWidth title={`Детали ${config.entityName}`}>
+						<DrawerSection maxWidth>
 							<div className="space-y-4">
 								<Input
 									label={`Название ${config.entityName}`}
