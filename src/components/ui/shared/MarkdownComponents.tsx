@@ -8,7 +8,11 @@ export const markdownComponents: Components = {
 		if (href?.startsWith("/")) {
 			// Internal link
 			return (
-				<Link to={href} className="text-primary hover:underline" {...props}>
+				<Link
+					to={href}
+					className="text-[var(--color-accent)] hover:underline"
+					{...props}
+				>
 					{children}
 				</Link>
 			);
@@ -19,7 +23,7 @@ export const markdownComponents: Components = {
 				href={href}
 				target="_blank"
 				rel="noopener noreferrer"
-				className="text-primary hover:underline"
+				className="text-[var(--color-accent)] hover:underline"
 				{...props}
 			>
 				{children}
