@@ -1,13 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
-import type * as schema from "~/schema";
 import {
 	productAttributes,
-	productStoreLocations,
 	products,
+	productStoreLocations,
 	productVariations,
 	variationAttributes,
 } from "~/schema";
@@ -16,7 +14,7 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 	.inputValidator((data: { id: number }) => data)
 	.handler(async ({ data }) => {
 		try {
-			const db: DrizzleD1Database<typeof schema> = DB();
+			const db = DB();
 			const productId = data.id;
 
 			if (Number.isNaN(productId)) {
@@ -153,6 +151,7 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 				collectionSlug: product.collectionSlug,
 				storeLocationId: product.storeLocationId,
 				createdAt: product.createdAt,
+				dimensions: product.dimensions,
 				productAttributes: productAttributesArray,
 				variations,
 				storeLocationIds, // Add store location IDs for convenience

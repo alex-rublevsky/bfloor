@@ -1,21 +1,19 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
 import {
 	products,
 	productVariations,
-	type schema,
 	variationAttributes,
 } from "~/schema";
+import { getStorageBucket } from "~/utils/storage";
 
 export const deleteProduct = createServerFn({ method: "POST" })
 	.inputValidator((data: { id: number }) => data)
 	.handler(async ({ data }) => {
 		try {
-			const db: DrizzleD1Database<typeof schema> = DB();
+			const db = DB();
 			const productId = data.id;
 
 			if (Number.isNaN(productId)) {
@@ -51,20 +49,18 @@ export const deleteProduct = createServerFn({ method: "POST" })
 					}
 
 					if (imageArray.length > 0) {
-						const bucket = env.BFLOOR_STORAGE as R2Bucket;
-						if (bucket) {
-							// Delete all images associated with this product
-							await Promise.all(
-								imageArray.map(async (imagePath) => {
-									try {
-										await bucket.delete(imagePath);
-									} catch (error) {
-										// Log but don't fail if image deletion fails
-										console.warn(`Failed to delete image ${imagePath}:`, error);
-									}
-								}),
-							);
-						}
+						const bucket = getStorageBucket();
+						// Delete all images associated with this product
+						await Promise.all(
+							imageArray.map(async (imagePath) => {
+								try {
+									await bucket.delete(imagePath);
+								} catch (error) {
+									// Log but don't fail if image deletion fails
+									console.warn(`Failed to delete image ${imagePath}:`, error);
+								}
+							}),
+						);
 					}
 				} catch (error) {
 					// Log but don't fail if image deletion fails

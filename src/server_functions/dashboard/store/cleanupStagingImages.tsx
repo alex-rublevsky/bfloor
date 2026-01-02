@@ -1,6 +1,6 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
+import { getStorageBucket } from "~/utils/storage";
 
 interface CleanupStagingImagesInput {
 	imagePaths: string[]; // Array of staging image paths to delete
@@ -20,12 +20,7 @@ export const cleanupStagingImages = createServerFn({ method: "POST" })
 				return { success: true, deletedCount: 0 };
 			}
 
-			const bucket = env.BFLOOR_STORAGE as R2Bucket;
-
-			if (!bucket) {
-				setResponseStatus(500);
-				throw new Error("Storage bucket not configured");
-			}
+			const bucket = getStorageBucket();
 
 			// Filter to only staging images
 			const stagingImages = imagePaths.filter((path) =>

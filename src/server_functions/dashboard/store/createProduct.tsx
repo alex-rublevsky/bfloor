@@ -25,6 +25,11 @@ export const createProduct = createServerFn({ method: "POST" })
 				);
 			}
 
+			if (!productData.unitOfMeasurement) {
+				setResponseStatus(400);
+				throw new Error("Unit of measurement is required");
+			}
+
 			// Check for duplicate slug and SKU
 			const [duplicateSlug, duplicateSku] = await Promise.all([
 				db
@@ -121,6 +126,7 @@ export const createProduct = createServerFn({ method: "POST" })
 					hasVariations: productData.hasVariations,
 					images: imagesJson,
 					productAttributes: attributesJson,
+					dimensions: productData.dimensions || null,
 					createdAt: new Date(),
 				})
 				.returning();

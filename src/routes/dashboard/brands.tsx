@@ -4,7 +4,6 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Edit, Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { CountriesManager } from "~/components/ui/dashboard/CountriesManager";
@@ -18,6 +17,7 @@ import { EntityCardGrid } from "~/components/ui/dashboard/EntityCardGrid";
 import { ImageUpload } from "~/components/ui/dashboard/ImageUpload";
 import { BrandsPageSkeleton } from "~/components/ui/dashboard/skeletons/BrandsPageSkeleton";
 import { Badge } from "~/components/ui/shared/Badge";
+import { Edit, Loader2 } from "~/components/ui/shared/Icon";
 import { Image } from "~/components/ui/shared/Image";
 import styles from "~/components/ui/store/productCard.module.css";
 import { ASSETS_BASE_URL } from "~/constants/urls";
@@ -30,6 +30,7 @@ import { createBrand } from "~/server_functions/dashboard/brands/createBrand";
 import { deleteBrand } from "~/server_functions/dashboard/brands/deleteBrand";
 import { updateBrand } from "~/server_functions/dashboard/brands/updateBrand";
 import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
+import { deleteProductImage } from "~/server_functions/dashboard/store/deleteProductImage";
 import { moveStagingImages } from "~/server_functions/dashboard/store/moveStagingImages";
 import type { Brand, BrandFormData } from "~/types";
 
@@ -51,6 +52,7 @@ const BrandFormFields = ({
 				folder="brands"
 				slug={(formData as BrandFormData).slug}
 				productName={(formData as BrandFormData).name}
+				label="Логотип бренда"
 			/>
 
 			{/* Country selection */}
@@ -137,11 +139,17 @@ const BrandList = ({ entities, onEdit }: EntityListProps<BrandWithCount>) => (
 									{brand.name}
 								</span>
 								{brand.productCount === null ? (
-									<span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded flex items-center gap-1">
+									<span
+										suppressHydrationWarning
+										className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded flex items-center gap-1"
+									>
 										<Loader2 className="w-3 h-3 animate-spin" />
 									</span>
 								) : brand.productCount > 0 ? (
-									<span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+									<span
+										suppressHydrationWarning
+										className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded"
+									>
 										{brand.productCount}
 									</span>
 								) : null}
@@ -181,13 +189,14 @@ export const Route = createFileRoute("/dashboard/brands")({
 	component: RouteComponent,
 	pendingComponent: BrandsPageSkeleton,
 
-	// Loader prefetches brands and countries (fast) before component renders
-	// Counts will load separately and stream in
+	// Loader prefetches brands, countries, and counts before component renders
+	// This ensures consistent server/client rendering and prevents hydration mismatches
 	loader: async ({ context: { queryClient } }) => {
-		// Only prefetch brands and countries (fast), not counts (slower)
+		// Prefetch all data to ensure consistent server/client rendering
 		await Promise.all([
 			queryClient.ensureQueryData(brandsQueryOptions()),
 			queryClient.ensureQueryData(countriesQueryOptions()),
+			queryClient.ensureQueryData(productBrandCountsQueryOptions()),
 		]);
 	},
 });
@@ -272,6 +281,10 @@ function RouteComponent() {
 			});
 		},
 		updateFn: async (data: { id: number; data: BrandFormData }) => {
+			// Get the current brand to check for old logo
+			const currentBrand = brands.find((b) => b.id === data.id);
+			const oldLogo = currentBrand?.image || "";
+
 			// Move staging images to final location before updating brand
 			let finalLogo = data.data.logo || "";
 			if (finalLogo?.startsWith("staging/")) {
@@ -311,6 +324,18 @@ function RouteComponent() {
 					toast.warning(
 						"Логотип загружен, но не перемещен. Он будет очищен автоматически.",
 					);
+				}
+			}
+
+			// Delete old logo from R2 if it changed and exists
+			if (oldLogo && oldLogo !== finalLogo && !oldLogo.startsWith("staging/")) {
+				try {
+					console.log("🗑️ Deleting old brand logo:", oldLogo);
+					await deleteProductImage({ data: { filename: oldLogo } });
+					console.log("✅ Old brand logo deleted successfully");
+				} catch (deleteError) {
+					console.warn("⚠️ Failed to delete old brand logo:", deleteError);
+					// Don't fail the update if deletion fails
 				}
 			}
 

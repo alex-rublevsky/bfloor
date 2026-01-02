@@ -1,6 +1,6 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
+import { getStorageBucket } from "~/utils/storage";
 
 interface MoveStagingImagesInput {
 	imagePaths: string[]; // Array of staging image paths to move
@@ -31,12 +31,7 @@ export const moveStagingImages = createServerFn({ method: "POST" })
 				return { success: true, movedImages: [] };
 			}
 
-			const bucket = env.BFLOOR_STORAGE as R2Bucket;
-
-			if (!bucket) {
-				setResponseStatus(500);
-				throw new Error("Storage bucket not configured");
-			}
+			const bucket = getStorageBucket();
 
 			// Helper to sanitize filename
 			const sanitizeFilename = (name: string): string => {
@@ -50,8 +45,11 @@ export const moveStagingImages = createServerFn({ method: "POST" })
 			// Determine final directory path
 			let finalDirectoryPath = finalFolder;
 
-			if (finalFolder === "country-flags" || finalFolder === "brands") {
+			if (finalFolder === "country-flags") {
 				finalDirectoryPath = finalFolder;
+			} else if (finalFolder === "brands") {
+				// Brand logos go in the top-level 'Brands' folder
+				finalDirectoryPath = "Brands";
 			} else if (categorySlug && productName) {
 				const sanitizedCategorySlug = sanitizeFilename(categorySlug);
 				const sanitizedProductName = sanitizeFilename(productName);
@@ -108,11 +106,10 @@ export const moveStagingImages = createServerFn({ method: "POST" })
 						finalPathToUse = `${finalDirectoryPath}/${nameWithoutExt}-copy${copyNumber > 1 ? copyNumber : ""}${ext}`;
 					}
 
-					// Read staging file content - use body stream directly for better compatibility
-					// R2Object.body is a ReadableStream, we can use it directly or convert to ArrayBuffer
-					let fileContent: ArrayBuffer | ReadableStream;
-					if (stagingObject.body) {
-						// Convert ReadableStream to ArrayBuffer for put operation
+					// Read staging file content - convert to ArrayBuffer for put operation
+					let fileContent: ArrayBuffer;
+					if (stagingObject.body && stagingObject.arrayBuffer) {
+						// Use the arrayBuffer helper method
 						fileContent = await stagingObject.arrayBuffer();
 					} else {
 						throw new Error(`Staging object has no body: ${stagingPath}`);
@@ -122,14 +119,12 @@ export const moveStagingImages = createServerFn({ method: "POST" })
 
 					// Upload to final location FIRST (before deleting staging)
 					// Preserve all metadata from staging object
-					const putResult = await bucket.put(finalPathToUse, fileContent, {
+					await bucket.put(finalPathToUse, fileContent, {
 						httpMetadata: stagingObject.httpMetadata,
 						customMetadata: stagingObject.customMetadata,
 					});
 
-					console.log(`✅ Put operation completed for: ${finalPathToUse}`, {
-						etag: putResult?.etag,
-					});
+					console.log(`✅ Put operation completed for: ${finalPathToUse}`);
 
 					// Verify the copy succeeded by checking if file exists in final location
 					// Add a small delay to ensure eventual consistency
@@ -144,7 +139,6 @@ export const moveStagingImages = createServerFn({ method: "POST" })
 
 					console.log(`✅ Verified copy exists at: ${finalPathToUse}`, {
 						size: verifyFinal.size,
-						contentType: verifyFinal.httpMetadata?.contentType,
 					});
 
 					// Delete from staging AFTER successful copy and verification

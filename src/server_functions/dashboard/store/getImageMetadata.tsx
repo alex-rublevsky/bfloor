@@ -1,6 +1,6 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
+import { getStorageBucket } from "~/utils/storage";
 
 interface GetImageMetadataInput {
 	filename: string; // Full path in R2 (e.g., "products/category/product/image.jpg")
@@ -24,12 +24,7 @@ export const getImageMetadata = createServerFn({ method: "POST" })
 				throw new Error("No filename provided");
 			}
 
-			const bucket = env.BFLOOR_STORAGE as R2Bucket;
-
-			if (!bucket) {
-				setResponseStatus(500);
-				throw new Error("Storage bucket not configured");
-			}
+			const bucket = getStorageBucket();
 
 			// Use HEAD request to get metadata without downloading the file
 			const object = await bucket.head(filename);
@@ -42,8 +37,6 @@ export const getImageMetadata = createServerFn({ method: "POST" })
 			// Return metadata
 			return {
 				size: object.size,
-				contentType: object.httpMetadata?.contentType,
-				etag: object.etag,
 				uploaded: object.uploaded,
 			};
 		} catch (error) {

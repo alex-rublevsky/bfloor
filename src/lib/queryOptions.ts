@@ -16,10 +16,10 @@ import { notFound } from "@tanstack/react-router";
 import { getAllAttributeValuesByAttribute } from "~/server_functions/dashboard/attributes/getAllAttributeValuesByAttribute";
 import { getAllProductAttributes } from "~/server_functions/dashboard/attributes/getAllProductAttributes";
 import { getAttributeValues } from "~/server_functions/dashboard/attributes/getAttributeValues";
-import { getProductAttributeCounts } from "~/server_functions/dashboard/attributes/getProductAttributeCounts";
 import { getProductBrandCounts } from "~/server_functions/dashboard/brands/getProductBrandCounts";
 import { getAllProductCategories } from "~/server_functions/dashboard/categories/getAllProductCategories";
 import { getAllCollections } from "~/server_functions/dashboard/collections/getAllCollections";
+import { getProductCollectionCounts } from "~/server_functions/dashboard/collections/getProductCollectionCounts";
 import { getAllCountriesForDashboard } from "~/server_functions/dashboard/countries/getAllCountries";
 import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
 import { getTotalAttributesCount } from "~/server_functions/dashboard/getTotalAttributesCount";
@@ -484,32 +484,12 @@ export const productAttributesQueryOptions = () =>
 	});
 
 /**
- * Product Attribute Counts query options (uses SQL COUNT - efficient)
- * Used for: /dashboard/attributes route for streaming counts
- *
- * Cache Strategy: Aggressive caching for counts
- * - Counts cached for 2 weeks (counts change when products change, but still relatively static)
- * - Kept in memory for 4 weeks
- * - No automatic refetching
- */
-export const productAttributeCountsQueryOptions = () =>
-	queryOptions({
-		queryKey: ["productAttributeCounts"],
-		queryFn: async () => getProductAttributeCounts(),
-		staleTime: 1000 * 60 * 60 * 24 * 14, // 2 weeks - counts are relatively static
-		gcTime: 1000 * 60 * 60 * 24 * 28, // 4 weeks - keep in memory
-		retry: 3,
-		refetchOnWindowFocus: false,
-		refetchOnMount: false,
-	});
-
-/**
  * Product Brand Counts query options (uses SQL COUNT - efficient)
  * Used for: /dashboard/brands route for streaming counts
  *
  * Cache Strategy: Aggressive caching for counts
  * - Counts cached for 2 weeks (counts change when products change, but still relatively static)
- * - Kept in memory for 4 weeks
+ * - Kept in memory for 24 days (max safe 32-bit timeout value)
  * - No automatic refetching
  */
 export const productBrandCountsQueryOptions = () =>
@@ -517,7 +497,27 @@ export const productBrandCountsQueryOptions = () =>
 		queryKey: ["productBrandCounts"],
 		queryFn: async () => getProductBrandCounts(),
 		staleTime: 1000 * 60 * 60 * 24 * 14, // 2 weeks - counts are relatively static
-		gcTime: 1000 * 60 * 60 * 24 * 28, // 4 weeks - keep in memory
+		gcTime: 1000 * 60 * 60 * 24 * 24, // 24 days - keep in memory (max safe 32-bit value)
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Product Collection Counts query options (uses SQL COUNT - efficient)
+ * Used for: /dashboard/collections route for streaming counts
+ *
+ * Cache Strategy: Aggressive caching for counts
+ * - Counts cached for 2 weeks (counts change when products change, but still relatively static)
+ * - Kept in memory for 24 days (max safe 32-bit timeout value)
+ * - No automatic refetching
+ */
+export const productCollectionCountsQueryOptions = () =>
+	queryOptions({
+		queryKey: ["productCollectionCounts"],
+		queryFn: async () => getProductCollectionCounts(),
+		staleTime: 1000 * 60 * 60 * 24 * 14, // 2 weeks - counts are relatively static
+		gcTime: 1000 * 60 * 60 * 24 * 24, // 24 days - keep in memory (max safe 32-bit value)
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,

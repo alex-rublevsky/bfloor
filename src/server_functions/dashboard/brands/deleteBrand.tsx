@@ -3,6 +3,7 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
 import { DB } from "~/db";
 import { brands, products } from "~/schema";
+import { getStorageBucket } from "~/utils/storage";
 
 export const deleteBrand = createServerFn({ method: "POST" })
 	.inputValidator((data: { id: number }) => data)
@@ -11,9 +12,9 @@ export const deleteBrand = createServerFn({ method: "POST" })
 			const db = DB();
 			const { id } = data;
 
-			// Check if brand exists
+			// Check if brand exists and get its logo
 			const existingBrand = await db
-				.select({ id: brands.id, slug: brands.slug })
+				.select({ id: brands.id, slug: brands.slug, image: brands.image })
 				.from(brands)
 				.where(eq(brands.id, id))
 				.limit(1);
@@ -35,6 +36,20 @@ export const deleteBrand = createServerFn({ method: "POST" })
 				throw new Error(
 					"Cannot delete brand: there are products using this brand",
 				);
+			}
+
+			// Delete the brand logo from R2 if it exists
+			const brandLogo = existingBrand[0].image;
+			if (brandLogo && !brandLogo.startsWith("staging/")) {
+				try {
+					const bucket = getStorageBucket();
+					console.log("🗑️ Deleting brand logo from R2:", brandLogo);
+					await bucket.delete(brandLogo);
+					console.log("✅ Brand logo deleted from R2 successfully");
+				} catch (deleteError) {
+					console.warn("⚠️ Failed to delete brand logo from R2:", deleteError);
+					// Don't fail the brand deletion if logo deletion fails
+				}
 			}
 
 			// Delete the brand

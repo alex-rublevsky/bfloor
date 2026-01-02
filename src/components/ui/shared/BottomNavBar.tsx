@@ -1,6 +1,5 @@
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
-import { MoreVertical } from "./Icon";
 import {
 	Drawer,
 	DrawerContent,
@@ -11,6 +10,7 @@ import { useCart } from "~/lib/cartContext";
 import { signOut } from "~/utils/auth-client";
 import { cn } from "~/utils/utils";
 import { CartDrawerContent } from "../store/CartDrawerContent";
+import { MoreVertical } from "./Icon";
 import { MobileActionButtons } from "./nav/NavBarActionButtons";
 
 interface BottomNavBarProps {

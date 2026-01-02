@@ -1,6 +1,6 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
+import { getStorageBucket } from "~/utils/storage";
 
 interface DeleteImageInput {
 	filename: string; // Full path in R2 (e.g., "products/image.jpg")
@@ -17,12 +17,7 @@ export const deleteProductImage = createServerFn({ method: "POST" })
 				throw new Error("No filename provided");
 			}
 
-			const bucket = env.BFLOOR_STORAGE as R2Bucket;
-
-			if (!bucket) {
-				setResponseStatus(500);
-				throw new Error("Storage bucket not configured");
-			}
+			const bucket = getStorageBucket();
 
 			// Check if file exists
 			const fileExists = await bucket.head(filename);

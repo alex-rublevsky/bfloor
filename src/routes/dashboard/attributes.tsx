@@ -18,7 +18,6 @@ import { EntityCardGrid } from "~/components/ui/dashboard/EntityCardGrid";
 import { AttributesPageSkeleton } from "~/components/ui/dashboard/skeletons/AttributesPageSkeleton";
 import {
 	allAttributeValuesByAttributeQueryOptions,
-	productAttributeCountsQueryOptions,
 	productAttributesQueryOptions,
 } from "~/lib/queryOptions";
 import { createProductAttribute } from "~/server_functions/dashboard/attributes/createProductAttribute";
@@ -26,9 +25,8 @@ import { deleteProductAttribute } from "~/server_functions/dashboard/attributes/
 import { updateProductAttribute } from "~/server_functions/dashboard/attributes/updateProductAttribute";
 import type { ProductAttribute } from "~/types";
 
-// Type for attribute with potentially loading count and values
+// Type for attribute with values
 type ProductAttributeWithCount = ProductAttribute & {
-	productCount: number | null; // null means count is still loading
 	values?: Array<{ id: number; value: string; slug: string | null }>; // Standardized values
 };
 
@@ -67,7 +65,6 @@ const AttributeList = ({
 				name={attribute.name}
 				slug={attribute.slug}
 				isActive={attribute.isActive}
-				count={attribute.productCount}
 				tags={attribute.values}
 			/>
 		)}
@@ -78,9 +75,7 @@ export const Route = createFileRoute("/dashboard/attributes")({
 	component: AttributesPage,
 	pendingComponent: AttributesPageSkeleton,
 	// Loader prefetches attributes (fast) before component renders
-	// Counts will load separately and stream in
 	loader: async ({ context: { queryClient } }) => {
-		// Only prefetch attributes (fast), not counts (slower)
 		await queryClient.ensureQueryData(productAttributesQueryOptions());
 	},
 });
@@ -93,22 +88,18 @@ function AttributesPage() {
 		productAttributesQueryOptions(),
 	);
 
-	// Load counts separately with regular query (slower - streams in)
-	const { data: counts } = useQuery(productAttributeCountsQueryOptions());
-
 	// Load attribute values grouped by attribute ID
 	const { data: attributeValuesByAttribute } = useQuery(
 		allAttributeValuesByAttributeQueryOptions(),
 	);
 
-	// Merge attributes with counts and values
+	// Merge attributes with values
 	const attributesWithCounts = useMemo((): ProductAttributeWithCount[] => {
 		return attributes.map((attr) => ({
 			...attr,
-			productCount: counts?.[attr.id] ?? null, // null = still loading
 			values: attributeValuesByAttribute?.[attr.id] || undefined, // Standardized values if they exist
 		}));
-	}, [attributes, counts, attributeValuesByAttribute]);
+	}, [attributes, attributeValuesByAttribute]);
 
 	// Entity manager configuration
 	const entityManagerConfig = {
@@ -121,10 +112,7 @@ function AttributesPage() {
 				data: { name: data.data.name, slug: data.data.slug },
 			});
 			// DashboardEntityManager will invalidate ["productAttributes"]
-			// Also invalidate counts and values so they refresh
-			queryClient.invalidateQueries({
-				queryKey: ["productAttributeCounts"],
-			});
+			// Also invalidate values so they refresh
 			queryClient.invalidateQueries({
 				queryKey: ["attributeValuesByAttribute"],
 			});
@@ -144,10 +132,7 @@ function AttributesPage() {
 				},
 			});
 			// DashboardEntityManager will invalidate ["productAttributes"]
-			// Also invalidate counts and values so they refresh
-			queryClient.invalidateQueries({
-				queryKey: ["productAttributeCounts"],
-			});
+			// Also invalidate values so they refresh
 			queryClient.invalidateQueries({
 				queryKey: ["attributeValuesByAttribute"],
 			});
@@ -159,10 +144,7 @@ function AttributesPage() {
 		deleteFn: async (data: { id: number }) => {
 			await deleteProductAttribute({ data });
 			// DashboardEntityManager will invalidate ["productAttributes"]
-			// Also invalidate counts and values so they refresh
-			queryClient.invalidateQueries({
-				queryKey: ["productAttributeCounts"],
-			});
+			// Also invalidate values so they refresh
 			queryClient.invalidateQueries({
 				queryKey: ["attributeValuesByAttribute"],
 			});
