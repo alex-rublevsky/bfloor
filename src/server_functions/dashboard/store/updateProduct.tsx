@@ -1,12 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
-import type * as schema from "~/schema";
 import {
-	productStoreLocations,
 	products,
+	productStoreLocations,
 	productVariations,
 	variationAttributes,
 } from "~/schema";
@@ -17,7 +15,7 @@ export const updateProduct = createServerFn({ method: "POST" })
 	.inputValidator((data: { id: number; data: ProductFormData }) => data)
 	.handler(async ({ data }) => {
 		try {
-			const db: DrizzleD1Database<typeof schema> = DB();
+			const db = DB();
 			const { id: productId, data: productData } = data;
 
 			if (Number.isNaN(productId)) {
@@ -30,6 +28,11 @@ export const updateProduct = createServerFn({ method: "POST" })
 				throw new Error(
 					"Missing required fields: name, slug, and price are required",
 				);
+			}
+
+			if (!productData.unitOfMeasurement) {
+				setResponseStatus(400);
+				throw new Error("Unit of measurement is required");
 			}
 
 			// Fetch existing product and check for duplicate slug and SKU
@@ -170,6 +173,10 @@ export const updateProduct = createServerFn({ method: "POST" })
 						hasVariations: productData.hasVariations,
 						images: imagesJson,
 						productAttributes: attributesJson,
+						dimensions: preserveIfEmpty(
+							productData.dimensions,
+							existingProductData.dimensions,
+						),
 					})
 					.where(eq(products.id, productId)),
 
