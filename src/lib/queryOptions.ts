@@ -18,6 +18,7 @@ import { getAllProductAttributes } from "~/server_functions/dashboard/attributes
 import { getAttributeValues } from "~/server_functions/dashboard/attributes/getAttributeValues";
 import { getProductBrandCounts } from "~/server_functions/dashboard/brands/getProductBrandCounts";
 import { getAllProductCategories } from "~/server_functions/dashboard/categories/getAllProductCategories";
+import { getProductCategoryCounts } from "~/server_functions/dashboard/categories/getProductCategoryCounts";
 import { getAllCollections } from "~/server_functions/dashboard/collections/getAllCollections";
 import { getProductCollectionCounts } from "~/server_functions/dashboard/collections/getProductCollectionCounts";
 import { getAllCountriesForDashboard } from "~/server_functions/dashboard/countries/getAllCountries";
@@ -496,6 +497,26 @@ export const productBrandCountsQueryOptions = () =>
 	queryOptions({
 		queryKey: ["productBrandCounts"],
 		queryFn: async () => getProductBrandCounts(),
+		staleTime: 1000 * 60 * 60 * 24 * 14, // 2 weeks - counts are relatively static
+		gcTime: 1000 * 60 * 60 * 24 * 24, // 24 days - keep in memory (max safe 32-bit value)
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Product Category Counts query options (uses SQL COUNT - efficient)
+ * Used for: Home page catalog dropdown for streaming counts
+ *
+ * Cache Strategy: Aggressive caching for counts
+ * - Counts cached for 2 weeks (counts change when products change, but still relatively static)
+ * - Kept in memory for 24 days (max safe 32-bit timeout value)
+ * - No automatic refetching
+ */
+export const productCategoryCountsQueryOptions = () =>
+	queryOptions({
+		queryKey: ["productCategoryCounts"],
+		queryFn: async () => getProductCategoryCounts(),
 		staleTime: 1000 * 60 * 60 * 24 * 14, // 2 weeks - counts are relatively static
 		gcTime: 1000 * 60 * 60 * 24 * 24, // 24 days - keep in memory (max safe 32-bit value)
 		retry: 3,

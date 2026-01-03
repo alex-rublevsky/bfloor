@@ -154,6 +154,9 @@ export function ImageUpload({
 	const [isUploading, setIsUploading] = useState(false);
 	const [imageList, setImageList] = useState<string[]>([]);
 	const [showTextarea, setShowTextarea] = useState(false);
+	const [textareaValue, setTextareaValue] = useState<string>(
+		currentImages || "",
+	); // Local state for textarea
 	const [isDragging, setIsDragging] = useState(false);
 	const [isPasting, setIsPasting] = useState(false);
 	const [imageSizes, setImageSizes] = useState<Map<string, number>>(new Map()); // File sizes fetched from R2 server
@@ -208,6 +211,8 @@ export function ImageUpload({
 	// Parse comma-separated string into array
 	// Use a ref to track previous currentImages to avoid unnecessary updates
 	const prevCurrentImagesRef = useRef<string>("");
+	// Debounce timeout for sync operations (console.log, cleanup)
+	const syncDebounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	useEffect(() => {
 		// Only update if currentImages actually changed
@@ -224,31 +229,45 @@ export function ImageUpload({
 					.filter(Boolean)
 			: [];
 
-		console.log("Syncing imageList from currentImages:", {
-			currentImages,
-			images,
-		});
-
+		// Update UI state immediately for responsiveness
 		setImageList(images);
-		// Clean up sizes and fetched tracking for images that are no longer in the list
-		setImageSizes((prev) => {
-			const newMap = new Map(prev);
-			// Remove sizes for images that are no longer in the list
-			for (const [imagePath] of newMap) {
-				if (!images.includes(imagePath)) {
-					newMap.delete(imagePath);
-					fetchedImagesRef.current.delete(imagePath);
-				}
-			}
-			return newMap;
-		});
-		// Note: deletedImages tracking removed - images are now deleted immediately
 
-		// Update staged images tracking - only track images that are actually in staging
-		// Images that come from currentImages (from database) are not staged
-		stagedImagesRef.current = new Set(
-			images.filter((img) => img.startsWith("staging/")),
-		);
+		// Only sync textarea value if it differs (to avoid overwriting user's current typing)
+		setTextareaValue((prev) => {
+			const newValue = currentImages || "";
+			return prev !== newValue ? newValue : prev;
+		});
+
+		// Debounce the sync operations (console.log and cleanup) to avoid running on every keystroke
+		if (syncDebounceTimeoutRef.current) {
+			clearTimeout(syncDebounceTimeoutRef.current);
+		}
+
+		syncDebounceTimeoutRef.current = setTimeout(() => {
+			console.log("Syncing imageList from currentImages:", {
+				currentImages,
+				images,
+			});
+
+			// Clean up sizes and fetched tracking for images that are no longer in the list
+			setImageSizes((prev) => {
+				const newMap = new Map(prev);
+				// Remove sizes for images that are no longer in the list
+				for (const [imagePath] of newMap) {
+					if (!images.includes(imagePath)) {
+						newMap.delete(imagePath);
+						fetchedImagesRef.current.delete(imagePath);
+					}
+				}
+				return newMap;
+			});
+
+			// Update staged images tracking - only track images that are actually in staging
+			// Images that come from currentImages (from database) are not staged
+			stagedImagesRef.current = new Set(
+				images.filter((img) => img.startsWith("staging/")),
+			);
+		}, 500);
 	}, [currentImages]);
 
 	// Fetch metadata from R2 server for all images in the list
@@ -859,8 +878,11 @@ export function ImageUpload({
 	};
 
 	const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-		// When manually editing via textarea, update images
-		onImagesChange(e.target.value);
+		const newValue = e.target.value;
+		// Update local state immediately so typing feels responsive
+		setTextareaValue(newValue);
+		// Update parent immediately - the sync operations are debounced in useEffect
+		onImagesChange(newValue);
 	};
 
 	const handleDragEnd = (event: DragEndEvent) => {
@@ -883,6 +905,11 @@ export function ImageUpload({
 	// Cleanup staged images when component unmounts (drawer closes)
 	useEffect(() => {
 		return () => {
+			// Cleanup debounce timeout
+			if (syncDebounceTimeoutRef.current) {
+				clearTimeout(syncDebounceTimeoutRef.current);
+			}
+
 			// Cleanup staged images on unmount
 			const stagedImages = Array.from(stagedImagesRef.current);
 			if (stagedImages.length > 0) {
@@ -938,7 +965,7 @@ export function ImageUpload({
 
 			{showTextarea ? (
 				<Textarea
-					value={currentImages}
+					value={textareaValue}
 					onChange={handleTextareaChange}
 					placeholder="image1.jpg, image2.jpg, image3.jpg"
 					className="h-32 resize-none font-mono text-xs"

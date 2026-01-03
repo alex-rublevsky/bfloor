@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Trash2 } from "lucide-react";
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { EnhancedDescriptionField } from "~/components/ui/dashboard/EnhancedDescriptionField";
@@ -14,6 +13,7 @@ import ProductVariationForm from "~/components/ui/dashboard/ProductVariationForm
 import { StoreLocationsSelector } from "~/components/ui/dashboard/StoreLocationsSelector";
 import { Button } from "~/components/ui/shared/Button";
 import { CheckboxList } from "~/components/ui/shared/CheckboxList";
+import { Eye, Trash } from "~/components/ui/shared/Icon";
 import { getProductTagName, PRODUCT_TAGS } from "~/constants/units";
 import {
 	generateVariationSKU,
@@ -62,8 +62,8 @@ function EditProductPage() {
 	const { data: collections } = useQuery(collectionsQueryOptions());
 	const { data: storeLocations } = useQuery(storeLocationsQueryOptions());
 
-	// Generate unique IDs for form elements
-	const editProductFormId = useId();
+	// Use static ID for form to avoid hydration mismatch
+	const editProductFormId = "edit-product-form";
 
 	const defaultFormData: ProductFormData = {
 		name: "",
@@ -85,11 +85,12 @@ function EditProductPage() {
 		images: "",
 		attributes: [],
 		variations: [],
+		dimensions: "",
 	};
 
 	const [editFormData, setEditFormData] =
 		useState<ProductFormData>(defaultFormData);
-	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [_isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState("");
 	const [isEditAutoSlug, setIsEditAutoSlug] = useState(false);
 	const [originalProductSlug, setOriginalProductSlug] = useState<string>("");
@@ -209,7 +210,7 @@ function EditProductPage() {
 			price: productWithDetails.price.toString(),
 			squareMetersPerPack:
 				productWithDetails.squareMetersPerPack?.toString() || "",
-			unitOfMeasurement: productWithDetails.unitOfMeasurement || "штука",
+			unitOfMeasurement: productWithDetails.unitOfMeasurement || "упаковка",
 			categorySlug: productWithDetails.categorySlug || "",
 			brandSlug: productWithDetails.brandSlug || "",
 			collectionSlug: productWithDetails.collectionSlug || "",
@@ -220,6 +221,7 @@ function EditProductPage() {
 			images: imagesString,
 			attributes: parsedAttributes,
 			variations: [],
+			dimensions: productWithDetails.dimensions || "",
 		});
 
 		setOriginalProductSlug(productWithDetails.slug);
@@ -477,6 +479,27 @@ function EditProductPage() {
 		setShowDeleteDialog(false);
 	};
 
+	// Listen for navigation bar button clicks
+	useEffect(() => {
+		const handleFormAction = (e: Event) => {
+			const customEvent = e as CustomEvent<{ action: string }>;
+			if (customEvent.detail?.action === "cancel") {
+				navigate({ to: "/dashboard" });
+			} else if (customEvent.detail?.action === "submit") {
+				const form = document.getElementById(
+					editProductFormId,
+				) as HTMLFormElement;
+				if (form) {
+					form.requestSubmit();
+				}
+			}
+		};
+
+		window.addEventListener("productFormAction", handleFormAction);
+		return () =>
+			window.removeEventListener("productFormAction", handleFormAction);
+	}, [navigate]);
+
 	if (isLoading) {
 		return <div>Loading...</div>;
 	}
@@ -487,13 +510,32 @@ function EditProductPage() {
 
 	return (
 		<div className="container mx-auto py-8 px-4">
-			<div className="mb-6">
-				<Link
-					to="/dashboard"
-					className="text-muted-foreground hover:text-foreground"
+			<div className="mb-6 flex items-center justify-between">
+				<button
+					type="button"
+					onClick={() => window.history.back()}
+					className="cursor-pointer text-muted-foreground hover:text-foreground"
 				>
 					← Назад
-				</Link>
+				</button>
+				{productWithDetails?.slug && (
+					<Button
+						asChild
+						variant="outline"
+						size="sm"
+						className="flex items-center gap-2"
+					>
+						<Link
+							to="/store/$productId"
+							params={{
+								productId: productWithDetails.slug,
+							}}
+						>
+							<Eye className="w-4 h-4" />
+							<span>посмотреть на страницу этого товара</span>
+						</Link>
+					</Button>
+				)}
 			</div>
 
 			<h1 className="text-3xl font-bold mb-8">Редактировать товар</h1>
@@ -541,7 +583,6 @@ function EditProductPage() {
 									}
 								}}
 								idPrefix="edit-tag"
-								columns={2}
 							/>
 						</DrawerSection>
 
@@ -612,6 +653,17 @@ function EditProductPage() {
 								showHelp={true}
 							/>
 						</DrawerSection>
+
+						{/* Dimensions Field */}
+						<DrawerSection variant="default" title="Габариты">
+							<textarea
+								name="dimensions"
+								value={editFormData.dimensions || ""}
+								onChange={handleEditChange}
+								placeholder="Введите габариты товара..."
+								className="w-full min-h-[4rem] px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y field-sizing-content"
+							/>
+						</DrawerSection>
 					</div>
 				</div>
 
@@ -662,25 +714,11 @@ function EditProductPage() {
 							onClick={handleDeleteClick}
 							className="mt-2 w-fit"
 						>
-							<Trash2 className="w-4 h-4" />
+							<Trash size={16} />
 							<span>Удалить товар</span>
 						</Button>
 					</div>
 				</DrawerSection>
-
-				{/* Submit Button */}
-				<div className="flex justify-end gap-4">
-					<Button
-						type="button"
-						variant="outline"
-						onClick={() => navigate({ to: "/dashboard" })}
-					>
-						Отмена
-					</Button>
-					<Button type="submit" disabled={isSubmitting}>
-						{isSubmitting ? "Обновление..." : "Обновить товар"}
-					</Button>
-				</div>
 
 				{error && <div className="text-destructive text-sm mt-4">{error}</div>}
 			</form>

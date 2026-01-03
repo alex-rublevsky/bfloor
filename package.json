@@ -8,7 +8,7 @@
 		"preview": "vite preview",
 		"lint": "biome check .",
 		"lint-format": "biome check --write",
-		"deploy": "pnpm build && npx vercel deploy --prebuilt --prod",
+		"deploy": "pnpm build && npx vercel deploy --prebuilt --archive=tgz --prod",
 		"db:generate": "drizzle-kit generate",
 		"db:studio": "drizzle-kit studio",
 		"db:push": "drizzle-kit push",
