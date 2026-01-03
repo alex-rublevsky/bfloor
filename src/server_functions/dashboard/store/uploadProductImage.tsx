@@ -1,7 +1,7 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { ASSETS_BASE_URL } from "~/constants/urls";
+import { getStorageBucket, type R2Bucket } from "~/utils/storage";
 
 const MAX_FILE_SIZE = 1.5 * 1024 * 1024; // 1.5MB
 const MAX_SVG_SIZE = 5 * 1024 * 1024; // 5MB for SVG files (they can be larger)
@@ -127,14 +127,8 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 
 			// File validation passed
 
-			// Resolve R2 bucket binding (supports new and legacy names)
-			const bucket = env.BFLOOR_STORAGE as R2Bucket;
-
-			if (!bucket) {
-				console.error("🖥️ Server: Storage bucket not configured");
-				setResponseStatus(500);
-				throw new Error("Storage bucket not configured");
-			}
+			// Get storage bucket
+			const bucket = getStorageBucket();
 
 			// R2 bucket found
 
@@ -187,9 +181,12 @@ export const uploadProductImage = createServerFn({ method: "POST" })
 				// This allows easy cleanup by session and by folder type
 				const stagingSessionId = sessionId || `session-${Date.now()}`;
 				directoryPath = `staging/${folder}/${stagingSessionId}`;
-			} else if (folder === "country-flags" || folder === "brands") {
-				// Country flags and brand logos go directly in their respective folders, no subdirectories
+			} else if (folder === "country-flags") {
+				// Country flags go directly in their respective folder, no subdirectories
 				directoryPath = folder;
+			} else if (folder === "brands") {
+				// Brand logos go in the top-level 'Brands' folder
+				directoryPath = "Brands";
 			} else if (
 				categorySlug &&
 				productName &&
