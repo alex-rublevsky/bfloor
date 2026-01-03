@@ -8,11 +8,15 @@ export const Route = createFileRoute("/about")({
 
 function RouteComponent() {
 	return (
-		<div>
-			<div className="flex gap-4">
-				<Image src={`${ASSETS_BASE_URL}/2025/10/about.webp`} alt="О компании" />
+		<section>
+			<div className="flex flex-wrap gap-4 mb-6">
+				<Image
+					src={`${ASSETS_BASE_URL}/banners/bubisha.webp`}
+					className="rounded-lg max-h-120 h-full w-full sm:w-auto sm:shrink-0"
+					alt="О компании"
+				/>
 
-				<div className="flex flex-col gap-4">
+				<div className="flex flex-col gap-4 min-w-[45ch] flex-1">
 					<h1>О компании</h1>
 					<p>
 						У нас большой выбор напольных покрытий, для домов, офисов,
@@ -34,7 +38,7 @@ function RouteComponent() {
 					</p>
 				</div>
 			</div>
-			<div>
+			<div className="flex flex-col gap-4">
 				<p>
 					Основными клиентами нашей ком пании являются строительные компании,
 					учебные и здравоохранительные учреждения, гостиничные комплексы, базы
@@ -51,6 +55,6 @@ function RouteComponent() {
 					уложенных покрытий.
 				</p>
 			</div>
-		</div>
+		</section>
 	);
 }
