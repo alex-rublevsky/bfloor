@@ -58,6 +58,7 @@ type PropType = ComponentPropsWithRef<"button"> & {
 export const PrevButton: React.FC<PropType> = ({
 	size = "default",
 	children,
+	disabled,
 	...restProps
 }) => {
 	const sizeClasses =
@@ -65,8 +66,9 @@ export const PrevButton: React.FC<PropType> = ({
 
 	return (
 		<button
-			className={`embla__button embla__button--prev border-2 border-input bg-transparent flex no-underline cursor-pointer p-0 m-0 z-[1] rounded-full items-center justify-center transition-standard ${sizeClasses}`}
+			className={`embla__button embla__button--prev border-2 border-input bg-transparent flex no-underline cursor-pointer p-0 m-0 z-[1] rounded-full items-center justify-center transition-standard text-foreground ${sizeClasses}`}
 			type="button"
+			disabled={disabled}
 			{...restProps}
 		>
 			<svg className="w-[35%] h-[35%]" viewBox="0 0 532 532">
@@ -84,6 +86,7 @@ export const PrevButton: React.FC<PropType> = ({
 export const NextButton: React.FC<PropType> = ({
 	size = "default",
 	children,
+	disabled,
 	...restProps
 }) => {
 	const sizeClasses =
@@ -91,8 +94,9 @@ export const NextButton: React.FC<PropType> = ({
 
 	return (
 		<button
-			className={`embla__button embla__button--next border-2 border-input bg-transparent flex no-underline cursor-pointer p-0 m-0 z-[1] rounded-full items-center justify-center transition-standard ${sizeClasses}`}
+			className={`embla__button embla__button--next border-2 border-input bg-transparent flex no-underline cursor-pointer p-0 m-0 z-[1] rounded-full items-center justify-center transition-standard text-foreground ${sizeClasses}`}
 			type="button"
+			disabled={disabled}
 			{...restProps}
 		>
 			<svg className="w-[35%] h-[35%]" viewBox="0 0 532 532">
