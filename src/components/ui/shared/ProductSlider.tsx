@@ -273,7 +273,10 @@ export default function ProductSlider({
 							{products.map((product: ProductWithVariations) => (
 								<div className="embla__slide" key={product.id}>
 									<div className="px-1 md:px-1.5">
-										<ProductCard product={product} />
+										<ProductCard
+											product={product}
+											disableViewTransition={mode === "recommended"}
+										/>
 									</div>
 								</div>
 							))}

@@ -1,17 +1,24 @@
 /* Reuse testimonial carousel styles - most styles are shared */
 /* Product-specific adjustments */
 
+/* Unified header content alignment for all sliders (testimonials, products, discounts) */
+.testimonial-slider__header-content,
+.product-slider__header-content {
+	padding-top: 0.375rem; /* Visual adjustment to center text with controls */
+}
+
 /* Ensure section takes full width */
 section.embla.product-slider-section {
 	width: 100%;
-	max-width: none;
+	max-width: 100%; /* Constrain to parent width */
 	min-width: 0; /* Allow flex shrinking */
+	overflow-x: hidden; /* Prevent horizontal overflow */
 }
 
 /* Header row - contains title/tags and arrows */
 .product-slider__header {
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
 	justify-content: space-between;
 	margin-bottom: 1.5rem;
 	padding: 0 var(--section-padding-x);
@@ -88,7 +95,12 @@ section.embla.product-slider-section {
 
 .product-slider__tag-count {
 	font-size: 0.75rem;
-	opacity: 0.7;
+	color: var(--background);
+	transition: var(--transition-standard);
+}
+
+.product-slider__tag-button:hover:not(:disabled) .product-slider__tag-count {
+	color: var(--foreground);
 }
 
 /* Desktop adjustments - reduce button padding and gap */
@@ -104,9 +116,8 @@ section.embla.product-slider-section {
 
 .product-slider__controls {
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
 	flex-shrink: 0;
-	padding-top: 0.25rem; /* Align with h2 top */
 	min-width: 0; /* Prevent flex overflow issues */
 }
 
@@ -124,6 +135,7 @@ section.embla.product-slider-section .embla__viewport {
 	padding-bottom: 1.5rem; /* Space for hover shadow (20px shadow + some margin) */
 	width: 100%;
 	min-width: 0; /* Allow flex shrinking */
+	overflow: hidden; /* Prevent horizontal scroll - clip the container */
 }
 
 /* Ensure container displays slides in a row */
@@ -205,9 +217,9 @@ section.embla.product-slider-section .embla__slide:last-child > div {
 		min-width: 0; /* Allow shrinking */
 	}
 
-	/* Controls stay on same row when space allows, wrap naturally when needed */
+	/* Hide arrow buttons on mobile - users can swipe instead */
 	.product-slider__controls {
-		flex-shrink: 0;
+		display: none;
 	}
 
 	section.embla.product-slider-section .embla__slide {
