@@ -877,7 +877,7 @@ export const recommendedProductsInfiniteQueryOptions = () =>
 				},
 			}),
 		staleTime: 1000 * 60 * 60 * 24 * 30, // 30 days - extreme caching for static-like data
-		gcTime: 1000 * 60 * 60 * 24 * 60, // 60 days - keep in memory for a long time
+		gcTime: 1000 * 60 * 60 * 24 * 24, // 24 days - keep in memory (max safe 32-bit value)
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
