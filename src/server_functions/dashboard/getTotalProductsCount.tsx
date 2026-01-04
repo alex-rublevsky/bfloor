@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { staticFunctionMiddleware } from "@tanstack/start-static-server-functions";
 import { count } from "drizzle-orm";
 import { DB } from "~/db";
 import { products } from "~/schema";
@@ -9,10 +8,10 @@ import { products } from "~/schema";
  * Optimized for Cloudflare D1:
  * - Uses Drizzle's count() aggregation function
  * - Single SQL query - much more efficient than fetching all products
- * - Evaluated once at build time using staticFunctionMiddleware
+ * - Aggressively cached via TanStack Query (3 days staleTime, 7 days gcTime)
  */
 export const getTotalProductsCount = createServerFn({ method: "GET" })
-	.middleware([staticFunctionMiddleware])
+	.inputValidator(() => ({}))
 	.handler(async (): Promise<number> => {
 		const db = DB();
 
