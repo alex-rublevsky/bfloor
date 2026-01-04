@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import useEmblaCarousel from "embla-carousel-react";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Image } from "~/components/ui/shared/Image";
 import { ASSETS_BASE_URL } from "~/constants/urls";
 import { EmblaArrowButtons } from "./EmblaArrowButtons";
@@ -28,6 +28,7 @@ interface ImageGalleryProps extends VariantProps<typeof mainImageVariants> {
 	className?: string;
 	productSlug?: string;
 	viewTransitionName?: string;
+	initialImageIndex?: number; // Which image to show initially (for view transitions)
 }
 
 export default function ImageGallery({
@@ -37,9 +38,14 @@ export default function ImageGallery({
 	size,
 	productSlug,
 	viewTransitionName,
+	initialImageIndex = 0,
 }: ImageGalleryProps) {
 	// Determine the view transition name
 	const transitionName = viewTransitionName || `product-image-${productSlug}`;
+
+	// Track current image index for mobile
+	const [mobileSelectedIndex, setMobileSelectedIndex] =
+		useState(initialImageIndex);
 
 	// Desktop carousel (full-width, ~70% height, loop with snap)
 	// Images are edge-to-edge, full height, auto width (maintains aspect ratio)
@@ -83,8 +89,9 @@ export default function ImageGallery({
 
 	const onMobileSelect = useCallback(() => {
 		if (!emblaMobileApi || !emblaThumbsApi) return;
-		const selectedIndex = emblaMobileApi.selectedScrollSnap();
-		emblaThumbsApi.scrollTo(selectedIndex);
+		const index = emblaMobileApi.selectedScrollSnap();
+		setMobileSelectedIndex(index);
+		emblaThumbsApi.scrollTo(index);
 	}, [emblaMobileApi, emblaThumbsApi]);
 
 	useEffect(() => {
@@ -92,6 +99,25 @@ export default function ImageGallery({
 		onMobileSelect();
 		emblaMobileApi.on("select", onMobileSelect).on("reInit", onMobileSelect);
 	}, [emblaMobileApi, onMobileSelect]);
+
+	// Scroll to initial image index on mount
+	useEffect(() => {
+		if (
+			emblaMainApi &&
+			initialImageIndex >= 0 &&
+			initialImageIndex < images.length
+		) {
+			emblaMainApi.scrollTo(initialImageIndex, true); // true = instant, no animation
+		}
+		if (
+			emblaMobileApi &&
+			initialImageIndex >= 0 &&
+			initialImageIndex < images.length
+		) {
+			emblaMobileApi.scrollTo(initialImageIndex, true);
+			setMobileSelectedIndex(initialImageIndex);
+		}
+	}, [emblaMainApi, emblaMobileApi, initialImageIndex, images.length]);
 
 	if (!images.length) {
 		return (
@@ -134,7 +160,7 @@ export default function ImageGallery({
 
 				{/* Mobile: Single image */}
 				<div className="lg:hidden">
-					<div className="relative w-full aspect-square">
+					<div className="relative w-full aspect-[4/3] max-h-[50vh]">
 						<img
 							src={`${ASSETS_BASE_URL}/${images[0]}`}
 							alt={alt}
@@ -173,7 +199,7 @@ export default function ImageGallery({
 									className="w-auto h-full object-contain object-center rounded-none block"
 									style={{
 										viewTransitionName:
-											index === 0 ? transitionName : undefined,
+											index === initialImageIndex ? transitionName : undefined,
 									}}
 								/>
 							</div>
@@ -199,8 +225,8 @@ export default function ImageGallery({
 
 			{/* Mobile: Square main image with thumbnails */}
 			<div className="lg:hidden w-full">
-				{/* Main image carousel */}
-				<div className="relative w-full aspect-square">
+				{/* Main image carousel - edge-to-edge */}
+				<div className="relative w-full aspect-[4/3] max-h-[50vh]">
 					<div className="overflow-hidden w-full h-full" ref={emblaMobileRef}>
 						<div className="flex h-full touch-pan-y touch-pinch-zoom">
 							{images.map((image, index) => (
@@ -220,7 +246,9 @@ export default function ImageGallery({
 												width: "auto",
 												objectFit: "contain",
 												viewTransitionName:
-													index === 0 ? transitionName : undefined,
+													index === initialImageIndex
+														? transitionName
+														: undefined,
 											}}
 										/>
 									</div>
@@ -230,13 +258,12 @@ export default function ImageGallery({
 					</div>
 				</div>
 
-				{/* Thumbnails */}
-				<div className="mt-2 px-4">
+				{/* Thumbnails - edge-to-edge with left padding for first item */}
+				<div className="mt-2">
 					<div className="overflow-hidden w-full" ref={emblaThumbsRef}>
-						<div className="flex gap-2 py-2">
+						<div className="flex gap-2 py-2 pl-3">
 							{images.map((image, index) => {
-								const isSelected =
-									emblaMobileApi?.selectedScrollSnap() === index;
+								const isSelected = mobileSelectedIndex === index;
 								return (
 									<button
 										key={image}
