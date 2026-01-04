@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { Skeleton } from "~/components/ui/dashboard/skeleton";
 import { ASSETS_BASE_URL } from "~/constants/urls";
 import { usePrefetch } from "~/hooks/usePrefetch";
@@ -16,6 +16,16 @@ import type { Product, ProductVariation, VariationAttribute } from "~/types";
 import { FilterGroup } from "../shared/FilterGroup";
 import { Icon } from "../shared/Icon";
 import styles from "./productCard.module.css";
+
+// Memoized broken image fallback component
+// This is identical for all product cards, so we memoize it to avoid re-renders
+const BrokenImageFallback = memo(() => (
+	<div className="absolute inset-0 hidden items-center justify-center flex-col text-muted-foreground select-none bfloor-img-fallback">
+		<Icon name="image" className="w-12 h-12" />
+		<span className="mt-2 text-xs">Картинка сломана</span>
+	</div>
+));
+BrokenImageFallback.displayName = "BrokenImageFallback";
 
 // Extended product interface with variations
 interface ProductWithVariations extends Product {
@@ -107,8 +117,15 @@ const getVariationSearchParams = (
 	return params;
 };
 
-function ProductCard({ product }: { product: ProductWithVariations }) {
+function ProductCard({
+	product,
+	disableViewTransition = false,
+}: {
+	product: ProductWithVariations;
+	disableViewTransition?: boolean;
+}) {
 	const [isAddingToCart, setIsAddingToCart] = useState(false);
+	const [isHovering, setIsHovering] = useState(false);
 	const { addProductToCart, cart } = useCart();
 	const { prefetchProduct } = usePrefetch();
 	const queryClient = useQueryClient();
@@ -131,16 +148,20 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 		[product],
 	);
 
-	const linkSearchParams = useMemo(
-		() => getVariationSearchParams(defaultVariation),
-		[defaultVariation],
-	);
-
-	// Memoize expensive calculations
+	// Memoize expensive calculations - must be before linkSearchParams
 	const imageArray = useMemo(
 		() => calculateImageArray(product.images),
 		[product.images],
 	);
+
+	const linkSearchParams = useMemo(() => {
+		const params = getVariationSearchParams(defaultVariation);
+		// Add imageIndex when hovering and there are multiple images
+		if (isHovering && imageArray.length > 1) {
+			params.imageIndex = "1"; // Second image (0-indexed)
+		}
+		return params;
+	}, [defaultVariation, isHovering, imageArray.length]);
 
 	// Get unique attribute values for a specific attribute ID - memoized
 	const getUniqueAttributeValues = useCallback(
@@ -227,7 +248,12 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 				id={styles.productCard}
 			>
 				<div className="bg-background flex flex-col">
-					<div className="relative aspect-square overflow-hidden">
+					{/* biome-ignore lint/a11y/noStaticElementInteractions: Hover detection for view transitions only */}
+					<div
+						className="relative aspect-square overflow-hidden"
+						onMouseEnter={() => setIsHovering(true)}
+						onMouseLeave={() => setIsHovering(false)}
+					>
 						<div>
 							{/* Primary Image */}
 							<div className="relative aspect-square flex items-center justify-center overflow-hidden">
@@ -238,11 +264,8 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 											<Skeleton className="absolute inset-0 w-full h-full rounded-none" />
 										</div>
 
-										{/* Broken overlay, initially hidden */}
-										<div className="absolute inset-0 hidden items-center justify-center flex-col text-muted-foreground select-none bfloor-img-fallback">
-											<Icon name="image" className="w-12 h-12" />
-											<span className="mt-2 text-xs">Картинка сломана</span>
-										</div>
+										{/* Broken overlay, initially hidden - memoized for performance */}
+										<BrokenImageFallback />
 
 										{/* Primary Image */}
 										<img
@@ -250,9 +273,16 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 											alt={product.name}
 											loading="eager"
 											className="absolute inset-0 w-full h-full object-cover object-center"
-											style={{
-												viewTransitionName: `product-image-${product.slug}`,
-											}}
+											style={
+												disableViewTransition
+													? undefined
+													: // Apply view transition to primary image only when NOT hovering or when there's no secondary image
+														!isHovering || imageArray.length === 1
+														? {
+																viewTransitionName: `product-image-${product.slug}`,
+															}
+														: undefined
+											}
 											onLoad={(e) => {
 												const parent = e.currentTarget.parentElement;
 												const sk = parent?.querySelector<HTMLDivElement>(
@@ -283,6 +313,16 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 												alt={product.name}
 												loading="eager"
 												className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-500 ease-in-out opacity-0 group-hover:opacity-100 hidden md:block"
+												style={
+													disableViewTransition
+														? undefined
+														: // Apply view transition to secondary image only when hovering
+															isHovering
+															? {
+																	viewTransitionName: `product-image-${product.slug}`,
+																}
+															: undefined
+												}
 												onError={(e) => {
 													const t = e.currentTarget;
 													t.style.display = "none";
@@ -374,9 +414,13 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 										) : (
 											<div
 												className="whitespace-nowrap flex items-baseline gap-0.5"
-												style={{
-													viewTransitionName: `product-price-${product.slug}`,
-												}}
+												style={
+													disableViewTransition
+														? undefined
+														: {
+																viewTransitionName: `product-price-${product.slug}`,
+															}
+												}
 											>
 												<span className="text-xl font-light">
 													{currentPrice?.toFixed(2)}
@@ -393,10 +437,14 @@ function ProductCard({ product }: { product: ProductWithVariations }) {
 
 								{/* Product Name */}
 								<p
-									className=" mb-3"
-									style={{
-										viewTransitionName: `product-name-${product.slug}`,
-									}}
+									className="mb-3 text-foreground"
+									style={
+										disableViewTransition
+											? undefined
+											: {
+													viewTransitionName: `product-name-${product.slug}`,
+												}
+									}
 								>
 									{product.name}
 								</p>
