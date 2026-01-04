@@ -336,20 +336,18 @@ const ProductFilters = memo(function ProductFilters({
 						label: cat.name,
 					}))}
 					selectedIds={localCategory ? [localCategory] : []}
-					onSingleSelectChange={(categorySlug) => {
-						handleMainCategoryChange(
-							categorySlug === null ? null : String(categorySlug),
-						);
+					onItemChange={(itemId, checked) => {
+						// Single-select behavior: if checked, select this one; if unchecked, clear selection
+						const categorySlug = checked ? String(itemId) : null;
+						handleMainCategoryChange(categorySlug);
 						// Clear uncategorized filter when selecting a category
 						if (categorySlug && localShowUncategorizedOnly) {
 							setLocalShowUncategorizedOnly(false);
 						}
 					}}
 					idPrefix="filter-category"
-					columns={2}
 					scrollable={true}
 					maxHeight="200px"
-					singleSelect={true}
 				/>
 			</div>,
 		);
@@ -387,14 +385,14 @@ const ProductFilters = memo(function ProductFilters({
 							label: brand.name,
 						}))}
 						selectedIds={localBrand ? [localBrand] : []}
-						onSingleSelectChange={(brandSlug) => {
-							handleBrandChange(brandSlug === null ? null : String(brandSlug));
+						onItemChange={(itemId, checked) => {
+							// Single-select behavior: if checked, select this one; if unchecked, clear selection
+							const brandSlug = checked ? String(itemId) : null;
+							handleBrandChange(brandSlug);
 						}}
 						idPrefix="filter-brand"
-						columns={2}
 						scrollable={true}
 						maxHeight="200px"
-						singleSelect={true}
 					/>
 				</div>,
 			);
@@ -433,16 +431,14 @@ const ProductFilters = memo(function ProductFilters({
 							label: collection.name,
 						}))}
 						selectedIds={localCollection ? [localCollection] : []}
-						onSingleSelectChange={(collectionSlug) => {
-							handleCollectionChange(
-								collectionSlug === null ? null : String(collectionSlug),
-							);
+						onItemChange={(itemId, checked) => {
+							// Single-select behavior: if checked, select this one; if unchecked, clear selection
+							const collectionSlug = checked ? String(itemId) : null;
+							handleCollectionChange(collectionSlug);
 						}}
 						idPrefix="filter-collection"
-						columns={2}
 						scrollable={true}
 						maxHeight="200px"
-						singleSelect={true}
 					/>
 				</div>,
 			);
@@ -479,7 +475,6 @@ const ProductFilters = memo(function ProductFilters({
 						selectedIds={selectedValueIds}
 						onItemChange={handleAttributeItemChange}
 						idPrefix={`filter-attr-${attrFilter.attributeId}`}
-						columns={2}
 						scrollable={true}
 						maxHeight="200px"
 					/>
@@ -544,11 +539,7 @@ const ProductFilters = memo(function ProductFilters({
 				onCancel={handleDrawerCancel}
 				layout="single-column"
 			>
-				<form
-					onSubmit={handleDrawerSubmit}
-					id={drawerFormId}
-					className="contents"
-				>
+				<form onSubmit={handleDrawerSubmit} id={drawerFormId}>
 					{renderFilterContent()}
 				</form>
 			</DashboardFormDrawer>
