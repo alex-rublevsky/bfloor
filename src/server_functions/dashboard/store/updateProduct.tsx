@@ -8,23 +8,30 @@ import {
 	productVariations,
 	variationAttributes,
 } from "~/schema";
-import type { ProductFormData } from "~/types"; // Updated interface
+import type { ProductFormData } from "~/types";
 import { validateAttributeValues } from "~/utils/validateAttributeValues";
+import { moveStagingImages } from "./moveStagingImages";
 
 export const updateProduct = createServerFn({ method: "POST" })
 	.inputValidator((data: { id: number; data: ProductFormData }) => data)
 	.handler(async ({ data }) => {
+		// Track response status to avoid overwriting specific error codes
+		let responseStatusSet = false;
+
 		try {
 			const db = DB();
 			const { id: productId, data: productData } = data;
 
+			// Validation
 			if (Number.isNaN(productId)) {
 				setResponseStatus(400);
+				responseStatusSet = true;
 				throw new Error("Invalid product ID");
 			}
 
 			if (!productData.name || !productData.slug || !productData.price) {
 				setResponseStatus(400);
+				responseStatusSet = true;
 				throw new Error(
 					"Missing required fields: name, slug, and price are required",
 				);
@@ -32,12 +39,12 @@ export const updateProduct = createServerFn({ method: "POST" })
 
 			if (!productData.unitOfMeasurement) {
 				setResponseStatus(400);
+				responseStatusSet = true;
 				throw new Error("Unit of measurement is required");
 			}
 
 			// Fetch existing product and check for duplicate slug
-			// Note: SKU duplicates are allowed since SKU is optional and not unique in the schema
-			const normalizedSku = productData.sku?.trim() || null;
+			const normalizedProductSku = productData.sku?.trim() || null;
 
 			const [existingProduct, duplicateSlug] = await Promise.all([
 				db.select().from(products).where(eq(products.id, productId)).limit(1),
@@ -50,24 +57,31 @@ export const updateProduct = createServerFn({ method: "POST" })
 
 			if (!existingProduct[0]) {
 				setResponseStatus(404);
+				responseStatusSet = true;
 				throw new Error("Product not found");
 			}
 
 			if (duplicateSlug[0] && duplicateSlug[0].id !== productId) {
 				setResponseStatus(400);
+				responseStatusSet = true;
 				throw new Error("A product with this slug already exists");
 			}
 
-			// SKU duplicate check is intentionally removed - duplicate SKUs are allowed
+			const existingProductData = existingProduct[0];
 
-			// Process images - convert comma-separated string to JSON array
-			const imagesArray =
-				productData.images
-					?.split(",")
-					.map((img) => img.trim())
-					.filter(Boolean) ?? [];
-			const imagesJson =
-				imagesArray.length > 0 ? JSON.stringify(imagesArray) : "";
+			// Helper to preserve existing value if new value is empty string
+			const preserveIfEmpty = (
+				newValue: string | null | undefined,
+				existingValue: string | null | undefined,
+			): string | null => {
+				if (newValue && newValue.trim() !== "") {
+					return newValue;
+				}
+				if (newValue === "") {
+					return existingValue || null;
+				}
+				return null;
+			};
 
 			// Validate standardized attribute values before saving
 			if (productData.attributes?.length) {
@@ -78,6 +92,7 @@ export const updateProduct = createServerFn({ method: "POST" })
 
 				if (validationErrors.length > 0) {
 					setResponseStatus(400);
+					responseStatusSet = true;
 					const errorMessages = validationErrors
 						.map((err) => err.error)
 						.join("; ");
@@ -85,7 +100,7 @@ export const updateProduct = createServerFn({ method: "POST" })
 				}
 			}
 
-			// Convert attributes array back to object format for database storage
+			// Convert attributes array to object format for database storage
 			const attributesObject = productData.attributes?.reduce(
 				(acc, attr) => {
 					if (attr.value?.trim()) {
@@ -100,32 +115,7 @@ export const updateProduct = createServerFn({ method: "POST" })
 					? JSON.stringify(attributesObject)
 					: null;
 
-			// Preserve existing values for optional fields if empty strings are provided
-			// This prevents accidentally clearing fields when form data contains empty strings
-			// The form may send empty strings due to initialization, but we should preserve
-			// existing values unless a non-empty value is explicitly provided
-			const existingProductData = existingProduct[0];
-
-			// Helper to preserve existing value if new value is empty string
-			// Empty strings typically indicate form initialization, not intentional clearing
-			const preserveIfEmpty = (
-				newValue: string | null | undefined,
-				existingValue: string | null | undefined,
-			): string | null => {
-				// If new value is explicitly provided (non-empty string), use it
-				if (newValue && newValue.trim() !== "") {
-					return newValue;
-				}
-				// If new value is empty string (form initialization artifact), preserve existing
-				if (newValue === "") {
-					return existingValue || null;
-				}
-				// If new value is null/undefined, allow clearing the field (explicit clear)
-				return null;
-			};
-
 			// Validate and prepare variations before any database changes
-			// This prevents data loss if validation fails
 			const shouldHaveVariations = productData.hasVariations === true;
 			const incomingVariations = shouldHaveVariations
 				? productData.variations || []
@@ -138,6 +128,7 @@ export const updateProduct = createServerFn({ method: "POST" })
 					const price = parseFloat(variation.price.toString());
 					if (Number.isNaN(price) || price < 0) {
 						setResponseStatus(400);
+						responseStatusSet = true;
 						throw new Error(
 							`Variation ${index + 1}: Invalid price. Must be a non-negative number`,
 						);
@@ -147,6 +138,7 @@ export const updateProduct = createServerFn({ method: "POST" })
 						const discount = parseInt(variation.discount.toString(), 10);
 						if (Number.isNaN(discount) || discount < 0 || discount > 100) {
 							setResponseStatus(400);
+							responseStatusSet = true;
 							throw new Error(
 								`Variation ${index + 1}: Invalid discount. Must be between 0 and 100`,
 							);
@@ -154,17 +146,23 @@ export const updateProduct = createServerFn({ method: "POST" })
 					}
 				}
 
-				// Check for duplicate IDs within incoming variations (shouldn't happen, but safety check)
-				const incomingIds = incomingVariations
-					.map((v) => v.id)
-					.filter((id): id is number => id !== undefined);
-				const duplicateIds = incomingIds.filter(
-					(id, index) => incomingIds.indexOf(id) !== index,
-				);
+				// Check for duplicate IDs within incoming variations
+				const seenIds = new Set<number>();
+				const duplicateIds: number[] = [];
+				for (const variation of incomingVariations) {
+					if (variation.id !== undefined) {
+						if (seenIds.has(variation.id)) {
+							duplicateIds.push(variation.id);
+						} else {
+							seenIds.add(variation.id);
+						}
+					}
+				}
 				if (duplicateIds.length > 0) {
 					setResponseStatus(400);
+					responseStatusSet = true;
 					throw new Error(
-						`Duplicate variation IDs found: ${[...new Set(duplicateIds)].join(", ")}`,
+						`Duplicate variation IDs found: ${duplicateIds.join(", ")}`,
 					);
 				}
 
@@ -180,6 +178,7 @@ export const updateProduct = createServerFn({ method: "POST" })
 
 					if (validationErrors.length > 0) {
 						setResponseStatus(400);
+						responseStatusSet = true;
 						const errorMessages = validationErrors
 							.map((err) => err.error)
 							.join("; ");
@@ -189,6 +188,57 @@ export const updateProduct = createServerFn({ method: "POST" })
 					}
 				}
 			}
+
+			// All validation passed - now process images
+			// Parse image paths once
+			const imagePaths =
+				productData.images
+					?.split(",")
+					.map((img) => img.trim())
+					.filter(Boolean) ?? [];
+
+			// Move staging images to final location if any exist
+			if (imagePaths.length > 0) {
+				const hasStagingImages = imagePaths.some((path) =>
+					path.startsWith("staging/"),
+				);
+
+				if (hasStagingImages) {
+					try {
+						const moveResult = await moveStagingImages({
+							data: {
+								imagePaths,
+								finalFolder: "products",
+								categorySlug: productData.categorySlug,
+								productName: productData.name,
+								slug: productData.slug,
+							},
+						});
+
+						if (moveResult?.pathMap) {
+							// Update paths in place with final locations
+							imagePaths.forEach((path, index) => {
+								imagePaths[index] = moveResult.pathMap?.[path] || path;
+							});
+						}
+					} catch (imageError) {
+						// If image move fails, fail the entire operation to maintain consistency
+						setResponseStatus(500);
+						responseStatusSet = true;
+						throw new Error(
+							`Failed to move staging images: ${
+								imageError instanceof Error
+									? imageError.message
+									: String(imageError)
+							}`,
+						);
+					}
+				}
+			}
+
+			// Convert to JSON array for database storage
+			const imagesJson =
+				imagePaths.length > 0 ? JSON.stringify(imagePaths) : "";
 
 			// Fetch existing variations with their attributes for efficient comparison
 			const existingVariationsWithAttrs = await db
@@ -247,8 +297,8 @@ export const updateProduct = createServerFn({ method: "POST" })
 
 			for (const incomingVar of incomingVariations) {
 				const varAttributes = incomingVar.attributes || [];
-				// Normalize SKU: allow empty strings or null (SKU is optional)
-				const normalizedSku = incomingVar.sku?.trim() || "";
+				// Normalize variation SKU: allow empty strings (SKU is optional)
+				const normalizedVariationSku = incomingVar.sku?.trim() || "";
 				const price = parseFloat(incomingVar.price.toString());
 				const discount =
 					incomingVar.discount !== null && incomingVar.discount !== undefined
@@ -257,19 +307,9 @@ export const updateProduct = createServerFn({ method: "POST" })
 
 				// If variation has an ID and exists in this product, it's an update
 				if (incomingVar.id && existingVariationsMap.has(incomingVar.id)) {
-					// Verify the variation belongs to this product (security check)
-					const existingVar = existingVariationsMap.get(incomingVar.id);
-					if (existingVar && existingVar.variation.productId !== productId) {
-						setResponseStatus(400);
-						throw new Error(
-							`Variation ID ${incomingVar.id} does not belong to this product`,
-						);
-					}
-
-					// For updates, exclude createdAt to preserve original creation time
 					const updateData = {
 						productId,
-						sku: normalizedSku,
+						sku: normalizedVariationSku,
 						price,
 						sort: incomingVar.sort || 0,
 						discount,
@@ -283,7 +323,7 @@ export const updateProduct = createServerFn({ method: "POST" })
 					// No ID or ID doesn't exist = new variation
 					const insertData = {
 						productId,
-						sku: normalizedSku,
+						sku: normalizedVariationSku,
 						price,
 						sort: incomingVar.sort || 0,
 						discount,
@@ -297,7 +337,6 @@ export const updateProduct = createServerFn({ method: "POST" })
 			}
 
 			// Determine which existing variations should be deleted
-			// Delete if: hasVariations is false OR variation ID not in incoming list
 			const incomingVariationIds = new Set(
 				incomingVariations
 					.map((v) => v.id)
@@ -307,15 +346,128 @@ export const updateProduct = createServerFn({ method: "POST" })
 				existingVariationsMap.keys(),
 			).filter((id) => !shouldHaveVariations || !incomingVariationIds.has(id));
 
+			// Helper functions for database operations
+			const handleVariations = async () => {
+				// Update existing variations
+				if (variationsToUpdate.length > 0) {
+					const updatingVariationIds = variationsToUpdate.map((v) => v.id);
+
+					// Batch delete all attributes for variations being updated
+					await db
+						.delete(variationAttributes)
+						.where(
+							inArray(
+								variationAttributes.productVariationId,
+								updatingVariationIds,
+							),
+						);
+
+					// Update variations and insert attributes in parallel
+					await Promise.all([
+						// Update all variations in parallel
+						...variationsToUpdate.map(({ id, data }) =>
+							db
+								.update(productVariations)
+								.set(data)
+								.where(eq(productVariations.id, id)),
+						),
+						// Insert all attributes in parallel (if any)
+						(async () => {
+							const allAttributesToInsert = variationsToUpdate.flatMap(
+								({ id, attributes }) =>
+									attributes.map((attr) => ({
+										productVariationId: id,
+										attributeId: attr.attributeId,
+										value: attr.value,
+										createdAt: new Date(),
+									})),
+							);
+
+							if (allAttributesToInsert.length > 0) {
+								await db
+									.insert(variationAttributes)
+									.values(allAttributesToInsert);
+							}
+						})(),
+					]);
+				}
+
+				// Insert new variations
+				if (variationsToInsert.length > 0) {
+					const insertedVariations = await db
+						.insert(productVariations)
+						.values(variationsToInsert.map((v) => v.data))
+						.returning();
+
+					// Insert attributes for new variations
+					const attributesToInsert = variationsToInsert.flatMap(
+						(variation, index) =>
+							variation.attributes.map((attr) => ({
+								productVariationId: insertedVariations[index].id,
+								attributeId: attr.attributeId,
+								value: attr.value,
+								createdAt: new Date(),
+							})),
+					);
+
+					if (attributesToInsert.length > 0) {
+						await db.insert(variationAttributes).values(attributesToInsert);
+					}
+				}
+
+				// Delete variations that are no longer needed
+				if (variationsToDelete.length > 0) {
+					// Delete attributes first (cascade should handle this, but being explicit)
+					await db
+						.delete(variationAttributes)
+						.where(
+							inArray(
+								variationAttributes.productVariationId,
+								variationsToDelete,
+							),
+						);
+
+					// Delete variations
+					await db
+						.delete(productVariations)
+						.where(inArray(productVariations.id, variationsToDelete));
+				}
+			};
+
+			const handleStoreLocations = async () => {
+				// Delete existing connections
+				await db
+					.delete(productStoreLocations)
+					.where(eq(productStoreLocations.productId, productId));
+
+				// Add new connections if provided
+				if (productData.storeLocationIds?.length) {
+					// Validate and filter to ensure all IDs are numbers
+					const validLocationIds = productData.storeLocationIds.filter(
+						(id): id is number => typeof id === "number" && !Number.isNaN(id),
+					);
+
+					if (validLocationIds.length > 0) {
+						await db.insert(productStoreLocations).values(
+							validLocationIds.map((locationId) => ({
+								productId,
+								storeLocationId: locationId,
+								createdAt: new Date(),
+							})),
+						);
+					}
+				}
+			};
+
 			// Update product and related data
-			await Promise.all([
-				// Update main product
+			const [updatedProductResult] = await Promise.all([
+				// Update main product and return updated row to avoid extra query
 				db
 					.update(products)
 					.set({
 						name: productData.name,
 						slug: productData.slug,
-						sku: normalizedSku,
+						sku: normalizedProductSku,
 						description: productData.description || null,
 						importantNote: productData.importantNote || null,
 						tags: productData.tags?.length
@@ -325,7 +477,6 @@ export const updateProduct = createServerFn({ method: "POST" })
 						squareMetersPerPack: productData.squareMetersPerPack
 							? parseFloat(productData.squareMetersPerPack)
 							: null,
-						// Preserve existing values if empty strings are provided
 						categorySlug: preserveIfEmpty(
 							productData.categorySlug,
 							existingProductData.categorySlug,
@@ -350,133 +501,26 @@ export const updateProduct = createServerFn({ method: "POST" })
 							existingProductData.dimensions,
 						),
 					})
-					.where(eq(products.id, productId)),
-
-				// Handle variations efficiently: update, insert, delete only what's needed
-				(async () => {
-					// Update existing variations in parallel for better performance
-					if (variationsToUpdate.length > 0) {
-						// Batch delete all attributes for variations being updated
-						const updatingVariationIds = variationsToUpdate.map((v) => v.id);
-						if (updatingVariationIds.length > 0) {
-							await db
-								.delete(variationAttributes)
-								.where(
-									inArray(
-										variationAttributes.productVariationId,
-										updatingVariationIds,
-									),
-								);
-						}
-
-						// Update variations and insert attributes in parallel
-						await Promise.all([
-							// Update all variations in parallel
-							...variationsToUpdate.map(({ id, data }) =>
-								db
-									.update(productVariations)
-									.set(data)
-									.where(eq(productVariations.id, id)),
-							),
-							// Insert all attributes in parallel (if any)
-							(async () => {
-								const allAttributesToInsert = variationsToUpdate.flatMap(
-									({ id, attributes }) =>
-										attributes.map((attr) => ({
-											productVariationId: id,
-											attributeId: attr.attributeId,
-											value: attr.value,
-											createdAt: new Date(),
-										})),
-								);
-
-								if (allAttributesToInsert.length > 0) {
-									await db
-										.insert(variationAttributes)
-										.values(allAttributesToInsert);
-								}
-							})(),
-						]);
-					}
-
-					// Insert new variations
-					if (variationsToInsert.length > 0) {
-						const insertedVariations = await db
-							.insert(productVariations)
-							.values(variationsToInsert.map((v) => v.data))
-							.returning();
-
-						// Insert attributes for new variations
-						const attributesToInsert = variationsToInsert.flatMap(
-							(variation, index) =>
-								variation.attributes.map((attr) => ({
-									productVariationId: insertedVariations[index].id,
-									attributeId: attr.attributeId,
-									value: attr.value,
-									createdAt: new Date(),
-								})),
-						);
-
-						if (attributesToInsert.length > 0) {
-							await db.insert(variationAttributes).values(attributesToInsert);
-						}
-					}
-
-					// Delete variations that are no longer needed
-					if (variationsToDelete.length > 0) {
-						// Delete attributes first (cascade should handle this, but being explicit)
-						await db
-							.delete(variationAttributes)
-							.where(
-								inArray(
-									variationAttributes.productVariationId,
-									variationsToDelete,
-								),
-							);
-
-						// Delete variations
-						await db
-							.delete(productVariations)
-							.where(inArray(productVariations.id, variationsToDelete));
-					}
-				})(),
-
-				// Handle store location connections
-				(async () => {
-					// Delete existing connections
-					await db
-						.delete(productStoreLocations)
-						.where(eq(productStoreLocations.productId, productId));
-
-					// Add new connections if provided
-					if (productData.storeLocationIds?.length) {
-						await db.insert(productStoreLocations).values(
-							productData.storeLocationIds.map((locationId: number) => ({
-								productId,
-								storeLocationId: locationId,
-								createdAt: new Date(),
-							})),
-						);
-					}
-				})(),
+					.where(eq(products.id, productId))
+					.returning(),
+				handleVariations(),
+				handleStoreLocations(),
 			]);
-
-			// Fetch and return updated product
-			const updatedProduct = await db
-				.select()
-				.from(products)
-				.where(eq(products.id, productId))
-				.limit(1);
 
 			return {
 				message: "Product updated successfully",
-				product: updatedProduct[0],
+				product: updatedProductResult[0],
 			};
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : String(error);
 			console.error("Error updating product:", { errorMessage, error });
-			setResponseStatus(500);
+
+			// Only set status if it hasn't been set already
+			if (!responseStatusSet) {
+				setResponseStatus(500);
+			}
+
 			throw new Error(`Failed to update product: ${errorMessage}`);
 		}
 	});
