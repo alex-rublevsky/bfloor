@@ -3,6 +3,7 @@ import { Checkbox } from "~/components/ui/shared/Checkbox";
 import { Image } from "~/components/ui/shared/Image";
 import { Switch } from "~/components/ui/shared/Switch";
 import { ASSETS_BASE_URL } from "~/constants/urls";
+import { formatDate } from "~/lib/utils";
 import { Trash } from "../shared/Icon";
 
 interface OrderItem {
@@ -94,7 +95,7 @@ export function OrderCard({
 					<div className="flex flex-wrap items-center gap-2">
 						<p className="text-xs text-foreground">#{order.id}</p>
 						<p className="text-xs text-muted-foreground">
-							{new Date(order.createdAt).toLocaleDateString()}
+							{formatDate(order.createdAt)}
 						</p>
 						<p className="text-xs text-muted-foreground">
 							{totalItems} {totalItems === 1 ? "item" : "items"}

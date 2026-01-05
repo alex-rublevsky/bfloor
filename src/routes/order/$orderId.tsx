@@ -8,6 +8,7 @@ import {
 	getAttributeDisplayName,
 	useProductAttributes,
 } from "~/hooks/useProductAttributes";
+import { formatDate } from "~/lib/utils";
 import { getOrderBySlug } from "~/server_functions/dashboard/orders/getOrderBySlug";
 
 // Helper function to get first image from comma-separated string
@@ -99,8 +100,7 @@ function OrderPage() {
 					<div className="flex justify-center gap-8">
 						<p className="text-muted-foreground mb-2">Order #{order.id}</p>
 						<p className="text-muted-foreground">
-							Placed on{" "}
-							{new Date(Number(order.createdAt) * 1000).toLocaleDateString()}
+							Placed on {formatDate(order.createdAt)}
 						</p>
 					</div>
 

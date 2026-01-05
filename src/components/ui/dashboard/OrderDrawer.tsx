@@ -8,6 +8,7 @@ import {
 	DrawerTitle,
 } from "~/components/ui/shared/Drawer";
 import { Image } from "~/components/ui/shared/Image";
+import { formatDate } from "~/lib/utils";
 import { X } from "../shared/Icon";
 
 interface OrderItem {
@@ -66,7 +67,7 @@ export function OrderDrawer({ order, isOpen, onClose }: OrderDrawerProps) {
 						</Button>
 					</div>
 					<p className="text-sm text-muted-foreground">
-						Placed on {new Date(order.createdAt).toLocaleDateString()}
+						Placed on {formatDate(order.createdAt)}
 					</p>
 				</DrawerHeader>
 
