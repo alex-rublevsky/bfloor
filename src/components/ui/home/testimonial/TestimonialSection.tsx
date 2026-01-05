@@ -106,10 +106,15 @@ export default function TestimonialSliderSection() {
 
 	return (
 		<section className="embla no-padding">
-			<h2>Отзывы</h2>
-			{/* Arrow controls positioned above carousel on the right */}
-			<div className="embla__controls">
-				<EmblaArrowButtons emblaApi={emblaApi} />
+			{/* Header Row - Title and Arrows */}
+			<div className="testimonial-slider__header">
+				<div className="testimonial-slider__header-content">
+					<h2>Отзывы</h2>
+				</div>
+				{/* Carousel Controls */}
+				<div className="testimonial-slider__controls">
+					<EmblaArrowButtons emblaApi={emblaApi} />
+				</div>
 			</div>
 
 			<div className="embla__viewport" ref={emblaRef}>

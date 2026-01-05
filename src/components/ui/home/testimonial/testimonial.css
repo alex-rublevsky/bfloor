@@ -1,10 +1,15 @@
 section.embla {
 	width: 100%;
-	max-width: none;
+	max-width: 100%;
+	min-width: 0;
 	--slide-height: 19rem;
 	--slide-spacing: 0rem;
 	--slide-size: 45ch;
-	overflow: hidden;
+	overflow-x: hidden;
+	overflow-y: visible;
+	position: relative;
+	/* Ensure shadows can extend beyond section bounds */
+	contain: none;
 }
 
 @media (max-width: 640px) {
@@ -14,13 +19,19 @@ section.embla {
 }
 
 .embla__viewport {
-	overflow: hidden;
+	overflow-x: hidden;
+	overflow-y: visible;
 	width: 100%;
+	min-width: 0;
+	position: relative;
+	/* Ensure shadows can extend beyond viewport */
+	clip-path: none;
 }
 .embla__container {
 	display: flex;
 	touch-action: pan-y pinch-zoom;
 	margin-left: calc(var(--slide-spacing) * -1);
+	margin-bottom: 1.5rem; /* Space for hover shadow to render without clipping */
 }
 .embla__slide {
 	transform: translate3d(0, 0, 0);
@@ -41,6 +52,57 @@ section.embla {
 	height: var(--slide-height);
 	user-select: none;
 }
+/* Unified header content alignment for all sliders (testimonials, products, discounts) */
+.testimonial-slider__header-content,
+.product-slider__header-content {
+	padding-top: 0.375rem; /* Visual adjustment to center text with controls */
+}
+
+/* Header row - contains title and arrows */
+.testimonial-slider__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 1.5rem;
+	padding: 0 var(--section-padding-x);
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+
+/* Header content wrapper - contains title */
+.testimonial-slider__header-content {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-width: 0;
+}
+
+/* Title styling in header */
+.testimonial-slider__header-content h2 {
+	margin: 0;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+	max-width: 100%;
+}
+
+/* Carousel Controls */
+.testimonial-slider__controls {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	min-width: 0;
+}
+
+/* Ensure embla buttons stay in a row */
+.testimonial-slider__controls .embla__buttons {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 0.6rem;
+	align-items: center;
+	flex-wrap: nowrap;
+}
+
+/* Legacy embla__controls - keeping for backwards compatibility but should be removed */
 .embla__controls {
 	display: flex;
 	justify-content: flex-end;
@@ -57,14 +119,17 @@ section.embla {
 	-webkit-appearance: none;
 	appearance: none;
 	touch-action: manipulation;
+	color: var(--foreground);
 }
-.embla__button:hover {
+.embla__button:hover:not(:disabled) {
 	background-color: var(--muted);
 	border-color: var(--primary);
+	color: var(--primary);
 }
 
 .embla__button:disabled {
-	color: oklch(var(--muted));
+	color: var(--secondary);
+	cursor: not-allowed;
 }
 .embla__button__svg {
 	width: 35%;
@@ -129,5 +194,10 @@ section.embla {
 	/* Adjust spacing for mobile */
 	.embla__buttons {
 		gap: 0.4rem;
+	}
+
+	/* Hide arrow buttons on mobile - users can swipe instead */
+	.testimonial-slider__controls {
+		display: none;
 	}
 }
