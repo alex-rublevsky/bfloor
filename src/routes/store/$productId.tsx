@@ -1,4 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import {
+	useQuery,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import {
 	createFileRoute,
@@ -15,6 +19,7 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "~/components/ui/dashboard/breadcrumb";
+import { Skeleton } from "~/components/ui/dashboard/skeleton";
 import { Button } from "~/components/ui/shared/Button";
 import { Icon } from "~/components/ui/shared/Icon";
 import ImageGallery from "~/components/ui/shared/ImageGallery";
@@ -31,14 +36,51 @@ import { useProductAttributes } from "~/hooks/useProductAttributes";
 import { useRecentlyVisitedProducts } from "~/hooks/useRecentlyVisitedProducts";
 import { useVariationSelection } from "~/hooks/useVariationSelection";
 import { useCart } from "~/lib/cartContext";
-import { productQueryOptions, userDataQueryOptions } from "~/lib/queryOptions";
+import {
+	productQueryOptions,
+	storeDataQueryOptions,
+	userDataQueryOptions,
+} from "~/lib/queryOptions";
 import type {
 	Product,
-	ProductWithDetails,
+	ProductAttribute,
+	ProductVariationWithAttributes,
 	ProductWithVariations,
 	VariationAttribute,
 } from "~/types";
+import { formatContentForDisplay } from "~/utils/contentUtils";
 import { seo } from "~/utils/seo";
+
+// Helper function to find attribute by ID, slug, or name (reduces redundant lookups)
+const findAttributeByIdOrSlugOrName = (
+	attributeId: string,
+	attributes: ProductAttribute[] | undefined,
+): ProductAttribute | undefined => {
+	if (!attributes || !attributes.length) return undefined;
+	return attributes.find(
+		(a) =>
+			a.id.toString() === attributeId ||
+			a.slug === attributeId ||
+			a.name === attributeId,
+	);
+};
+
+// Inline skeleton components for progressive loading
+const DescriptionSkeleton = () => (
+	<div className="space-y-3">
+		<Skeleton className="h-4 w-full" />
+		<Skeleton className="h-4 w-5/6" />
+		<Skeleton className="h-4 w-4/5" />
+	</div>
+);
+
+const DimensionsSkeleton = () => (
+	<div className="space-y-2">
+		<Skeleton className="h-4 w-full" />
+		<Skeleton className="h-4 w-5/6" />
+		<Skeleton className="h-4 w-4/5" />
+	</div>
+);
 
 // Simple search params - no Zod needed for basic optional strings
 const validateSearch = (search: Record<string, unknown>) => {
@@ -123,6 +165,15 @@ export const Route = createFileRoute("/store/$productId")({
 	notFoundComponent: ProductNotFoundComponent,
 	pendingComponent: ProductPageSkeleton,
 
+	// Loader ensures data is available before component renders
+	// ensureQueryData is smart:
+	// - If data exists (from prefetch/cache) → returns immediately (instant!)
+	// - If data is stale → returns cached, refetches in background
+	// - If no data → fetches and waits (shows pendingComponent)
+	loader: async ({ context: { queryClient }, params }) => {
+		await queryClient.ensureQueryData(productQueryOptions(params.productId));
+	},
+
 	head: () => ({
 		meta: [
 			...seo({
@@ -147,6 +198,17 @@ function ProductPage() {
 
 	const { addProductToCart, cart } = useCart();
 	const { data: attributes } = useProductAttributes();
+	const queryClient = useQueryClient();
+
+	// Parse initial image index from search params (for view transitions)
+	const initialImageIndex = useMemo(() => {
+		const imageIndexStr = search.imageIndex;
+		if (imageIndexStr) {
+			const parsed = Number.parseInt(imageIndexStr, 10);
+			return Number.isNaN(parsed) ? 0 : parsed;
+		}
+		return 0;
+	}, [search.imageIndex]);
 	const {
 		addRecentlyVisited,
 		getRecentlyVisitedProductIds,
@@ -157,18 +219,10 @@ function ProductPage() {
 	const { data: userData } = useQuery(userDataQueryOptions());
 	const isAdmin = userData?.isAdmin ?? false;
 
-	// Use query to track loading state
-	const {
-		data: product,
-		isLoading: isLoadingProduct,
-		isFetching: isFetchingProduct,
-	} = useQuery({
-		...productQueryOptions(productId),
-		refetchOnMount: true,
-	});
-
-	// Type assertion for product with all details
-	const productWithDetails = product as ProductWithDetails | undefined;
+	// Use suspense query - data is guaranteed to be available by the loader
+	// No need for manual cache access or fallback logic!
+	const { data: productWithDetails, isFetching: isFetchingProduct } =
+		useSuspenseQuery(productQueryOptions(productId));
 
 	// Track product visit when route param changes and product data is available
 	// The hook handles deduplication automatically, so we don't need a ref
@@ -243,7 +297,10 @@ function ProductPage() {
 
 			firstVariation.attributes.forEach((attr: VariationAttribute) => {
 				// Convert attribute name to slug for URL
-				const attribute = attributes?.find((a) => a.name === attr.attributeId);
+				const attribute = findAttributeByIdOrSlugOrName(
+					attr.attributeId,
+					attributes,
+				);
 				const slug =
 					attribute?.slug || attr.attributeId.toLowerCase().replace(/_/g, "-");
 				autoSearchParams[slug] = attr.value;
@@ -266,65 +323,35 @@ function ProductPage() {
 		attributes: attributes || [], // Pass database attributes for slug conversion
 	});
 
-	// Find variation for pricing (regardless of stock status)
-	const variationForPricing = useMemo(() => {
-		if (
-			!productWithDetails?.hasVariations ||
-			!productWithDetails.variations ||
-			!selectedAttributes
-		) {
-			return null;
-		}
-
-		// Find variation that matches all selected attributes, regardless of stock
-		return (
-			productWithDetails.variations.find((variation) => {
-				return Object.entries(selectedAttributes).every(([attrId, value]) =>
-					variation.attributes.some(
-						(attr: VariationAttribute) =>
-							attr.attributeId === attrId && attr.value === value,
-					),
-				);
-			}) || null
-		);
-	}, [productWithDetails, selectedAttributes]);
-
 	// Calculate current price based on selected variation
+	// selectedVariation already finds the matching variation regardless of stock status
 	const currentPrice = useMemo(() => {
 		if (!productWithDetails) return 0;
 		// If product has variations, always use variation price
 		if (productWithDetails.hasVariations) {
-			// Use selectedVariation for available stock, or variationForPricing for out-of-stock items
-			const relevantVariation = selectedVariation || variationForPricing;
-			return relevantVariation?.price || 0;
+			return selectedVariation?.price || 0;
 		}
 		// If product price is zero, use variation price (if available)
-		if (
-			productWithDetails.price === 0 &&
-			(selectedVariation || variationForPricing)
-		) {
-			const relevantVariation = selectedVariation || variationForPricing;
-			return relevantVariation?.price || 0;
+		if (productWithDetails.price === 0 && selectedVariation) {
+			return selectedVariation.price || 0;
 		}
 		return productWithDetails.price || 0;
-	}, [selectedVariation, variationForPricing, productWithDetails]);
+	}, [selectedVariation, productWithDetails]);
 
 	// Calculate current discount based on selected variation
 	const currentDiscount = useMemo(() => {
-		// Use selectedVariation for available stock, or variationForPricing for out-of-stock items
-		const relevantVariation = selectedVariation || variationForPricing;
-		if (relevantVariation?.discount) {
-			return relevantVariation.discount;
+		if (selectedVariation?.discount) {
+			return selectedVariation.discount;
 		}
 		return productWithDetails?.discount || null;
-	}, [selectedVariation, variationForPricing, productWithDetails?.discount]);
+	}, [selectedVariation, productWithDetails?.discount]);
 
-	// Calculate original price (before discount)
-	const originalPrice = useMemo(() => {
+	// Calculate discounted price (the actual price to display)
+	const displayPrice = useMemo(() => {
 		if (currentDiscount && currentDiscount > 0) {
-			return currentPrice / (1 - currentDiscount / 100);
+			return currentPrice * (1 - currentDiscount / 100);
 		}
-		return null;
+		return currentPrice;
 	}, [currentPrice, currentDiscount]);
 
 	// Check if product can be added to cart
@@ -367,7 +394,7 @@ function ProductPage() {
 			const newSearch = { ...search };
 
 			// Convert attribute name to slug for URL
-			const attribute = attributes?.find((attr) => attr.name === attributeId);
+			const attribute = findAttributeByIdOrSlugOrName(attributeId, attributes);
 			const slug =
 				attribute?.slug || attributeId.toLowerCase().replace(/_/g, "-");
 
@@ -391,11 +418,20 @@ function ProductPage() {
 	const handleAddToCart = useCallback(async () => {
 		if (!productWithDetails || !canAddToCart) return;
 
+		// Try to get products from TanStack Query cache for validation (optional)
+		// If cache is empty, the function will use the product directly
+		const storeData = queryClient.getQueryData(
+			storeDataQueryOptions().queryKey,
+		);
+		const products = storeData?.products || [];
+
 		const success = await addProductToCart(
 			productWithDetails as unknown as Product,
 			quantity,
 			selectedVariation,
-			selectedAttributes,
+			products.length > 0
+				? (products as unknown as ProductWithVariations[])
+				: undefined,
 		);
 
 		if (success) {
@@ -405,13 +441,31 @@ function ProductPage() {
 		productWithDetails,
 		quantity,
 		selectedVariation,
-		selectedAttributes,
 		canAddToCart,
 		addProductToCart,
+		queryClient,
 	]);
 
 	// Calculate total price for display
-	const totalPrice = currentPrice * quantity;
+	// For flooring products: price per m² × square meters per pack × quantity
+	// For other products: price × quantity
+	// Always apply discount if present
+	const totalPrice = useMemo(() => {
+		const pricePerUnit = productWithDetails?.squareMetersPerPack
+			? displayPrice * productWithDetails.squareMetersPerPack
+			: displayPrice;
+
+		return pricePerUnit * quantity;
+	}, [displayPrice, productWithDetails?.squareMetersPerPack, quantity]);
+
+	// Calculate original total price (without discount) for the entire order
+	const originalTotalPrice = useMemo(() => {
+		const pricePerUnit = productWithDetails?.squareMetersPerPack
+			? currentPrice * productWithDetails.squareMetersPerPack
+			: currentPrice;
+
+		return pricePerUnit * quantity;
+	}, [currentPrice, productWithDetails?.squareMetersPerPack, quantity]);
 
 	// Get images array - should already be an array from server
 	const productImages = useMemo(() => {
@@ -435,9 +489,9 @@ function ProductPage() {
 	}, [productWithDetails?.images]);
 
 	// Show skeleton while loading
-	if (isLoadingProduct || isFetchingProduct || !productWithDetails) {
-		return <ProductPageSkeleton />;
-	}
+	// Data is guaranteed by loader + useSuspenseQuery
+	// No need for loading checks - data is always available!
+	// pendingComponent handles the loading state automatically
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -446,20 +500,27 @@ function ProductPage() {
 				{/* Wrapper that spans full height for sticky positioning */}
 				<div className="relative">
 					{/* Full-width Image Gallery */}
-					<div className="w-full">
+					<div className="w-full relative z-0">
 						<ImageGallery
 							images={productImages}
 							alt={productWithDetails?.name || "Product"}
 							productSlug={productWithDetails?.slug}
 							size="default"
+							initialImageIndex={initialImageIndex}
 						/>
 					</div>
 
 					{/* Sticky Product Info Panel - Overlay on top of gallery, then sticks */}
-					<div className="absolute top-0 right-0 w-full h-full pointer-events-none">
+					<div
+						className="absolute top-0 right-0 w-full h-full pointer-events-none"
+						style={{
+							zIndex: 9999,
+							viewTransitionName: "product-info-container",
+						}}
+					>
 						<div className="sticky top-16 w-full lg:w-2/5 min-w-0 h-fit ml-auto pointer-events-auto">
 							<div className="flex items-start justify-end p-8 min-w-0">
-								<div className="product-info-overlay p-6 max-w-[45vw] rounded-lg shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] min-w-0 w-fit border border-border bg-background/95 backdrop-blur-sm relative">
+								<div className="product-info-overlay p-6 max-w-[45vw] rounded-lg shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] min-w-0 w-fit border border-border relative">
 									{/* Admin Edit Button - Top Right Corner */}
 									{isAdmin && productWithDetails?.id && (
 										<div className="absolute top-4 right-4">
@@ -521,12 +582,7 @@ function ProductPage() {
 
 										{/* Product Title */}
 										<div>
-											<h1
-												className=""
-												style={{
-													viewTransitionName: `product-name-${productWithDetails?.slug}`,
-												}}
-											>
+											<h1 className="">
 												{productWithDetails?.name || "Product"}
 											</h1>
 											<div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm">
@@ -539,7 +595,7 @@ function ProductPage() {
 													>
 														{productWithDetails.brand.image ? (
 															<img
-																src={productWithDetails.brand.image}
+																src={`${ASSETS_BASE_URL}/${productWithDetails.brand.image}`}
 																alt={productWithDetails.brand.name}
 																className="h-6 w-auto"
 															/>
@@ -600,11 +656,11 @@ function ProductPage() {
 										</div>
 
 										{/* Wrapper for Price, Quantity, and Add to Cart */}
-										<div className="border border-border rounded-lg p-2 space-y-4 min-w-0 max-w-full">
+										<div className="border border-border rounded-lg p-2 space-y-4 min-w-0 max-w-full @container">
 											{/* Price and Quantity */}
-											<div className="flex items-stretch gap-0 min-w-0 w-full">
+											<div className="flex flex-wrap items-stretch gap-0 min-w-0 w-full">
 												{/* Price Box */}
-												<div className="bg-muted px-4 py-3 rounded-lg flex-shrink-0">
+												<div className="bg-muted px-4 py-3 rounded-lg flex flex-col justify-center items-center @[38ch]:items-start w-full @[38ch]:w-auto text-center @[38ch]:text-left">
 													<div className="text-sm text-gray-500 mb-1">
 														Цена за{" "}
 														<span className="whitespace-nowrap">
@@ -615,18 +671,27 @@ function ProductPage() {
 																	)}
 														</span>
 													</div>
-													<div
-														className="text-2xl font-bold text-gray-800"
-														style={{
-															viewTransitionName: `product-price-${productWithDetails?.slug}`,
-														}}
-													>
-														{currentPrice.toLocaleString()} р
+													{currentDiscount && currentDiscount > 0 && (
+														<div className="text-sm line-through text-muted-foreground mb-1">
+															{currentPrice.toLocaleString()} р
+														</div>
+													)}
+													<div className="text-2xl font-bold text-foreground">
+														{displayPrice.toLocaleString()} р
 													</div>
 												</div>
 
-												{/* Icon divider */}
-												<div className="flex-shrink-0 mx-2 flex items-center">
+												{/* Icon divider - horizontal (shown when both blocks fit in one row) */}
+												<div className="hidden @[38ch]:flex shrink-0 px-1 items-center justify-center">
+													<Icon
+														name="plus"
+														size={28}
+														className="text-foreground-muted rotate-45"
+													/>
+												</div>
+
+												{/* Icon divider - vertical (shown when stacked) */}
+												<div className="@[38ch]:hidden w-full flex justify-center py-2">
 													<Icon
 														name="plus"
 														size={28}
@@ -635,52 +700,52 @@ function ProductPage() {
 												</div>
 
 												{/* Quantity Selector */}
-												<div className="flex flex-col min-w-0 flex-1 overflow-hidden">
-													<div className="flex gap-1 items-stretch min-w-0">
+												<div className="flex flex-col min-w-[20ch] flex-1 self-stretch w-full @[38ch]:w-auto">
+													<div className="flex gap-0.5 items-stretch w-full flex-1">
 														<button
 															type="button"
 															onClick={decrementQuantity}
 															disabled={quantity <= 1}
-															className="flex-shrink-0 w-10 h-full flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+															className="flex-1 min-w-10 flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
 														>
 															<Icon name="minus" size={20} />
 														</button>
-														<div className="text-center bg-muted rounded-lg p-2 flex items-center justify-center min-w-0 w-fit max-w-full">
-															<div className="flex flex-col items-center gap-0 min-w-0">
+														<div className="text-center bg-muted rounded-lg py-1 px-0.5 flex items-center justify-center flex-1">
+															<div className="flex flex-col items-center gap-1 w-full justify-center">
 																{productWithDetails?.squareMetersPerPack && (
-																	<div className="flex items-baseline gap-1 justify-center min-w-0">
-																		<div className="text-sm font-normal flex-shrink-0">
-																			Площадь
-																		</div>
-																		<div className="text-xl font-normal whitespace-nowrap">
+																	<div className="flex flex-col items-center justify-center w-full gap-0">
+																		<div className="text-lg sm:text-xl font-normal whitespace-nowrap text-foreground">
 																			{(
 																				quantity *
 																				productWithDetails.squareMetersPerPack
 																			).toFixed(2)}{" "}
 																			м²
 																		</div>
+																		<div className="text-xs sm:text-sm font-normal whitespace-nowrap text-muted-foreground -mt-1">
+																			Площадь
+																		</div>
 																	</div>
 																)}
-																<div className="flex items-baseline gap-1 justify-center min-w-0">
-																	{isFlooringProduct && (
-																		<div className="text-sm font-normal whitespace-nowrap flex-shrink-0">
-																			Упаковок
-																		</div>
-																	)}
+																<div className="flex flex-col items-center justify-center w-full gap-0 pb-0.5">
 																	<Input
 																		type="number"
 																		min={1}
 																		value={quantity}
 																		onChange={handleQuantityChange}
-																		className="text-xl font-normal text-center border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto min-w-0 field-sizing-content [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+																		className="text-lg sm:text-xl font-normal text-center border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 m-0 h-auto w-auto min-w-[4ch] max-w-[8ch] field-sizing-content [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 																	/>
+																	{isFlooringProduct && (
+																		<div className="text-xs sm:text-sm font-normal whitespace-nowrap text-muted-foreground -mt-3.5">
+																			Упаковок
+																		</div>
+																	)}
 																</div>
 															</div>
 														</div>
 														<button
 															type="button"
 															onClick={incrementQuantity}
-															className="flex-shrink-0 w-10 h-full flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] cursor-pointer"
+															className="flex-1 min-w-10 flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] cursor-pointer"
 														>
 															<Icon name="plus" size={20} />
 														</button>
@@ -689,9 +754,11 @@ function ProductPage() {
 											</div>
 
 											{/* Variation Selector */}
-											{product?.hasVariations && (
+											{productWithDetails?.hasVariations && (
 												<VariationSelector
-													product={product as unknown as ProductWithVariations}
+													product={
+														productWithDetails as unknown as ProductWithVariations
+													}
 													selectedAttributes={selectedAttributes}
 													search={search}
 													onAttributeChange={handleAttributeChange}
@@ -699,45 +766,66 @@ function ProductPage() {
 											)}
 
 											{/* Price and Add to Cart */}
-											<div className="bg-muted rounded-lg p-2 flex flex-col md:flex-row gap-4 items-baseline">
-												{/* Price Display */}
-												<div className="flex flex-col gap-2">
+											{currentDiscount && currentDiscount > 0 ? (
+												/* With discount: Grid layout with button spanning both rows */
+												<div className="bg-muted rounded-lg p-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 items-stretch">
 													{/* Discount Row */}
-													{currentDiscount && originalPrice && (
-														<div className="flex items-baseline justify-between gap-6">
-															<div className="text-left">Скидка</div>
-															<div className="flex items-baseline gap-3 text-right">
-																<span className="text-lg line-through ">
-																	{originalPrice.toLocaleString()} р
-																</span>
-																<span className="px-2 py-1 bg-accent text-accent-foreground text-sm font-semibold rounded-[5px]">
-																	{currentDiscount}%
-																</span>
-															</div>
-														</div>
-													)}
+													<div className="flex items-baseline gap-4">
+														<div className="text-left">Скидка</div>
+														<span className="text-lg line-through">
+															{originalTotalPrice.toLocaleString()} р
+														</span>
+														<span className="px-2 py-1 bg-accent text-accent-foreground text-sm font-semibold rounded-[5px]">
+															{currentDiscount}%
+														</span>
+													</div>
+
+													{/* Add to Cart Button - spans both rows */}
+													<div className="row-span-2 flex">
+														<Button
+															onClick={handleAddToCart}
+															disabled={!canAddToCart}
+															size="lg"
+															className="w-full h-full"
+														>
+															{!canAddToCart ? "Недоступно" : "В корзину"}
+														</Button>
+													</div>
 
 													{/* Total Row */}
-													<div className="flex items-baseline justify-between gap-6">
+													<div className="flex items-baseline gap-4">
 														<div className="text-left">Итого</div>
-														<span className="text-3xl font-bold text-right">
+														<span className="text-3xl font-bold">
 															{totalPrice.toLocaleString()} р
 														</span>
 													</div>
 												</div>
+											) : (
+												/* Without discount: Label above price */
+												<div className="bg-muted rounded-lg p-2 flex flex-row gap-4 items-stretch">
+													{/* Price Display - stacked vertically */}
+													<div className="flex flex-col">
+														<div className="text-sm text-muted-foreground">
+															Итого
+														</div>
+														<span className="text-3xl font-bold">
+															{totalPrice.toLocaleString()} р
+														</span>
+													</div>
 
-												{/* Add to Cart Button */}
-												<div className="flex-1 flex">
-													<Button
-														onClick={handleAddToCart}
-														disabled={!canAddToCart}
-														size="lg"
-														className="w-full h-full"
-													>
-														{!canAddToCart ? "Недоступно" : "В корзину"}
-													</Button>
+													{/* Add to Cart Button */}
+													<div className="flex-1 flex">
+														<Button
+															onClick={handleAddToCart}
+															disabled={!canAddToCart}
+															size="lg"
+															className="w-full h-full"
+														>
+															{!canAddToCart ? "Недоступно" : "В корзину"}
+														</Button>
+													</div>
 												</div>
-											</div>
+											)}
 
 											{/* Store Locations */}
 											{productWithDetails?.storeLocations &&
@@ -769,16 +857,15 @@ function ProductPage() {
 										</div>
 
 										{/* Important Note */}
-										{product?.importantNote && (
-											<div className="prose prose-sm max-w-none">
+										{productWithDetails?.importantNote && (
+											<div className="prose max-w-none">
 												<ReactMarkdown
 													components={markdownComponents}
 													rehypePlugins={rehypePlugins}
 												>
-													{productWithDetails?.importantNote?.replace(
-														/\\n/g,
-														"\n",
-													) ?? ""}
+													{formatContentForDisplay(
+														productWithDetails?.importantNote ?? "",
+													)}
 												</ReactMarkdown>
 											</div>
 										)}
@@ -789,16 +876,16 @@ function ProductPage() {
 					</div>
 
 					{/* Description and Characteristics Section */}
-					{(product?.description ||
-						product?.hasVariations ||
-						(product?.productAttributes &&
+					{(productWithDetails?.description ||
+						productWithDetails?.hasVariations ||
+						(productWithDetails?.productAttributes &&
 							Array.isArray(productWithDetails.productAttributes) &&
 							productWithDetails.productAttributes.length > 0)) && (
 						<div className="max-w-7xl mx-auto px-4 py-8 lg:pr-[45%]">
 							<div className="flex flex-col gap-8">
 								{/* Characteristics */}
-								{(product?.hasVariations ||
-									(product?.productAttributes &&
+								{(productWithDetails?.hasVariations ||
+									(productWithDetails?.productAttributes &&
 										Array.isArray(productWithDetails.productAttributes) &&
 										productWithDetails.productAttributes.length > 0)) && (
 									<div className="space-y-4">
@@ -811,22 +898,30 @@ function ProductPage() {
 													(attr: { attributeId: string; value: string }) => {
 														if (!attributes || !attributes.length) return false;
 														// Check if attribute is in the standardized list
-														const attribute = attributes.find(
-															(a) =>
-																a.id.toString() === attr.attributeId ||
-																a.slug === attr.attributeId ||
-																a.name === attr.attributeId,
+														const attribute = findAttributeByIdOrSlugOrName(
+															attr.attributeId,
+															attributes,
 														);
 														// Only show if it's a standardized attribute
-														return attribute !== undefined;
+														if (!attribute) return false;
+														// Exclude Толщина (thickness) from characteristics - it should be in dimensions
+														const attributeNameLower =
+															attribute.name.toLowerCase();
+														const attributeSlugLower =
+															attribute.slug.toLowerCase();
+														if (
+															attributeNameLower.includes("толщина") ||
+															attributeSlugLower.includes("thickness")
+														) {
+															return false;
+														}
+														return true;
 													},
 												)
 												.map((attr: { attributeId: string; value: string }) => {
-													const attribute = attributes?.find(
-														(a) =>
-															a.id.toString() === attr.attributeId ||
-															a.slug === attr.attributeId ||
-															a.name === attr.attributeId,
+													const attribute = findAttributeByIdOrSlugOrName(
+														attr.attributeId,
+														attributes,
 													);
 													const displayName = attribute
 														? attribute.name
@@ -846,33 +941,41 @@ function ProductPage() {
 												})}
 
 											{/* Variation attributes */}
-											{product?.hasVariations &&
+											{productWithDetails?.hasVariations &&
 												(() => {
-													// Find the variation with attributes that matches the selected variation
+													// Use selectedVariation directly (already has all attributes)
+													// Fallback to first variation if no selection
 													const productWithVariations =
-														product as unknown as ProductWithVariations;
-													let variationToShow = null;
-
-													if (selectedVariation) {
-														// Find the variation with attributes that matches the selected variation ID
-														variationToShow =
-															productWithVariations.variations?.find(
-																(v) => v.id === selectedVariation.id,
-															);
-													}
-
-													// Fallback to first variation if no match found
-													if (!variationToShow) {
-														variationToShow =
-															productWithVariations.variations?.[0];
-													}
+														productWithDetails as unknown as ProductWithVariations;
+													const variationToShow:
+														| ProductVariationWithAttributes
+														| undefined =
+														(selectedVariation as ProductVariationWithAttributes | null) ||
+														productWithVariations.variations?.[0];
 
 													if (!variationToShow?.attributes) return null;
 
-													return variationToShow.attributes.map(
-														(attr: VariationAttribute) => {
-															const attribute = attributes?.find(
-																(a) => a.id.toString() === attr.attributeId,
+													return variationToShow.attributes
+														.filter((attr: VariationAttribute) => {
+															const attribute = findAttributeByIdOrSlugOrName(
+																attr.attributeId,
+																attributes,
+															);
+															if (!attribute) return true; // Keep if not found in standardized list
+															// Exclude Толщина (thickness) from characteristics - it should be in dimensions
+															const attributeNameLower =
+																attribute.name.toLowerCase();
+															const attributeSlugLower =
+																attribute.slug.toLowerCase();
+															return !(
+																attributeNameLower.includes("толщина") ||
+																attributeSlugLower.includes("thickness")
+															);
+														})
+														.map((attr: VariationAttribute) => {
+															const attribute = findAttributeByIdOrSlugOrName(
+																attr.attributeId,
+																attributes,
 															);
 															const displayName = attribute
 																? attribute.name
@@ -891,15 +994,47 @@ function ProductPage() {
 																	</span>
 																</div>
 															);
-														},
-													);
+														});
 												})()}
 										</div>
 									</div>
 								)}
 
+								{/* Dimensions */}
+								{productWithDetails?.dimensions ? (
+									<div className="space-y-4">
+										<h3>Габариты</h3>
+										<div>
+											{productWithDetails.dimensions
+												.split("\n")
+												.filter((line) => line.trim())
+												.map((line) => {
+													const [label, ...valueParts] = line.split(":");
+													const value = valueParts.join(":").trim();
+													const trimmedLabel = label.trim();
+													return (
+														<div
+															key={`${trimmedLabel}-${value}`}
+															className="flex justify-between items-center py-2"
+														>
+															<span className="text-foreground-muted">
+																{trimmedLabel}
+															</span>
+															<span>{value}</span>
+														</div>
+													);
+												})}
+										</div>
+									</div>
+								) : isFetchingProduct ? (
+									<div className="space-y-4">
+										<h3>Габариты</h3>
+										<DimensionsSkeleton />
+									</div>
+								) : null}
+
 								{/* Description */}
-								{product?.description && (
+								{productWithDetails?.description ? (
 									<div className="space-y-4">
 										<h2>Описание</h2>
 										<div className="prose max-w-none">
@@ -914,7 +1049,12 @@ function ProductPage() {
 											</ReactMarkdown>
 										</div>
 									</div>
-								)}
+								) : isFetchingProduct ? (
+									<div className="space-y-4">
+										<h2>Описание</h2>
+										<DescriptionSkeleton />
+									</div>
+								) : null}
 							</div>
 						</div>
 					)}
@@ -922,397 +1062,395 @@ function ProductPage() {
 			</div>
 
 			{/* Mobile: Standard layout */}
-			<div className="lg:hidden max-w-7xl mx-auto px-4 py-8">
-				<div className="flex flex-col gap-8">
-					{/* Image Gallery */}
-					<div className="w-full">
-						<ImageGallery
-							images={productImages}
-							alt={productWithDetails?.name || "Product"}
-							productSlug={productWithDetails?.slug}
-							size="default"
-						/>
-					</div>
+			<div className="lg:hidden">
+				{/* Image Gallery - edge-to-edge, no padding */}
+				<div className="w-full">
+					<ImageGallery
+						images={productImages}
+						alt={productWithDetails?.name || "Product"}
+						productSlug={productWithDetails?.slug}
+						size="default"
+						initialImageIndex={initialImageIndex}
+					/>
+				</div>
 
-					{/* Product Info */}
-					<div className="w-full">
-						<div className="space-y-6">
-							{/* Breadcrumb Navigation */}
-							<div>
-								<Breadcrumb>
-									<BreadcrumbList>
-										<BreadcrumbItem>
-											<BreadcrumbLink asChild>
-												<Link
-													to="/"
-													className="text-gray-400 hover:text-gray-600"
-												>
-													Главная
-												</Link>
-											</BreadcrumbLink>
-										</BreadcrumbItem>
-										<BreadcrumbSeparator />
-										<BreadcrumbItem>
-											<BreadcrumbLink asChild>
-												<Link
-													to="/store"
-													className="text-gray-400 hover:text-gray-600"
-													viewTransition={true}
-													resetScroll={false}
-												>
-													Ламинат
-												</Link>
-											</BreadcrumbLink>
-										</BreadcrumbItem>
-										<BreadcrumbSeparator />
-										<BreadcrumbItem>
-											<BreadcrumbPage className="text-gray-400">
-												{productWithDetails?.name}
-											</BreadcrumbPage>
-										</BreadcrumbItem>
-									</BreadcrumbList>
-								</Breadcrumb>
-							</div>
+				{/* Rest of content with padding */}
+				<div className="max-w-7xl mx-auto px-4 py-8">
+					<div className="flex flex-col gap-8">
+						{/* Product Info */}
+						<div className="w-full">
+							<div className="space-y-6">
+								{/* Breadcrumb Navigation */}
+								<div>
+									<Breadcrumb>
+										<BreadcrumbList>
+											<BreadcrumbItem>
+												<BreadcrumbLink asChild>
+													<Link
+														to="/"
+														className="text-gray-400 hover:text-gray-600"
+													>
+														Главная
+													</Link>
+												</BreadcrumbLink>
+											</BreadcrumbItem>
+											<BreadcrumbSeparator />
+											<BreadcrumbItem>
+												<BreadcrumbLink asChild>
+													<Link
+														to="/store"
+														className="text-gray-400 hover:text-gray-600"
+														viewTransition={true}
+														resetScroll={false}
+													>
+														Ламинат
+													</Link>
+												</BreadcrumbLink>
+											</BreadcrumbItem>
+											<BreadcrumbSeparator />
+											<BreadcrumbItem>
+												<BreadcrumbPage className="text-gray-400">
+													{productWithDetails?.name}
+												</BreadcrumbPage>
+											</BreadcrumbItem>
+										</BreadcrumbList>
+									</Breadcrumb>
+								</div>
 
-							{/* Product Title */}
-							<div>
-								<h1
-									className=""
-									style={{
-										viewTransitionName: `product-name-${productWithDetails?.slug}`,
-									}}
-								>
-									{productWithDetails?.name || "Product"}
-								</h1>
-								<div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600">
-									{/* Brand Logo/Name */}
-									{productWithDetails?.brand && (
-										<Link
-											to="/store"
-											search={{ brand: productWithDetails.brand.slug }}
-											className="flex items-center gap-2 hover:underline"
-										>
-											{productWithDetails.brand.image ? (
-												<img
-													src={productWithDetails.brand.image}
-													alt={productWithDetails.brand.name}
-													className="h-6 w-auto"
-												/>
-											) : (
-												<span className="font-medium">
-													{productWithDetails.brand.name}
-												</span>
-											)}
-										</Link>
-									)}
-
-									{/* SKU */}
-									{productWithDetails?.sku && (
-										<div className="flex items-center gap-1">
-											<span className="text-gray-500">Артикул:</span>
-
-											{productWithDetails.sku}
-										</div>
-									)}
-
-									{/* Country of Origin */}
-									{productWithDetails?.brand?.country && (
-										<div className="flex items-center gap-1.5">
-											{productWithDetails.brand.country.flagImage && (
-												<img
-													src={`${ASSETS_BASE_URL}/${productWithDetails.brand.country.flagImage}`}
-													alt={productWithDetails.brand.country.name}
-													className="h-4 w-auto"
-												/>
-											)}
-											<span className="font-semibold">
-												{productWithDetails.brand.country.name}
-											</span>
-											<span className="text-gray-500">родина бренда</span>
-										</div>
-									)}
-
-									{/* Collection */}
-									{productWithDetails?.collection && (
-										<div className="flex items-center gap-1">
-											<span className="text-gray-500">Коллекция:</span>
+								{/* Product Title */}
+								<div>
+									<h1 className="">{productWithDetails?.name || "Product"}</h1>
+									<div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600">
+										{/* Brand Logo/Name */}
+										{productWithDetails?.brand && (
 											<Link
 												to="/store"
-												search={{
-													collection: productWithDetails.collection.slug,
-												}}
-												className="font-semibold hover:underline"
+												search={{ brand: productWithDetails.brand.slug }}
+												className="flex items-center gap-2 hover:underline"
 											>
-												{productWithDetails.collection.name}
+												{productWithDetails.brand.image ? (
+													<img
+														src={`${ASSETS_BASE_URL}/${productWithDetails.brand.image}`}
+														alt={productWithDetails.brand.name}
+														className="h-6 w-auto"
+													/>
+												) : (
+													<span className="font-medium">
+														{productWithDetails.brand.name}
+													</span>
+												)}
 											</Link>
-										</div>
-									)}
-								</div>
-							</div>
+										)}
 
-							{/* Wrapper for Price, Quantity, and Add to Cart */}
-							<div className="border border-border rounded-lg p-2 space-y-4 min-w-0">
-								{/* Price and Quantity */}
-								<div className="flex items-stretch gap-0 min-w-0">
-									{/* Price Box */}
-									<div className="bg-muted px-4 py-3 rounded-lg flex-shrink-0">
-										<div className="text-sm text-gray-500 mb-1">
-											Цена за{" "}
-											<span className="whitespace-nowrap">
-												{isFlooringProduct
-													? "м²"
-													: getUnitShortLabel(
-															productWithDetails?.unitOfMeasurement,
-														)}
-											</span>
-										</div>
-										<div
-											className="text-2xl font-bold text-gray-800"
-											style={{
-												viewTransitionName: `product-price-${productWithDetails?.slug}`,
-											}}
-										>
-											{currentPrice.toLocaleString()} р
-										</div>
-									</div>
+										{/* SKU */}
+										{productWithDetails?.sku && (
+											<div className="flex items-center gap-1">
+												<span className="text-gray-500">Артикул:</span>
 
-									{/* Icon divider */}
-									<div className="flex-shrink-0 mx-2 flex items-center">
-										<Icon
-											name="plus"
-											size={28}
-											className="text-foreground-muted rotate-45"
-										/>
-									</div>
-
-									{/* Quantity Selector */}
-									<div className="flex-1 flex flex-col min-w-0">
-										<div className="flex gap-1 items-stretch flex-1 min-w-0">
-											<button
-												type="button"
-												onClick={decrementQuantity}
-												disabled={quantity <= 1}
-												className="flex-shrink-0 w-10 h-full flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-											>
-												<Icon name="minus" size={20} />
-											</button>
-											<div className="text-center bg-muted rounded-lg p-2 flex items-center justify-center min-w-0 w-fit max-w-full">
-												<div className="flex flex-col items-center gap-0 min-w-0">
-													{productWithDetails?.squareMetersPerPack && (
-														<div className="flex items-baseline gap-1 justify-center min-w-0">
-															<div className="text-sm font-normal flex-shrink-0">
-																Площадь
-															</div>
-															<div className="text-xl font-normal whitespace-nowrap">
-																{(
-																	quantity *
-																	productWithDetails.squareMetersPerPack
-																).toFixed(2)}{" "}
-																м²
-															</div>
-														</div>
-													)}
-													<div className="flex items-baseline gap-1 justify-center min-w-0 w-full">
-														{isFlooringProduct && (
-															<div className="text-sm font-normal whitespace-nowrap flex-shrink-0">
-																Упаковок
-															</div>
-														)}
-														<Input
-															type="number"
-															min={1}
-															value={quantity}
-															onChange={handleQuantityChange}
-															className="text-xl font-normal text-center border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto min-w-0 field-sizing-content [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-														/>
-													</div>
-												</div>
-											</div>
-											<button
-												type="button"
-												onClick={incrementQuantity}
-												className="flex-shrink-0 w-10 h-full flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] cursor-pointer"
-											>
-												<Icon name="plus" size={20} />
-											</button>
-										</div>
-									</div>
-								</div>
-
-								{/* Variation Selector */}
-								{product?.hasVariations && (
-									<VariationSelector
-										product={product as unknown as ProductWithVariations}
-										selectedAttributes={selectedAttributes}
-										search={search}
-										onAttributeChange={handleAttributeChange}
-									/>
-								)}
-
-								{/* Price and Add to Cart */}
-								<div className="bg-muted rounded-lg p-2 flex flex-col md:flex-row gap-4 items-baseline">
-									{/* Price Display */}
-									<div className="flex flex-col gap-2">
-										{/* Discount Row */}
-										{currentDiscount && originalPrice && (
-											<div className="flex items-baseline justify-between gap-6">
-												<div className="text-left">Скидка</div>
-												<div className="flex items-baseline gap-3 text-right">
-													<span className="text-lg line-through ">
-														{originalPrice.toLocaleString()} р
-													</span>
-													<span className="px-2 py-1 bg-accent text-accent-foreground text-sm font-semibold rounded-[5px]">
-														{currentDiscount}%
-													</span>
-												</div>
+												{productWithDetails.sku}
 											</div>
 										)}
 
-										{/* Total Row */}
-										<div className="flex items-baseline justify-between gap-6">
-											<div className="text-left">Итого</div>
-											<span className="text-3xl font-bold text-right">
-												{totalPrice.toLocaleString()} р
-											</span>
-										</div>
-									</div>
+										{/* Country of Origin */}
+										{productWithDetails?.brand?.country && (
+											<div className="flex items-center gap-1.5">
+												{productWithDetails.brand.country.flagImage && (
+													<img
+														src={`${ASSETS_BASE_URL}/${productWithDetails.brand.country.flagImage}`}
+														alt={productWithDetails.brand.country.name}
+														className="h-4 w-auto"
+													/>
+												)}
+												<span className="font-semibold">
+													{productWithDetails.brand.country.name}
+												</span>
+												<span className="text-gray-500">родина бренда</span>
+											</div>
+										)}
 
-									{/* Add to Cart Button */}
-									<div className="flex-1 flex">
-										<Button
-											onClick={handleAddToCart}
-											disabled={!canAddToCart}
-											size="lg"
-											className="w-full h-full"
-										>
-											{!canAddToCart ? "Недоступно" : "В корзину"}
-										</Button>
+										{/* Collection */}
+										{productWithDetails?.collection && (
+											<div className="flex items-center gap-1">
+												<span className="text-gray-500">Коллекция:</span>
+												<Link
+													to="/store"
+													search={{
+														collection: productWithDetails.collection.slug,
+													}}
+													className="font-semibold hover:underline"
+												>
+													{productWithDetails.collection.name}
+												</Link>
+											</div>
+										)}
 									</div>
 								</div>
 
-								{/* Store Locations */}
-								{productWithDetails?.storeLocations &&
-									productWithDetails.storeLocations.length > 0 && (
-										<div className="text-sm">
-											<span className="text-foreground-muted">
-												Доступно в магазинах:{" "}
-											</span>
-											<span className="text-foreground">
-												{productWithDetails.storeLocations?.map(
-													(location, index) => (
-														<span key={location.id}>
-															<Link
-																to="/contacts"
-																className="text-accent hover:underline"
-															>
-																{location.address}
-															</Link>
-															{index <
-																(productWithDetails.storeLocations?.length ??
-																	0) -
-																	1 && ", "}
-														</span>
-													),
+								{/* Wrapper for Price, Quantity, and Add to Cart */}
+								<div className="border border-border rounded-lg p-2 space-y-4 min-w-0">
+									{/* Price and Quantity */}
+									<div className="@container">
+										<div className="flex flex-wrap items-stretch gap-0 min-w-0 w-full">
+											{/* Price Box */}
+											<div className="bg-muted px-4 py-3 rounded-lg flex flex-col justify-center items-center @[38ch]:items-start w-full @[38ch]:w-auto text-center @[38ch]:text-left">
+												<div className="text-sm text-gray-500 mb-1">
+													Цена за{" "}
+													<span className="whitespace-nowrap">
+														{isFlooringProduct
+															? "м²"
+															: getUnitShortLabel(
+																	productWithDetails?.unitOfMeasurement,
+																)}
+													</span>
+												</div>
+												{currentDiscount && currentDiscount > 0 && (
+													<div className="text-sm line-through text-muted-foreground mb-1">
+														{currentPrice.toLocaleString()} р
+													</div>
 												)}
-											</span>
+												<div className="text-2xl font-bold text-gray-800">
+													{displayPrice.toLocaleString()} р
+												</div>
+											</div>
+
+											{/* Icon divider - horizontal (shown when both blocks fit in one row) */}
+											<div className="hidden @[38ch]:flex shrink-0 px-1 items-center justify-center">
+												<Icon
+													name="plus"
+													size={28}
+													className="text-foreground-muted rotate-45"
+												/>
+											</div>
+
+											{/* Icon divider - vertical (shown when stacked) */}
+											<div className="@[38ch]:hidden w-full flex justify-center py-2">
+												<Icon
+													name="plus"
+													size={28}
+													className="text-foreground-muted rotate-45"
+												/>
+											</div>
+
+											{/* Quantity Selector */}
+											<div className="flex flex-col min-w-[20ch] flex-1 self-stretch w-full @[38ch]:w-auto">
+												<div className="flex gap-0.5 items-stretch w-full flex-1">
+													<button
+														type="button"
+														onClick={decrementQuantity}
+														disabled={quantity <= 1}
+														className="flex-1 min-w-10 flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+													>
+														<Icon name="minus" size={20} />
+													</button>
+													<div className="text-center bg-muted rounded-lg py-1 px-0.5 flex items-center justify-center flex-1">
+														<div className="flex flex-col items-center gap-1 w-full justify-center">
+															{productWithDetails?.squareMetersPerPack && (
+																<div className="flex flex-col items-center justify-center w-full gap-0">
+																	<div className="text-lg sm:text-xl font-normal whitespace-nowrap text-foreground">
+																		{(
+																			quantity *
+																			productWithDetails.squareMetersPerPack
+																		).toFixed(2)}{" "}
+																		м²
+																	</div>
+																	<div className="text-xs sm:text-sm font-normal whitespace-nowrap text-muted-foreground -mt-1">
+																		Площадь
+																	</div>
+																</div>
+															)}
+															<div className="flex flex-col items-center justify-center w-full gap-0 pb-0.5">
+																<Input
+																	type="number"
+																	min={1}
+																	value={quantity}
+																	onChange={handleQuantityChange}
+																	className="text-lg sm:text-xl font-normal text-center border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 m-0 h-auto w-auto min-w-[4ch] max-w-[8ch] field-sizing-content [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+																/>
+																{isFlooringProduct && (
+																	<div className="text-xs sm:text-sm font-normal whitespace-nowrap text-muted-foreground -mt-3.5">
+																		Упаковок
+																	</div>
+																)}
+															</div>
+														</div>
+													</div>
+													<button
+														type="button"
+														onClick={incrementQuantity}
+														className="flex-1 min-w-10 flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] cursor-pointer"
+													>
+														<Icon name="plus" size={20} />
+													</button>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									{/* Variation Selector */}
+									{productWithDetails?.hasVariations && (
+										<VariationSelector
+											product={
+												productWithDetails as unknown as ProductWithVariations
+											}
+											selectedAttributes={selectedAttributes}
+											search={search}
+											onAttributeChange={handleAttributeChange}
+										/>
+									)}
+
+									{/* Price and Add to Cart */}
+									{currentDiscount && currentDiscount > 0 ? (
+										/* With discount: Grid layout with button spanning both rows */
+										<div className="bg-muted rounded-lg p-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 items-stretch">
+											{/* Discount Row */}
+											<div className="flex items-baseline gap-4">
+												<div className="text-left">Скидка</div>
+												<span className="text-lg line-through">
+													{originalTotalPrice.toLocaleString()} р
+												</span>
+												<span className="px-2 py-1 bg-accent text-accent-foreground text-sm font-semibold rounded-[5px]">
+													{currentDiscount}%
+												</span>
+											</div>
+
+											{/* Add to Cart Button - spans both rows */}
+											<div className="row-span-2 flex">
+												<Button
+													onClick={handleAddToCart}
+													disabled={!canAddToCart}
+													size="lg"
+													className="w-full h-full"
+												>
+													{!canAddToCart ? "Недоступно" : "В корзину"}
+												</Button>
+											</div>
+
+											{/* Total Row */}
+											<div className="flex items-baseline gap-4">
+												<div className="text-left">Итого</div>
+												<span className="text-3xl font-bold">
+													{totalPrice.toLocaleString()} р
+												</span>
+											</div>
+										</div>
+									) : (
+										/* Without discount: Label above price */
+										<div className="bg-muted rounded-lg p-2 flex flex-row gap-4 items-stretch">
+											{/* Price Display - stacked vertically */}
+											<div className="flex flex-col">
+												<div className="text-sm text-muted-foreground">
+													Итого
+												</div>
+												<span className="text-3xl font-bold">
+													{totalPrice.toLocaleString()} р
+												</span>
+											</div>
+
+											{/* Add to Cart Button */}
+											<div className="flex-1 flex">
+												<Button
+													onClick={handleAddToCart}
+													disabled={!canAddToCart}
+													size="lg"
+													className="w-full h-full"
+												>
+													{!canAddToCart ? "Недоступно" : "В корзину"}
+												</Button>
+											</div>
 										</div>
 									)}
-							</div>
 
-							{/* Important Note */}
-							{product?.importantNote && (
-								<div className="prose prose-sm max-w-none">
-									<ReactMarkdown
-										components={markdownComponents}
-										rehypePlugins={rehypePlugins}
-									>
-										{productWithDetails?.importantNote?.replace(/\\n/g, "\n") ??
-											""}
-									</ReactMarkdown>
-								</div>
-							)}
-						</div>
-					</div>
-
-					{/* Description and Characteristics Section */}
-					{(product?.description ||
-						product?.hasVariations ||
-						(product?.productAttributes &&
-							Array.isArray(productWithDetails.productAttributes) &&
-							productWithDetails.productAttributes.length > 0)) && (
-						<div className="w-full">
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-								{/* Left Column - Characteristics */}
-								{(product?.hasVariations ||
-									(product?.productAttributes &&
-										Array.isArray(productWithDetails.productAttributes) &&
-										productWithDetails.productAttributes.length > 0)) && (
-									<div className="space-y-4">
-										<h2>Характеристики</h2>
-										<div>
-											{/* Product-level attributes - only show standardized attributes */}
-											{(productWithDetails?.productAttributes ?? [])
-												.filter(
-													(attr: { attributeId: string; value: string }) => {
-														if (!attributes || !attributes.length) return false;
-														const attribute = attributes.find(
-															(a) =>
-																a.id.toString() === attr.attributeId ||
-																a.slug === attr.attributeId ||
-																a.name === attr.attributeId,
-														);
-														return attribute !== undefined;
-													},
-												)
-												.map((attr: { attributeId: string; value: string }) => {
-													const attribute = attributes?.find(
-														(a) =>
-															a.id.toString() === attr.attributeId ||
-															a.slug === attr.attributeId ||
-															a.name === attr.attributeId,
-													);
-													const displayName = attribute
-														? attribute.name
-														: attr.attributeId;
-
-													return (
-														<div
-															key={attr.attributeId}
-															className="flex justify-between items-center py-2"
-														>
-															<span className="text-foreground-muted">
-																{displayName}
+									{/* Store Locations */}
+									{productWithDetails?.storeLocations &&
+										productWithDetails.storeLocations.length > 0 && (
+											<div className="text-sm">
+												<span className="text-foreground-muted">
+													Доступно в магазинах:{" "}
+												</span>
+												<span className="text-foreground">
+													{productWithDetails.storeLocations?.map(
+														(location, index) => (
+															<span key={location.id}>
+																<Link
+																	to="/contacts"
+																	className="text-accent hover:underline"
+																>
+																	{location.address}
+																</Link>
+																{index <
+																	(productWithDetails.storeLocations?.length ??
+																		0) -
+																		1 && ", "}
 															</span>
-															<span>{attr.value}</span>
-														</div>
-													);
-												})}
+														),
+													)}
+												</span>
+											</div>
+										)}
+								</div>
 
-											{/* Variation attributes */}
-											{product?.hasVariations &&
-												(() => {
-													const productWithVariations =
-														product as unknown as ProductWithVariations;
-													let variationToShow = null;
+								{/* Important Note */}
+								{productWithDetails?.importantNote && (
+									<div className="prose max-w-none">
+										<ReactMarkdown
+											components={markdownComponents}
+											rehypePlugins={rehypePlugins}
+										>
+											{formatContentForDisplay(
+												productWithDetails?.importantNote ?? "",
+											)}
+										</ReactMarkdown>
+									</div>
+								)}
+							</div>
+						</div>
 
-													if (selectedVariation) {
-														variationToShow =
-															productWithVariations.variations?.find(
-																(v) => v.id === selectedVariation.id,
+						{/* Description and Characteristics Section */}
+						{(productWithDetails?.description ||
+							productWithDetails?.hasVariations ||
+							(productWithDetails?.productAttributes &&
+								Array.isArray(productWithDetails.productAttributes) &&
+								productWithDetails.productAttributes.length > 0)) && (
+							<div className="w-full">
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+									{/* Left Column - Characteristics */}
+									{(productWithDetails?.hasVariations ||
+										(productWithDetails?.productAttributes &&
+											Array.isArray(productWithDetails.productAttributes) &&
+											productWithDetails.productAttributes.length > 0)) && (
+										<div className="space-y-4">
+											<h2>Характеристики</h2>
+											<div>
+												{/* Product-level attributes - only show standardized attributes */}
+												{(productWithDetails?.productAttributes ?? [])
+													.filter(
+														(attr: { attributeId: string; value: string }) => {
+															if (!attributes || !attributes.length)
+																return false;
+															const attribute = findAttributeByIdOrSlugOrName(
+																attr.attributeId,
+																attributes,
 															);
-													}
-
-													if (!variationToShow) {
-														variationToShow =
-															productWithVariations.variations?.[0];
-													}
-
-													if (!variationToShow?.attributes) return null;
-
-													return variationToShow.attributes.map(
-														(attr: VariationAttribute) => {
-															const attribute = attributes?.find(
-																(a) => a.id.toString() === attr.attributeId,
+															if (!attribute) return false;
+															// Exclude Толщина (thickness) from characteristics - it should be in dimensions
+															const attributeNameLower =
+																attribute.name.toLowerCase();
+															const attributeSlugLower =
+																attribute.slug.toLowerCase();
+															if (
+																attributeNameLower.includes("толщина") ||
+																attributeSlugLower.includes("thickness")
+															) {
+																return false;
+															}
+															return true;
+														},
+													)
+													.map(
+														(attr: { attributeId: string; value: string }) => {
+															const attribute = findAttributeByIdOrSlugOrName(
+																attr.attributeId,
+																attributes,
 															);
 															const displayName = attribute
 																? attribute.name
@@ -1323,46 +1461,139 @@ function ProductPage() {
 																	key={attr.attributeId}
 																	className="flex justify-between items-center py-2"
 																>
-																	<span className="text-foreground-muted font-normal">
+																	<span className="text-foreground-muted">
 																		{displayName}
 																	</span>
-																	<span className="text-foreground font-normal">
-																		{attr.value}
-																	</span>
+																	<span>{attr.value}</span>
 																</div>
 															);
 														},
-													);
-												})()}
-										</div>
-									</div>
-								)}
+													)}
 
-								{/* Right Column - Description */}
-								{product?.description && (
-									<div className="space-y-4">
-										<h2>Описание</h2>
-										<div className="prose max-w-none">
-											<ReactMarkdown
-												components={markdownComponents}
-												rehypePlugins={rehypePlugins}
-											>
-												{productWithDetails?.description?.replace(
-													/\\n/g,
-													"\n",
-												) ?? ""}
-											</ReactMarkdown>
+												{/* Variation attributes */}
+												{productWithDetails?.hasVariations &&
+													(() => {
+														// Use selectedVariation directly (already has all attributes)
+														// Fallback to first variation if no selection
+														const productWithVariations =
+															productWithDetails as unknown as ProductWithVariations;
+														const variationToShow:
+															| ProductVariationWithAttributes
+															| undefined =
+															(selectedVariation as ProductVariationWithAttributes | null) ||
+															productWithVariations.variations?.[0];
+
+														if (!variationToShow?.attributes) return null;
+
+														return variationToShow.attributes
+															.filter((attr: VariationAttribute) => {
+																const attribute = findAttributeByIdOrSlugOrName(
+																	attr.attributeId,
+																	attributes,
+																);
+																if (!attribute) return true; // Keep if not found in standardized list
+																// Exclude Толщина (thickness) from characteristics - it should be in dimensions
+																const attributeNameLower =
+																	attribute.name.toLowerCase();
+																const attributeSlugLower =
+																	attribute.slug.toLowerCase();
+																return !(
+																	attributeNameLower.includes("толщина") ||
+																	attributeSlugLower.includes("thickness")
+																);
+															})
+															.map((attr: VariationAttribute) => {
+																const attribute = findAttributeByIdOrSlugOrName(
+																	attr.attributeId,
+																	attributes,
+																);
+																const displayName = attribute
+																	? attribute.name
+																	: attr.attributeId;
+
+																return (
+																	<div
+																		key={attr.attributeId}
+																		className="flex justify-between items-center py-2"
+																	>
+																		<span className="text-foreground-muted font-normal">
+																			{displayName}
+																		</span>
+																		<span className="text-foreground font-normal">
+																			{attr.value}
+																		</span>
+																	</div>
+																);
+															});
+													})()}
+											</div>
 										</div>
-									</div>
-								)}
+									)}
+
+									{/* Dimensions */}
+									{productWithDetails?.dimensions ? (
+										<div className="space-y-4">
+											<h3>Габариты</h3>
+											<div>
+												{productWithDetails.dimensions
+													.split("\n")
+													.filter((line) => line.trim())
+													.map((line) => {
+														const [label, ...valueParts] = line.split(":");
+														const value = valueParts.join(":").trim();
+														const trimmedLabel = label.trim();
+														return (
+															<div
+																key={`${trimmedLabel}-${value}`}
+																className="flex justify-between items-center py-2"
+															>
+																<span className="text-foreground-muted">
+																	{trimmedLabel}
+																</span>
+																<span>{value}</span>
+															</div>
+														);
+													})}
+											</div>
+										</div>
+									) : isFetchingProduct ? (
+										<div className="space-y-4">
+											<h3>Габариты</h3>
+											<DimensionsSkeleton />
+										</div>
+									) : null}
+
+									{/* Right Column - Description */}
+									{productWithDetails?.description ? (
+										<div className="space-y-4">
+											<h2>Описание</h2>
+											<div className="prose max-w-none">
+												<ReactMarkdown
+													components={markdownComponents}
+													rehypePlugins={rehypePlugins}
+												>
+													{productWithDetails?.description?.replace(
+														/\\n/g,
+														"\n",
+													) ?? ""}
+												</ReactMarkdown>
+											</div>
+										</div>
+									) : isFetchingProduct ? (
+										<div className="space-y-4">
+											<h2>Описание</h2>
+											<DescriptionSkeleton />
+										</div>
+									) : null}
+								</div>
 							</div>
-						</div>
-					)}
+						)}
+					</div>
 				</div>
 			</div>
 
 			{/* Recommended/Recently Visited Products Slider */}
-			<div className="w-full max-w-7xl mx-auto px-4 py-8">
+			<div className="pt-20 w-full overflow-x-hidden">
 				<ProductSlider
 					mode="recommended"
 					title={
