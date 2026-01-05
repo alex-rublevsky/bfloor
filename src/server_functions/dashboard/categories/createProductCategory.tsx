@@ -31,14 +31,11 @@ export const createProductCategory = createServerFn({ method: "POST" })
 			}
 
 			// Move staging images to final location before saving
-			const finalImage = await moveSingleStagingImage(
-				categoryData.image,
-				{
-					finalFolder: "categories",
-					slug: categoryData.slug,
-					productName: categoryData.name,
-				},
-			);
+			const finalImage = await moveSingleStagingImage(categoryData.image, {
+				finalFolder: "categories",
+				slug: categoryData.slug,
+				productName: categoryData.name,
+			});
 
 			const insertResult = await db
 				.insert(categories)
