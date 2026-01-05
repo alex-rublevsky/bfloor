@@ -50,14 +50,11 @@ export const updateProductCategory = createServerFn({ method: "POST" })
 			}
 
 			// Move staging images to final location before saving
-			const finalImage = await moveSingleStagingImage(
-				categoryData.image,
-				{
-					finalFolder: "categories",
-					slug: categoryData.slug,
-					productName: categoryData.name,
-				},
-			);
+			const finalImage = await moveSingleStagingImage(categoryData.image, {
+				finalFolder: "categories",
+				slug: categoryData.slug,
+				productName: categoryData.name,
+			});
 
 			// Update the category
 			const updateResult = await db
