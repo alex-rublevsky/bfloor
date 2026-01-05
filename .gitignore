@@ -44,3 +44,4 @@ scripts
 migration/data
 .env.development.local
 .vercelignore
+.DS_Store

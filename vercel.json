@@ -1,0 +1,9 @@
+{
+	"buildCommand": "pnpm build",
+	"installCommand": "pnpm install --ignore-scripts=false",
+	"functions": {
+		".vercel/output/functions/**/*.func/**": {
+			"maxDuration": 19
+		}
+	}
+}
