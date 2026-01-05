@@ -5,6 +5,7 @@
 
 import type { ActionButtonConfig } from "~/config/dashboardActionButtons";
 import { cn } from "~/utils/utils";
+import { Button } from "../Button";
 import { Plus } from "../Icon";
 
 interface ActionButtonProps {
@@ -15,6 +16,7 @@ interface ActionButtonProps {
 
 /**
  * Single action button component
+ * Uses the shared Button component with custom rounded-full styling
  */
 export function ActionButton({
 	button,
@@ -24,22 +26,14 @@ export function ActionButton({
 	const isPrimary = button.variant === "default";
 
 	return (
-		<button
-			type="button"
+		<Button
+			variant={isPrimary ? "default" : "outline"}
+			size="sm"
 			onClick={button.onClick}
-			className={cn(
-				"relative flex rounded-full border transition-standard p-[0.3rem] focus:outline-hidden focus:ring-1 focus:ring-ring whitespace-nowrap min-w-fit",
-				isPrimary
-					? "border-primary bg-primary text-primary-foreground hover:bg-background hover:text-foreground"
-					: "border-border bg-background text-foreground hover:bg-muted",
-				className,
-			)}
 		>
-			<span className="relative z-10 flex items-center gap-1.5 cursor-pointer px-3 py-1.5 text-xs">
-				{isPrimary && showIcon && <Plus className="w-4 h-4" />}
-				{button.label}
-			</span>
-		</button>
+			{isPrimary && showIcon && <Plus className="w-4 h-4" />}
+			{button.label}
+		</Button>
 	);
 }
 
@@ -91,14 +85,15 @@ export function MobileActionButton({
 	const isPrimary = button.variant === "default";
 
 	return (
-		<button
-			type="button"
+		<Button
+			variant={isPrimary ? "default" : "outline"}
+			size="sm"
 			onClick={button.onClick}
 			className={cn(
-				"md:hidden fixed bottom-22 z-50 rounded-full whitespace-nowrap transition-standard",
+				"md:hidden fixed bottom-22 z-50 rounded-full whitespace-nowrap",
 				position === "left" ? "left-2" : "right-2",
 				isPrimary
-					? "bg-primary text-primary-foreground hover:bg-primary/90"
+					? "bg-primary text-primary-foreground hover:bg-primary-hover"
 					: "bg-background text-foreground border border-border hover:bg-muted",
 				className,
 			)}
@@ -108,7 +103,7 @@ export function MobileActionButton({
 				{isPrimary && <Plus className="w-4 h-4" />}
 				{button.label}
 			</span>
-		</button>
+		</Button>
 	);
 }
 
