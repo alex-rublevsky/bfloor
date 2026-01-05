@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { DB } from "~/db";
 import { countries } from "~/schema";
 import type { CountryFormData } from "~/types";
+import { moveSingleStagingImage } from "../store/moveStagingImages";
 
 export const createCountry = createServerFn({ method: "POST" })
 	.inputValidator((data: CountryFormData) => data)
@@ -29,13 +30,23 @@ export const createCountry = createServerFn({ method: "POST" })
 				throw new Error("A country with this code already exists");
 			}
 
+			// Move staging images to final location before saving
+			const finalFlagImage = await moveSingleStagingImage(
+				countryData.flagImage,
+				{
+					finalFolder: "country-flags",
+					slug: countryData.code,
+					productName: countryData.name,
+				},
+			);
+
 			// Insert the country
 			const insertResult = await db
 				.insert(countries)
 				.values({
 					name: countryData.name,
 					code: countryData.code,
-					flagImage: countryData.flagImage || null,
+					flagImage: finalFlagImage || null,
 					isActive: countryData.isActive ?? true,
 				})
 				.returning();

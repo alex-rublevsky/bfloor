@@ -3,13 +3,14 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
 import { DB } from "~/db";
 import {
-	productStoreLocations,
 	products,
+	productStoreLocations,
 	productVariations,
 	variationAttributes,
 } from "~/schema";
 import type { ProductFormData } from "~/types";
 import { validateAttributeValues } from "~/utils/validateAttributeValues";
+import { moveStagingImages } from "./moveStagingImages";
 
 export const createProduct = createServerFn({ method: "POST" })
 	.inputValidator((data: ProductFormData) => data)
@@ -30,39 +31,59 @@ export const createProduct = createServerFn({ method: "POST" })
 				throw new Error("Unit of measurement is required");
 			}
 
-			// Check for duplicate slug and SKU
-			const [duplicateSlug, duplicateSku] = await Promise.all([
-				db
-					.select()
-					.from(products)
-					.where(eq(products.slug, productData.slug))
-					.limit(1),
-				productData.sku
-					? db
-							.select()
-							.from(products)
-							.where(eq(products.sku, productData.sku))
-							.limit(1)
-					: Promise.resolve([]),
-			]);
+			// Check for duplicate slug only
+			// Note: SKU duplicates are allowed since SKU is optional and not unique in the schema
+			const duplicateSlug = await db
+				.select()
+				.from(products)
+				.where(eq(products.slug, productData.slug))
+				.limit(1);
 
 			if (duplicateSlug[0]) {
 				setResponseStatus(400);
 				throw new Error("A product with this slug already exists");
 			}
 
-			if (duplicateSku[0]) {
-				setResponseStatus(400);
-				throw new Error("A product with this SKU already exists");
+			// Process images - move staging images to final location before saving
+			let imageString = productData.images?.trim() || "";
+
+			// Parse image paths and move staging images to final location
+			if (imageString) {
+				const imagePaths = imageString
+					.split(",")
+					.map((img) => img.trim())
+					.filter(Boolean);
+
+				// Check if any images are in staging
+				const hasStagingImages = imagePaths.some((path) =>
+					path.startsWith("staging/"),
+				);
+
+				if (hasStagingImages) {
+					// Move staging images to final location
+					const moveResult = await moveStagingImages({
+						data: {
+							imagePaths,
+							finalFolder: "products",
+							categorySlug: productData.categorySlug,
+							productName: productData.name,
+							slug: productData.slug,
+						},
+					});
+
+					if (moveResult?.pathMap) {
+						// Update image string with final paths
+						const updatedPaths = imagePaths.map(
+							(path) => moveResult.pathMap?.[path] || path,
+						);
+						imageString = updatedPaths.join(", ");
+					}
+				}
 			}
 
-			// Process images - convert comma-separated string to JSON array
-			const imageString = productData.images?.trim() || "";
+			// Convert comma-separated string to JSON array
 			const imagesArray = imageString
-				? imageString
-						.split(",")
-						.map((img) => img.trim())
-						.filter(Boolean)
+				? imageString.split(",").map((img) => img.trim()).filter(Boolean)
 				: [];
 			const imagesJson =
 				imagesArray.length > 0 ? JSON.stringify(imagesArray) : "";

@@ -46,10 +46,17 @@ export const moveStagingImages = createServerFn({ method: "POST" })
 			let finalDirectoryPath = finalFolder;
 
 			if (finalFolder === "country-flags") {
-				finalDirectoryPath = finalFolder;
+				// Country flags go in the /country-flags directory
+				finalDirectoryPath = "country-flags";
 			} else if (finalFolder === "brands") {
-				// Brand logos go in the top-level 'Brands' folder
-				finalDirectoryPath = "Brands";
+				// Brand logos go in the /brands directory
+				finalDirectoryPath = "brands";
+			} else if (finalFolder === "products") {
+				// Product images go in YYYY/MM format (e.g., 2026/01)
+				const now = new Date();
+				const year = now.getFullYear();
+				const month = String(now.getMonth() + 1).padStart(2, "0");
+				finalDirectoryPath = `${year}/${month}`;
 			} else if (categorySlug && productName) {
 				const sanitizedCategorySlug = sanitizeFilename(categorySlug);
 				const sanitizedProductName = sanitizeFilename(productName);
@@ -216,3 +223,43 @@ export const moveStagingImages = createServerFn({ method: "POST" })
 			);
 		}
 	});
+
+/**
+ * Helper function to move a single staging image and return the final path.
+ * This simplifies the common pattern of checking if an image is staging,
+ * moving it, and extracting the final path.
+ */
+export async function moveSingleStagingImage(
+	imagePath: string | null | undefined,
+	options: {
+		finalFolder: string;
+		slug?: string;
+		productName?: string;
+		categorySlug?: string;
+	},
+): Promise<string> {
+	if (!imagePath || !imagePath.startsWith("staging/")) {
+		return imagePath || "";
+	}
+
+	const moveResult = await moveStagingImages({
+		data: {
+			imagePaths: [imagePath],
+			finalFolder: options.finalFolder,
+			slug: options.slug,
+			productName: options.productName,
+			categorySlug: options.categorySlug,
+		},
+	});
+
+	if (moveResult?.pathMap?.[imagePath]) {
+		return moveResult.pathMap[imagePath];
+	}
+
+	if (moveResult?.movedImages && moveResult.movedImages.length > 0) {
+		return moveResult.movedImages[0];
+	}
+
+	// Fallback to original path if move failed
+	return imagePath;
+}

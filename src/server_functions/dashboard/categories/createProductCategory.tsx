@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { DB } from "~/db";
 import { categories } from "~/schema";
 import type { CategoryFormData } from "~/types";
+import { moveSingleStagingImage } from "../store/moveStagingImages";
 
 export const createProductCategory = createServerFn({ method: "POST" })
 	.inputValidator((data: CategoryFormData) => data)
@@ -29,13 +30,23 @@ export const createProductCategory = createServerFn({ method: "POST" })
 				throw new Error("A category with this slug already exists");
 			}
 
+			// Move staging images to final location before saving
+			const finalImage = await moveSingleStagingImage(
+				categoryData.image,
+				{
+					finalFolder: "categories",
+					slug: categoryData.slug,
+					productName: categoryData.name,
+				},
+			);
+
 			const insertResult = await db
 				.insert(categories)
 				.values({
 					name: categoryData.name,
 					slug: categoryData.slug,
 					parentSlug: categoryData.parentSlug || null,
-					image: categoryData.image || null,
+					image: finalImage || null,
 					isActive: categoryData.isActive ?? true,
 					order: categoryData.order ?? 0,
 				})

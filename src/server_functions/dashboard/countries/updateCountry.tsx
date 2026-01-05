@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { DB } from "~/db";
 import { countries } from "~/schema";
 import type { CountryFormData } from "~/types";
+import { moveSingleStagingImage } from "../store/moveStagingImages";
 
 export const updateCountry = createServerFn({ method: "POST" })
 	.inputValidator((data: { id: number; data: CountryFormData }) => data)
@@ -43,13 +44,23 @@ export const updateCountry = createServerFn({ method: "POST" })
 				}
 			}
 
+			// Move staging images to final location before saving
+			const finalFlagImage = await moveSingleStagingImage(
+				countryData.flagImage,
+				{
+					finalFolder: "country-flags",
+					slug: countryData.code,
+					productName: countryData.name,
+				},
+			);
+
 			// Update the country
 			const updateResult = await db
 				.update(countries)
 				.set({
 					name: countryData.name,
 					code: countryData.code,
-					flagImage: countryData.flagImage || null,
+					flagImage: finalFlagImage || null,
 					isActive: countryData.isActive ?? true,
 				})
 				.where(eq(countries.id, id))

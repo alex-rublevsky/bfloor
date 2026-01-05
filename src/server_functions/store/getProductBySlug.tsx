@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq, inArray } from "drizzle-orm";
 import { DB } from "~/db";
 import {
@@ -43,7 +42,8 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 			.all();
 
 		if (!result || result.length === 0) {
-			setResponseStatus(404);
+			// Don't set response status - let TanStack Router handle 404s via notFound()
+			// Setting status here causes Vercel to return platform-level NOT_FOUND error
 			throw new Error("Product not found");
 		}
 

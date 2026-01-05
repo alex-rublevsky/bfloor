@@ -1,9 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq, inArray, like, or, type SQL, sql } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { DB } from "~/db";
-import type * as schema from "~/schema";
 import {
 	attributeValues,
 	productAttributes,
@@ -46,7 +44,7 @@ export const getStoreData = createServerFn({ method: "GET" })
 	)
 	.handler(async ({ data = {} }) => {
 		try {
-			const db: DrizzleD1Database<typeof schema> = DB();
+			const db = DB();
 			const { page, limit: pageLimit } = data;
 			const rawSearch =
 				typeof data.search === "string" ? data.search : undefined;
@@ -265,28 +263,45 @@ export const getStoreData = createServerFn({ method: "GET" })
 					? await productsQuery.limit(pageLimit).offset(offsetValue).all()
 					: await productsQuery.all();
 
-			// Fetch variations and attributes in parallel
-			const [variationsResult, attributesResult] = await Promise.all([
-				db.select().from(productVariations),
-				db.select().from(variationAttributes),
-			]);
-
+			// Get product IDs from current page
 			const activeProductIds = new Set(
 				productsResult.map((p: Product) => p.id),
 			);
-			const filteredVariations = variationsResult.filter(
-				(v: ProductVariation) =>
-					v.productId && activeProductIds.has(v.productId),
-			);
 
+			// Fetch ONLY variations for the current page of products (not all variations in DB)
+			const filteredVariations =
+				activeProductIds.size > 0
+					? await db
+							.select()
+							.from(productVariations)
+							.where(
+								inArray(
+									productVariations.productId,
+									Array.from(activeProductIds),
+								),
+							)
+							.all()
+					: [];
+
+			// Get variation IDs from the filtered variations
 			const activeVariationIds = new Set(
 				filteredVariations.map((v: ProductVariation) => v.id),
 			);
-			const filteredAttributes = attributesResult.filter(
-				(attr) =>
-					attr.productVariationId &&
-					activeVariationIds.has(attr.productVariationId),
-			);
+
+			// Fetch ONLY attributes for these specific variations (not all attributes in DB)
+			const filteredAttributes =
+				activeVariationIds.size > 0
+					? await db
+							.select()
+							.from(variationAttributes)
+							.where(
+								inArray(
+									variationAttributes.productVariationId,
+									Array.from(activeVariationIds),
+								),
+							)
+							.all()
+					: [];
 
 			const variationsByProduct = new Map<number, ProductVariation[]>();
 			filteredVariations.forEach((variation: ProductVariation) => {
