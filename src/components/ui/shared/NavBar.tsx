@@ -332,7 +332,7 @@ const CartButton = () => {
 					{/* Cart Counter Badge */}
 					{itemCount > 0 && (
 						<span
-							className="absolute top-0 right-0.5 bg-accent text-background text-sm font-medium w-5 h-5 flex items-center justify-center -translate-y-1.5 translate-x-1.5"
+							className="absolute top-0 right-0.5 bg-accent text-accent-foreground! text-sm font-medium w-5 h-5 flex items-center justify-center -translate-y-1.5 translate-x-1.5"
 							style={{ borderRadius: "var(--radius-xs)" }}
 						>
 							{itemCount}
