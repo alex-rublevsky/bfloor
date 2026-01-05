@@ -18,7 +18,6 @@ import { createCountry } from "~/server_functions/dashboard/countries/createCoun
 import { deleteCountry } from "~/server_functions/dashboard/countries/deleteCountry";
 import { updateCountry } from "~/server_functions/dashboard/countries/updateCountry";
 import { deleteProductImage } from "~/server_functions/dashboard/store/deleteProductImage";
-import { moveStagingImages } from "~/server_functions/dashboard/store/moveStagingImages";
 import type { Country, CountryFormData } from "~/types";
 import { Trash } from "../shared/Icon";
 
@@ -60,56 +59,8 @@ export function CountriesManager({ className }: CountriesManagerProps) {
 		form.crud.startSubmitting();
 
 		try {
-			// Move staging images to final location before creating country
 			const formData = form.createForm.formData as CountryFormData;
-			let finalFlagImage = formData.flagImage?.trim() || "";
-
-			if (finalFlagImage?.startsWith("staging/")) {
-				try {
-					console.log("🚀 Moving country flag from staging:", finalFlagImage);
-					const moveResult = await moveStagingImages({
-						data: {
-							imagePaths: [finalFlagImage],
-							finalFolder: "country-flags",
-							slug: formData.code,
-							productName: formData.name,
-						},
-					});
-
-					if (moveResult?.pathMap?.[finalFlagImage]) {
-						finalFlagImage = moveResult.pathMap[finalFlagImage];
-						console.log("✅ Country flag moved to:", finalFlagImage);
-					} else if (
-						moveResult?.movedImages &&
-						moveResult.movedImages.length > 0
-					) {
-						finalFlagImage = moveResult.movedImages[0];
-						console.log("✅ Country flag moved to:", finalFlagImage);
-					}
-
-					if (moveResult?.failedImages && moveResult.failedImages.length > 0) {
-						console.warn(
-							"⚠️ Country flag failed to move:",
-							moveResult.failedImages,
-						);
-						toast.warning(
-							"Флаг загружен, но не перемещен. Он будет очищен автоматически.",
-						);
-					}
-				} catch (moveError) {
-					console.error("❌ Failed to move country flag:", moveError);
-					toast.warning(
-						"Флаг загружен, но не перемещен. Он будет очищен автоматически.",
-					);
-				}
-			}
-
-			await createCountry({
-				data: {
-					...formData,
-					flagImage: finalFlagImage,
-				} as CountryFormData,
-			});
+			await createCountry({ data: formData });
 
 			toast.success("Страна добавлена успешно!");
 
@@ -158,48 +109,7 @@ export function CountriesManager({ className }: CountriesManagerProps) {
 			// For countries, flagImage is a single string (not comma-separated)
 			// Compare original and new flag images to determine what was added/removed
 			const originalImage = originalFlagImage?.trim() || "";
-			let newImage = form.editForm.formData.flagImage?.trim() || "";
-
-			// Move staging images to final location before updating country
-			if (newImage?.startsWith("staging/")) {
-				try {
-					console.log("🚀 Moving country flag from staging:", newImage);
-					const moveResult = await moveStagingImages({
-						data: {
-							imagePaths: [newImage],
-							finalFolder: "country-flags",
-							slug: form.editForm.formData.code,
-							productName: form.editForm.formData.name,
-						},
-					});
-
-					if (moveResult?.pathMap?.[newImage]) {
-						newImage = moveResult.pathMap[newImage];
-						console.log("✅ Country flag moved to:", newImage);
-					} else if (
-						moveResult?.movedImages &&
-						moveResult.movedImages.length > 0
-					) {
-						newImage = moveResult.movedImages[0];
-						console.log("✅ Country flag moved to:", newImage);
-					}
-
-					if (moveResult?.failedImages && moveResult.failedImages.length > 0) {
-						console.warn(
-							"⚠️ Country flag failed to move:",
-							moveResult.failedImages,
-						);
-						toast.warning(
-							"Флаг загружен, но не перемещен. Он будет очищен автоматически.",
-						);
-					}
-				} catch (moveError) {
-					console.error("❌ Failed to move country flag:", moveError);
-					toast.warning(
-						"Флаг загружен, но не перемещен. Он будет очищен автоматически.",
-					);
-				}
-			}
+			const newImage = form.editForm.formData.flagImage?.trim() || "";
 
 			console.log("Country update - image tracking:", {
 				originalImage,
@@ -283,10 +193,7 @@ export function CountriesManager({ className }: CountriesManagerProps) {
 			await updateCountry({
 				data: {
 					id: editingCountryId,
-					data: {
-						...form.editForm.formData,
-						flagImage: newImage,
-					} as CountryFormData,
+					data: form.editForm.formData as CountryFormData,
 				},
 			});
 
