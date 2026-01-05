@@ -43,7 +43,6 @@ interface CartContextType {
 		product: Product,
 		quantity: number,
 		selectedVariation?: ProductVariation | null,
-		selectedAttributes?: Record<string, string>,
 		products?: ProductWithVariations[], // Pass products for validation
 	) => Promise<boolean>;
 	removeFromCart: (productId: number, variationId?: number) => void;
@@ -61,7 +60,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 // Cookie constant
-const CART_COOKIE_NAME = "rublevsky-cart";
+const CART_COOKIE_NAME = "bfloor-cart";
 
 interface CartProviderProps {
 	children: React.ReactNode;
@@ -157,57 +156,62 @@ export function CartProvider({ children }: CartProviderProps) {
 		product: Product,
 		quantity: number,
 		selectedVariation?: ProductVariation | null,
-		_selectedAttributes?: Record<string, string>, // Not used anymore (enriched from cache)
-		products?: ProductWithVariations[], // Products passed from component
+		products?: ProductWithVariations[], // Products passed from component (optional - for validation)
 	): Promise<boolean> => {
 		try {
 			// Basic validation
 			if (!product || !product.id) {
-				toast.error("Invalid product");
+				toast.error("Неверный товар");
 				return false;
 			}
 
 			if (quantity <= 0) {
-				toast.error("Invalid quantity");
+				toast.error("Неверное количество");
 				return false;
 			}
 
 			// Validate variation requirement
 			if (product.hasVariations && !selectedVariation) {
-				toast.error("Please select a variation");
+				toast.error("Пожалуйста, выберите вариант");
 				return false;
 			}
 
 			if (!product.hasVariations && selectedVariation) {
-				toast.error("This product does not support variations");
+				toast.error("Этот товар не поддерживает варианты");
 				return false;
 			}
 
-			// Find the product in products array to get the latest data
-			const currentProduct = products?.find((p) => p.id === product.id);
-			if (!currentProduct) {
-				toast.error("Product not found");
+			// Try to find the product in products array for validation (if provided)
+			// If products array is not provided or empty, use the product directly
+			const currentProduct =
+				products?.find((p) => p.id === product.id) || product;
+
+			// Validate product is active
+			if (!currentProduct.isActive) {
+				toast.error("Этот товар больше недоступен");
 				return false;
 			}
 
-			// Validate variation exists and matches
-			if (selectedVariation) {
-				const currentVariation = currentProduct.variations?.find(
+			// Validate variation exists and matches (only if products array was provided)
+			if (selectedVariation && products && products.length > 0) {
+				const currentProductWithVariations =
+					currentProduct as ProductWithVariations;
+				const currentVariation = currentProductWithVariations.variations?.find(
 					(v) => v.id === selectedVariation.id,
 				);
 				if (!currentVariation) {
-					toast.error("Selected variation not found");
+					toast.error("Выбранный вариант не найден");
 					return false;
 				}
 				// Validate variation price matches
 				if (currentVariation.price !== selectedVariation.price) {
-					toast.error("Product price has changed");
+					toast.error("Цена товара изменилась");
 					return false;
 				}
-			} else {
-				// Validate base product price matches
+			} else if (!selectedVariation && products && products.length > 0) {
+				// Validate base product price matches (only if products array was provided)
 				if (currentProduct.price !== product.price) {
-					toast.error("Product price has changed");
+					toast.error("Цена товара изменилась");
 					return false;
 				}
 			}
@@ -223,10 +227,11 @@ export function CartProvider({ children }: CartProviderProps) {
 			};
 
 			addToCart(cartItem);
+			toast.success("Товар добавлен в корзину");
 			return true;
 		} catch (error) {
 			console.error("Error adding product to cart:", error);
-			toast.error("Failed to add product to cart");
+			toast.error("Не удалось добавить товар в корзину");
 			return false;
 		}
 	};
