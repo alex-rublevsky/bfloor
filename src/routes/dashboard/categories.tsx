@@ -1,10 +1,11 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { toast } from "sonner";
+import { useMemo } from "react";
 import {
 	DashboardEntityManager,
 	type EntityFormFieldsProps,
 	type EntityListProps,
+	type EntityManagerConfig,
 } from "~/components/ui/dashboard/DashboardEntityManager";
 import { EntityCardContent } from "~/components/ui/dashboard/EntityCardContent";
 import { EntityCardGrid } from "~/components/ui/dashboard/EntityCardGrid";
@@ -17,13 +18,20 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "~/components/ui/shared/Select";
-import { categoriesQueryOptions } from "~/lib/queryOptions";
+import {
+	categoriesQueryOptions,
+	productCategoryCountsQueryOptions,
+} from "~/lib/queryOptions";
 import { createProductCategory } from "~/server_functions/dashboard/categories/createProductCategory";
 import { deleteProductCategory } from "~/server_functions/dashboard/categories/deleteProductCategory";
 import { getAllProductCategories } from "~/server_functions/dashboard/categories/getAllProductCategories";
 import { updateProductCategory } from "~/server_functions/dashboard/categories/updateProductCategory";
-import { moveStagingImages } from "~/server_functions/dashboard/store/moveStagingImages";
 import type { Category, CategoryFormData } from "~/types";
+
+// Category with count type (for displaying product counts)
+interface CategoryWithCount extends Category {
+	productCount: number | null;
+}
 
 // Category form fields component
 const CategoryFormFields = ({
@@ -85,8 +93,19 @@ const CategoryFormFields = ({
 };
 
 // Category list component using the reusable component
-const CategoryList = ({ entities, onEdit }: EntityListProps<Category>) => {
-	const { data: categories } = useSuspenseQuery(categoriesQueryOptions());
+const CategoryList = ({
+	entities,
+	onEdit,
+}: EntityListProps<CategoryWithCount>) => {
+	// Use entities directly instead of fetching again - they already contain all category data
+	// Create a lookup map for O(1) parent category lookup
+	const categoryMap = useMemo(() => {
+		const map = new Map<string, CategoryWithCount>();
+		entities.forEach((cat) => {
+			map.set(cat.slug, cat);
+		});
+		return map;
+	}, [entities]);
 
 	return (
 		<EntityCardGrid
@@ -94,7 +113,7 @@ const CategoryList = ({ entities, onEdit }: EntityListProps<Category>) => {
 			onEdit={onEdit}
 			renderEntity={(category) => {
 				const parentCategory = category.parentSlug
-					? categories.find((c) => c.slug === category.parentSlug)
+					? categoryMap.get(category.parentSlug)
 					: null;
 				return (
 					<EntityCardContent
@@ -104,6 +123,7 @@ const CategoryList = ({ entities, onEdit }: EntityListProps<Category>) => {
 						secondaryInfo={
 							parentCategory ? `Родитель: ${parentCategory.name}` : undefined
 						}
+						count={category.productCount}
 					/>
 				);
 			}}
@@ -115,146 +135,77 @@ export const Route = createFileRoute("/dashboard/categories")({
 	component: RouteComponent,
 	pendingComponent: CategoriesPageSkeleton,
 
-	// Loader prefetches data before component renders
+	// Loader prefetches categories and counts before component renders
+	// This ensures consistent server/client rendering and prevents hydration mismatches
 	loader: async ({ context: { queryClient } }) => {
-		// Ensure data is loaded before component renders
-		await queryClient.ensureQueryData(categoriesQueryOptions());
+		// Prefetch all data to ensure consistent server/client rendering
+		await Promise.all([
+			queryClient.ensureQueryData(categoriesQueryOptions()),
+			queryClient.ensureQueryData(productCategoryCountsQueryOptions()),
+		]);
 	},
 });
 
 function RouteComponent() {
-	// Use suspense queries - data is guaranteed to be loaded by the loader
-	const { data: categoriesData } = useSuspenseQuery(categoriesQueryOptions());
+	// Load categories with Suspense (fast - guaranteed to be loaded by loader)
+	const { data: categories } = useSuspenseQuery(categoriesQueryOptions());
+
+	// Load counts separately with regular query (slower - streams in)
+	const { data: counts } = useQuery(productCategoryCountsQueryOptions());
+
+	// Merge categories with counts efficiently
+	// Using useMemo to prevent unnecessary recalculations when dependencies haven't changed
+	const categoriesWithCounts = useMemo((): CategoryWithCount[] => {
+		return categories.map((category) => ({
+			...category,
+			productCount: counts?.[category.slug] ?? null, // null = still loading
+		}));
+	}, [categories, counts]);
 
 	// Entity manager configuration
-	const entityManagerConfig = {
-		queryKey: ["bfloorCategories"],
-		queryFn: getAllProductCategories,
-		createFn: async (data: { data: CategoryFormData }) => {
-			// Move staging images to final location before creating category
-			let finalImage = data.data.image || "";
-			if (finalImage?.startsWith("staging/")) {
-				try {
-					console.log("🚀 Moving category image from staging:", finalImage);
-					const moveResult = await moveStagingImages({
-						data: {
-							imagePaths: [finalImage],
-							finalFolder: "categories",
-							slug: data.data.slug,
-							productName: data.data.name,
-						},
-					});
-
-					if (moveResult?.pathMap?.[finalImage]) {
-						finalImage = moveResult.pathMap[finalImage];
-						console.log("✅ Category image moved to:", finalImage);
-					} else if (
-						moveResult?.movedImages &&
-						moveResult.movedImages.length > 0
-					) {
-						finalImage = moveResult.movedImages[0];
-						console.log("✅ Category image moved to:", finalImage);
-					}
-
-					if (moveResult?.failedImages && moveResult.failedImages.length > 0) {
-						console.warn(
-							"⚠️ Category image failed to move:",
-							moveResult.failedImages,
-						);
-						toast.warning(
-							"Изображение загружено, но не перемещено. Оно будет очищено автоматически.",
-						);
-					}
-				} catch (moveError) {
-					console.error("❌ Failed to move category image:", moveError);
-					toast.warning(
-						"Изображение загружено, но не перемещено. Оно будет очищено автоматически.",
-					);
-				}
-			}
-
-			await createProductCategory({
-				data: {
-					...data.data,
-					image: finalImage,
-				},
-			});
-		},
-		updateFn: async (data: { id: number; data: CategoryFormData }) => {
-			// Move staging images to final location before updating category
-			let finalImage = data.data.image || "";
-			if (finalImage?.startsWith("staging/")) {
-				try {
-					console.log("🚀 Moving category image from staging:", finalImage);
-					const moveResult = await moveStagingImages({
-						data: {
-							imagePaths: [finalImage],
-							finalFolder: "categories",
-							slug: data.data.slug,
-							productName: data.data.name,
-						},
-					});
-
-					if (moveResult?.pathMap?.[finalImage]) {
-						finalImage = moveResult.pathMap[finalImage];
-						console.log("✅ Category image moved to:", finalImage);
-					} else if (
-						moveResult?.movedImages &&
-						moveResult.movedImages.length > 0
-					) {
-						finalImage = moveResult.movedImages[0];
-						console.log("✅ Category image moved to:", finalImage);
-					}
-
-					if (moveResult?.failedImages && moveResult.failedImages.length > 0) {
-						console.warn(
-							"⚠️ Category image failed to move:",
-							moveResult.failedImages,
-						);
-						toast.warning(
-							"Изображение загружено, но не перемещено. Оно будет очищено автоматически.",
-						);
-					}
-				} catch (moveError) {
-					console.error("❌ Failed to move category image:", moveError);
-					toast.warning(
-						"Изображение загружено, но не перемещено. Оно будет очищено автоматически.",
-					);
-				}
-			}
-
-			await updateProductCategory({
-				data: {
-					id: data.id,
-					data: {
-						...data.data,
-						image: finalImage,
-					},
-				},
-			});
-		},
-		deleteFn: async (data: { id: number }) => {
-			await deleteProductCategory({ data });
-		},
-		entityName: "категория",
-		entityNamePlural: "категории",
-		emptyStateEntityType: "categories",
-		defaultFormData: {
-			name: "",
-			slug: "",
-			parentSlug: null,
-			image: "",
-			isActive: true,
-		} as CategoryFormData,
-		formFields: CategoryFormFields,
-		renderList: CategoryList,
-	};
+	// Using useMemo to prevent recreation on every render
+	const entityManagerConfig = useMemo(
+		(): EntityManagerConfig<CategoryWithCount, CategoryFormData> => ({
+			queryKey: ["bfloorCategories"],
+			// Wrapper function to match expected return type (though data is passed directly)
+			queryFn: async (): Promise<CategoryWithCount[]> => {
+				const cats = await getAllProductCategories();
+				// Map to CategoryWithCount with null counts (will be populated by counts query)
+				return cats.map((cat) => ({
+					...cat,
+					productCount: null,
+				}));
+			},
+			createFn: async (data: { data: CategoryFormData }) => {
+				await createProductCategory({ data: data.data });
+			},
+			updateFn: async (data: { id: number; data: CategoryFormData }) => {
+				await updateProductCategory({ data });
+			},
+			deleteFn: async (data: { id: number }) => {
+				await deleteProductCategory({ data });
+			},
+			entityName: "категория",
+			entityNamePlural: "категории",
+			emptyStateEntityType: "categories",
+			defaultFormData: {
+				name: "",
+				slug: "",
+				parentSlug: null,
+				image: "",
+				isActive: true,
+			} as CategoryFormData,
+			formFields: CategoryFormFields,
+			renderList: CategoryList,
+		}),
+		[], // Empty deps - config is stable
+	);
 
 	return (
 		<div className="px-6 py-6">
 			<DashboardEntityManager
 				config={entityManagerConfig}
-				data={categoriesData || []}
+				data={categoriesWithCounts}
 			/>
 		</div>
 	);
