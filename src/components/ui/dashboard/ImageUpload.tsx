@@ -14,7 +14,14 @@ import {
 	useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import {
+	useCallback,
+	useEffect,
+	useId,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { toast } from "sonner";
 import { ASSETS_BASE_URL } from "~/constants/urls";
 import { cleanupStagingImages } from "~/server_functions/dashboard/store/cleanupStagingImages";
@@ -152,11 +159,27 @@ export function ImageUpload({
 	// Target max uploaded size (~700KB)
 	const TARGET_MAX_BYTES = 700 * 1024;
 	const [isUploading, setIsUploading] = useState(false);
-	const [imageList, setImageList] = useState<string[]>([]);
+
+	// Derive imageList directly from currentImages prop - no useEffect needed
+	const imageList = useMemo(() => {
+		if (!currentImages) return [];
+		return currentImages
+			.split(",")
+			.map((img) => img.trim())
+			.filter(Boolean);
+	}, [currentImages]);
+
 	const [showTextarea, setShowTextarea] = useState(false);
-	const [textareaValue, setTextareaValue] = useState<string>(
-		currentImages || "",
-	); // Local state for textarea
+	// Local state for textarea when user is editing
+	const [localTextareaValue, setLocalTextareaValue] = useState<string | null>(
+		null,
+	);
+
+	// Derive textarea value: use local state if editing, otherwise use currentImages prop
+	const textareaValue =
+		showTextarea && localTextareaValue !== null
+			? localTextareaValue
+			: currentImages || "";
 	const [isDragging, setIsDragging] = useState(false);
 	const [isPasting, setIsPasting] = useState(false);
 	const [imageSizes, setImageSizes] = useState<Map<string, number>>(new Map()); // File sizes fetched from R2 server
@@ -208,118 +231,77 @@ export function ImageUpload({
 		[productName],
 	);
 
-	// Parse comma-separated string into array
-	// Use a ref to track previous currentImages to avoid unnecessary updates
-	const prevCurrentImagesRef = useRef<string>("");
-	// Debounce timeout for sync operations (console.log, cleanup)
-	const syncDebounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	// Reset local textarea value when textarea is hidden or currentImages changes externally
+	// This ensures the textarea shows the correct value when reopened
+	const prevShowTextareaRef = useRef(showTextarea);
+	const prevCurrentImagesRef = useRef(currentImages);
 
 	useEffect(() => {
-		// Only update if currentImages actually changed
-		if (prevCurrentImagesRef.current === currentImages) {
-			return;
+		if (!showTextarea && prevShowTextareaRef.current) {
+			// Textarea was just hidden - reset local state
+			setLocalTextareaValue(null);
 		}
 
-		prevCurrentImagesRef.current = currentImages || "";
+		if (currentImages !== prevCurrentImagesRef.current && !showTextarea) {
+			// currentImages changed externally and textarea is hidden - reset local state
+			setLocalTextareaValue(null);
+		}
 
-		const images = currentImages
-			? currentImages
-					.split(",")
-					.map((img) => img.trim())
-					.filter(Boolean)
-			: [];
+		prevShowTextareaRef.current = showTextarea;
+		prevCurrentImagesRef.current = currentImages;
+	}, [showTextarea, currentImages]);
 
-		// Update UI state immediately for responsiveness
-		setImageList(images);
-
-		// Only sync textarea value if it differs (to avoid overwriting user's current typing)
-		setTextareaValue((prev) => {
-			const newValue = currentImages || "";
-			return prev !== newValue ? newValue : prev;
+	// Clean up sizes and staged tracking when images are removed
+	useEffect(() => {
+		// Clean up sizes for images no longer in the list
+		setImageSizes((prev) => {
+			const newMap = new Map(prev);
+			for (const [imagePath] of newMap) {
+				if (!imageList.includes(imagePath)) {
+					newMap.delete(imagePath);
+					fetchedImagesRef.current.delete(imagePath);
+				}
+			}
+			return newMap;
 		});
 
-		// Debounce the sync operations (console.log and cleanup) to avoid running on every keystroke
-		if (syncDebounceTimeoutRef.current) {
-			clearTimeout(syncDebounceTimeoutRef.current);
+		// Update staged images tracking
+		stagedImagesRef.current = new Set(
+			imageList.filter((img) => img.startsWith("staging/")),
+		);
+	}, [imageList]);
+
+	// Fetch metadata for new images on-demand
+	const fetchMetadataForImage = useCallback(async (image: string) => {
+		if (fetchedImagesRef.current.has(image)) {
+			return; // Already fetched
 		}
 
-		syncDebounceTimeoutRef.current = setTimeout(() => {
-			console.log("Syncing imageList from currentImages:", {
-				currentImages,
-				images,
+		fetchedImagesRef.current.add(image);
+
+		try {
+			const metadata = await getImageMetadata({
+				data: { filename: image },
 			});
-
-			// Clean up sizes and fetched tracking for images that are no longer in the list
-			setImageSizes((prev) => {
-				const newMap = new Map(prev);
-				// Remove sizes for images that are no longer in the list
-				for (const [imagePath] of newMap) {
-					if (!images.includes(imagePath)) {
-						newMap.delete(imagePath);
-						fetchedImagesRef.current.delete(imagePath);
-					}
-				}
-				return newMap;
-			});
-
-			// Update staged images tracking - only track images that are actually in staging
-			// Images that come from currentImages (from database) are not staged
-			stagedImagesRef.current = new Set(
-				images.filter((img) => img.startsWith("staging/")),
-			);
-		}, 500);
-	}, [currentImages]);
-
-	// Fetch metadata from R2 server for all images in the list
-	useEffect(() => {
-		const fetchMetadataForImages = async () => {
-			// Only fetch for images that we haven't fetched yet
-			const imagesNeedingMetadata = imageList.filter(
-				(image) => !fetchedImagesRef.current.has(image),
-			);
-
-			if (imagesNeedingMetadata.length === 0) {
-				return;
-			}
-
-			// Mark these images as being fetched to prevent duplicate requests
-			imagesNeedingMetadata.forEach((image) => {
-				fetchedImagesRef.current.add(image);
-			});
-
-			// Fetch metadata for all images in parallel from R2
-			const metadataPromises = imagesNeedingMetadata.map(async (image) => {
-				try {
-					const metadata = await getImageMetadata({
-						data: { filename: image },
-					});
-					if (metadata) {
-						return { image, size: metadata.size };
-					}
-				} catch (error) {
-					console.warn(`Failed to fetch metadata from R2 for ${image}:`, error);
-					// Remove from fetched set on error so we can retry
-					fetchedImagesRef.current.delete(image);
-				}
-				return null;
-			});
-
-			const results = await Promise.all(metadataPromises);
-
-			// Update sizes map with metadata fetched from R2 server
-			setImageSizes((prev) => {
-				const newMap = new Map(prev);
-				results.forEach((result) => {
-					if (result) {
-						newMap.set(result.image, result.size);
-					}
+			if (metadata) {
+				setImageSizes((prev) => {
+					const newMap = new Map(prev);
+					newMap.set(image, metadata.size);
+					return newMap;
 				});
-				return newMap;
-			});
-		};
+			}
+		} catch (error) {
+			console.warn(`Failed to fetch metadata from R2 for ${image}:`, error);
+			fetchedImagesRef.current.delete(image);
+		}
+	}, []);
 
-		fetchMetadataForImages();
-	}, [imageList]);
+	// Fetch metadata for all images in the list
+	useEffect(() => {
+		imageList.forEach((image) => {
+			fetchMetadataForImage(image);
+		});
+	}, [imageList, fetchMetadataForImage]);
 
 	// --- Client-side image compression & WebP conversion ---
 	const compressToWebP = useCallback(async (file: File): Promise<File> => {
@@ -544,12 +526,9 @@ export function ImageUpload({
 								stagedImages: Array.from(stagedImagesRef.current),
 							});
 
-							// Update local state immediately for instant preview
-							setImageList(newImages);
-							// File size will be fetched from R2 server via useEffect
-
-							// Update parent with new images
+							// Update parent with new images - this will update currentImages prop, which will update imageList via useMemo
 							onImagesChange(newImagesString);
+							// File size will be fetched from R2 server via useEffect
 
 							// IMPORTANT: Reset uploading state after successful upload
 							setIsUploading(false);
@@ -846,9 +825,7 @@ export function ImageUpload({
 			return newMap;
 		});
 
-		// Update local state immediately for instant preview
-		setImageList(newImages);
-		// Update parent with new list (no need to track deleted images anymore)
+		// Update parent with new list - this will update currentImages prop, which will update imageList via useMemo
 		onImagesChange(newImagesString);
 
 		// Immediately delete from R2 storage
@@ -880,8 +857,8 @@ export function ImageUpload({
 	const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
 		const newValue = e.target.value;
 		// Update local state immediately so typing feels responsive
-		setTextareaValue(newValue);
-		// Update parent immediately - the sync operations are debounced in useEffect
+		setLocalTextareaValue(newValue);
+		// Update parent immediately
 		onImagesChange(newValue);
 	};
 
@@ -893,7 +870,7 @@ export function ImageUpload({
 			const newIndex = imageList.indexOf(over.id as string);
 
 			const newImages = arrayMove(imageList, oldIndex, newIndex);
-			setImageList(newImages); // Update local state immediately for instant preview
+			// Update parent - this will update currentImages prop, which will update imageList via useMemo
 			onImagesChange(newImages.join(", "));
 		}
 	};
@@ -905,11 +882,6 @@ export function ImageUpload({
 	// Cleanup staged images when component unmounts (drawer closes)
 	useEffect(() => {
 		return () => {
-			// Cleanup debounce timeout
-			if (syncDebounceTimeoutRef.current) {
-				clearTimeout(syncDebounceTimeoutRef.current);
-			}
-
 			// Cleanup staged images on unmount
 			const stagedImages = Array.from(stagedImagesRef.current);
 			if (stagedImages.length > 0) {

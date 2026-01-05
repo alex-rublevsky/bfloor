@@ -32,6 +32,7 @@ import { getTotalProductsCount } from "~/server_functions/dashboard/getTotalProd
 import { getTotalStoreLocationsCount } from "~/server_functions/dashboard/getTotalStoreLocationsCount";
 import { getAllOrders } from "~/server_functions/dashboard/orders/getAllOrders";
 import { getAllProducts } from "~/server_functions/dashboard/store/getAllProducts";
+import { getProductBySlug as getDashboardProductBySlug } from "~/server_functions/dashboard/store/getProductBySlug";
 import { getAllStoreLocations } from "~/server_functions/dashboard/storeLocations/getAllStoreLocations";
 import { getStoreData } from "~/server_functions/store/getAllProducts";
 import { getAttributeValuesForFiltering } from "~/server_functions/store/getAttributeValuesForFiltering";
@@ -206,6 +207,26 @@ export const productQueryOptions = (productId: string) =>
 		retry: false, // Don't retry on error - fail fast for 404s
 		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - products cached aggressively
 		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Dashboard product by ID query options
+ * Used for: /dashboard/products/$productId/edit route
+ *
+ * Cache Strategy: Moderate caching for edit pages
+ * - Product cached for 5 minutes (fresh for editing)
+ * - Kept in memory for 1 day
+ * - Manual invalidation after product updates
+ */
+export const dashboardProductQueryOptions = (productId: number) =>
+	queryOptions({
+		queryKey: ["bfloorDashboardProduct", productId],
+		queryFn: async () => getDashboardProductBySlug({ data: { id: productId } }),
+		staleTime: 1000 * 60 * 5, // 5 minutes - fresh for editing
+		gcTime: 1000 * 60 * 60 * 24, // 1 day - keep in memory
+		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
 	});

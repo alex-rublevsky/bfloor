@@ -9,12 +9,16 @@ import {
 	variationAttributes,
 } from "~/schema";
 import type { ProductFormData } from "~/types";
+import { getStorageBucket } from "~/utils/storage";
 import { validateAttributeValues } from "~/utils/validateAttributeValues";
 import { moveStagingImages } from "./moveStagingImages";
 
 export const createProduct = createServerFn({ method: "POST" })
 	.inputValidator((data: ProductFormData) => data)
 	.handler(async ({ data }) => {
+		// Track moved images for cleanup on error (declared outside try for catch access)
+		let movedImagePaths: string[] = [];
+
 		try {
 			const db = DB();
 			const productData = data;
@@ -44,7 +48,24 @@ export const createProduct = createServerFn({ method: "POST" })
 				throw new Error("A product with this slug already exists");
 			}
 
-			// Process images - move staging images to final location before saving
+			// Validate standardized attribute values BEFORE moving images
+			// This prevents orphaned images if validation fails
+			if (productData.attributes?.length) {
+				const validationErrors = await validateAttributeValues(
+					db,
+					productData.attributes,
+				);
+
+				if (validationErrors.length > 0) {
+					setResponseStatus(400);
+					const errorMessages = validationErrors
+						.map((err) => err.error)
+						.join("; ");
+					throw new Error(`Ошибки валидации атрибутов: ${errorMessages}`);
+				}
+			}
+
+			// Process images - move staging images to final location after validation passes
 			let imageString = productData.images?.trim() || "";
 
 			// Parse image paths and move staging images to final location
@@ -77,6 +98,8 @@ export const createProduct = createServerFn({ method: "POST" })
 							(path) => moveResult.pathMap?.[path] || path,
 						);
 						imageString = updatedPaths.join(", ");
+						// Track moved images for potential cleanup
+						movedImagePaths = Object.values(moveResult.pathMap);
 					}
 				}
 			}
@@ -87,22 +110,6 @@ export const createProduct = createServerFn({ method: "POST" })
 				: [];
 			const imagesJson =
 				imagesArray.length > 0 ? JSON.stringify(imagesArray) : "";
-
-			// Validate standardized attribute values before saving
-			if (productData.attributes?.length) {
-				const validationErrors = await validateAttributeValues(
-					db,
-					productData.attributes,
-				);
-
-				if (validationErrors.length > 0) {
-					setResponseStatus(400);
-					const errorMessages = validationErrors
-						.map((err) => err.error)
-						.join("; ");
-					throw new Error(`Ошибки валидации атрибутов: ${errorMessages}`);
-				}
-			}
 
 			// Convert attributes array back to object format for database storage
 			let attributesJson = null;
@@ -211,7 +218,40 @@ export const createProduct = createServerFn({ method: "POST" })
 			};
 		} catch (error) {
 			console.error("Error creating product:", error);
+
+			// Cleanup: If images were moved but product creation failed, delete the moved images
+			// This prevents orphaned images in the final location
+			if (movedImagePaths.length > 0) {
+				try {
+					const bucket = getStorageBucket();
+					await Promise.allSettled(
+						movedImagePaths.map(async (imagePath) => {
+							try {
+								await bucket.delete(imagePath);
+								console.log(`Cleaned up orphaned image: ${imagePath}`);
+							} catch (deleteError) {
+								console.warn(
+									`Failed to cleanup orphaned image ${imagePath}:`,
+									deleteError,
+								);
+							}
+						}),
+					);
+				} catch (cleanupError) {
+					console.error("Error during image cleanup:", cleanupError);
+					// Don't throw - cleanup failure shouldn't mask the original error
+				}
+			}
+
+			// Preserve the original error message if it's a validation error
+			if (error instanceof Error && error.message.includes("Ошибки валидации")) {
+				setResponseStatus(400);
+				throw error;
+			}
+
 			setResponseStatus(500);
-			throw new Error("Failed to create product");
+			throw new Error(
+				error instanceof Error ? error.message : "Failed to create product",
+			);
 		}
 	});
