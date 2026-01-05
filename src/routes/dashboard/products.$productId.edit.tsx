@@ -29,7 +29,6 @@ import {
 import { deleteProduct } from "~/server_functions/dashboard/store/deleteProduct";
 import { deleteProductImage } from "~/server_functions/dashboard/store/deleteProductImage";
 import { getProductBySlug } from "~/server_functions/dashboard/store/getProductBySlug";
-import { moveStagingImages } from "~/server_functions/dashboard/store/moveStagingImages";
 import { updateProduct } from "~/server_functions/dashboard/store/updateProduct";
 import type {
 	ProductAttributeFormData,
@@ -346,41 +345,6 @@ function EditProductPage() {
 		setError("");
 
 		try {
-			// Handle image deletion and staging image movement (same logic as create)
-			const images = editFormData.images
-				? editFormData.images
-						.split(",")
-						.map((img) => img.trim())
-						.filter(Boolean)
-				: [];
-			const stagingImages = images.filter((img) => img.startsWith("staging/"));
-
-			let finalImagePaths = images;
-			if (stagingImages.length > 0) {
-				try {
-					const moveResult = await moveStagingImages({
-						data: {
-							imagePaths: stagingImages,
-							finalFolder: "products",
-							categorySlug: editFormData.categorySlug,
-							productName: editFormData.name,
-							slug: editFormData.slug,
-						},
-					});
-
-					if (moveResult?.movedImages && moveResult?.pathMap) {
-						finalImagePaths = images.map(
-							(img) => moveResult.pathMap?.[img] || img,
-						);
-					}
-				} catch (moveError) {
-					console.error("Failed to move staging images:", moveError);
-					toast.warning(
-						"Изображения загружены, но не перемещены. Они будут очищены автоматически.",
-					);
-				}
-			}
-
 			// Delete removed images
 			if (editDeletedImages.length > 0) {
 				const deletePromises = editDeletedImages.map((filename) =>
@@ -410,7 +374,6 @@ function EditProductPage() {
 
 			const submissionData = {
 				...editFormData,
-				images: finalImagePaths.join(", "),
 				variations: formattedVariations,
 				storeLocationIds: editSelectedStoreLocationIds,
 			};
