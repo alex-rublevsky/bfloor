@@ -106,7 +106,10 @@ export const createProduct = createServerFn({ method: "POST" })
 
 			// Convert comma-separated string to JSON array
 			const imagesArray = imageString
-				? imageString.split(",").map((img) => img.trim()).filter(Boolean)
+				? imageString
+						.split(",")
+						.map((img) => img.trim())
+						.filter(Boolean)
 				: [];
 			const imagesJson =
 				imagesArray.length > 0 ? JSON.stringify(imagesArray) : "";
@@ -244,7 +247,10 @@ export const createProduct = createServerFn({ method: "POST" })
 			}
 
 			// Preserve the original error message if it's a validation error
-			if (error instanceof Error && error.message.includes("Ошибки валидации")) {
+			if (
+				error instanceof Error &&
+				error.message.includes("Ошибки валидации")
+			) {
 				setResponseStatus(400);
 				throw error;
 			}
