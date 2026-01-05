@@ -374,6 +374,7 @@ h1 {
 	font-weight: 500;
 	line-height: 1;
 	letter-spacing: 1.2%;
+	color: var(--foreground);
 }
 
 h2 {
@@ -381,6 +382,7 @@ h2 {
 	font-weight: 400;
 	line-height: 1.2;
 	letter-spacing: 1.2%;
+	color: var(--foreground);
 }
 
 h3 {
@@ -388,6 +390,7 @@ h3 {
 	line-height: 1.2;
 	font-weight: 300;
 	letter-spacing: 1.2%;
+	color: var(--foreground);
 }
 
 h4 {
@@ -395,6 +398,7 @@ h4 {
 	line-height: 1.2;
 	font-weight: 300;
 	letter-spacing: 1.2%;
+	color: var(--foreground);
 }
 
 h5 {
@@ -402,6 +406,7 @@ h5 {
 	line-height: 1.2;
 	font-weight: 300;
 	letter-spacing: 1.2%;
+	color: var(--foreground);
 }
 
 h6 {
@@ -409,10 +414,16 @@ h6 {
 	line-height: 1.2;
 	font-weight: 300;
 	letter-spacing: 1.2%;
+	color: var(--foreground);
 }
 
 p {
 	line-height: 1.5;
+	color: var(--foreground);
+}
+
+span {
+	color: var(--foreground);
 }
 
 .largeDescription {
@@ -544,10 +555,12 @@ p {
 *::-webkit-scrollbar {
 	width: 12px;
 	height: 12px;
+	background: transparent; /* Ensure scrollbar itself is transparent */
 }
 
 *::-webkit-scrollbar-track {
-	background: transparent;
+	background: transparent; /* This creates the overlay effect */
+	background-color: transparent; /* Explicit transparent background */
 }
 
 *::-webkit-scrollbar-thumb {
@@ -577,11 +590,19 @@ p {
 		-webkit-appearance: none;
 		width: 12px;
 		height: 12px;
+		background: transparent;
+	}
+
+	*::-webkit-scrollbar-track {
+		background: transparent;
+		background-color: transparent;
 	}
 
 	*::-webkit-scrollbar-thumb {
 		background-color: var(--primary);
 		border-radius: 10px;
+		border: 2px solid transparent;
+		background-clip: padding-box;
 		cursor: grab;
 	}
 
@@ -608,14 +629,46 @@ p {
 }
 ::view-transition {
 	navigation: auto;
+	/* Lower the view transition layer below the product info card */
+	z-index: 1000;
 }
 
 /* View transition for elements that actually transition */
 /* Remove root animation disabling to allow view transitions to work */
 ::view-transition-old(root),
 ::view-transition-new(root) {
-	animation-duration: 0.3s;
-	animation-timing-function: ease-in-out;
+	animation-duration: 0.5s;
+	animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smoother, slower transitions for product images */
+::view-transition-old(product-image),
+::view-transition-new(product-image) {
+	animation-duration: 0.6s;
+	animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Specific smooth easing for image transitions */
+::view-transition-old(*),
+::view-transition-new(*) {
+	animation-duration: 0.5s;
+	animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Control z-index stacking during view transitions */
+/* Ensure product images stay below the product info card */
+::view-transition-group(product-image) {
+	z-index: 0;
+}
+
+::view-transition-old(product-image),
+::view-transition-new(product-image) {
+	z-index: 0;
+}
+
+/* Product info container should be at the highest level in view transitions */
+::view-transition-group(product-info-container) {
+	z-index: 100;
 }
 
 /* Enable text selection in drawer content */
@@ -646,54 +699,88 @@ input[type="number"] {
 	appearance: textfield;
 }
 
-/* Catalog Dropdown Menu - Pure CSS hover with hover triangle (desktop only) */
-/* Hover triangle - invisible bridge between button and dropdown menu */
-/* Safe triangle implementation for catalog dropdown */
-/* Uses SVG triangle with pointer-events to create safe zone between button and menu */
-.catalog-dropdown-menu {
-	width: 24rem;
+/* Modern Dropdown Menu - CSS :hover for desktop, data-open for mobile */
+.dropdown-container {
+	position: relative;
+}
+
+.dropdown-menu {
+	position: absolute;
+	left: 0;
+	top: 100%;
+	margin-top: 0.5rem;
+	/* Content-based width with minimum constraint */
+	width: fit-content;
+	min-width: 12rem;
+	max-width: 24rem;
+	/* Ensure solid background color */
 	background-color: var(--background);
-	border: 1px solid var(--border);
+	border: 1px solid oklch(var(--border));
+	outline: 1px solid var(--border);
 	border-radius: 0.5rem;
 	box-shadow:
 		0 10px 15px -3px rgba(0, 0, 0, 0.1),
 		0 4px 6px -2px rgba(0, 0, 0, 0.05);
-	pointer-events: none;
-	transition:
-		opacity 0.2s ease-in-out,
-		visibility 0.2s ease-in-out;
 	z-index: 50;
 	overflow: hidden;
-	/* Two-column layout using CSS columns - items flow naturally and only take height they need */
+	/* Two-column layout using CSS columns */
 	column-count: 2;
 	column-gap: 0;
+	/* Modern animation using transform + opacity for better performance */
+	opacity: 0;
+	transform: translateY(-4px) scale(0.98);
+	pointer-events: none;
+	transition:
+		opacity var(--transition-faster-duration) var(--transition-faster-easing),
+		transform var(--transition-faster-duration) var(--transition-faster-easing),
+		visibility 0s var(--transition-faster-duration);
+	visibility: hidden;
 }
 
-/* Enable pointer events when visible (opacity set inline) */
-.catalog-dropdown-menu[style*="opacity: 1"],
-.catalog-dropdown-menu[style*="opacity:1"] {
-	pointer-events: auto;
+/* Right-aligned dropdown variant */
+.dropdown-menu-right {
+	left: auto;
+	right: 0;
+}
+
+/* Single column variant - adjusts to content width */
+.catalog-dropdown-menu-single-column {
+	column-count: 1;
+	width: fit-content;
+	min-width: fit-content;
+	max-width: none;
 }
 
 /* Prevent menu items from breaking across columns */
-.catalog-dropdown-menu > * {
+.dropdown-menu > * {
 	break-inside: avoid;
 	page-break-inside: avoid;
 }
 
-/* Single column variant for menus that should not have columns */
-.catalog-dropdown-menu-single-column {
-	column-count: 1;
-	width: auto;
-	min-width: 16rem;
+/* Dropdown visible state - controlled by JavaScript */
+.dropdown-menu[data-open="true"] {
+	opacity: 1;
+	transform: translateY(0) scale(1);
+	pointer-events: auto;
+	visibility: visible;
+	/* Ensure background is solid when visible */
+	background-color: var(--background);
+	transition:
+		opacity var(--transition-faster-duration) var(--transition-faster-easing),
+		transform var(--transition-faster-duration) var(--transition-faster-easing),
+		visibility 0s;
 }
 
-@media (min-width: 1024px) {
-	/* Menu is controlled by JavaScript state, no CSS hover needed */
+/* Catalog dropdown specific styles - wider for multi-column layout */
+.catalog-dropdown-menu {
+	width: 24rem;
+	min-width: 24rem;
+	max-width: 24rem;
 }
 
+/* Hide catalog dropdown on mobile (handled by BottomNavBar) */
 @media (max-width: 1023px) {
-	.catalog-dropdown-menu {
+	.catalog-dropdown-container .catalog-dropdown-menu {
 		display: none;
 	}
 }
