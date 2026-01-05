@@ -1,15 +1,7 @@
-import {
-	IconBadgeTm,
-	IconBox,
-	IconCategory,
-	IconPackage,
-	IconTags,
-} from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ArrowLeftFromLine, LogOutIcon, MoreVertical } from "lucide-react";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
 	Drawer,
@@ -18,13 +10,13 @@ import {
 } from "~/components/ui/shared/Drawer";
 import { SearchInput } from "~/components/ui/shared/SearchInput";
 import { getActionButtonsForRoute } from "~/config/dashboardActionButtons";
-import { useHoverDropdown } from "~/hooks/useHoverDropdown";
 import { usePrefetch } from "~/hooks/usePrefetch";
 import { useSearchPlaceholderWithCount } from "~/hooks/useSearchPlaceholderWithCount";
 import { useCart } from "~/lib/cartContext";
 import { useClientSearch } from "~/lib/clientSearchContext";
 import {
 	categoriesQueryOptions,
+	productCategoryCountsQueryOptions,
 	userDataQueryOptions,
 } from "~/lib/queryOptions";
 import { signOut } from "~/utils/auth-client";
@@ -32,7 +24,17 @@ import { cn } from "~/utils/utils";
 import { CartDrawerContent } from "../store/CartDrawerContent";
 import { BottomNavBar } from "./BottomNavBar";
 import { Button } from "./Button";
-import { Icon } from "./Icon";
+import {
+	ArrowLeftFromLine,
+	Icon,
+	BadgeCheck as IconBadgeTm,
+	Box as IconBox,
+	FolderTree as IconCategory,
+	Package as IconPackage,
+	Tags as IconTags,
+	LogOut as LogOutIcon,
+	MoreVertical,
+} from "./Icon";
 import { Logo } from "./Logo";
 import { ActionButton, ActionButtons } from "./nav/NavBarActionButtons";
 import { SafeArea } from "./SafeArea";
@@ -121,25 +123,82 @@ const DropdownNavMenu = ({
 	};
 }) => {
 	const navigate = useNavigate();
-	const {
-		isOpen: open,
-		parentRef: parent,
-		childRef: child,
-		handleMouseEnter,
-		handleMouseLeave,
-	} = useHoverDropdown();
+	const [isOpen, setIsOpen] = useState(false);
+	const containerRef = useRef<HTMLDivElement>(null);
+	const menuRef = useRef<HTMLDivElement>(null);
+	const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	const userID = userData?.userID || "";
 	const userName = userData?.userName || "";
 	const userEmail = userData?.userEmail || "";
 	const userAvatar = userData?.userAvatar || "";
 
+	// Handle mouse enter - open dropdown
+	const handleMouseEnter = () => {
+		if (closeTimeoutRef.current) {
+			clearTimeout(closeTimeoutRef.current);
+			closeTimeoutRef.current = null;
+		}
+		setIsOpen(true);
+	};
+
+	// Handle mouse leave - close dropdown with small delay
+	const handleMouseLeave = () => {
+		closeTimeoutRef.current = setTimeout(() => {
+			setIsOpen(false);
+		}, 150);
+	};
+
+	// Handle click for mobile devices
+	const handleClick = (e: React.MouseEvent) => {
+		if (window.matchMedia("(hover: none)").matches) {
+			e.preventDefault();
+			setIsOpen((prev) => !prev);
+		}
+	};
+
+	// Close dropdown when clicking outside (mobile only)
+	useEffect(() => {
+		if (!isOpen) return;
+
+		const handleClickOutside = (event: MouseEvent) => {
+			if (
+				containerRef.current &&
+				!containerRef.current.contains(event.target as Node)
+			) {
+				setIsOpen(false);
+			}
+		};
+
+		if (window.matchMedia("(hover: none)").matches) {
+			document.addEventListener("mousedown", handleClickOutside);
+			return () => {
+				document.removeEventListener("mousedown", handleClickOutside);
+			};
+		}
+	}, [isOpen]);
+
+	// Cleanup timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (closeTimeoutRef.current) {
+				clearTimeout(closeTimeoutRef.current);
+			}
+		};
+	}, []);
+
 	return (
 		<div
-			ref={parent}
-			className="relative"
+			ref={containerRef}
+			className="dropdown-container"
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
+			onClick={handleClick}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					handleClick(e as unknown as React.MouseEvent);
+				}
+			}}
 			role="menu"
 		>
 			<button
@@ -148,26 +207,22 @@ const DropdownNavMenu = ({
 			>
 				<MoreVertical className="w-5 h-5" />
 			</button>
-			{/* Safe mouse area - SVG triangle */}
-			{open && parent.current && child.current && (
-				<SafeArea
-					anchor={parent.current}
-					submenu={child.current}
-					onMouseEnter={handleMouseEnter}
-				/>
-			)}
+			{/* Safe triangle bridge for gap between trigger and menu */}
+			{isOpen &&
+				containerRef.current &&
+				menuRef.current &&
+				window.matchMedia("(hover: hover)").matches && (
+					<SafeArea
+						anchor={containerRef.current}
+						submenu={menuRef.current}
+						onMouseEnter={handleMouseEnter}
+					/>
+				)}
 			{/* Dropdown menu - positioned below */}
 			<div
-				ref={child}
-				style={{
-					visibility: open ? "visible" : "hidden",
-					opacity: open ? 1 : 0,
-					position: "absolute",
-					right: 0,
-					top: "100%",
-					marginTop: "0.5rem",
-				}}
-				className="catalog-dropdown-menu catalog-dropdown-menu-single-column"
+				ref={menuRef}
+				className="dropdown-menu dropdown-menu-right catalog-dropdown-menu-single-column"
+				data-open={isOpen ? "true" : "false"}
 				onMouseEnter={handleMouseEnter}
 				onMouseLeave={handleMouseLeave}
 				role="menu"
@@ -175,19 +230,15 @@ const DropdownNavMenu = ({
 				{showUserInfo && (
 					<>
 						<div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-							<Avatar className="h-8 w-8 rounded-lg">
+							<Avatar className="h-8 w-8 rounded-lg flex-shrink-0">
 								<AvatarImage src={userAvatar} alt={userName || userID} />
 								<AvatarFallback className="rounded-lg">
 									{userName ? userName.charAt(0).toUpperCase() : "U"}
 								</AvatarFallback>
 							</Avatar>
-							<div className="grid flex-1 text-left text-sm leading-tight">
-								<span className="truncate font-medium">
-									{userName || userID}
-								</span>
-								<span className="truncate text-xs text-muted-foreground">
-									{userEmail}
-								</span>
+							<div className="text-left text-sm leading-tight whitespace-nowrap">
+								<div className="font-medium">{userName || userID}</div>
+								<div className="text-xs text-muted-foreground">{userEmail}</div>
 							</div>
 						</div>
 						<button
@@ -248,7 +299,7 @@ const DropdownNavMenu = ({
 
 // Cart Button Component (copied from CartNav)
 const CartButton = () => {
-	const { cartOpen, setCartOpen } = useCart();
+	const { cartOpen, setCartOpen, itemCount } = useCart();
 
 	return (
 		<Drawer open={cartOpen} onOpenChange={setCartOpen}>
@@ -256,12 +307,12 @@ const CartButton = () => {
 				<button
 					type="button"
 					onClick={() => setCartOpen(true)}
-					className="relative flex items-center justify-center text-accent hover:text-accent transition-standard cursor-pointer"
+					className="relative flex items-center justify-center text-accent hover:text-accent transition-standard cursor-pointer h-9"
 				>
 					{/* Cart SVG Icon */}
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
-						className="w-6 h-6"
+						className="h-7 w-auto"
 						fill="none"
 						viewBox="0 0 33 30"
 						aria-label="Корзина"
@@ -278,6 +329,15 @@ const CartButton = () => {
 						<circle cx="13.4453" cy="27.3013" r="2.5" fill="currentColor" />
 						<circle cx="26.4453" cy="27.3013" r="2.5" fill="currentColor" />
 					</svg>
+					{/* Cart Counter Badge */}
+					{itemCount > 0 && (
+						<span
+							className="absolute top-0 right-0.5 bg-accent text-background text-sm font-medium w-5 h-5 flex items-center justify-center -translate-y-1.5 translate-x-1.5"
+							style={{ borderRadius: "var(--radius-xs)" }}
+						>
+							{itemCount}
+						</span>
+					)}
 				</button>
 			</DrawerTrigger>
 			<DrawerContent>
@@ -287,7 +347,7 @@ const CartButton = () => {
 	);
 };
 
-// Reusable hover dropdown component
+// Modern hover dropdown component with safe triangle for gap bridging
 const HoverDropdown = ({
 	trigger,
 	children,
@@ -299,45 +359,95 @@ const HoverDropdown = ({
 	className?: string;
 	menuClassName?: string;
 }) => {
-	const {
-		isOpen: open,
-		parentRef: parent,
-		childRef: child,
-		handleMouseEnter,
-		handleMouseLeave,
-	} = useHoverDropdown();
+	const [isOpen, setIsOpen] = useState(false);
+	const containerRef = useRef<HTMLDivElement>(null);
+	const menuRef = useRef<HTMLDivElement>(null);
+	const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+	// Handle mouse enter - open dropdown
+	const handleMouseEnter = () => {
+		if (closeTimeoutRef.current) {
+			clearTimeout(closeTimeoutRef.current);
+			closeTimeoutRef.current = null;
+		}
+		setIsOpen(true);
+	};
+
+	// Handle mouse leave - close dropdown with small delay
+	const handleMouseLeave = () => {
+		closeTimeoutRef.current = setTimeout(() => {
+			setIsOpen(false);
+		}, 150); // Small delay to allow moving through safe triangle
+	};
+
+	// Handle click for mobile devices
+	const handleClick = (e: React.MouseEvent) => {
+		if (window.matchMedia("(hover: none)").matches) {
+			e.preventDefault();
+			setIsOpen((prev) => !prev);
+		}
+	};
+
+	// Close dropdown when clicking outside (mobile only)
+	useEffect(() => {
+		if (!isOpen) return;
+
+		const handleClickOutside = (event: MouseEvent) => {
+			if (
+				containerRef.current &&
+				!containerRef.current.contains(event.target as Node)
+			) {
+				setIsOpen(false);
+			}
+		};
+
+		if (window.matchMedia("(hover: none)").matches) {
+			document.addEventListener("mousedown", handleClickOutside);
+			return () => {
+				document.removeEventListener("mousedown", handleClickOutside);
+			};
+		}
+	}, [isOpen]);
+
+	// Cleanup timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (closeTimeoutRef.current) {
+				clearTimeout(closeTimeoutRef.current);
+			}
+		};
+	}, []);
 
 	return (
 		<div
-			ref={parent}
-			className={cn("relative", className)}
+			ref={containerRef}
+			className={cn("dropdown-container", className)}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
+			onClick={handleClick}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					handleClick(e as unknown as React.MouseEvent);
+				}
+			}}
 			role="menu"
 		>
-			{typeof trigger === "function" ? trigger(open) : trigger}
-			{open && parent.current && child.current && (
-				<SafeArea
-					anchor={parent.current}
-					submenu={child.current}
-					onMouseEnter={handleMouseEnter}
-				/>
-			)}
+			{typeof trigger === "function" ? trigger(isOpen) : trigger}
+			{/* Safe triangle bridge for gap between trigger and menu */}
+			{isOpen &&
+				containerRef.current &&
+				menuRef.current &&
+				window.matchMedia("(hover: hover)").matches && (
+					<SafeArea
+						anchor={containerRef.current}
+						submenu={menuRef.current}
+						onMouseEnter={handleMouseEnter}
+					/>
+				)}
 			<div
-				ref={child}
-				style={{
-					visibility: open ? "visible" : "hidden",
-					opacity: open ? 1 : 0,
-					position: "absolute",
-					left: 0,
-					top: "100%",
-					marginTop: "0.5rem",
-					...(menuClassName.includes("!w-fit") && {
-						width: "fit-content",
-						minWidth: "fit-content",
-					}),
-				}}
-				className={cn("catalog-dropdown-menu", menuClassName)}
+				ref={menuRef}
+				className={cn("dropdown-menu", menuClassName)}
+				data-open={isOpen ? "true" : "false"}
 				onMouseEnter={handleMouseEnter}
 				onMouseLeave={handleMouseLeave}
 				role="menu"
@@ -352,7 +462,7 @@ const HoverDropdown = ({
 const AddressDropdown = () => {
 	return (
 		<HoverDropdown
-			menuClassName="!w-fit !min-w-fit columns-1"
+			menuClassName="catalog-dropdown-menu-single-column"
 			trigger={(isOpen) => (
 				<a
 					href="/contacts"
@@ -372,7 +482,7 @@ const AddressDropdown = () => {
 		>
 			<div className="px-4 py-3">
 				<div className="space-y-3 text-sm">
-					<div className="flex gap-3">
+					<div className="flex gap-6">
 						<div>
 							<div className="font-medium mb-1 whitespace-nowrap">
 								ул. Русская, 78
@@ -430,7 +540,7 @@ const AddressDropdown = () => {
 const PhoneDropdown = () => {
 	return (
 		<HoverDropdown
-			menuClassName="!w-fit !min-w-fit columns-1"
+			menuClassName="catalog-dropdown-menu-single-column"
 			trigger={(isOpen) => (
 				<a
 					href="tel:+79084466740"
@@ -449,7 +559,7 @@ const PhoneDropdown = () => {
 			)}
 		>
 			<div className="px-4 py-3">
-				<div className="flex gap-4 items-start">
+				<div className="flex gap-8 items-start">
 					{/* Left column - Contact info */}
 					<div className="space-y-2 text-sm">
 						<div>
@@ -488,7 +598,7 @@ const PhoneDropdown = () => {
 					{/* Right column - Social icons */}
 					<div className="flex flex-col gap-2 items-center">
 						<a
-							href="https://t.me/your_telegram"
+							href="https://t.me/beautyfloor"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="text-accent hover:opacity-80 transition-faster"
@@ -497,7 +607,7 @@ const PhoneDropdown = () => {
 							<Icon name="telegram" size={36} className="text-accent" />
 						</a>
 						<a
-							href="https://instagram.com/your_instagram"
+							href="https://www.instagram.com/beautyfloor_vl/"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="text-accent hover:opacity-80 transition-faster"
@@ -521,56 +631,118 @@ const PhoneDropdown = () => {
 	);
 };
 
-// Catalog Dropdown Component with safe triangle
+// Catalog Dropdown Component - with safe triangle for gap bridging
 const CatalogDropdown = () => {
-	const {
-		isOpen: open,
-		parentRef: parent,
-		childRef: child,
-		handleMouseEnter,
-		handleMouseLeave,
-	} = useHoverDropdown();
+	const [isOpen, setIsOpen] = useState(false);
+	const containerRef = useRef<HTMLDivElement>(null);
+	const menuRef = useRef<HTMLDivElement>(null);
+	const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	const { data: categories = [] } = useQuery({
 		...categoriesQueryOptions(),
 	});
 
+	// Load category counts separately (streams in after categories)
+	const { data: counts } = useQuery(productCategoryCountsQueryOptions());
+
 	// Filter active categories and sort by order
-	const activeCategories = categories
-		.filter((cat) => cat.isActive)
-		.sort((a, b) => a.order - b.order);
+	const activeCategories = useMemo(() => {
+		return categories
+			.filter((cat) => cat.isActive)
+			.sort((a, b) => a.order - b.order)
+			.map((category) => ({
+				...category,
+				productCount: counts?.[category.slug] ?? null, // null = still loading
+			}));
+	}, [categories, counts]);
+
+	// Handle mouse enter - open dropdown
+	const handleMouseEnter = () => {
+		if (closeTimeoutRef.current) {
+			clearTimeout(closeTimeoutRef.current);
+			closeTimeoutRef.current = null;
+		}
+		setIsOpen(true);
+	};
+
+	// Handle mouse leave - close dropdown with small delay
+	const handleMouseLeave = () => {
+		closeTimeoutRef.current = setTimeout(() => {
+			setIsOpen(false);
+		}, 150);
+	};
+
+	// Handle click for mobile devices
+	const handleClick = (e: React.MouseEvent) => {
+		if (window.matchMedia("(hover: none)").matches) {
+			e.preventDefault();
+			setIsOpen((prev) => !prev);
+		}
+	};
+
+	// Close dropdown when clicking outside (mobile only)
+	useEffect(() => {
+		if (!isOpen) return;
+
+		const handleClickOutside = (event: MouseEvent) => {
+			if (
+				containerRef.current &&
+				!containerRef.current.contains(event.target as Node)
+			) {
+				setIsOpen(false);
+			}
+		};
+
+		if (window.matchMedia("(hover: none)").matches) {
+			document.addEventListener("mousedown", handleClickOutside);
+			return () => {
+				document.removeEventListener("mousedown", handleClickOutside);
+			};
+		}
+	}, [isOpen]);
+
+	// Cleanup timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (closeTimeoutRef.current) {
+				clearTimeout(closeTimeoutRef.current);
+			}
+		};
+	}, []);
 
 	return (
 		<div
-			ref={parent}
-			className="relative catalog-dropdown-container"
+			ref={containerRef}
+			className="dropdown-container catalog-dropdown-container"
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
+			onClick={handleClick}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					handleClick(e as unknown as React.MouseEvent);
+				}
+			}}
 			role="menu"
 		>
 			<Button to="/store" variant="accent" size="sm">
 				Каталог
 			</Button>
-			{/* Safe mouse area - SVG triangle */}
-			{open && parent.current && child.current && (
-				<SafeArea
-					anchor={parent.current}
-					submenu={child.current}
-					onMouseEnter={handleMouseEnter}
-				/>
-			)}
-			{/* Dropdown menu - hidden by default, shown on hover (desktop only) */}
+			{/* Safe triangle bridge for gap between trigger and menu */}
+			{isOpen &&
+				containerRef.current &&
+				menuRef.current &&
+				window.matchMedia("(hover: hover)").matches && (
+					<SafeArea
+						anchor={containerRef.current}
+						submenu={menuRef.current}
+						onMouseEnter={handleMouseEnter}
+					/>
+				)}
+			{/* Dropdown menu - JS hover on desktop, JS state on mobile */}
 			<div
-				ref={child}
-				style={{
-					visibility: open ? "visible" : "hidden",
-					opacity: open ? 1 : 0,
-					position: "absolute",
-					left: 0,
-					top: "100%",
-					marginTop: "0.5rem",
-				}}
-				className="catalog-dropdown-menu"
+				ref={menuRef}
+				className="dropdown-menu catalog-dropdown-menu"
+				data-open={isOpen ? "true" : "false"}
 				onMouseEnter={handleMouseEnter}
 				onMouseLeave={handleMouseLeave}
 				role="menu"
@@ -585,14 +757,53 @@ const CatalogDropdown = () => {
 							key={category.slug}
 							to="/store"
 							search={{ category: category.slug }}
-							className="block px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-standard"
+							className="flex items-center justify-between gap-3 px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-standard"
 						>
-							{category.name}
+							<span>{category.name}</span>
+							{category.productCount !== null && (
+								<span className="text-xs opacity-70">
+									{category.productCount}
+								</span>
+							)}
 						</Link>
 					))
 				)}
 			</div>
 		</div>
+	);
+};
+
+// Dashboard search input component - extracted to reduce duplication
+const DashboardSearchInput = ({
+	placeholder,
+	searchTerm,
+	onSearchChange,
+	typedDashboardSearch,
+	setTypedDashboardSearch,
+	className = "w-full",
+}: {
+	placeholder: string;
+	searchTerm?: string;
+	onSearchChange?: (value: string) => void;
+	typedDashboardSearch: string;
+	setTypedDashboardSearch: (value: string) => void;
+	className?: string;
+}) => {
+	return (
+		<SearchInput
+			placeholder={placeholder}
+			value={
+				searchTerm !== undefined && onSearchChange
+					? searchTerm
+					: typedDashboardSearch
+			}
+			onChange={
+				searchTerm !== undefined && onSearchChange
+					? onSearchChange
+					: setTypedDashboardSearch
+			}
+			className={className}
+		/>
 	);
 };
 
@@ -703,19 +914,12 @@ export function NavBar({
 							{/* Search - takes all available space (dashboard) */}
 							{!isMiscPage && (
 								<div className="flex-1 min-w-0">
-									<SearchInput
+									<DashboardSearchInput
 										placeholder={dynamicPlaceholder}
-										value={
-											searchTerm !== undefined && onSearchChange
-												? searchTerm
-												: typedDashboardSearch
-										}
-										onChange={
-											searchTerm !== undefined && onSearchChange
-												? onSearchChange
-												: setTypedDashboardSearch
-										}
-										className="w-full"
+										searchTerm={searchTerm}
+										onSearchChange={onSearchChange}
+										typedDashboardSearch={typedDashboardSearch}
+										setTypedDashboardSearch={setTypedDashboardSearch}
 									/>
 								</div>
 							)}
@@ -755,19 +959,12 @@ export function NavBar({
 								{/* Search - takes available space (dashboard) */}
 								{!isMiscPage && (
 									<div className="flex-1 min-w-0">
-										<SearchInput
+										<DashboardSearchInput
 											placeholder={dynamicPlaceholder}
-											value={
-												searchTerm !== undefined && onSearchChange
-													? searchTerm
-													: typedDashboardSearch
-											}
-											onChange={
-												searchTerm !== undefined && onSearchChange
-													? onSearchChange
-													: setTypedDashboardSearch
-											}
-											className="w-full"
+											searchTerm={searchTerm}
+											onSearchChange={onSearchChange}
+											typedDashboardSearch={typedDashboardSearch}
+											setTypedDashboardSearch={setTypedDashboardSearch}
 										/>
 									</div>
 								)}
@@ -796,19 +993,12 @@ export function NavBar({
 						<div className="md:hidden w-full">
 							{/* Search - takes full available space (dashboard) */}
 							{!isMiscPage && (
-								<SearchInput
+								<DashboardSearchInput
 									placeholder={dynamicPlaceholder}
-									value={
-										searchTerm !== undefined && onSearchChange
-											? searchTerm
-											: typedDashboardSearch
-									}
-									onChange={
-										searchTerm !== undefined && onSearchChange
-											? onSearchChange
-											: setTypedDashboardSearch
-									}
-									className="w-full"
+									searchTerm={searchTerm}
+									onSearchChange={onSearchChange}
+									typedDashboardSearch={typedDashboardSearch}
+									setTypedDashboardSearch={setTypedDashboardSearch}
 								/>
 							)}
 						</div>
@@ -831,7 +1021,7 @@ export function NavBar({
 			<nav
 				style={{ viewTransitionName: "--persist-nav" }}
 				className={cn(
-					"sticky top-0 z-[100] bg-background/95 backdrop-blur-sm border-b border-border",
+					"sticky top-0 z-[10000] bg-background/95 backdrop-blur-sm border-b border-border",
 					className,
 				)}
 			>
