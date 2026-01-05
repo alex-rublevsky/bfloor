@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { Resend } from "resend";
-import { env, resolveSecret } from "~/utils/env";
+import { env } from "~/utils/env";
 
 interface CartItem {
 	productId: number;
@@ -356,11 +356,11 @@ export const sendOrderEmails = createServerFn({ method: "POST" })
 	})
 	.handler(async ({ data }) => {
 		try {
-			// Get the API key from Secrets Store
-			const resendApiKey = await resolveSecret(env.RESEND_API_KEY);
+			// Get the API key from environment variables
+			const resendApiKey = env.RESEND_API_KEY;
 
 			if (!resendApiKey) {
-				console.error("RESEND_API_KEY secret not found or empty");
+				console.error("RESEND_API_KEY not found or empty");
 				throw new Error(
 					"Email service configuration error - API key not found",
 				);

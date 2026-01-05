@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "~/utils/auth-middleware";
-import { env, resolveSecret } from "~/utils/env";
+import { env } from "~/utils/env";
 
 type User = {
 	id?: string;
@@ -20,27 +20,20 @@ type AuthContext = {
  * @param userEmail - The user's email address (normalized)
  * @returns true if the email matches any admin email, false otherwise
  */
-async function isAdminEmail(userEmail: string | null): Promise<boolean> {
+function isAdminEmail(userEmail: string | null): boolean {
 	if (!userEmail) {
 		return false;
 	}
 
-	// Resolve all admin emails from environment variables
-	const [superAdminEmail, adminEmail, adminEmail2, adminEmail3] =
-		await Promise.all([
-			resolveSecret(env.SUPER_ADMIN_EMAIL),
-			resolveSecret(env.ADMIN_EMAIL),
-			resolveSecret(env.ADMIN_EMAIL_2),
-			resolveSecret(env.ADMIN_EMAIL_3),
-		]);
-
-	// Normalize all admin emails (trim and lowercase)
+	// Get all admin emails from environment variables
 	const adminEmails = [
-		superAdminEmail?.trim().toLowerCase(),
-		adminEmail?.trim().toLowerCase(),
-		adminEmail2?.trim().toLowerCase(),
-		adminEmail3?.trim().toLowerCase(),
-	].filter((email): email is string => !!email); // Filter out null/undefined
+		env.SUPER_ADMIN_EMAIL,
+		env.ADMIN_EMAIL,
+		env.ADMIN_EMAIL_2,
+		env.ADMIN_EMAIL_3,
+	]
+		.filter((email): email is string => !!email) // Filter out null/undefined
+		.map((email) => email.trim().toLowerCase()); // Normalize (trim and lowercase)
 
 	// Check if user email matches any admin email
 	return adminEmails.includes(userEmail);
@@ -59,7 +52,7 @@ export const getUserData = createServerFn({ method: "GET" })
 
 		const userEmail = userEmailRaw?.trim().toLowerCase() ?? null;
 		const isAuthenticated = !!userEmail;
-		const isAdmin = isAuthenticated && (await isAdminEmail(userEmail));
+		const isAdmin = isAuthenticated && isAdminEmail(userEmail);
 
 		return {
 			userID: user?.id ?? null,
@@ -82,7 +75,7 @@ export const getAuthStatus = createServerFn({ method: "GET" })
 
 		const userEmail = userEmailRaw?.trim().toLowerCase() ?? null;
 		const isAuthenticated = !!userEmail;
-		const isAdmin = isAuthenticated && (await isAdminEmail(userEmail));
+		const isAdmin = isAuthenticated && isAdminEmail(userEmail);
 
 		return {
 			isAuthenticated,
