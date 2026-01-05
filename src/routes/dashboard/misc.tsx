@@ -1,6 +1,6 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useId, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
 import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
@@ -33,8 +33,9 @@ export const Route = createFileRoute("/dashboard/misc")({
 
 function RouteComponent() {
 	const queryClient = useQueryClient();
-	const createFormId = useId();
-	const editFormId = useId();
+	// Use static IDs to avoid hydration mismatch
+	const createFormId = "create-store-location-form";
+	const editFormId = "edit-store-location-form";
 
 	const { data: locations } = useSuspenseQuery(storeLocationsQueryOptions());
 
