@@ -97,7 +97,7 @@ function CheckoutScreen() {
 				// Order succeeded, but emails failed - still return success
 				return {
 					orderId: orderResult.orderId,
-					emailWarnings: ["Confirmation emails failed to send"],
+					emailWarnings: ["Не удалось отправить письма с подтверждением"],
 				};
 			}
 		},
@@ -105,13 +105,16 @@ function CheckoutScreen() {
 			// Show appropriate success message
 			if (emailWarnings && emailWarnings.length > 0) {
 				toast.warning(
-					`Order placed successfully! ${emailWarnings.join(", ")}. Our team will contact you shortly.`,
+					`Заказ успешно размещён! ${emailWarnings.join(", ")}. Наша команда свяжется с вами в ближайшее время.`,
 					{ duration: 5000 },
 				);
 			} else {
-				toast.success("Order placed and confirmation emails sent! 🎉", {
-					duration: 3000,
-				});
+				toast.success(
+					"Заказ размещён и письма с подтверждением отправлены! 🎉",
+					{
+						duration: 3000,
+					},
+				);
 			}
 
 			// Pass display-ready order data optimistically to success page
@@ -149,9 +152,13 @@ function CheckoutScreen() {
 			}, 1000);
 		},
 		onError: (error: Error) => {
-			toast.error(error.message || "Failed to place order. Please try again.", {
-				duration: 5000,
-			});
+			toast.error(
+				error.message ||
+					"Не удалось разместить заказ. Пожалуйста, попробуйте снова.",
+				{
+					duration: 5000,
+				},
+			);
 		},
 	});
 
@@ -160,7 +167,7 @@ function CheckoutScreen() {
 	// Handle button click
 	const handleButtonClick = () => {
 		if (cart.items.length === 0) {
-			toast.error("Your cart is empty");
+			toast.error("Ваша корзина пуста");
 		} else {
 			// Submit the form
 			const formElement = formRef.current;
@@ -175,18 +182,17 @@ function CheckoutScreen() {
 		if (isLoading) {
 			// Fun, descriptive loading messages
 			const loadingMessages = [
-				"✨ Sprinkling some magic on your order...",
-				"🎨 Preparing your beautiful items...",
-				"📦 Crafting your order with love...",
-				"🚀 Launching your order into the world...",
-				"💫 Working our creative magic...",
+				"✨ Добавляем немного волшебства в ваш заказ...",
+				"🎨 Подготавливаем ваши прекрасные товары...",
+				"📦 Создаём ваш заказ с любовью...",
+				"💫 Творим нашу магию...",
 			];
 			const randomMessage =
 				loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
 			return randomMessage;
 		}
-		if (cart.items.length === 0) return "Cart is empty";
-		return "Place Order";
+		if (cart.items.length === 0) return "Корзина пуста";
+		return "Оформить заказ";
 	};
 
 	// Get dynamic button variant based on state
@@ -219,7 +225,7 @@ function CheckoutScreen() {
 
 		// If cart is empty
 		if (cart.items.length === 0) {
-			toast.error("Your cart is empty");
+			toast.error("Ваша корзина пуста");
 			return;
 		}
 
@@ -257,22 +263,22 @@ function CheckoutScreen() {
 	return (
 		<div className="w-full px-4 pt-10 pb-20">
 			<div className="max-w-[2000px] mx-auto">
-				<h2 className="mb-4">Checkout</h2>
+				<h2 className="mb-4">Оформление заказа</h2>
 				<div className="flex flex-col lg:flex-row gap-8">
 					{/* Customer Information Form - Left Side */}
 					<div className="flex-1">
 						<form ref={formRef} onSubmit={handleSubmit}>
 							<p className="mb-8">
-								You will be contacted regarding payment options after placing
-								your order.
+								С вами свяжутся по поводу вариантов оплаты после размещения
+								вашего заказа.
 							</p>
 
 							<div className="mb-8">
 								<div className="mt-12">
-									<h3 className=" mb-4">Additional Information</h3>
+									<h3 className=" mb-4">Дополнительная информация</h3>
 									<div className="mb-6">
 										<h4 className="block text-sm font-medium mb-2">
-											Shipping Method
+											Способ доставки
 										</h4>
 										<div className="flex gap-4">
 											<Button
@@ -290,7 +296,7 @@ function CheckoutScreen() {
 												}
 												className="flex-1"
 											>
-												Standard Shipping
+												Стандартная доставка
 											</Button>
 											<Button
 												type="button"
@@ -307,7 +313,7 @@ function CheckoutScreen() {
 												}
 												className="flex-1"
 											>
-												Local Pickup
+												Самовывоз
 											</Button>
 										</div>
 									</div>
@@ -316,7 +322,7 @@ function CheckoutScreen() {
 											className="block text-sm font-medium mb-2"
 											htmlFor={notesId}
 										>
-											Order Notes
+											Примечания к заказу
 										</label>
 										<Textarea
 											id={notesId}
@@ -325,7 +331,7 @@ function CheckoutScreen() {
 											onChange={handleInputChange}
 											rows={4}
 											className="w-full p-2 border rounded-md"
-											placeholder="Any special instructions for your order?"
+											placeholder="Есть ли особые инструкции для вашего заказа?"
 										/>
 									</div>
 								</div>
@@ -334,25 +340,25 @@ function CheckoutScreen() {
 					</div>
 					{/* Order Summary - Right Side */}
 					<div className="lg:w-[27rem] lg:sticky lg:top-4 lg:self-start">
-						<h5>Summary</h5>
+						<h5>Итого</h5>
 						<div className="flex justify-between items-baseline my-2">
-							<span>Subtotal</span>
+							<span>Промежуточная сумма</span>
 							<span>CA${subtotal.toFixed(2)}</span>
 						</div>
 						{totalDiscount > 0 && (
 							<div className="flex justify-between items-baseline my-2 text-red-600">
-								<span>Discount</span>
+								<span>Скидка</span>
 								<span>-CA${totalDiscount.toFixed(2)}</span>
 							</div>
 						)}
 						<div className="flex justify-between items-baseline mb-4">
-							<p>Shipping</p>
+							<p>Доставка</p>
 							<p className="text-right text-muted-foreground">
-								To be discussed after order
+								Обсуждается после заказа
 							</p>
 						</div>
 						<div className="flex justify-between items-baseline text-xl mb-2 border-t pt-4">
-							<span>Total</span>
+							<span>Всего</span>
 							<h3 className="">CA${total.toFixed(2)}</h3>
 						</div>
 						<Button
@@ -367,7 +373,7 @@ function CheckoutScreen() {
 							{getButtonText()}
 						</Button>
 						<div className="mt-6 pt-4 border-t">
-							<h6>Order Items</h6>
+							<h6>Товары в заказе</h6>
 							{enrichedItems.map((item) => (
 								<div
 									key={`${item.productId}-${item.variationId || "default"}`}
@@ -383,7 +389,7 @@ function CheckoutScreen() {
 											/>
 										) : (
 											<div className="w-full h-full flex items-center justify-center text-muted-foreground">
-												No image
+												Нет изображения
 											</div>
 										)}
 									</div>
@@ -407,7 +413,7 @@ function CheckoutScreen() {
 												</p>
 											)}
 										<p className="text-sm text-muted-foreground">
-											Quantity: {item.quantity}
+											Количество: {item.quantity}
 										</p>
 									</div>
 									{/* Price */}
@@ -427,7 +433,7 @@ function CheckoutScreen() {
 														).toFixed(2)}
 													</p>
 													<span className="text-xs text-red-600">
-														{item.discount}% OFF
+														{item.discount}% СКИДКА
 													</span>
 												</div>
 											</>
