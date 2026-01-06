@@ -337,6 +337,19 @@ input.field-sizing-content[type="number"] {
 	color: inherit;
 }
 
+/* Ensure all children of .link-text inherit the color (override global span rule) */
+.link .link-text,
+.link .link-text * {
+	color: inherit;
+}
+
+/* When link has flex layout and animation is disabled, make link-text a flex container */
+.link:not(.link-animated) .link-text {
+	display: flex;
+	align-items: center;
+	width: 100%;
+}
+
 /* .link-text-wrapper - Wraps text that can have animated underline */
 .link-text-wrapper {
 	position: relative;
@@ -367,10 +380,10 @@ input.field-sizing-content[type="number"] {
 	will-change: transform;
 }
 
-/* Hover, active, focus states - apply accent color to text */
-.link:hover .link-text,
-.link:active .link-text,
-.link:focus .link-text {
+/* Hover, active, focus states - apply accent color to text (only for animated links) */
+.link-animated:hover .link-text,
+.link-animated:active .link-text,
+.link-animated:focus .link-text {
 	color: var(--accent) !important;
 }
 
@@ -384,8 +397,8 @@ input.field-sizing-content[type="number"] {
 		display: none;
 	}
 
-	/* Mobile: text color on active/tap */
-	.link:active .link-text {
+	/* Mobile: text color on active/tap (only for animated links) */
+	.link-animated:active .link-text {
 		color: var(--accent) !important;
 	}
 }
@@ -850,9 +863,9 @@ input[type="number"] {
 
 /* Catalog dropdown specific styles - wider for multi-column layout */
 .catalog-dropdown-menu {
-	width: 24rem;
-	min-width: 24rem;
-	max-width: 24rem;
+	width: 28rem;
+	min-width: 28rem;
+	max-width: 28rem;
 }
 
 /* Hide catalog dropdown on mobile (handled by BottomNavBar) */

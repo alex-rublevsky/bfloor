@@ -745,11 +745,14 @@ const CatalogDropdown = () => {
 						<Link
 							key={category.slug}
 							href={`/store?category=${category.slug}`}
-							className="flex items-center justify-between gap-3 px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-standard"
+							disableAnimation={true}
+							className="whitespace-normal! flex items-center justify-between w-full px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground! transition-standard"
 						>
-							<span>{category.name}</span>
+							<span className="flex-1 min-w-0 pr-3 wrap-break-word">
+								{category.name}
+							</span>
 							{category.productCount !== null && (
-								<span className="text-xs opacity-70">
+								<span className="text-xs opacity-70 shrink-0">
 									{category.productCount}
 								</span>
 							)}
