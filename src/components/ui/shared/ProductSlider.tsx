@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseEmblaCarouselType } from "embla-carousel-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { WheelGesturesPlugin } from "embla-carousel-wheel-gestures";
@@ -40,6 +40,7 @@ export default function ProductSlider({
 	const scrollListenerRef = useRef<() => void>(() => undefined);
 	const listenForScrollRef = useRef(true);
 	const hasMoreToLoadRef = useRef(true);
+	const queryClient = useQueryClient();
 
 	// Determine which query to use
 	const queryOptions = useMemo(() => {
@@ -216,6 +217,12 @@ export default function ProductSlider({
 										key={tag}
 										type="button"
 										onClick={() => setSelectedTag(tag)}
+										onMouseEnter={() => {
+											// Prefetch products for this tag on hover
+											queryClient.prefetchInfiniteQuery(
+												productsByTagInfiniteQueryOptions(tag),
+											);
+										}}
 										className={`product-slider__tag-button ${
 											selectedTag === tag
 												? "product-slider__tag-button--active"
