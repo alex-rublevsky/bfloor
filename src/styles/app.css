@@ -327,15 +327,88 @@ input.field-sizing-content[type="number"] {
 
 /* Links */
 
-.blurLink {
-	text-decoration: underline;
-	text-underline-offset: 0.3rem;
-	text-decoration-thickness: 0.1rem;
-	transition: filter 0.3s ease;
+/* Animated underline for Link component - CSS-only approach */
+/* .link - Root link element (RouterLink or anchor tag) */
+/* .link-text - The actual text content inside the link */
+.link-text {
+	transition: color var(--transition-standard-duration)
+		var(--transition-standard-easing);
 }
 
-.blurLink:hover {
-	filter: blur(0.3rem);
+/* .link-text-wrapper - Wraps text that can have animated underline */
+.link-text-wrapper {
+	position: relative;
+	display: inline-block;
+	transition: color var(--transition-standard-duration)
+		var(--transition-standard-easing);
+}
+
+/* CSS-only animated underline using ::before pseudo-element */
+/* Based on: https://tobiasahlin.com/blog/css-trick-animating-link-underlines/ */
+.link-text-wrapper::before {
+	content: "";
+	position: absolute;
+	display: block;
+	width: 100%;
+	height: 0.1em;
+	bottom: -0.01em;
+	left: 0;
+	background-color: currentColor;
+	transform: scaleX(0);
+	transform-origin: center;
+	transition: transform var(--transition-faster-duration)
+		var(--transition-faster-easing);
+	/* Performance optimizations - GPU accelerated */
+	backface-visibility: hidden;
+	will-change: transform;
+}
+
+/* Hover, active, focus states - apply accent color to text */
+.link:hover .link-text,
+.link:active .link-text,
+.link:focus .link-text {
+	color: oklch(var(--accent)) !important;
+}
+
+/* Mobile: show simple underline, hide animated underline */
+@media (hover: none) {
+	.link-animated .link-text-wrapper {
+		text-decoration: underline;
+	}
+
+	.link-animated .link-text-wrapper::before {
+		display: none;
+	}
+
+	/* Mobile: text color on active/tap */
+	.link:active .link-text {
+		color: oklch(var(--accent)) !important;
+	}
+}
+
+/* Desktop: hide simple underline, show animated underline on hover */
+@media (hover: hover) {
+	.link-animated {
+		text-decoration: none;
+	}
+
+	.link-animated .link-text-wrapper {
+		text-decoration: none;
+	}
+
+	/* Desktop: animate underline on hover, active, focus */
+	.link:hover .link-text-wrapper::before,
+	.link:active .link-text-wrapper::before,
+	.link:focus .link-text-wrapper::before {
+		transform: scaleX(1);
+	}
+
+	/* Desktop: text wrapper (and thus underline) changes color on hover */
+	.link:hover .link-text-wrapper,
+	.link:active .link-text-wrapper,
+	.link:focus .link-text-wrapper {
+		color: oklch(var(--accent)) !important;
+	}
 }
 
 /* Typography */

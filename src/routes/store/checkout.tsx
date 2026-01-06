@@ -391,7 +391,6 @@ function CheckoutScreen() {
 									<div className="grow">
 										<Link
 											href={`/store/${item.productId}`}
-											className="blurLink"
 											id={`product-${item.productId}`}
 										>
 											{item.productName}

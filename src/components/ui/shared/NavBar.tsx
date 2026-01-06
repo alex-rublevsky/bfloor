@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -8,6 +8,7 @@ import {
 	DrawerContent,
 	DrawerTrigger,
 } from "~/components/ui/shared/Drawer";
+import { Link } from "~/components/ui/shared/Link";
 import { SearchInput } from "~/components/ui/shared/SearchInput";
 import { getActionButtonsForRoute } from "~/config/dashboardActionButtons";
 import { usePrefetch } from "~/hooks/usePrefetch";
@@ -89,7 +90,7 @@ const DashboardNavLinks = ({
 		{dashboardNavItems.map((item) => (
 			<Link
 				key={item.url}
-				to={item.url}
+				href={item.url}
 				onMouseEnter={() => {
 					// Prefetch orders data on hover
 					if (item.url === "/dashboard/orders") {
@@ -285,7 +286,7 @@ const DropdownNavMenu = ({
 					) : (
 						<Link
 							key={item.url}
-							to={item.url}
+							href={item.url}
 							className="relative flex w-full cursor-pointer select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-standard"
 						>
 							{item.name}
@@ -464,7 +465,7 @@ const AddressDropdown = () => {
 		<HoverDropdown
 			menuClassName="catalog-dropdown-menu-single-column"
 			trigger={(isOpen) => (
-				<a
+				<Link
 					href="/contacts"
 					className="flex items-center gap-1.5 text-foreground hover:text-primary transition-standard whitespace-nowrap cursor-pointer"
 				>
@@ -477,7 +478,7 @@ const AddressDropdown = () => {
 						)}
 					/>
 					ул. Русская, 78
-				</a>
+				</Link>
 			)}
 		>
 			<div className="px-4 py-3">
@@ -524,7 +525,7 @@ const AddressDropdown = () => {
 					</div>
 					<div className="pt-3 border-t border-border">
 						<Link
-							to="/contacts"
+							href="/contacts"
 							className="block text-center py-2 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-standard"
 						>
 							Адреса
@@ -542,7 +543,7 @@ const PhoneDropdown = () => {
 		<HoverDropdown
 			menuClassName="catalog-dropdown-menu-single-column"
 			trigger={(isOpen) => (
-				<a
+				<Link
 					href="tel:+79084466740"
 					className="flex items-center gap-1.5 text-foreground hover:text-primary transition-standard whitespace-nowrap cursor-pointer"
 				>
@@ -555,7 +556,7 @@ const PhoneDropdown = () => {
 						)}
 					/>
 					8 908 446 6740
-				</a>
+				</Link>
 			)}
 		>
 			<div className="px-4 py-3">
@@ -563,36 +564,24 @@ const PhoneDropdown = () => {
 					{/* Left column - Contact info */}
 					<div className="space-y-2 text-sm">
 						<div>
-							<a
-								href="tel:+79084466740"
-								className="text-primary hover:underline block"
-							>
+							<Link href="tel:+79084466740" className="text-primary block">
 								8 908 446 6740
-							</a>
+							</Link>
 						</div>
 						<div>
-							<a
-								href="tel:+79025559405"
-								className="text-primary hover:underline block"
-							>
+							<Link href="tel:+79025559405" className="text-primary block">
 								8 902 555 9405
-							</a>
+							</Link>
 						</div>
 						<div>
-							<a
-								href="tel:+79084486785"
-								className="text-primary hover:underline block"
-							>
+							<Link href="tel:+79084486785" className="text-primary block">
 								8 908 448 6785
-							</a>
+							</Link>
 						</div>
 						<div>
-							<a
-								href="mailto:romavg@mail.ru"
-								className="text-primary hover:underline block"
-							>
+							<Link href="mailto:romavg@mail.ru" className="text-primary block">
 								romavg@mail.ru
-							</a>
+							</Link>
 						</div>
 					</div>
 					{/* Right column - Social icons */}
@@ -755,8 +744,7 @@ const CatalogDropdown = () => {
 					activeCategories.map((category) => (
 						<Link
 							key={category.slug}
-							to="/store"
-							search={{ category: category.slug }}
+							href={`/store?category=${category.slug}`}
 							className="flex items-center justify-between gap-3 px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-standard"
 						>
 							<span>{category.name}</span>
@@ -1033,24 +1021,24 @@ export function NavBar({
 							<AddressDropdown />
 							<PhoneDropdown />
 							<div className="flex items-center gap-3">
-								<a
+								<Link
 									href="/delivery"
 									className="text-foreground hover:text-primary transition-standard whitespace-nowrap"
 								>
 									Доставка и оплата
-								</a>
-								<a
+								</Link>
+								<Link
 									href="/contacts"
 									className="text-foreground hover:text-primary transition-standard whitespace-nowrap"
 								>
 									Контакты и адреса
-								</a>
-								<a
+								</Link>
+								<Link
 									href="/about"
 									className="text-foreground hover:text-primary transition-standard whitespace-nowrap"
 								>
 									О компании
-								</a>
+								</Link>
 							</div>
 						</div>
 
@@ -1058,7 +1046,11 @@ export function NavBar({
 						<div className="flex items-center gap-4">
 							{/* Logo - fixed width */}
 							<div className="flex-shrink-0">
-								<Link to="/" className="hover:opacity-80 transition-standard">
+								<Link
+									href="/"
+									className="hover:opacity-80 transition-standard"
+									disableAnimation={true}
+								>
 									<Logo className="h-8 w-auto" />
 								</Link>
 							</div>
@@ -1108,7 +1100,11 @@ export function NavBar({
 						{/* First row: Logo + Catalog button */}
 						<div className="flex items-center gap-4">
 							<div className="flex-shrink-0">
-								<Link to="/" className="hover:opacity-80 transition-standard">
+								<Link
+									href="/"
+									className="hover:opacity-80 transition-standard"
+									disableAnimation={true}
+								>
 									<Logo className="h-8 w-auto" />
 								</Link>
 							</div>

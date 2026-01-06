@@ -78,7 +78,7 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 	}, [emblaMainApi, onSelect]);
 
 	return (
-		<section className="no-padding pb-12">
+		<section className="no-padding">
 			<div className="embla">
 				<div className="embla__viewport" ref={emblaMainRef}>
 					<div className="embla__container">
@@ -88,6 +88,7 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 									{slide.url ? (
 										<Link
 											href={slide.url}
+											disableAnimation
 											className="block w-full h-full no-underline hover:no-underline"
 										>
 											<picture>
@@ -123,7 +124,7 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 
 				<div className="embla-thumbs">
 					<div className="embla-thumbs__viewport" ref={emblaThumbsRef}>
-						<div className="embla-thumbs__container flex gap-3">
+						<div className="embla-thumbs__container flex">
 							{slides.map((slide, index) => (
 								<Thumb
 									key={`thumb-${slide.desktop}`}
@@ -143,14 +144,17 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 	--slide-height: 19rem;
 	--slide-spacing: 1rem;
 	--slide-size: 100%;
+	--thumbs-gap: 0.75rem;
 }
 .embla__viewport {
 	overflow: hidden;
+	margin-bottom: 0;
 }
 .embla__container {
 	display: flex;
 	touch-action: pan-y pinch-zoom;
 	margin-left: calc(var(--slide-spacing) * -1);
+	margin-bottom: 0;
 }
 .embla__slide {
 	transform: translate3d(0, 0, 0);
@@ -183,76 +187,106 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 }
 @media (max-width: 767px) {
 	.embla__slide__number {
-		max-height: var(--slide-height);
-		height: var(--slide-height);
+		width: 100%;
+		height: auto;
 	}
 	.embla__slide__number picture {
-		height: 100%;
+		width: 100%;
+		height: auto;
+		display: block;
 	}
 	.embla__slide__image {
-		height: 100%;
-		object-fit: cover;
-		object-position: left center;
+		width: 100%;
+		height: auto;
+		display: block;
+		object-fit: contain;
+		object-position: center;
 	}
 }
 @media (min-width: 768px) and (max-width: 1023px) {
 	.embla__slide__number {
-		height: 400px;
-		min-height: 400px;
+		width: 100%;
+		height: auto;
+		max-height: 300px;
 	}
 	.embla__slide__number picture {
-		height: 100%;
+		width: 100%;
+		height: auto;
+		display: block;
+		max-height: 300px;
 	}
 	.embla__slide__image {
-		height: 100%;
-		object-fit: cover;
+		width: 100%;
+		height: auto;
+		display: block;
+		object-fit: contain;
+		object-position: center;
+		max-height: 300px;
 	}
 }
 @media (min-width: 1024px) and (max-width: 1399px) {
 	.embla__slide__number {
-		height: 500px;
-		min-height: 500px;
+		width: 100%;
+		height: auto;
+		max-height: 600px;
 	}
 	.embla__slide__number picture {
-		height: 100%;
+		width: 100%;
+		height: auto;
+		display: block;
+		max-height: 600px;
 	}
 	.embla__slide__image {
-		height: 100%;
-		object-fit: cover;
+		width: 100%;
+		height: auto;
+		display: block;
+		object-fit: contain;
+		object-position: center;
+		max-height: 600px;
 	}
 }
 @media (min-width: 1400px) {
 	.embla__slide__number {
+		width: 100%;
 		height: auto;
-		min-height: 0;
+		max-height: 700px;
 		display: block;
 	}
 	.embla__slide__number picture {
-		width: auto;
+		width: 100%;
 		height: auto;
 		display: block;
-		max-width: none;
+		max-height: 700px;
 	}
 	.embla__slide__image {
-		width: auto;
+		width: 100%;
 		height: auto;
-		max-width: none;
-		max-height: none;
-		object-fit: none;
+		display: block;
+		object-fit: contain;
+		object-position: center;
+		max-height: 700px;
 	}
 }
 .embla-thumbs {
-	--thumbs-slide-spacing: 0.8rem;
-	--thumbs-slide-height: 4rem;
-	margin-top: var(--thumbs-slide-spacing);
+	--thumbs-slide-spacing: 0.6rem;
+	--thumbs-slide-height: 3.6rem;
+	--thumbs-gap-between: 0.5rem;
+	margin-top: 0.5rem;
+	margin-bottom: 0;
 }
 @media (min-width: 768px) {
 	.embla-thumbs {
-		--thumbs-slide-height: 6rem;
+		--thumbs-slide-spacing: 0.8rem;
+		--thumbs-slide-height: 4.8rem;
+		--thumbs-gap-between: 0.75rem;
+		margin-top: 0.75rem;
 	}
 }
 .embla-thumbs__viewport {
 	overflow: hidden;
+}
+.embla-thumbs__container {
+	gap: var(--thumbs-gap-between);
 }
 .embla-thumbs__slide {
 	flex: 0 0 auto;
