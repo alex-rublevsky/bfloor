@@ -78,7 +78,7 @@ const EmblaCarousel: React.FC<EmblaPropType> = (props) => {
 	}, [emblaMainApi, onSelect]);
 
 	return (
-		<section className="no-padding">
+		<section className="no-padding pb-12">
 			<div className="embla">
 				<div className="embla__viewport" ref={emblaMainRef}>
 					<div className="embla__container">
