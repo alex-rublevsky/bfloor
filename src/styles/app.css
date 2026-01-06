@@ -232,18 +232,18 @@ input.field-sizing-content[type="number"] {
 
 @layer base {
 	* {
-		border-color: oklch(var(--border));
+		border-color: var(--border);
 	}
 
 	body {
-		background-color: oklch(var(--background));
-		color: oklch(var(--foreground));
+		background-color: var(--background);
+		color: var(--foreground);
 	}
 }
 
 @layer utilities {
 	section {
-		background-color: oklch(var(--background));
+		background-color: var(--background);
 		padding-bottom: 6rem;
 		padding-left: var(--section-padding-x);
 		z-index: 1;
@@ -333,6 +333,8 @@ input.field-sizing-content[type="number"] {
 .link-text {
 	transition: color var(--transition-standard-duration)
 		var(--transition-standard-easing);
+	/* Inherit color from parent link to respect text color classes */
+	color: inherit;
 }
 
 /* .link-text-wrapper - Wraps text that can have animated underline */
@@ -341,6 +343,8 @@ input.field-sizing-content[type="number"] {
 	display: inline-block;
 	transition: color var(--transition-standard-duration)
 		var(--transition-standard-easing);
+	/* Inherit color from parent link to respect text color classes */
+	color: inherit;
 }
 
 /* CSS-only animated underline using ::before pseudo-element */
@@ -367,7 +371,7 @@ input.field-sizing-content[type="number"] {
 .link:hover .link-text,
 .link:active .link-text,
 .link:focus .link-text {
-	color: oklch(var(--accent)) !important;
+	color: var(--accent) !important;
 }
 
 /* Mobile: show simple underline, hide animated underline */
@@ -382,7 +386,7 @@ input.field-sizing-content[type="number"] {
 
 	/* Mobile: text color on active/tap */
 	.link:active .link-text {
-		color: oklch(var(--accent)) !important;
+		color: var(--accent) !important;
 	}
 }
 
@@ -407,7 +411,7 @@ input.field-sizing-content[type="number"] {
 	.link:hover .link-text-wrapper,
 	.link:active .link-text-wrapper,
 	.link:focus .link-text-wrapper {
-		color: oklch(var(--accent)) !important;
+		color: var(--accent) !important;
 	}
 }
 
@@ -788,7 +792,7 @@ input[type="number"] {
 	max-width: 24rem;
 	/* Ensure solid background color */
 	background-color: var(--background);
-	border: 1px solid oklch(var(--border));
+	border: 1px solid var(--border);
 	outline: 1px solid var(--border);
 	border-radius: 0.5rem;
 	box-shadow:

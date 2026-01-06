@@ -75,7 +75,7 @@ const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
 
 		// Determine className
 		const linkClassName = cn(
-			"cursor-pointer link",
+			"cursor-pointer link text-foreground transition-standard whitespace-nowrap",
 			!disableAnimation && "link-animated",
 			className,
 		);

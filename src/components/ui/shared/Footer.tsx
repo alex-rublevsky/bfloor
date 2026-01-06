@@ -1,3 +1,5 @@
+import { Link } from "./Link";
+
 export function Footer() {
 	return (
 		<footer className="flex flex-col items-center justify-center py-16">
@@ -7,14 +9,14 @@ export function Footer() {
 				{/* TODO: add link www.rublevsky.studio */}
 				<p className="">
 					Понравился сайт?{" "}
-					<a
+					<Link
 						href="https://www.rublevsky.studio"
 						target="_blank"
 						rel="noopener noreferrer"
-						className="text-primary hover:text-primary-hover transition-colors"
+						className="text-accent!"
 					>
 						Написать разработчику{" "}
-					</a>
+					</Link>
 				</p>
 			</div>
 		</footer>

@@ -1021,24 +1021,9 @@ export function NavBar({
 							<AddressDropdown />
 							<PhoneDropdown />
 							<div className="flex items-center gap-3">
-								<Link
-									href="/delivery"
-									className="text-foreground hover:text-primary transition-standard whitespace-nowrap"
-								>
-									Доставка и оплата
-								</Link>
-								<Link
-									href="/contacts"
-									className="text-foreground hover:text-primary transition-standard whitespace-nowrap"
-								>
-									Контакты и адреса
-								</Link>
-								<Link
-									href="/about"
-									className="text-foreground hover:text-primary transition-standard whitespace-nowrap"
-								>
-									О компании
-								</Link>
+								<Link href="/delivery">Доставка и оплата</Link>
+								<Link href="/contacts">Контакты и адреса</Link>
+								<Link href="/about">О компании</Link>
 							</div>
 						</div>
 
