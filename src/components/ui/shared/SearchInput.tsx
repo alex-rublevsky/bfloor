@@ -114,14 +114,15 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 						)}
 						{...props}
 					/>
-					<button
+					<Button
 						type="button"
 						onClick={handleSearchClick}
-						className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-accent transition-standard"
+						className="absolute right-1 top-1/2 -translate-y-1/2 h-auto w-auto p-1.5 rounded-sm group border-0"
 						aria-label="Поиск"
+						variant="secondary"
 					>
-						<Search size={18} className="text-accent" />
-					</button>
+						<Search size={18} className="text-accent group-hover:text-primary-foreground transition-standard" />
+					</Button>
 
 					{/* Search suggestions dropdown */}
 					{showSuggestions && (
