@@ -117,7 +117,10 @@ export default function TestimonialSliderSection() {
 				</div>
 			</div>
 
-			<div className="embla__viewport" ref={emblaRef}>
+			<div
+				className="embla__viewport overflow-y-visible overflow-x-hidden pb-6"
+				ref={emblaRef}
+			>
 				<div className="embla__container">
 					{testimonials.map((testimonial) => (
 						<div className="embla__slide" key={testimonial.id}>
