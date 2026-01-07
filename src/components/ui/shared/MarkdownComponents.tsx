@@ -1,33 +1,23 @@
-import { Link } from "@tanstack/react-router";
 import type { Components } from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
+import { Link } from "./Link";
 
 export const markdownComponents: Components = {
 	a: ({ href, children, ...props }) => {
-		if (href?.startsWith("/")) {
-			// Internal link
-			return (
-				<Link
-					to={href}
-					className="text-[var(--color-accent)] hover:underline"
-					{...props}
-				>
-					{children}
-				</Link>
-			);
-		}
-		// External link
+		if (!href) return <span>{children}</span>;
+		
+		// Use the custom Link component for all links (internal and external)
 		return (
-			<a
+			<Link
 				href={href}
-				target="_blank"
-				rel="noopener noreferrer"
-				className="text-[var(--color-accent)] hover:underline"
+				className="text-accent"
+				target={href.startsWith("/") ? undefined : "_blank"}
+				rel={href.startsWith("/") ? undefined : "noopener noreferrer"}
 				{...props}
 			>
 				{children}
-			</a>
+			</Link>
 		);
 	},
 	blockquote: ({ children, ...props }) => (

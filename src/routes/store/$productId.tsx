@@ -4,11 +4,7 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import type { ErrorComponentProps } from "@tanstack/react-router";
-import {
-	createFileRoute,
-	Link,
-	stripSearchParams,
-} from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import {
@@ -24,6 +20,7 @@ import { Button } from "~/components/ui/shared/Button";
 import { Icon } from "~/components/ui/shared/Icon";
 import ImageGallery from "~/components/ui/shared/ImageGallery";
 import { Input } from "~/components/ui/shared/input";
+import { Link } from "~/components/ui/shared/Link";
 import {
 	markdownComponents,
 	rehypePlugins,
@@ -108,7 +105,7 @@ function ProductErrorComponent({ error }: ErrorComponentProps) {
 				</p>
 				<div className="flex gap-3 justify-center">
 					<Button asChild size="lg">
-						<Link to="/store">Browse Store</Link>
+						<Link href="/store">Browse Store</Link>
 					</Button>
 					<Button
 						variant="outline"
@@ -144,7 +141,7 @@ function ProductNotFoundComponent() {
 				</p>
 				<div className="flex gap-3 justify-center">
 					<Button asChild size="lg">
-						<Link to="/store">Browse Store</Link>
+						<Link href="/store">Browse Store</Link>
 					</Button>
 					<Button
 						variant="outline"
@@ -531,10 +528,7 @@ function ProductPage() {
 												className="flex items-center gap-2"
 											>
 												<Link
-													to="/dashboard/products/$productId/edit"
-													params={{
-														productId: productWithDetails.id.toString(),
-													}}
+													href={`/dashboard/products/${productWithDetails.id}/edit`}
 												>
 													<Icon name="edit" size={16} />
 													<span>Редактировать</span>
@@ -550,7 +544,7 @@ function ProductPage() {
 													<BreadcrumbItem>
 														<BreadcrumbLink asChild>
 															<Link
-																to="/"
+																href="/"
 																className="text-gray-400 hover:text-gray-600"
 															>
 																Главная
@@ -561,10 +555,8 @@ function ProductPage() {
 													<BreadcrumbItem>
 														<BreadcrumbLink asChild>
 															<Link
-																to="/store"
+																href="/store"
 																className="text-gray-400 hover:text-gray-600"
-																viewTransition={true}
-																resetScroll={false}
 															>
 																Ламинат
 															</Link>
@@ -589,9 +581,8 @@ function ProductPage() {
 												{/* Brand Logo/Name */}
 												{productWithDetails?.brand && (
 													<Link
-														to="/store"
-														search={{ brand: productWithDetails.brand.slug }}
-														className="flex items-center gap-2 hover:underline"
+														href={`/store?brand=${productWithDetails.brand.slug}`}
+														className="flex items-center gap-2"
 													>
 														{productWithDetails.brand.image ? (
 															<img
@@ -642,11 +633,8 @@ function ProductPage() {
 															Коллекция:
 														</span>
 														<Link
-															to="/store"
-															search={{
-																collection: productWithDetails.collection.slug,
-															}}
-															className="font-semibold hover:underline"
+															href={`/store?collection=${productWithDetails.collection.slug}`}
+															className="font-semibold"
 														>
 															{productWithDetails.collection.name}
 														</Link>
@@ -839,8 +827,8 @@ function ProductPage() {
 																(location, index) => (
 																	<span key={location.id}>
 																		<Link
-																			to="/contacts"
-																			className="text-accent hover:underline"
+																			href="/contacts"
+																			className="text-accent"
 																		>
 																			{location.address}
 																		</Link>
@@ -1087,7 +1075,7 @@ function ProductPage() {
 											<BreadcrumbItem>
 												<BreadcrumbLink asChild>
 													<Link
-														to="/"
+														href="/"
 														className="text-gray-400 hover:text-gray-600"
 													>
 														Главная
@@ -1098,10 +1086,8 @@ function ProductPage() {
 											<BreadcrumbItem>
 												<BreadcrumbLink asChild>
 													<Link
-														to="/store"
+														href="/store"
 														className="text-gray-400 hover:text-gray-600"
-														viewTransition={true}
-														resetScroll={false}
 													>
 														Ламинат
 													</Link>
@@ -1124,9 +1110,8 @@ function ProductPage() {
 										{/* Brand Logo/Name */}
 										{productWithDetails?.brand && (
 											<Link
-												to="/store"
-												search={{ brand: productWithDetails.brand.slug }}
-												className="flex items-center gap-2 hover:underline"
+												href={`/store?brand=${productWithDetails.brand.slug}`}
+												className="flex items-center gap-2"
 											>
 												{productWithDetails.brand.image ? (
 													<img
@@ -1173,11 +1158,8 @@ function ProductPage() {
 											<div className="flex items-center gap-1">
 												<span className="text-gray-500">Коллекция:</span>
 												<Link
-													to="/store"
-													search={{
-														collection: productWithDetails.collection.slug,
-													}}
-													className="font-semibold hover:underline"
+													href={`/store?collection=${productWithDetails.collection.slug}`}
+													className="font-semibold"
 												>
 													{productWithDetails.collection.name}
 												</Link>
@@ -1371,10 +1353,7 @@ function ProductPage() {
 													{productWithDetails.storeLocations?.map(
 														(location, index) => (
 															<span key={location.id}>
-																<Link
-																	to="/contacts"
-																	className="text-accent hover:underline"
-																>
+																<Link href="/contacts" className="text-accent">
 																	{location.address}
 																</Link>
 																{index <
