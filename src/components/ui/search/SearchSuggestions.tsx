@@ -6,7 +6,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "~/components/ui/shared/Button";
 import { Search, TrendingUp } from "~/components/ui/shared/Icon";
+import { ASSETS_BASE_URL } from "~/constants/urls";
 import {
 	popularSearchTerms,
 	type SearchSuggestion,
@@ -171,22 +173,34 @@ export function SearchSuggestions({
 			<ul className="max-h-[400px] overflow-y-auto">
 				{suggestions.map((suggestion, index) => (
 					<li key={`${suggestion.type}-${index}`}>
-						<button
+						<Button
 							type="button"
 							onClick={() => handleSuggestionClick(suggestion)}
 							onMouseEnter={() => setSelectedIndex(index)}
-							className={`w-full px-4 py-3 text-left hover:bg-accent transition-colors flex items-center gap-3 ${
-								index === selectedIndex ? "bg-accent" : ""
+							className={`w-full px-4 py-2 text-left hover:bg-primary hover:text-primary-foreground transition-standard flex items-center gap-3 h-auto rounded-none justify-start ${
+								index === selectedIndex
+									? "bg-primary text-primary-foreground"
+									: "text-foreground bg-transparent"
 							}`}
+							asChild={false}
 						>
-							<Search className="h-4 w-4 text-muted-foreground shrink-0" />
+							{suggestion.type === "product" &&
+							suggestion.metadata?.imageUrl ? (
+								<img
+									src={`${ASSETS_BASE_URL}/${suggestion.metadata.imageUrl}`}
+									alt={suggestion.text}
+									className="h-8 w-8 object-cover rounded shrink-0"
+								/>
+							) : (
+								<Search className="h-4 w-4 shrink-0" />
+							)}
 							<div className="flex-1 min-w-0">
 								<div className="font-medium truncate">{suggestion.text}</div>
-								<div className="text-xs text-muted-foreground capitalize">
+								<div className="text-xs opacity-70 capitalize">
 									{getSuggestionTypeLabel(suggestion.type)}
 								</div>
 							</div>
-						</button>
+						</Button>
 					</li>
 				))}
 			</ul>

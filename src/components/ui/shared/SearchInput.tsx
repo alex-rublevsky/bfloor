@@ -79,18 +79,24 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 			}
 		};
 
+		const handleSearchClick = () => {
+			if (onSubmit && value.trim()) {
+				onSubmit(value);
+			}
+		};
+
 		return (
-			<div className="flex items-center gap-2 w-full">
+			<div className="flex items-center gap-1 w-full">
 				{value && (
 					<Button
 						size="icon"
 						variant="secondary"
 						type="button"
 						onClick={handleClear}
-						className="h-9 w-9 text-muted-foreground hover:text-foreground transition-standard shrink-0"
+						className="h-9 w-9 shrink-0 group"
 						aria-label="Очистить поиск"
 					>
-						<X className="h-4 w-4" />
+						<X className="h-4 w-4 text-primary group-hover:text-primary-foreground transition-standard" />
 					</Button>
 				)}
 				<div ref={inputWrapperRef} className="relative w-full">
@@ -108,9 +114,14 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 						)}
 						{...props}
 					/>
-					<div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+					<button
+						type="button"
+						onClick={handleSearchClick}
+						className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-accent transition-standard"
+						aria-label="Поиск"
+					>
 						<Search size={18} className="text-accent" />
-					</div>
+					</button>
 
 					{/* Search suggestions dropdown */}
 					{showSuggestions && (

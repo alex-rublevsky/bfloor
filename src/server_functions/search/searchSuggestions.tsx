@@ -17,6 +17,7 @@ export interface SearchSuggestion {
 	count?: number; // Number of results for this suggestion
 	metadata?: {
 		slug?: string; // For categories, brands, collections - used for navigation
+		imageUrl?: string; // For products - first image URL
 	};
 }
 
@@ -77,20 +78,34 @@ export const searchSuggestions = createServerFn({ method: "GET" })
 				] = await Promise.all([
 					// Product suggestions
 					db
-						.all<{ name: string }>(
-							sql`SELECT p.name 
-						    FROM products p 
-						    JOIN products_fts ON products_fts.rowid = p.id 
-						    WHERE products_fts MATCH ${ftsQuery} 
-						    ORDER BY rank 
-						    LIMIT ${limit}`,
+						.all<{ name: string; images: string | null }>(
+							sql`SELECT p.name, p.images 
+					    FROM products p 
+					    JOIN products_fts ON products_fts.rowid = p.id 
+					    WHERE products_fts MATCH ${ftsQuery} 
+					    ORDER BY rank 
+					    LIMIT ${limit}`,
 						)
 						.then((rows) =>
-							rows.map((row) => ({
-								text: row.name || "",
-								type: "product" as const,
-								metadata: {},
-							})),
+							rows.map((row) => {
+								let imageUrl: string | undefined;
+								if (row.images) {
+									try {
+										const images = JSON.parse(row.images);
+										imageUrl =
+											Array.isArray(images) && images.length > 0
+												? images[0]
+												: undefined;
+									} catch {
+										// Ignore JSON parse errors
+									}
+								}
+								return {
+									text: row.name || "",
+									type: "product" as const,
+									metadata: { imageUrl },
+								};
+							}),
 						)
 						.catch(() => []),
 
