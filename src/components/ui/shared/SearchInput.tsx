@@ -1,5 +1,6 @@
-import { forwardRef } from "react";
+import { forwardRef, useRef, useState } from "react";
 import { cn } from "~/lib/utils";
+import { SearchSuggestions } from "../search/SearchSuggestions";
 import { Button } from "./Button";
 import { Search, X } from "./Icon";
 
@@ -14,6 +15,7 @@ interface SearchInputProps
 	onSubmit?: (value: string) => void;
 	placeholder?: string;
 	className?: string;
+	showSuggestions?: boolean; // New prop to enable/disable suggestions
 }
 
 export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
@@ -25,22 +27,56 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 			onSubmit,
 			placeholder = "Search...",
 			className,
+			showSuggestions = false,
 			...props
 		},
 		ref,
 	) => {
+		const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
+		const inputWrapperRef = useRef<HTMLDivElement>(null);
+
 		const handleClear = () => {
 			onChange("");
 			onClear?.();
 		};
 
 		const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+			// Handle Enter key
 			if (e.key === "Enter" && onSubmit) {
-				e.preventDefault();
-				onSubmit(value);
+				// If suggestions are open and there's a selection, let SearchSuggestions handle it
+				// Otherwise, submit the current value
+				if (!isSuggestionsOpen || !showSuggestions) {
+					e.preventDefault();
+					onSubmit(value);
+				}
 			}
 			// Call original onKeyDown if provided
 			props.onKeyDown?.(e);
+		};
+
+		const handleSuggestionSelect = (suggestion: string) => {
+			onChange(suggestion);
+			setIsSuggestionsOpen(false);
+			onSubmit?.(suggestion);
+		};
+
+		const handleClearSearch = () => {
+			onChange("");
+			setIsSuggestionsOpen(false);
+		};
+
+		const handleFocus = () => {
+			if (showSuggestions) {
+				setIsSuggestionsOpen(true);
+			}
+		};
+
+		const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+			onChange(e.target.value);
+			// Keep suggestions open when typing (if enabled)
+			if (showSuggestions) {
+				setIsSuggestionsOpen(true);
+			}
 		};
 
 		return (
@@ -51,19 +87,20 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 						variant="secondary"
 						type="button"
 						onClick={handleClear}
-						className="h-9 w-9 text-muted-foreground hover:text-foreground transition-standard flex-shrink-0"
+						className="h-9 w-9 text-muted-foreground hover:text-foreground transition-standard shrink-0"
 						aria-label="Очистить поиск"
 					>
-						<X className="h-4 w-4" style={{ color: "currentColor" }} />
+						<X className="h-4 w-4" />
 					</Button>
 				)}
-				<div className="relative w-full">
+				<div ref={inputWrapperRef} className="relative w-full">
 					<input
 						ref={ref}
 						type="text"
 						value={value}
-						onChange={(e) => onChange(e.target.value)}
+						onChange={handleChange}
 						onKeyDown={handleKeyDown}
+						onFocus={handleFocus}
 						placeholder={placeholder}
 						className={cn(
 							"flex h-9 w-full min-w-[15ch] rounded-md border-[1.5px] border-input bg-background px-3 pr-10 py-1 text-base shadow-xs transition-standard file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-accent hover:border-accent disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
@@ -74,6 +111,18 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 					<div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
 						<Search size={18} className="text-accent" />
 					</div>
+
+					{/* Search suggestions dropdown */}
+					{showSuggestions && (
+						<SearchSuggestions
+							query={value}
+							onSelect={handleSuggestionSelect}
+							onClose={() => setIsSuggestionsOpen(false)}
+							isOpen={isSuggestionsOpen}
+							inputRef={inputWrapperRef}
+							onClearSearch={handleClearSearch}
+						/>
+					)}
 				</div>
 			</div>
 		);

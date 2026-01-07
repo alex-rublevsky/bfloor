@@ -13,6 +13,7 @@ import type {
 	ProductVariationWithAttributes,
 	ProductWithVariations,
 } from "~/types";
+import { buildFts5Query } from "~/utils/search/queryExpander";
 
 // Type for the joined query result
 type JoinedQueryResult = {
@@ -93,22 +94,48 @@ export const getAllProducts = createServerFn({ method: "GET" })
 
 			// Build where clause (search + filters)
 			const conditions: SQL[] = [];
+
+			// Store FTS result IDs separately for ordering
+			let ftsProductIds: number[] | undefined;
+
 			if (effectiveSearch) {
-				const searchTerm = effectiveSearch.toLowerCase();
-				const searchPattern = `%${searchTerm}%`;
-				// Use Drizzle's like() function directly - simplest approach
-				conditions.push(
-					or(
-						like(sql`LOWER(${products.name})`, searchPattern),
-						like(sql`LOWER(${products.slug})`, searchPattern),
-						like(sql`LOWER(${products.sku})`, searchPattern),
-						like(sql`LOWER(${products.description})`, searchPattern),
-						like(sql`LOWER(${products.importantNote})`, searchPattern),
-						like(sql`LOWER(${products.brandSlug})`, searchPattern),
-						like(sql`LOWER(${products.collectionSlug})`, searchPattern),
-						like(sql`LOWER(${products.categorySlug})`, searchPattern),
-					) ?? sql`1=0`,
-				);
+				// Use FTS5 for search (trigram tokenizer handles fuzzy matching)
+				const ftsQuery = buildFts5Query(effectiveSearch, {
+					enablePrefixMatch: true,
+					operator: "AND",
+				});
+
+				if (ftsQuery) {
+					try {
+						// Query FTS5 table for matching product IDs
+						// ORDER BY rank ensures most relevant results appear first
+						const ftsResults = await db.all<{ id: number }>(
+							sql`SELECT rowid as id FROM products_fts WHERE products_fts MATCH ${ftsQuery} ORDER BY rank`,
+						);
+
+						ftsProductIds = ftsResults.map((r) => r.id);
+
+						// Filter products by FTS results
+						if (ftsProductIds && ftsProductIds.length > 0) {
+							conditions.push(inArray(products.id, ftsProductIds));
+						} else {
+							// No matches - return empty result
+							conditions.push(sql`1=0`);
+						}
+					} catch (error) {
+						console.error("FTS5 search error, falling back to LIKE:", error);
+						// Fallback to LIKE search if FTS5 fails
+						// Note: Only search fields that are indexed in FTS5
+						const searchTerm = effectiveSearch.toLowerCase();
+						const searchPattern = `%${searchTerm}%`;
+						conditions.push(
+							or(
+								like(sql`LOWER(${products.name})`, searchPattern),
+								like(sql`LOWER(${products.sku})`, searchPattern),
+							) ?? sql`1=0`,
+						);
+					}
+				}
 			}
 			if (categoryFilter) {
 				conditions.push(eq(products.categorySlug, categoryFilter));
@@ -308,7 +335,15 @@ export const getAllProducts = createServerFn({ method: "GET" })
 				orderSql = sql`${products.createdAt} desc`;
 			} else if (sort === "oldest") {
 				orderSql = sql`${products.createdAt} asc`;
+			} else if (effectiveSearch && ftsProductIds && ftsProductIds.length > 0) {
+				// Use FTS5 relevance order when search is active
+				// Create CASE statement to maintain FTS rank order
+				const caseStatements = ftsProductIds
+					.map((id, index) => `WHEN ${products.id.name} = ${id} THEN ${index}`)
+					.join(" ");
+				orderSql = sql.raw(`CASE ${caseStatements} ELSE 9999 END`);
 			} else if (effectiveSearch) {
+				// Fallback for non-FTS search
 				orderSql = sql`instr(lower(${products.name}), ${effectiveSearch.toLowerCase()}), ${products.name}`;
 			}
 

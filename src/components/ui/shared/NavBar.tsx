@@ -1048,24 +1048,25 @@ export function NavBar({
 								<CatalogDropdown />
 							</div>
 
-							{/* Search - takes all available space */}
-							<div className="flex-1 min-w-0">
-								<SearchInput
-									placeholder={dynamicPlaceholder || "Поиск..."}
-									value={clientSearch.searchTerm}
-									onChange={clientSearch.setSearchTerm}
-									onSubmit={(value) => {
-										const trimmed = value.trim();
-										if (trimmed.length >= 2) {
-											// Navigate to store page if not already there
-											if (pathname !== "/store") {
-												navigate({ to: "/store" });
-											}
+						{/* Search - takes all available space */}
+						<div className="flex-1 min-w-0">
+							<SearchInput
+								placeholder={dynamicPlaceholder || "Поиск..."}
+								value={clientSearch.searchTerm}
+								onChange={clientSearch.setSearchTerm}
+								onSubmit={(value) => {
+									const trimmed = value.trim();
+									if (trimmed.length >= 2) {
+										// Navigate to store page if not already there
+										if (pathname !== "/store") {
+											navigate({ to: "/store" });
 										}
-									}}
-									className="w-full"
-								/>
-							</div>
+									}
+								}}
+								showSuggestions={true}
+								className="w-full"
+							/>
+						</div>
 
 							{/* Cart button - fixed width */}
 							<div className="flex-shrink-0">
@@ -1101,41 +1102,8 @@ export function NavBar({
 							</div>
 						</div>
 
-						{/* Second row: Search + Cart + Dashboard */}
-						<div className="flex items-center gap-3">
-							<div className="flex-1 min-w-0">
-								<SearchInput
-									placeholder={dynamicPlaceholder || "Поиск..."}
-									value={clientSearch.searchTerm}
-									onChange={clientSearch.setSearchTerm}
-									onSubmit={(value) => {
-										const trimmed = value.trim();
-										if (trimmed.length >= 2) {
-											// Navigate to store page if not already there
-											if (pathname !== "/store") {
-												navigate({ to: "/store" });
-											}
-										}
-									}}
-									className="w-full"
-								/>
-							</div>
-							<div className="flex-shrink-0">
-								<CartButton />
-							</div>
-							{isAdmin && (
-								<div className="flex-shrink-0">
-									<Button to="/dashboard" variant="secondary" size="sm">
-										Админка
-									</Button>
-								</div>
-							)}
-						</div>
-					</div>
-
-					{/* Mobile layout - Small screens */}
-					<div className="md:hidden flex items-center gap-3">
-						{/* Search - takes full available space */}
+					{/* Second row: Search + Cart + Dashboard */}
+					<div className="flex items-center gap-3">
 						<div className="flex-1 min-w-0">
 							<SearchInput
 								placeholder={dynamicPlaceholder || "Поиск..."}
@@ -1150,9 +1118,44 @@ export function NavBar({
 										}
 									}
 								}}
+								showSuggestions={true}
 								className="w-full"
 							/>
 						</div>
+							<div className="flex-shrink-0">
+								<CartButton />
+							</div>
+							{isAdmin && (
+								<div className="flex-shrink-0">
+									<Button to="/dashboard" variant="secondary" size="sm">
+										Админка
+									</Button>
+								</div>
+							)}
+						</div>
+					</div>
+
+					{/* Mobile layout - Small screens */}
+				<div className="md:hidden flex items-center gap-3">
+					{/* Search - takes full available space */}
+					<div className="flex-1 min-w-0">
+						<SearchInput
+							placeholder={dynamicPlaceholder || "Поиск..."}
+							value={clientSearch.searchTerm}
+							onChange={clientSearch.setSearchTerm}
+							onSubmit={(value) => {
+								const trimmed = value.trim();
+								if (trimmed.length >= 2) {
+									// Navigate to store page if not already there
+									if (pathname !== "/store") {
+										navigate({ to: "/store" });
+									}
+								}
+							}}
+							showSuggestions={true}
+							className="w-full"
+						/>
+					</div>
 
 						{/* Dashboard button - fixed width (only for admins) */}
 						{isAdmin && (
