@@ -296,10 +296,7 @@ const ProductFilters = memo(function ProductFilters({
 					onValueChange={handlePriceRangeChange}
 					showTooltip
 					tooltipContent={(value) => `${value} р`}
-					label="Диапазон цен"
-					valueDisplay={
-						<output className="text-sm font-medium tabular-nums">{`${localPriceRange[0]} р - ${localPriceRange[1]} р`}</output>
-					}
+					label="Цена"
 				/>
 			</div>,
 		);
@@ -484,15 +481,6 @@ const ProductFilters = memo(function ProductFilters({
 
 		return (
 			<div className="space-y-4">
-				{/* Reset button */}
-				{hasAnyActiveFilters && (
-					<div>
-						<Button type="button" variant="accent" size="sm" onClick={resetAll}>
-							Сбросить все фильтры
-						</Button>
-					</div>
-				)}
-
 				{/* Filters in flex row with wrap and space-between */}
 				<div className="flex flex-row flex-wrap justify-between gap-x-4 gap-y-4">
 					{filterSections}
@@ -531,13 +519,24 @@ const ProductFilters = memo(function ProductFilters({
 			<DashboardFormDrawer
 				isOpen={isDrawerOpen}
 				onOpenChange={setIsDrawerOpen}
-				title="Фильтры"
+				title=""
 				formId={drawerFormId}
 				isSubmitting={false}
 				submitButtonText="Применить"
 				submittingText="Применение..."
 				onCancel={handleDrawerCancel}
 				layout="single-column"
+				footerActions={
+					hasAnyActiveFilters ? (
+						<Button type="button" variant="accent" size="sm" onClick={resetAll}>
+							Сбросить все фильтры
+						</Button>
+					) : (
+						<span className="text-lg font-semibold leading-none tracking-tight">
+							Фильтры
+						</span>
+					)
+				}
 			>
 				<form onSubmit={handleDrawerSubmit} id={drawerFormId}>
 					{renderFilterContent()}

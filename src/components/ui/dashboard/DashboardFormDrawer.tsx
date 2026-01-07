@@ -30,6 +30,10 @@ interface DashboardFormDrawerProps {
 	 * Optional: Use full width drawer (defaults to true for consistency)
 	 */
 	fullWidth?: boolean;
+	/**
+	 * Optional: Additional footer actions to display before Cancel/Apply buttons
+	 */
+	footerActions?: ReactNode;
 }
 
 export function DashboardFormDrawer({
@@ -45,6 +49,7 @@ export function DashboardFormDrawer({
 	children,
 	layout = "two-column",
 	fullWidth = true,
+	footerActions,
 }: DashboardFormDrawerProps) {
 	return (
 		<Drawer open={isOpen} onOpenChange={onOpenChange}>
@@ -52,9 +57,11 @@ export function DashboardFormDrawer({
 				width={fullWidth ? "full" : undefined}
 				className="border-primary"
 			>
-				<DrawerHeader className="px-4 sm:px-6 lg:px-8">
-					<DrawerTitle>{title}</DrawerTitle>
-				</DrawerHeader>
+				{title && (
+					<DrawerHeader className="px-4 sm:px-6 lg:px-8">
+						<DrawerTitle>{title}</DrawerTitle>
+					</DrawerHeader>
+				)}
 
 				<DrawerBody className="w-full">
 					{error && (
@@ -74,18 +81,21 @@ export function DashboardFormDrawer({
 				</DrawerBody>
 
 				<DrawerFooter className="border-t border-border bg-background px-4 sm:px-6 lg:px-8">
-					<div className="flex justify-end space-x-2">
-						<Button variant="secondary" type="button" onClick={onCancel}>
-							Отмена
-						</Button>
-						<Button
-							variant="green"
-							type="submit"
-							form={formId}
-							disabled={isSubmitting}
-						>
-							{isSubmitting ? submittingText : submitButtonText}
-						</Button>
+					<div className="flex justify-between items-center">
+						<div>{footerActions}</div>
+						<div className="flex space-x-2">
+							<Button variant="secondary" type="button" onClick={onCancel}>
+								Отмена
+							</Button>
+							<Button
+								variant="green"
+								type="submit"
+								form={formId}
+								disabled={isSubmitting}
+							>
+								{isSubmitting ? submittingText : submitButtonText}
+							</Button>
+						</div>
 					</div>
 				</DrawerFooter>
 			</DrawerContent>
