@@ -3,6 +3,7 @@ import { Image } from "~/components/ui/shared/Image";
 import { EmblaArrowButtons } from "../../shared/EmblaArrowButtons";
 import { EmblaDotButtons } from "../../shared/EmblaDotButtons";
 import { ExternalLink, Google, TwoGis, Yandex } from "../../shared/Icon";
+import "../../shared/image-gallery.css";
 import "./testimonial.css";
 
 type TestimonialSource = "Google" | "Yandex" | "2GIS";
