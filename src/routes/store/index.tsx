@@ -8,7 +8,9 @@ import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
+import { Button } from "~/components/ui/shared/Button";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
+import { X } from "~/components/ui/shared/Icon";
 import ProductCard from "~/components/ui/store/ProductCard";
 import ProductFilters from "~/components/ui/store/ProductFilters";
 import { StorePageSkeleton } from "~/components/ui/store/skeletons/StorePageSkeleton";
@@ -108,6 +110,9 @@ function ActiveFiltersDisplay({
 	selectedCollection,
 	attributeFilters,
 	selectedAttributeFilters,
+	onRemoveBrand,
+	onRemoveCollection,
+	onRemoveAttributeValue,
 }: {
 	categories: CategoryWithCount[];
 	selectedCategory: string | null;
@@ -117,6 +122,9 @@ function ActiveFiltersDisplay({
 	selectedCollection: string | null;
 	attributeFilters: AttributeFilter[];
 	selectedAttributeFilters: Record<number, string[]>;
+	onRemoveBrand: () => void;
+	onRemoveCollection: () => void;
+	onRemoveAttributeValue: (attributeId: number, valueId: string) => void;
 }) {
 	// Get category name
 	const categoryName = useMemo(() => {
@@ -139,9 +147,13 @@ function ActiveFiltersDisplay({
 		return collection?.name ?? null;
 	}, [collections, selectedCollection]);
 
-	// Get attribute filter pills
+	// Get attribute filter pills with IDs for removal
 	const attributePills = useMemo(() => {
-		const pills: Array<{ attributeName: string; valueNames: string[] }> = [];
+		const pills: Array<{
+			attributeId: number;
+			attributeName: string;
+			values: Array<{ id: string; name: string }>;
+		}> = [];
 
 		for (const [attributeIdStr, valueIds] of Object.entries(
 			selectedAttributeFilters,
@@ -154,19 +166,20 @@ function ActiveFiltersDisplay({
 			);
 			if (!attributeFilter) continue;
 
-			const valueNames = valueIds
+			const values = valueIds
 				.map((valueId) => {
 					const value = attributeFilter.values.find(
 						(v) => v.id.toString() === valueId || v.slug === valueId,
 					);
-					return value?.value ?? null;
+					return value ? { id: valueId, name: value.value } : null;
 				})
-				.filter((name): name is string => name !== null);
+				.filter((v): v is { id: string; name: string } => v !== null);
 
-			if (valueNames.length > 0) {
+			if (values.length > 0) {
 				pills.push({
+					attributeId,
 					attributeName: attributeFilter.attributeName,
-					valueNames,
+					values,
 				});
 			}
 		}
@@ -185,22 +198,57 @@ function ActiveFiltersDisplay({
 			{(brandName || collectionName || attributePills.length > 0) && (
 				<div className="flex flex-wrap gap-2">
 					{brandName && (
-						<span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground">
-							{brandName}
+						<span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground transition-all duration-200 hover:bg-muted/80">
+							<span>{brandName}</span>
+							<Button
+								type="button"
+								onClick={onRemoveBrand}
+								className="h-4 w-4 p-0 rounded-full hover:bg-background/50 transition-standard"
+								aria-label={`Remove ${brandName} filter`}
+							>
+								<X
+									size={14}
+									className="text-muted-foreground hover:text-foreground"
+								/>
+							</Button>
 						</span>
 					)}
 					{collectionName && (
-						<span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground">
-							{collectionName}
+						<span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground transition-all duration-200 hover:bg-muted/80">
+							<span>{collectionName}</span>
+							<Button
+								type="button"
+								onClick={onRemoveCollection}
+								className="h-4 w-4 p-0 rounded-full hover:bg-background/50 transition-standard"
+								aria-label={`Remove ${collectionName} filter`}
+							>
+								<X
+									size={14}
+									className="text-muted-foreground hover:text-foreground"
+								/>
+							</Button>
 						</span>
 					)}
 					{attributePills.map((pill) =>
-						pill.valueNames.map((valueName, idx) => (
+						pill.values.map((value) => (
 							<span
-								key={`${pill.attributeName}-${valueName}-${idx}`}
-								className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground"
+								key={`${pill.attributeId}-${value.id}`}
+								className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground transition-all duration-200 hover:bg-muted/80"
 							>
-								{valueName}
+								<span>{value.name}</span>
+								<Button
+									type="button"
+									onClick={() =>
+										onRemoveAttributeValue(pill.attributeId, value.id)
+									}
+									className="h-4 w-4 p-0 rounded-full hover:bg-background/50 transition-standard"
+									aria-label={`Remove ${value.name} filter`}
+								>
+									<X
+										size={14}
+										className="text-muted-foreground hover:text-foreground"
+									/>
+								</Button>
 							</span>
 						)),
 					)}
@@ -608,6 +656,13 @@ function StorePage() {
 					selectedCollection={selectedCollection}
 					attributeFilters={attributeFilters}
 					selectedAttributeFilters={selectedAttributeFilters}
+					onRemoveBrand={() => updateBrand(null)}
+					onRemoveCollection={() => updateCollection(null)}
+					onRemoveAttributeValue={(attributeId, valueId) => {
+						const currentValues = selectedAttributeFilters[attributeId] || [];
+						const newValues = currentValues.filter((id) => id !== valueId);
+						updateAttributeFilter(attributeId, newValues);
+					}}
 				/>
 				{/* Products List - Virtualized for performance */}
 				{displayProducts.length === 0 && !isFetching ? (
