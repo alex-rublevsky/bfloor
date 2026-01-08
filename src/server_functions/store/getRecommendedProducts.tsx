@@ -70,16 +70,18 @@ export const getRecommendedProducts = createServerFn({ method: "GET" })
 				};
 			}
 
-			// Only fetch variations for the products we're returning (optimized!)
-			const productIds = productsResult.map((p) => p.id);
-			const variationsResult = await db
-				.select()
-				.from(productVariations)
-				.where(inArray(productVariations.productId, productIds))
-				.all();
+		// Only fetch variations for the products we're returning (optimized!)
+		const productIds = productsResult.map((p) => p.id).filter((id): id is number => id !== undefined && id !== null);
+		const variationsResult = productIds.length > 0
+			? await db
+					.select()
+					.from(productVariations)
+					.where(inArray(productVariations.productId, productIds))
+					.all()
+			: [];
 
-			// Only fetch attributes for the variations we found (optimized!)
-			const variationIds = variationsResult.map((v) => v.id);
+		// Only fetch attributes for the variations we found (optimized!)
+		const variationIds = variationsResult.map((v) => v.id).filter((id): id is number => id !== undefined && id !== null);
 			const attributesResult =
 				variationIds.length > 0
 					? await db

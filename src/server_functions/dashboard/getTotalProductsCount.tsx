@@ -18,8 +18,7 @@ export const getTotalProductsCount = createServerFn({ method: "GET" })
 		const result = await db
 			.select({ count: count(products.id) })
 			.from(products)
-			.limit(1)
-			.all();
+			;
 
 		return result[0]?.count ?? 0;
 	});

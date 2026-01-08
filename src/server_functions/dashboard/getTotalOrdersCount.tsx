@@ -14,11 +14,7 @@ export const getTotalOrdersCount = createServerFn({ method: "GET" })
 	.handler(async (): Promise<number> => {
 		const db = DB();
 
-		const result = await db
-			.select({ count: count(orders.id) })
-			.from(orders)
-			.limit(1)
-			.all();
+		const result = await db.select({ count: count(orders.id) }).from(orders);
 
 		return result[0]?.count ?? 0;
 	});

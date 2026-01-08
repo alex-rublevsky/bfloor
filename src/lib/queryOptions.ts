@@ -175,8 +175,8 @@ export const attributeValuesForFilteringQueryOptions = (
 					attributeFilters: attributeFilters ?? undefined,
 				},
 			}),
-		staleTime: 1000 * 60 * 60, // 1 hour - values change based on filters
-		gcTime: 1000 * 60 * 60 * 3, // 3 hours - keep in memory
+		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - values change based on filters (increased from 1 hour)
+		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory (increased from 3 hours)
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
@@ -224,8 +224,8 @@ export const dashboardProductQueryOptions = (productId: number) =>
 	queryOptions({
 		queryKey: ["bfloorDashboardProduct", productId],
 		queryFn: async () => getDashboardProductBySlug({ data: { id: productId } }),
-		staleTime: 1000 * 60 * 5, // 5 minutes - fresh for editing
-		gcTime: 1000 * 60 * 60 * 24, // 1 day - keep in memory
+		staleTime: 1000 * 60 * 60, // 1 hour - fresh for editing (increased from 5 minutes)
+		gcTime: 1000 * 60 * 60 * 24 * 3, // 3 days - keep in memory (increased from 1 day)
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
@@ -498,8 +498,8 @@ export const productAttributesQueryOptions = () =>
 	queryOptions({
 		queryKey: ["productAttributes"],
 		queryFn: async () => getAllProductAttributes(),
-		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - attributes rarely change
-		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
+		staleTime: 1000 * 60 * 60 * 24 * 30, // 30 days - attributes rarely change (increased from 7)
+		gcTime: 1000 * 60 * 60 * 24 * 60, // 60 days - keep in memory (increased from 14)
 		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,

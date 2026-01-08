@@ -273,6 +273,30 @@ function ActiveFiltersDisplay({
 // Cache for virtualizer measurements - persists across navigations
 const measurementCache = new Map<string, number>();
 
+// Parse attribute filters from URL - moved outside component for stability
+function parseAttributeFilters(
+	attrFiltersStr?: string,
+): Record<number, string[]> {
+	if (!attrFiltersStr) return {};
+	try {
+		const parsed = JSON.parse(attrFiltersStr);
+		if (typeof parsed === "object" && parsed !== null) {
+			// Convert string keys to numbers
+			const result: Record<number, string[]> = {};
+			for (const [key, value] of Object.entries(parsed)) {
+				const numKey = parseInt(key, 10);
+				if (!Number.isNaN(numKey) && Array.isArray(value)) {
+					result[numKey] = value.map(String);
+				}
+			}
+			return result;
+		}
+	} catch {
+		// Invalid JSON, return empty object
+	}
+	return {};
+}
+
 function StorePage() {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const columnsPerRow = useResponsiveColumns();
@@ -291,31 +315,6 @@ function StorePage() {
 		const trimmed = value.trim().replace(/\s+/g, " ");
 		return trimmed.length >= 2 ? trimmed : undefined;
 	}, [clientSearch.searchTerm]);
-
-	// Parse attribute filters from URL
-	const parseAttributeFilters = useCallback(
-		(attrFiltersStr?: string): Record<number, string[]> => {
-			if (!attrFiltersStr) return {};
-			try {
-				const parsed = JSON.parse(attrFiltersStr);
-				if (typeof parsed === "object" && parsed !== null) {
-					// Convert string keys to numbers
-					const result: Record<number, string[]> = {};
-					for (const [key, value] of Object.entries(parsed)) {
-						const numKey = parseInt(key, 10);
-						if (!Number.isNaN(numKey) && Array.isArray(value)) {
-							result[numKey] = value.map(String);
-						}
-					}
-					return result;
-				}
-			} catch {
-				// Invalid JSON, return empty object
-			}
-			return {};
-		},
-		[],
-	);
 
 	// Initialize filter state from URL search params
 	const [selectedCategory, setSelectedCategory] = useState<string | null>(
@@ -352,7 +351,6 @@ function StorePage() {
 		searchParams.collection,
 		searchParams.attributeFilters,
 		searchParams.sort,
-		parseAttributeFilters,
 	]);
 
 	const isValidSort = (v: string): v is typeof sortBy => {

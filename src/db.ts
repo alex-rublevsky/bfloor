@@ -1,11 +1,3 @@
-// ============================================================================
-// TURSO DATABASE CONNECTION
-// ============================================================================
-// Using @libsql/client/http with drizzle-orm/sqlite-proxy
-// This approach avoids native dependencies that don't work on Vercel
-// drizzle-orm/libsql has native dependencies, so we use sqlite-proxy instead
-// ============================================================================
-
 import { createClient } from "@libsql/client/http";
 import type { SqliteRemoteDatabase } from "drizzle-orm/sqlite-proxy";
 import { drizzle as drizzleProxy } from "drizzle-orm/sqlite-proxy";
@@ -29,7 +21,6 @@ export function DB(): SqliteRemoteDatabase<typeof schema> {
 		});
 
 		// Use sqlite-proxy adapter - works with any SQLite-compatible client
-		// This avoids the native dependencies in drizzle-orm/libsql
 		db = drizzleProxy(
 			async (sql, params, method) => {
 				try {

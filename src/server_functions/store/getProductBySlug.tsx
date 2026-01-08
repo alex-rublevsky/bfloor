@@ -7,8 +7,8 @@ import {
 	collections,
 	countries,
 	productAttributes,
-	productStoreLocations,
 	products,
+	productStoreLocations,
 	productVariations,
 	storeLocations,
 	variationAttributes,
@@ -123,12 +123,12 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 			}
 		});
 
-		// Fetch all attributes to create slug-to-ID mapping
-		const allAttributes = await db.select().from(productAttributes);
+		// Fetch all attributes (cached by TanStack Query on client)
+		const allAttributes = await db.select().from(productAttributes).all();
 		const slugToIdMap: Record<string, string> = {};
-		allAttributes.forEach((attr) => {
+		for (const attr of allAttributes) {
 			slugToIdMap[attr.slug] = attr.id.toString();
-		});
+		}
 
 		// Map variation attributes from slugs to IDs
 		for (const variation of variationsMap.values()) {
