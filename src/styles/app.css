@@ -230,6 +230,12 @@ input.field-sizing-content[type="number"] {
 	--transition-faster: all var(--transition-faster-duration)
 		var(--transition-faster-easing);
 
+	/* Reveal animation settings (for smooth content fade-in) */
+	--animation-reveal-duration: 0.4s;
+	--animation-reveal-easing: cubic-bezier(0.4, 0, 0.2, 1);
+	--animation-reveal: fadeIn var(--animation-reveal-duration)
+		var(--animation-reveal-easing);
+
 	/* Section horizontal padding - standardized across the project */
 	/* Mobile default */
 	--section-padding-x: 1rem;
@@ -726,6 +732,16 @@ span {
 
 	to {
 		transform: translateY(0);
+		opacity: 1;
+	}
+}
+
+/* Fade-in animation - single keyframe, easing applied when used */
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
 		opacity: 1;
 	}
 }

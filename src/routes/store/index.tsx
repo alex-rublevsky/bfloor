@@ -13,7 +13,6 @@ import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { X } from "~/components/ui/shared/Icon";
 import ProductCard from "~/components/ui/store/ProductCard";
 import ProductFilters from "~/components/ui/store/ProductFilters";
-import { StorePageSkeleton } from "~/components/ui/store/skeletons/StorePageSkeleton";
 import { useClientSearch } from "~/lib/clientSearchContext";
 import {
 	attributeValuesForFilteringQueryOptions,
@@ -187,12 +186,25 @@ function ActiveFiltersDisplay({
 		return pills;
 	}, [attributeFilters, selectedAttributeFilters]);
 
+	// Show skeleton for title if category is selected but name isn't loaded yet
+	const showTitleSkeleton = selectedCategory && !categoryName;
+
 	return (
 		<div className="px-4 pt-6 pb-4">
 			{/* Title */}
-			<h1 className="text-2xl md:text-3xl font-semibold mb-3">
-				{categoryName ?? "Все товары"}
-			</h1>
+			{showTitleSkeleton ? (
+				<div className="h-10 md:h-12 bg-muted animate-pulse rounded w-48 mb-3" />
+			) : (
+				<h1
+					key={categoryName ?? "all"}
+					className="text-2xl md:text-3xl font-semibold mb-3"
+					style={{
+						animation: "fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+					}}
+				>
+					{categoryName ?? "Все товары"}
+				</h1>
+			)}
 
 			{/* Filter Pills */}
 			{(brandName || collectionName || attributePills.length > 0) && (
@@ -616,10 +628,8 @@ function StorePage() {
 		}
 	}, [virtualItems, hasNextPage, isFetchingNextPage, rowCount, fetchNextPage]);
 
-	// Show skeleton only on very first load with no data
-	if (!storeData && (isLoadingProducts || isFetching)) {
-		return <StorePageSkeleton />;
-	}
+	// Determine if we should show the full skeleton or just the products skeleton
+	const showFullSkeleton = !storeData && (isLoadingProducts || isFetching);
 
 	return (
 		<>
@@ -646,7 +656,7 @@ function StorePage() {
 					selectedAttributeFilters={selectedAttributeFilters}
 					onAttributeFilterChange={updateAttributeFilter}
 				/>
-				{/* Active Filters Display */}
+				{/* Active Filters Display - Always show, even during loading */}
 				<ActiveFiltersDisplay
 					categories={categoriesWithCount}
 					selectedCategory={selectedCategory}
@@ -664,8 +674,28 @@ function StorePage() {
 						updateAttributeFilter(attributeId, newValues);
 					}}
 				/>
-				{/* Products List - Virtualized for performance */}
-				{displayProducts.length === 0 && !isFetching ? (
+				{/* Products List - Show skeleton during initial load, otherwise show products */}
+				{showFullSkeleton ? (
+					// Products skeleton during initial load
+					<div className="py-4 flex-1">
+						<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
+							{Array.from({ length: 18 }, (_, i) => `skeleton-${i}`).map(
+								(key) => (
+									<div key={key} className="w-full bg-background">
+										<div className="aspect-square bg-muted animate-pulse" />
+										<div className="p-4 flex flex-col space-y-2">
+											<div className="h-7 bg-muted animate-pulse rounded w-20 mb-2" />
+											<div className="h-5 bg-muted animate-pulse rounded w-3/4 mb-3" />
+											<div className="md:hidden mt-auto">
+												<div className="h-10 bg-muted animate-pulse rounded w-full" />
+											</div>
+										</div>
+									</div>
+								),
+							)}
+						</div>
+					</div>
+				) : displayProducts.length === 0 && !isFetching ? (
 					<EmptyState
 						entityType="products"
 						isSearchResult={!!normalizedSearch}
@@ -678,6 +708,7 @@ function StorePage() {
 								height: `${virtualizer.getTotalSize()}px`,
 								width: "100%",
 								position: "relative",
+								animation: "fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
 							}}
 						>
 							{/* Following TanStack Virtual dynamic example pattern for useWindowVirtualizer */}

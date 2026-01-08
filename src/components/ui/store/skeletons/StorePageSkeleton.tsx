@@ -1,46 +1,49 @@
 /**
  * Store Page Skeleton
  * Loading state for the store index page
+ * Matches the actual store page layout with proper spacing and structure
  */
 
-// Generate stable keys for skeleton items
-const SKELETON_KEYS = Array.from(
-	{ length: 12 },
+// Simple fixed number of skeleton cards
+const SKELETON_CARDS = Array.from(
+	{ length: 18 },
 	(_, i) => `store-skeleton-card-${i}`,
 );
 
 export function StorePageSkeleton() {
 	return (
-		<section className="no-padding space-y-8">
-			<div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between px-4 pt-24 sm:pt-32 mb-8">
-				{/* Filters skeleton */}
-				<div className="flex gap-2">
-					<div className="h-10 w-24 bg-muted animate-pulse rounded" />
-					<div className="h-10 w-24 bg-muted animate-pulse rounded" />
-					<div className="h-10 w-24 bg-muted animate-pulse rounded" />
-				</div>
-				{/* Sort skeleton */}
-				<div className="h-10 w-32 bg-muted animate-pulse rounded" />
+		<div className="min-h-screen flex flex-col">
+			{/* Title and Filter Pills Section Skeleton */}
+			<div className="px-4 pt-6 pb-4">
+				{/* Title skeleton - taller to better match actual title */}
+				<div className="h-10 md:h-12 bg-muted animate-pulse rounded w-48" />
 			</div>
 
-			{/* Products grid skeleton */}
-			<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3 mb-20">
-				{SKELETON_KEYS.map((key) => (
-					<div key={key} className="w-full">
-						{/* Image skeleton */}
-						<div className="aspect-square bg-muted animate-pulse rounded-t" />
-						{/* Content skeleton */}
-						<div className="p-4 space-y-3">
-							<div className="h-5 bg-muted animate-pulse rounded w-3/4" />
-							<div className="h-4 bg-muted animate-pulse rounded w-1/2" />
-							<div className="flex gap-2">
-								<div className="h-8 bg-muted animate-pulse rounded w-16" />
-								<div className="h-8 bg-muted animate-pulse rounded w-16" />
+			{/* Products Grid Skeleton - no horizontal padding to match actual layout */}
+			<div className="py-4 flex-1">
+				<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
+					{SKELETON_CARDS.map((key) => (
+						<div key={key} className="w-full bg-background">
+							{/* Image skeleton - aspect-square to match ProductCard */}
+							<div className="aspect-square bg-muted animate-pulse" />
+
+							{/* Content skeleton - matching ProductCard structure */}
+							<div className="p-4 flex flex-col space-y-2">
+								{/* Price skeleton */}
+								<div className="h-7 bg-muted animate-pulse rounded w-20 mb-2" />
+
+								{/* Product name skeleton */}
+								<div className="h-5 bg-muted animate-pulse rounded w-3/4 mb-3" />
+
+								{/* Mobile button skeleton */}
+								<div className="md:hidden mt-auto">
+									<div className="h-10 bg-muted animate-pulse rounded w-full" />
+								</div>
 							</div>
 						</div>
-					</div>
-				))}
+					))}
+				</div>
 			</div>
-		</section>
+		</div>
 	);
 }
