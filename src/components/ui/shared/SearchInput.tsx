@@ -121,7 +121,10 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 						aria-label="Поиск"
 						variant="secondary"
 					>
-						<Search size={18} className="text-accent group-hover:text-primary-foreground transition-standard" />
+						<Search
+							size={18}
+							className="text-accent group-hover:text-primary-foreground transition-standard"
+						/>
 					</Button>
 
 					{/* Search suggestions dropdown */}

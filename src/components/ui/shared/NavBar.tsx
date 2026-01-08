@@ -485,7 +485,7 @@ const AddressDropdown = () => {
 				<div className="space-y-3 text-sm">
 					<div className="flex gap-6">
 						<div>
-							<div className="font-medium mb-1 whitespace-nowrap">
+							<div className="font-semibold mb-1 whitespace-nowrap">
 								ул. Русская, 78
 							</div>
 							<div className="text-muted-foreground space-y-0.5">
@@ -504,7 +504,7 @@ const AddressDropdown = () => {
 							</div>
 						</div>
 						<div>
-							<div className="font-medium mb-1 whitespace-nowrap">
+							<div className="font-semibold mb-1 whitespace-nowrap">
 								ул. 100 летия, 30
 							</div>
 							<div className="text-muted-foreground space-y-0.5">
@@ -524,12 +524,9 @@ const AddressDropdown = () => {
 						</div>
 					</div>
 					<div className="pt-3 border-t border-border">
-						<Link
-							href="/contacts"
-							className="block text-center py-2 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-standard"
-						>
+						<Button to="/contacts" variant="default" className="w-full">
 							Адреса
-						</Link>
+						</Button>
 					</div>
 				</div>
 			</div>
@@ -560,9 +557,9 @@ const PhoneDropdown = () => {
 			)}
 		>
 			<div className="px-4 py-3">
-				<div className="flex gap-8 items-start">
+				<div className="flex gap-4 items-stretch">
 					{/* Left column - Contact info */}
-					<div className="space-y-2 text-sm">
+					<div className="flex flex-col justify-between text-sm">
 						<div>
 							<Link href="tel:+79084466740" className="text-primary block">
 								8 908 446 6740
@@ -586,33 +583,48 @@ const PhoneDropdown = () => {
 					</div>
 					{/* Right column - Social icons */}
 					<div className="flex flex-col gap-2 items-center">
-						<a
+						<Button
 							href="https://t.me/beautyfloor"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="text-accent hover:opacity-80 transition-faster"
+							variant="secondary"
+							className="h-auto w-auto p-1.5 rounded-sm group border-0 [&_svg]:size-7"
 							aria-label="Telegram"
 						>
-							<Icon name="telegram" size={36} className="text-accent" />
-						</a>
-						<a
+							<Icon
+								name="telegram"
+								size={28}
+								className="text-accent group-hover:text-primary-foreground transition-standard"
+							/>
+						</Button>
+						<Button
 							href="https://www.instagram.com/beautyfloor_vl/"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="text-accent hover:opacity-80 transition-faster"
+							variant="secondary"
+							className="h-auto w-auto p-1.5 rounded-sm group border-0 [&_svg]:size-7"
 							aria-label="Instagram"
 						>
-							<Icon name="instagram" size={36} className="text-accent" />
-						</a>
-						<a
+							<Icon
+								name="instagram"
+								size={28}
+								className="text-accent group-hover:text-primary-foreground transition-standard"
+							/>
+						</Button>
+						<Button
 							href="https://wa.me/79084466740"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="text-accent hover:opacity-80 transition-faster"
+							variant="secondary"
+							className="h-auto w-auto p-1.5 rounded-sm group border-0 [&_svg]:size-7"
 							aria-label="WhatsApp"
 						>
-							<Icon name="whatsapp" size={36} className="text-accent" />
-						</a>
+							<Icon
+								name="whatsapp"
+								size={28}
+								className="text-accent group-hover:text-primary-foreground transition-standard"
+							/>
+						</Button>
 					</div>
 				</div>
 			</div>
@@ -1048,25 +1060,25 @@ export function NavBar({
 								<CatalogDropdown />
 							</div>
 
-						{/* Search - takes all available space */}
-						<div className="flex-1 min-w-0">
-							<SearchInput
-								placeholder={dynamicPlaceholder || "Поиск..."}
-								value={clientSearch.searchTerm}
-								onChange={clientSearch.setSearchTerm}
-								onSubmit={(value) => {
-									const trimmed = value.trim();
-									if (trimmed.length >= 2) {
-										// Navigate to store page if not already there
-										if (pathname !== "/store") {
-											navigate({ to: "/store" });
+							{/* Search - takes all available space */}
+							<div className="flex-1 min-w-0">
+								<SearchInput
+									placeholder={dynamicPlaceholder || "Поиск..."}
+									value={clientSearch.searchTerm}
+									onChange={clientSearch.setSearchTerm}
+									onSubmit={(value) => {
+										const trimmed = value.trim();
+										if (trimmed.length >= 2) {
+											// Navigate to store page if not already there
+											if (pathname !== "/store") {
+												navigate({ to: "/store" });
+											}
 										}
-									}
-								}}
-								showSuggestions={true}
-								className="w-full"
-							/>
-						</div>
+									}}
+									showSuggestions={true}
+									className="w-full"
+								/>
+							</div>
 
 							{/* Cart button - fixed width */}
 							<div className="flex-shrink-0">
@@ -1102,8 +1114,42 @@ export function NavBar({
 							</div>
 						</div>
 
-					{/* Second row: Search + Cart + Dashboard */}
-					<div className="flex items-center gap-3">
+						{/* Second row: Search + Cart + Dashboard */}
+						<div className="flex items-center gap-3">
+							<div className="flex-1 min-w-0">
+								<SearchInput
+									placeholder={dynamicPlaceholder || "Поиск..."}
+									value={clientSearch.searchTerm}
+									onChange={clientSearch.setSearchTerm}
+									onSubmit={(value) => {
+										const trimmed = value.trim();
+										if (trimmed.length >= 2) {
+											// Navigate to store page if not already there
+											if (pathname !== "/store") {
+												navigate({ to: "/store" });
+											}
+										}
+									}}
+									showSuggestions={true}
+									className="w-full"
+								/>
+							</div>
+							<div className="flex-shrink-0">
+								<CartButton />
+							</div>
+							{isAdmin && (
+								<div className="flex-shrink-0">
+									<Button to="/dashboard" variant="secondary" size="sm">
+										Админка
+									</Button>
+								</div>
+							)}
+						</div>
+					</div>
+
+					{/* Mobile layout - Small screens */}
+					<div className="md:hidden flex items-center gap-3">
+						{/* Search - takes full available space */}
 						<div className="flex-1 min-w-0">
 							<SearchInput
 								placeholder={dynamicPlaceholder || "Поиск..."}
@@ -1122,40 +1168,6 @@ export function NavBar({
 								className="w-full"
 							/>
 						</div>
-							<div className="flex-shrink-0">
-								<CartButton />
-							</div>
-							{isAdmin && (
-								<div className="flex-shrink-0">
-									<Button to="/dashboard" variant="secondary" size="sm">
-										Админка
-									</Button>
-								</div>
-							)}
-						</div>
-					</div>
-
-					{/* Mobile layout - Small screens */}
-				<div className="md:hidden flex items-center gap-3">
-					{/* Search - takes full available space */}
-					<div className="flex-1 min-w-0">
-						<SearchInput
-							placeholder={dynamicPlaceholder || "Поиск..."}
-							value={clientSearch.searchTerm}
-							onChange={clientSearch.setSearchTerm}
-							onSubmit={(value) => {
-								const trimmed = value.trim();
-								if (trimmed.length >= 2) {
-									// Navigate to store page if not already there
-									if (pathname !== "/store") {
-										navigate({ to: "/store" });
-									}
-								}
-							}}
-							showSuggestions={true}
-							className="w-full"
-						/>
-					</div>
 
 						{/* Dashboard button - fixed width (only for admins) */}
 						{isAdmin && (

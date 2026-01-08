@@ -161,7 +161,7 @@ export function SearchSuggestions({
 	return (
 		<div
 			ref={suggestionsRef}
-			className={`absolute z-50 w-full mt-2 bg-background border border-border rounded-lg shadow-lg overflow-hidden ${className}`}
+			className={`absolute z-50 w-full mt-2 bg-background border-2 border-primary rounded-lg shadow-lg overflow-hidden ${className}`}
 		>
 			{isShowingPopular && (
 				<div className="px-4 py-2 text-sm font-medium text-muted-foreground border-b border-border flex items-center gap-2">
