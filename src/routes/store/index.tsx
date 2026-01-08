@@ -450,8 +450,6 @@ function StorePage() {
 			attributeFilters: selectedAttributeFilters,
 			sort: sortBy,
 		}),
-		// Preserve previous data while new search/filters load
-		placeholderData: (prev) => prev,
 	});
 
 	// Fetch attribute filters based on current filters (including attribute filters)
@@ -703,6 +701,7 @@ function StorePage() {
 				) : (
 					<>
 						<div
+							key={selectedCategory ?? "all"}
 							className="relative px-4 py-4"
 							style={{
 								height: `${virtualizer.getTotalSize()}px`,
