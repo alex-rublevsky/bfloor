@@ -453,7 +453,11 @@ function StorePage() {
 	}, [virtualItems, hasNextPage, isFetchingNextPage, rowCount, fetchNextPage]);
 
 	// Determine if we should show the skeleton
-	const showSkeleton = !storeData || isFetching;
+	// Show skeleton only when:
+	// 1. No data yet (!storeData)
+	// 2. Fetching initial data or filter changes (isFetching && !isFetchingNextPage)
+	// Don't show skeleton when just fetching next page for infinite scroll
+	const showSkeleton = !storeData || (isFetching && !isFetchingNextPage);
 
 	return (
 		<>
