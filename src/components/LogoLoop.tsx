@@ -372,7 +372,7 @@ export const LogoLoop = React.memo<LogoLoopProps>(
 				) : (
 					<img
 						className={cx(
-							"max-w-full max-h-full w-auto h-auto block object-contain",
+							"w-full max-h-full h-auto block object-contain",
 							"[-webkit-user-drag:none] pointer-events-none",
 							"[image-rendering:-webkit-optimize-contrast]",
 							"motion-reduce:transition-none",
@@ -404,7 +404,7 @@ export const LogoLoop = React.memo<LogoLoopProps>(
 							"relative",
 							"rounded-lg",
 							"transition-standard",
-							"hover:bg-secondary",
+							"hover:bg-muted",
 							item.href && "cursor-pointer",
 							scaleOnHover && "overflow-visible group/item",
 						)}
