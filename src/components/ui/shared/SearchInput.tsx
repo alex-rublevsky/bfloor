@@ -109,7 +109,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 						onFocus={handleFocus}
 						placeholder={placeholder}
 						className={cn(
-							"flex h-9 w-full min-w-[15ch] rounded-md border-[1.5px] border-input bg-background px-3 pr-10 py-1 text-base shadow-xs transition-standard file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-accent hover:border-accent disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+							"flex h-9 w-full min-w-[6ch] md:min-w-[6ch] md:pl-2 md:pr-8 lg:min-w-[15ch] lg:px-3 rounded-md border-[1.5px] border-input bg-background px-3 pr-10 py-1 text-base shadow-xs transition-standard file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-accent hover:border-accent disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
 							className,
 						)}
 						{...props}

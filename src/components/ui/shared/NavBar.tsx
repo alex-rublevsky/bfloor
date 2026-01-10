@@ -925,9 +925,9 @@ export function NavBar({ className }: Omit<NavBarProps, "items">) {
 							</div>
 						</div>
 
-						{/* Tablet layout - Medium screens */}
-						<div className="hidden md:flex lg:hidden flex-col gap-3">
-							{/* First row: Pages navigation */}
+						{/* Tablet layout - Medium screens (single row with compact search) */}
+						<div className="hidden md:flex lg:hidden items-center gap-2 md:gap-2">
+							{/* Pages navigation */}
 							<div className="flex-shrink-0">
 								<DashboardNavLinks
 									dashboardNavItems={dashboardNavItems}
@@ -936,36 +936,33 @@ export function NavBar({ className }: Omit<NavBarProps, "items">) {
 								/>
 							</div>
 
-							{/* Second row: Search + Action + Menu */}
-							<div className="flex items-center gap-3">
-								{/* Search - takes available space (dashboard) */}
-								{!isMiscPage && (
-									<div className="flex-1 min-w-0">
-										<DashboardSearchInput
-											placeholder={dynamicPlaceholder}
-											value={dashboardSearchInput}
-											onChange={setDashboardSearchInput}
-										/>
-									</div>
-								)}
-
-								{/* Action button(s) - fixed width */}
-								<div className="flex-shrink-0">
-									{actionButtons.length > 1 ? (
-										<ActionButtons buttons={actionButtons} />
-									) : actionButton ? (
-										<ActionButton button={actionButton} />
-									) : null}
-								</div>
-
-								{/* Menu dropdown - fixed width */}
-								<div className="flex-shrink-0">
-									<DropdownNavMenu
-										items={dashboardSecondaryItems}
-										showUserInfo={true}
-										userData={userData || undefined}
+							{/* Search - flexible width (dashboard) */}
+							{!isMiscPage && (
+								<div className="flex-1 min-w-0">
+									<DashboardSearchInput
+										placeholder={dynamicPlaceholder}
+										value={dashboardSearchInput}
+										onChange={setDashboardSearchInput}
 									/>
 								</div>
+							)}
+
+							{/* Action button(s) */}
+							<div className="flex-shrink-0">
+								{actionButtons.length > 1 ? (
+									<ActionButtons buttons={actionButtons} />
+								) : actionButton ? (
+									<ActionButton button={actionButton} />
+								) : null}
+							</div>
+
+							{/* Menu dropdown */}
+							<div className="flex-shrink-0">
+								<DropdownNavMenu
+									items={dashboardSecondaryItems}
+									showUserInfo={true}
+									userData={userData || undefined}
+								/>
 							</div>
 						</div>
 
@@ -1074,8 +1071,20 @@ export function NavBar({ className }: Omit<NavBarProps, "items">) {
 
 					{/* Tablet layout - Medium screens */}
 					<div className="hidden md:flex lg:hidden flex-col gap-3">
-						{/* First row: Logo + Catalog button */}
-						<div className="flex items-center gap-4">
+						{/* First row: Navigation Links */}
+						<div className="flex items-center justify-between gap-3 text-sm flex-wrap">
+							<AddressDropdown />
+							<PhoneDropdown />
+							<div className="flex items-center gap-3">
+								<Link href="/delivery">Доставка и оплата</Link>
+								<Link href="/contacts">Контакты и адреса</Link>
+								<Link href="/about">О компании</Link>
+							</div>
+						</div>
+
+						{/* Second row: Logo, Catalog, Search, Cart, Dashboard (compact single row) */}
+						<div className="flex items-center gap-2 md:gap-2 lg:gap-4">
+							{/* Logo */}
 							<div className="flex-shrink-0">
 								<Link
 									href="/"
@@ -1085,13 +1094,13 @@ export function NavBar({ className }: Omit<NavBarProps, "items">) {
 									<Logo className="h-8 w-auto" />
 								</Link>
 							</div>
+
+							{/* Catalog button */}
 							<div className="flex-shrink-0">
 								<CatalogDropdown />
 							</div>
-						</div>
 
-						{/* Second row: Search + Cart + Dashboard */}
-						<div className="flex items-center gap-3">
+							{/* Search - flexible width */}
 							<div className="flex-1 min-w-0">
 								<SearchInput
 									placeholder={dynamicPlaceholder || "Поиск..."}
@@ -1110,9 +1119,13 @@ export function NavBar({ className }: Omit<NavBarProps, "items">) {
 									className="w-full"
 								/>
 							</div>
+
+							{/* Cart button */}
 							<div className="flex-shrink-0">
 								<CartButton />
 							</div>
+
+							{/* Dashboard button (only for admins) */}
 							{isAdmin && (
 								<div className="flex-shrink-0">
 									<Button to="/dashboard" variant="secondary" size="sm">
