@@ -804,7 +804,7 @@ export function NavBar({ className }: Omit<NavBarProps, "items">) {
 	const isMiscPage = pathname === "/dashboard/misc";
 
 	// Smart navbar: hides on scroll down, shows on scroll up
-	const { shouldShowNavbar } = useScrollDirection(100);
+	const { shouldShowNavbar } = useScrollDirection(300);
 
 	// Fetch userData using TanStack Query
 	// This is cached and shared across components, no prop drilling needed

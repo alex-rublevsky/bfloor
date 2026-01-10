@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { memo, useCallback, useMemo, useState } from "react";
 import { Skeleton } from "~/components/ui/dashboard/skeleton";
+import { Button } from "~/components/ui/shared/Button";
 import { ASSETS_BASE_URL } from "~/constants/urls";
 import { usePrefetch } from "~/hooks/usePrefetch";
 import {
@@ -340,17 +341,13 @@ function ProductCard({
 						</div>
 
 						{/* Desktop Add to Cart button */}
-						<button
+						<Button
 							type="button"
 							onClick={(e) => {
 								e.stopPropagation();
 								handleAddToCart(e);
 							}}
-							className={`absolute bottom-0 left-0 right-0 hidden md:flex items-center justify-center space-x-2 bg-muted/70 backdrop-blur-xs text-foreground hover:bg-primary active:bg-primary transition-all duration-500 py-2 opacity-0 group-hover:opacity-100 ${
-								!isAvailable
-									? "cursor-not-allowed hover:bg-muted/70 active:bg-muted/70 opacity-50"
-									: "cursor-pointer hover:text-primary-foreground active:text-primary-foreground"
-							}`}
+							variant="cart"
 							disabled={!isAvailable}
 							aria-label={!isAddingToCart ? "В корзину" : "Добавление…"}
 						>
@@ -378,7 +375,7 @@ function ProductCard({
 							) : (
 								<span>Добавление…</span>
 							)}
-						</button>
+						</Button>
 					</div>
 
 					{/* Content Section */}
@@ -493,17 +490,13 @@ function ProductCard({
 
 							{/* Mobile Add to Cart button */}
 							<div className="md:hidden mt-auto">
-								<button
+								<Button
 									type="button"
 									onClick={(e) => {
 										e.stopPropagation();
 										handleAddToCart(e);
 									}}
-									className={`w-full cursor-pointer flex items-center justify-center space-x-2 bg-muted backdrop-blur-xs text-foreground hover:bg-primary active:bg-primary transition-all duration-500 py-2 px-4 ${
-										!isAvailable
-											? "opacity-50 cursor-not-allowed hover:bg-muted/70 hover:text-foreground active:bg-muted/70 active:text-foreground"
-											: "hover:text-primary-foreground active:text-primary-foreground"
-									}`}
+									variant="cart-mobile"
 									disabled={!isAvailable}
 								>
 									<svg
@@ -541,7 +534,7 @@ function ProductCard({
 									) : (
 										<span>Добавление…</span>
 									)}
-								</button>
+								</Button>
 							</div>
 						</div>
 					</div>

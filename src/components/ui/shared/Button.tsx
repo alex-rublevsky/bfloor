@@ -31,6 +31,9 @@ const buttonVariants = cva(
 				accent:
 					"bg-accent text-accent-foreground hover:bg-accent-hover active:bg-accent-hover active:text-accent-foreground",
 				link: "text-primary underline-offset-4 hover:underline active:underline",
+				cart: "absolute bottom-0 left-0 right-0 hidden md:flex items-center justify-center gap-3 py-2 opacity-0 group-hover:opacity-100 rounded-none bg-muted/70 backdrop-blur-xs text-foreground hover:bg-primary active:bg-primary transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-muted/70 disabled:hover:text-foreground disabled:active:bg-muted/70 disabled:active:text-foreground [&_svg]:!w-5 [&_svg]:!h-5 hover:[&_svg]:text-muted active:[&_svg]:text-muted hover:[&_span]:!text-background active:[&_span]:!text-background",
+				"cart-mobile":
+					"w-full flex items-center justify-center gap-3 py-2 px-4 rounded-none bg-muted backdrop-blur-xs text-foreground hover:bg-primary active:bg-primary transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-muted/70 disabled:hover:text-foreground disabled:active:bg-muted/70 disabled:active:text-foreground [&_svg]:!w-5 [&_svg]:!h-5 hover:[&_svg]:text-muted active:[&_svg]:text-muted hover:[&_span]:!text-background active:[&_span]:!text-background",
 			},
 			size: {
 				default: "h-11 px-4 py-3",

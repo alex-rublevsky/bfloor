@@ -181,6 +181,46 @@ input.field-sizing-content[type="number"] {
 }
 
 :root {
+	--hue: 29.52;
+	--beige-hue: 84.88;
+
+	--background: oklch(0.9777 0.0154 var(--beige-hue));
+	--foreground: oklch(0.1532 0.0344 var(--hue));
+
+	--primary: oklch(0.3721 0.1297 var(--hue));
+	--primary-foreground: oklch(0.9672 0.0043 var(--hue));
+
+	--muted: oklch(0.9088 0.0881 var(--beige-hue));
+	--muted-foreground: oklch(0.5 0.0374 var(--hue));
+
+	/* make sure border is the same as secondary but with 50% opacity */
+	--secondary: oklch(0.5072 0.2029 var(--hue));
+	--secondary-hover: oklch(0.5072 0.2029 var(--hue) calc(l_ * _0 0.9));
+
+	--border: oklch(0.8779 0.0512 var(--hue) / 0.5);
+
+	--accent: oklch(0.54 0.2203 var(--hue));
+	--accent-foreground: var(--background);
+
+	--destructive: oklch(0.6368 0.2078 25.33);
+	--destructive-foreground: oklch(0.9779 0.0112 var(--hue));
+
+	--input: oklch(0.8779 0.0512 var(--hue));
+	--ring: 0 0% 3.9%;
+
+	--radius: 1rem;
+	--sidebar-background: 0 0% 98%;
+	--sidebar-foreground: 240 5.3% 26.1%;
+	--sidebar-primary: 240 5.9% 10%;
+	--sidebar-primary-foreground: 0 0% 98%;
+	--sidebar-accent: 240 4.8% 95.9%;
+	--sidebar-accent-foreground: 240 5.9% 10%;
+	--sidebar-border: 220 13% 91%;
+	--sidebar-ring: 217.2 91.2% 59.8%;
+	--discount-badge: #bee42b;
+	--discount-badge-foreground: #3c480b;
+
+	/* OLD COLORS
 	--hue: 29.38;
 
 	--background: oklch(0.9672 0.0043 var(--hue));
@@ -192,7 +232,6 @@ input.field-sizing-content[type="number"] {
 	--muted: oklch(0.9437 0.0174 var(--hue));
 	--muted-foreground: oklch(0.5 0.0374 var(--hue));
 
-	/* make sure border is the same as secondary but with 50% opacity */
 	--secondary: oklch(0.8779 0.0512 var(--hue));
 	--secondary-hover: oklch(0.54 0.2203 var(--hue) calc(l_ * _0 0.9));
 	--border: oklch(0.8779 0.0512 var(--hue) / 0.5);
@@ -216,7 +255,7 @@ input.field-sizing-content[type="number"] {
 	--sidebar-border: 220 13% 91%;
 	--sidebar-ring: 217.2 91.2% 59.8%;
 	--discount-badge: #bee42b;
-	--discount-badge-foreground: #3c480b;
+	--discount-badge-foreground: #3c480b; */
 
 	/* Standard transition settings (unified) */
 	--transition-standard-duration: 0.3s;
@@ -912,14 +951,15 @@ input[type="number"] {
 }
 
 /* Scroll-aware navbar: hides on scroll down, shows on scroll up */
+/* Using position: sticky keeps navbar in document flow, preventing content overlap */
 .navbar-scroll-aware {
-	position: fixed;
+	position: sticky;
 	top: 0;
 	left: 0;
 	right: 0;
 	width: 100%;
 	z-index: 10000;
-	background-color: rgba(var(--background-rgb, 246, 244, 242), 0.95);
+	background-color: color-mix(in oklch, var(--background) 95%, transparent);
 	transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	will-change: transform;
 }
@@ -935,7 +975,7 @@ input[type="number"] {
 /* Backdrop blur for modern browsers */
 @supports (backdrop-filter: blur(8px)) {
 	.navbar-scroll-aware {
-		background-color: rgba(var(--background-rgb, 246, 244, 242), 0.8);
+		background-color: color-mix(in oklch, var(--background) 80%, transparent);
 		backdrop-filter: blur(8px);
 		-webkit-backdrop-filter: blur(8px);
 	}

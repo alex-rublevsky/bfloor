@@ -3,10 +3,10 @@ import { useEffect, useRef, useState } from "react";
 /**
  * Detects scroll direction to show/hide navbar
  *
- * @param threshold - Scroll distance before hiding navbar (default: 100px)
+ * @param threshold - Scroll distance before hiding navbar
  * @returns shouldShowNavbar - Whether navbar should be visible
  */
-export function useScrollDirection(threshold = 100) {
+export function useScrollDirection(threshold: number) {
 	const [shouldShowNavbar, setShouldShowNavbar] = useState(true);
 	const lastScrollY = useRef(0);
 	const ticking = useRef(false);
@@ -39,7 +39,7 @@ export function useScrollDirection(threshold = 100) {
 			if (scrollDiff > 0 && currentScrollY > threshold) {
 				setShouldShowNavbar(false);
 			}
-			// Scrolling up: always show
+			// Scrolling up: show (regardless of position)
 			else if (scrollDiff < 0) {
 				setShouldShowNavbar(true);
 			}
