@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { eq, inArray, like, or, type SQL, sql } from "drizzle-orm";
+import { eq, inArray, type SQL, sql } from "drizzle-orm";
 import { DB } from "~/db";
 import {
 	attributeValues,
@@ -51,7 +51,7 @@ export const getStoreData = createServerFn({ method: "GET" })
 				typeof data.search === "string" ? data.search : undefined;
 			const normalizedSearch = rawSearch?.trim().replace(/\s+/g, " ");
 			const effectiveSearch =
-				normalizedSearch && normalizedSearch.length >= 2
+				normalizedSearch && normalizedSearch.length >= 3
 					? normalizedSearch
 					: undefined;
 
@@ -78,46 +78,41 @@ export const getStoreData = createServerFn({ method: "GET" })
 			// Build where clause (always filter by isActive, plus search + filters)
 			const conditions: SQL[] = [eq(products.isActive, true)];
 
-			// Store FTS result IDs separately for ordering
+			// Store FTS result IDs for filtering and ordering (execute FTS5 query once)
 			let ftsProductIds: number[] | undefined;
 
 			if (effectiveSearch) {
-				// Use FTS5 for search (trigram tokenizer handles fuzzy matching)
+				// Use FTS5 for all searches (trigram tokenizer requires 3+ chars)
 				const ftsQuery = buildFts5Query(effectiveSearch, {
 					enablePrefixMatch: true,
 					operator: "AND",
 				});
 
 				if (ftsQuery) {
+					// Execute FTS5 query ONCE to get both IDs and ranking
 					try {
-						// Query FTS5 table for matching product IDs
-						// ORDER BY rank ensures most relevant results appear first
-						const ftsResults = await db.all<{ id: number }>(
-							sql`SELECT rowid as id FROM products_fts WHERE products_fts MATCH ${ftsQuery} ORDER BY rank`,
+						const ftsResults = await db.all<{ rowid: number; rank: number }>(
+							sql`SELECT rowid, rank FROM products_fts WHERE products_fts MATCH ${ftsQuery} ORDER BY rank`,
 						);
 
-						ftsProductIds = ftsResults.map((r) => r.id);
+						ftsProductIds = ftsResults.map((r) => r.rowid);
 
-						// Filter products by FTS results
-						if (ftsProductIds && ftsProductIds.length > 0) {
+						if (ftsProductIds.length > 0) {
+							// Use pure Drizzle inArray for WHERE clause (no subquery!)
 							conditions.push(inArray(products.id, ftsProductIds));
 						} else {
-							// No matches - return empty result
-							conditions.push(sql`1=0`);
+							// No FTS results, exclude all products
+							conditions.push(sql`1 = 0`);
 						}
 					} catch (error) {
-						console.error("FTS5 search error, falling back to LIKE:", error);
-						// Fallback to LIKE search if FTS5 fails
-						// Note: Only search fields that are indexed in FTS5
-						const searchTerm = effectiveSearch.toLowerCase();
-						const searchPattern = `%${searchTerm}%`;
-						conditions.push(
-							or(
-								like(sql`LOWER(${products.name})`, searchPattern),
-								like(sql`LOWER(${products.sku})`, searchPattern),
-							) ?? sql`1=0`,
-						);
+						console.error("FTS5 search error:", error);
+						// If FTS5 fails completely, exclude all products (shouldn't happen in production)
+						conditions.push(sql`1 = 0`);
 					}
+				} else {
+					// Search term too short (< 3 chars), exclude all products
+					// Minimum 3 characters required for FTS5 trigram tokenizer
+					conditions.push(sql`1 = 0`);
 				}
 			}
 			if (categoryFilter) {
@@ -275,15 +270,12 @@ export const getStoreData = createServerFn({ method: "GET" })
 			} else if (sort === "name") {
 				orderSql = sql`${products.name} asc`;
 			} else if (effectiveSearch && ftsProductIds && ftsProductIds.length > 0) {
-				// Use FTS5 relevance order when search is active
-				// Create CASE statement to maintain FTS rank order
+				// Use pre-fetched FTS5 ranking (no duplicate query!)
+				// Build CASE statement to maintain FTS rank order from the single query we already executed
 				const caseStatements = ftsProductIds
 					.map((id, index) => `WHEN ${products.id.name} = ${id} THEN ${index}`)
 					.join(" ");
 				orderSql = sql.raw(`CASE ${caseStatements} ELSE 9999 END`);
-			} else if (effectiveSearch) {
-				// Fallback for non-FTS search
-				orderSql = sql`instr(lower(${products.name}), ${effectiveSearch.toLowerCase()}), ${products.name}`;
 			}
 
 			// Build products query with conditional pagination

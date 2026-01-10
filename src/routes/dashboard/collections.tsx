@@ -4,6 +4,7 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
 import { useCallback, useMemo } from "react";
 import {
 	DashboardEntityManager,
@@ -31,6 +32,7 @@ import { deleteCollection } from "~/server_functions/dashboard/collections/delet
 import { getAllCollections } from "~/server_functions/dashboard/collections/getAllCollections";
 import { updateCollection } from "~/server_functions/dashboard/collections/updateCollection";
 import type { Collection, CollectionFormData } from "~/types";
+import { simpleSearchSchema } from "~/utils/searchSchemas";
 
 // Type for collection with potentially loading count
 type CollectionWithCount = Collection & {
@@ -108,6 +110,7 @@ const CollectionList = ({
 
 export const Route = createFileRoute("/dashboard/collections")({
 	component: RouteComponent,
+	validateSearch: zodValidator(simpleSearchSchema),
 
 	// Loader prefetches collections and brands (fast) before component renders
 	// Counts will load separately and stream in
@@ -122,6 +125,10 @@ export const Route = createFileRoute("/dashboard/collections")({
 
 function RouteComponent() {
 	const queryClient = useQueryClient();
+
+	// Get search params from URL (Zod ensures search is string | undefined)
+	const searchParams = Route.useSearch();
+	const searchTerm = searchParams.search ?? "";
 
 	// Load collections with Suspense (fast - guaranteed to be loaded by loader)
 	const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
@@ -219,6 +226,7 @@ function RouteComponent() {
 			<DashboardEntityManager
 				config={entityManagerConfig}
 				data={collectionsWithCounts}
+				searchTerm={searchTerm}
 			/>
 		</div>
 	);

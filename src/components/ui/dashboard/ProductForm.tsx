@@ -9,12 +9,12 @@ import ProductVariationForm from "~/components/ui/dashboard/ProductVariationForm
 import { StoreLocationsSelector } from "~/components/ui/dashboard/StoreLocationsSelector";
 import { CheckboxList } from "~/components/ui/shared/CheckboxList";
 import { getProductTagName, PRODUCT_TAGS } from "~/constants/units";
+import { getAllStoreLocations } from "~/data/storeLocations";
 import type { Variation } from "~/hooks/useProductForm";
 import {
 	brandsQueryOptions,
 	categoriesQueryOptions,
 	collectionsQueryOptions,
-	storeLocationsQueryOptions,
 } from "~/lib/queryOptions";
 import type { ProductFormData } from "~/types";
 
@@ -66,7 +66,8 @@ export function ProductForm({
 	const { data: categories } = useQuery(categoriesQueryOptions());
 	const { data: brands } = useQuery(brandsQueryOptions());
 	const { data: collections } = useQuery(collectionsQueryOptions());
-	const { data: storeLocations } = useQuery(storeLocationsQueryOptions());
+	// Get store locations from hardcoded data
+	const storeLocations = getAllStoreLocations();
 
 	return (
 		<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

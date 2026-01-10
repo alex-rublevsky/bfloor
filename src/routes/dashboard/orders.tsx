@@ -1,5 +1,6 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
 import { useState } from "react";
 import { toast } from "sonner";
 import DeleteConfirmationDialog from "~/components/ui/dashboard/ConfirmationDialog";
@@ -15,6 +16,7 @@ import {
 	deleteOrders,
 } from "~/server_functions/dashboard/orders/deleteOrder";
 import { updateOrderStatus } from "~/server_functions/dashboard/orders/updateOrderStatus";
+import { simpleSearchSchema } from "~/utils/searchSchemas";
 
 export interface OrderItem {
 	id: number;
@@ -52,22 +54,10 @@ export interface Order {
 	items: OrderItem[];
 }
 
-// Validate search params - handle both string and number (numeric strings can be parsed as numbers by the router)
-const validateSearch = (search: Record<string, unknown>) => {
-	const result: { search?: string } = {};
-	if (typeof search.search === "string") {
-		result.search = search.search;
-	} else if (typeof search.search === "number") {
-		// Convert number back to string (e.g., "12345" might be parsed as 12345)
-		result.search = String(search.search);
-	}
-	return result;
-};
-
 export const Route = createFileRoute("/dashboard/orders")({
 	component: OrderList,
 	pendingComponent: OrdersPageSkeleton,
-	validateSearch,
+	validateSearch: zodValidator(simpleSearchSchema),
 	// Prefetch orders data before component renders
 	loader: async ({ context: { queryClient } }) => {
 		await queryClient.ensureQueryData(dashboardOrdersQueryOptions());
@@ -90,14 +80,9 @@ export const Route = createFileRoute("/dashboard/orders")({
 function OrderList() {
 	const queryClient = useQueryClient();
 	// Get search params from URL using TanStack Router (consistent with other dashboard pages)
+	// Get search params from URL (Zod ensures search is string | undefined)
 	const searchParams = Route.useSearch();
-	// Normalize search term - handle both string and number types
-	const searchTerm = (() => {
-		const rawValue = searchParams.search ?? "";
-		if (typeof rawValue === "string") return rawValue;
-		if (typeof rawValue === "number") return String(rawValue);
-		return "";
-	})();
+	const searchTerm = searchParams.search ?? "";
 	const [isSelectionMode, setIsSelectionMode] = useState(false);
 	const [selectedOrders, setSelectedOrders] = useState<Set<number>>(new Set());
 	const [isDeleting, setIsDeleting] = useState(false);

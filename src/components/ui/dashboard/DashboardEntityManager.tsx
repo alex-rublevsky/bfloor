@@ -88,6 +88,7 @@ interface DashboardEntityManagerProps<
 	config: EntityManagerConfig<TEntity, TFormData>;
 	data?: TEntity[];
 	isLoading?: boolean;
+	searchTerm?: string; // Optional search term for client-side filtering
 }
 
 export function DashboardEntityManager<
@@ -97,6 +98,7 @@ export function DashboardEntityManager<
 	config,
 	data = [],
 	isLoading = false,
+	searchTerm = "",
 }: DashboardEntityManagerProps<TEntity, TFormData>) {
 	const queryClient = useQueryClient();
 	const createFormId = useId();
@@ -288,6 +290,19 @@ export function DashboardEntityManager<
 		setDeletingEntityId(null);
 	};
 
+	// Client-side filtering based on search term
+	const filteredData =
+		searchTerm.trim().length >= 2
+			? data.filter((entity) => {
+					const searchLower = searchTerm.toLowerCase();
+					// Search in name and slug
+					return (
+						entity.name.toLowerCase().includes(searchLower) ||
+						entity.slug.toLowerCase().includes(searchLower)
+					);
+				})
+			: data;
+
 	if (isLoading) {
 		return <div>Loading...</div>;
 	}
@@ -296,12 +311,15 @@ export function DashboardEntityManager<
 		<div className="h-full overflow-auto">
 			<div className="space-y-6">
 				{/* Entity List */}
-				{data.length === 0 ? (
-					<EmptyState entityType={config.emptyStateEntityType} />
+				{filteredData.length === 0 ? (
+					<EmptyState
+						entityType={config.emptyStateEntityType}
+						isSearchResult={searchTerm.trim().length >= 2}
+					/>
 				) : (
 					<div className="space-y-4">
 						{config.renderList({
-							entities: data,
+							entities: filteredData,
 							onEdit: handleEditEntity,
 						})}
 					</div>

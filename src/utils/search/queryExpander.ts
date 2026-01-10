@@ -18,13 +18,16 @@ export function escapeFts5Term(term: string): string {
 /**
  * Build an FTS5 query from a single term with prefix matching
  * Trigram tokenizer handles fuzzy matching automatically
+ * Note: Trigrams require at least 3 characters to work properly
  */
 export function buildFts5TermQuery(
 	term: string,
 	enablePrefixMatch = true,
 ): string {
 	const cleanTerm = escapeFts5Term(term);
-	if (!cleanTerm || cleanTerm.length < 2) return "";
+	// Trigram tokenizer requires at least 3 characters to form trigrams
+	// Shorter terms will return empty string (no results)
+	if (!cleanTerm || cleanTerm.length < 3) return "";
 
 	// For trigram tokenizer, use unquoted terms for better fuzzy matching
 	// Prefix matching works better without quotes for trigrams
@@ -34,6 +37,7 @@ export function buildFts5TermQuery(
 /**
  * Build an FTS5 query from multiple search terms
  * Simple and fast - let trigram tokenizer do the heavy lifting
+ * Returns empty string if no terms are long enough for trigram matching (< 3 chars)
  */
 export function buildFts5Query(
 	searchQuery: string,
@@ -48,14 +52,16 @@ export function buildFts5Query(
 	const normalizedQuery = searchQuery.trim().replace(/\s+/g, " ");
 	if (!normalizedQuery) return "";
 
-	const terms = normalizedQuery.split(/\s+/).filter((t) => t.length >= 2);
+	// Keep all terms for splitting, but filter will happen in buildFts5TermQuery
+	const terms = normalizedQuery.split(/\s+/).filter((t) => t.length >= 1);
 	if (terms.length === 0) return "";
 
-	// Build FTS5 query for each term
+	// Build FTS5 query for each term (only terms >= 3 chars will return results)
 	const termQueries = terms
 		.map((term) => buildFts5TermQuery(term, enablePrefixMatch))
 		.filter((q) => q.length > 0);
 
+	// If no terms are long enough for FTS5, return empty string (no results)
 	if (termQueries.length === 0) return "";
 	if (termQueries.length === 1) return termQueries[0];
 
@@ -68,7 +74,7 @@ export function buildFts5Query(
  */
 export function buildFts5AutocompleteQuery(prefix: string): string {
 	const cleanPrefix = escapeFts5Term(prefix);
-	if (!cleanPrefix || cleanPrefix.length < 2) return "";
+	if (!cleanPrefix || cleanPrefix.length < 3) return "";
 
 	// Use unquoted prefix for better trigram matching
 	return `${cleanPrefix}*`;

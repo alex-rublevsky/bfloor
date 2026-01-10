@@ -21,7 +21,6 @@ import { getAllProductCategories } from "~/server_functions/dashboard/categories
 import { getProductCategoryCounts } from "~/server_functions/dashboard/categories/getProductCategoryCounts";
 import { getAllCollections } from "~/server_functions/dashboard/collections/getAllCollections";
 import { getProductCollectionCounts } from "~/server_functions/dashboard/collections/getProductCollectionCounts";
-import { getAllCountriesForDashboard } from "~/server_functions/dashboard/countries/getAllCountries";
 import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
 import { getTotalAttributesCount } from "~/server_functions/dashboard/getTotalAttributesCount";
 import { getTotalBrandsCount } from "~/server_functions/dashboard/getTotalBrandsCount";
@@ -29,11 +28,9 @@ import { getTotalCategoriesCount } from "~/server_functions/dashboard/getTotalCa
 import { getTotalCollectionsCount } from "~/server_functions/dashboard/getTotalCollectionsCount";
 import { getTotalOrdersCount } from "~/server_functions/dashboard/getTotalOrdersCount";
 import { getTotalProductsCount } from "~/server_functions/dashboard/getTotalProductsCount";
-import { getTotalStoreLocationsCount } from "~/server_functions/dashboard/getTotalStoreLocationsCount";
 import { getAllOrders } from "~/server_functions/dashboard/orders/getAllOrders";
 import { getAllProducts } from "~/server_functions/dashboard/store/getAllProducts";
 import { getProductBySlug as getDashboardProductBySlug } from "~/server_functions/dashboard/store/getProductBySlug";
-import { getAllStoreLocations } from "~/server_functions/dashboard/storeLocations/getAllStoreLocations";
 import { getStoreData } from "~/server_functions/store/getAllProducts";
 import { getAttributeValuesForFiltering } from "~/server_functions/store/getAttributeValuesForFiltering";
 import { getProductBySlug } from "~/server_functions/store/getProductBySlug";
@@ -446,46 +443,6 @@ export const categoriesQueryOptions = () =>
 	});
 
 /**
- * Store Locations query options
- * Used for: All routes that need store location data
- *
- * Cache Strategy: Maximum caching for static data
- * - Store locations cached for 7 days (very static)
- * - Kept in memory for 14 days
- * - No automatic refetching
- */
-export const storeLocationsQueryOptions = () =>
-	queryOptions({
-		queryKey: ["bfloorStoreLocations"],
-		queryFn: async () => getAllStoreLocations(),
-		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - store locations rarely change
-		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
-		retry: 3,
-		refetchOnWindowFocus: false,
-		refetchOnMount: false,
-	});
-
-/**
- * Countries query options
- * Used for: Dashboard routes that need country data
- *
- * Cache Strategy: Maximum caching for static data
- * - Countries cached for 7 days (very static)
- * - Kept in memory for 14 days
- * - No automatic refetching
- */
-export const countriesQueryOptions = () =>
-	queryOptions({
-		queryKey: ["bfloorCountries"],
-		queryFn: async () => getAllCountriesForDashboard(),
-		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - countries rarely change
-		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
-		retry: 3,
-		refetchOnWindowFocus: false,
-		refetchOnMount: false,
-	});
-
-/**
  * Product Attributes query options (without counts - fast)
  * Used for: All routes that need attribute data
  *
@@ -813,25 +770,6 @@ export const totalAttributesCountQueryOptions = () =>
 		queryKey: ["totalAttributesCount"],
 		queryFn: async () => getTotalAttributesCount(),
 		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - attributes are very static
-		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
-		retry: 3,
-		refetchOnWindowFocus: false,
-		refetchOnMount: false,
-	});
-
-/**
- * Total store locations count query options
- * Used for: Navigation/search placeholder on misc page
- *
- * Cache Strategy: Aggressive caching for counts
- * - Count cached for 7 days (store locations are very static)
- * - Kept in memory for 14 days
- */
-export const totalStoreLocationsCountQueryOptions = () =>
-	queryOptions({
-		queryKey: ["totalStoreLocationsCount"],
-		queryFn: async () => getTotalStoreLocationsCount(),
-		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - store locations are very static
 		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
 		retry: 3,
 		refetchOnWindowFocus: false,

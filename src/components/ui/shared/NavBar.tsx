@@ -49,9 +49,6 @@ interface NavItem {
 interface NavBarProps {
 	items?: NavItem[];
 	className?: string;
-	// Dashboard header props
-	searchTerm?: string;
-	onSearchChange?: (value: string) => void;
 }
 
 // Dashboard navigation items
@@ -779,42 +776,26 @@ const CatalogDropdown = () => {
 // Dashboard search input component - extracted to reduce duplication
 const DashboardSearchInput = ({
 	placeholder,
-	searchTerm,
-	onSearchChange,
-	typedDashboardSearch,
-	setTypedDashboardSearch,
+	value,
+	onChange,
 	className = "w-full",
 }: {
 	placeholder: string;
-	searchTerm?: string;
-	onSearchChange?: (value: string) => void;
-	typedDashboardSearch: string;
-	setTypedDashboardSearch: (value: string) => void;
+	value: string;
+	onChange: (value: string) => void;
 	className?: string;
 }) => {
 	return (
 		<SearchInput
 			placeholder={placeholder}
-			value={
-				searchTerm !== undefined && onSearchChange
-					? searchTerm
-					: typedDashboardSearch
-			}
-			onChange={
-				searchTerm !== undefined && onSearchChange
-					? onSearchChange
-					: setTypedDashboardSearch
-			}
+			value={value}
+			onChange={onChange}
 			className={className}
 		/>
 	);
 };
 
-export function NavBar({
-	className,
-	searchTerm,
-	onSearchChange,
-}: Omit<NavBarProps, "items">) {
+export function NavBar({ className }: Omit<NavBarProps, "items">) {
 	const routerState = useRouterState();
 	const pathname = routerState.location.pathname;
 	const { prefetchDashboardOrders } = usePrefetch();
@@ -832,15 +813,17 @@ export function NavBar({
 	// Check if user is admin
 	const isAdmin = userData?.isAdmin ?? false;
 
-	// Client-side search context
+	// Client-side search context (for store page)
 	const clientSearch = useClientSearch();
 	const navigate = useNavigate();
 
-	// Dashboard search state (self-managed when not provided by props)
+	// Dashboard search - read from URL and update URL directly
 	const currentSearchParam = (
 		routerState.location.search as unknown as Record<string, unknown>
 	)?.search;
-	const [typedDashboardSearch, setTypedDashboardSearch] = useState(() => {
+
+	// Local state for input value (for immediate UI feedback)
+	const [dashboardSearchInput, setDashboardSearchInput] = useState(() => {
 		// Handle both string and number (numeric strings can be parsed as numbers by the router)
 		if (typeof currentSearchParam === "string") return currentSearchParam;
 		if (typeof currentSearchParam === "number")
@@ -848,45 +831,40 @@ export function NavBar({
 		return "";
 	});
 
-	// Keep internal input in sync with URL changes
+	// Keep internal input in sync with URL changes (e.g., back/forward navigation)
 	useEffect(() => {
 		if (!isDashboard) return;
-		// Handle both string and number (numeric strings can be parsed as numbers by the router)
 		const searchValue =
 			typeof currentSearchParam === "string"
 				? currentSearchParam
 				: typeof currentSearchParam === "number"
 					? String(currentSearchParam)
 					: "";
-		setTypedDashboardSearch(searchValue);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+		setDashboardSearchInput(searchValue);
 	}, [isDashboard, currentSearchParam]);
 
-	// Debounce URL update when using internal dashboard search
+	// Debounced URL update for dashboard search
 	useEffect(() => {
 		if (!isDashboard || isMiscPage) return;
-		// If parent provides controlled search, do nothing here
-		if (searchTerm !== undefined && onSearchChange) return;
-		const normalized = typedDashboardSearch.trim().replace(/\s+/g, " ");
+
+		const normalized = dashboardSearchInput.trim().replace(/\s+/g, " ");
 		const applied = normalized.length >= 2 ? normalized : undefined;
+
 		const handle = setTimeout(() => {
-			const url = new URL(window.location.href);
-			if (applied) {
-				url.searchParams.set("search", applied);
-			} else {
-				url.searchParams.delete("search");
-			}
-			window.history.replaceState(null, "", url.toString());
+			// Use TanStack Router's navigate with explicit 'to' parameter
+			// This maintains type safety and proper router state management
+			navigate({
+				to: pathname,
+				search: (prev) => ({
+					...(prev as Record<string, unknown>),
+					search: applied,
+				}),
+				replace: true,
+			});
 		}, 400);
+
 		return () => clearTimeout(handle);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		isDashboard,
-		isMiscPage,
-		typedDashboardSearch,
-		searchTerm,
-		onSearchChange,
-	]);
+	}, [isDashboard, isMiscPage, dashboardSearchInput, navigate, pathname]);
 
 	// Get action buttons from configuration
 	const actionButtons = getActionButtonsForRoute(pathname);
@@ -919,10 +897,8 @@ export function NavBar({
 								<div className="flex-1 min-w-0">
 									<DashboardSearchInput
 										placeholder={dynamicPlaceholder}
-										searchTerm={searchTerm}
-										onSearchChange={onSearchChange}
-										typedDashboardSearch={typedDashboardSearch}
-										setTypedDashboardSearch={setTypedDashboardSearch}
+										value={dashboardSearchInput}
+										onChange={setDashboardSearchInput}
 									/>
 								</div>
 							)}
@@ -964,10 +940,8 @@ export function NavBar({
 									<div className="flex-1 min-w-0">
 										<DashboardSearchInput
 											placeholder={dynamicPlaceholder}
-											searchTerm={searchTerm}
-											onSearchChange={onSearchChange}
-											typedDashboardSearch={typedDashboardSearch}
-											setTypedDashboardSearch={setTypedDashboardSearch}
+											value={dashboardSearchInput}
+											onChange={setDashboardSearchInput}
 										/>
 									</div>
 								)}
@@ -998,10 +972,8 @@ export function NavBar({
 							{!isMiscPage && (
 								<DashboardSearchInput
 									placeholder={dynamicPlaceholder}
-									searchTerm={searchTerm}
-									onSearchChange={onSearchChange}
-									typedDashboardSearch={typedDashboardSearch}
-									setTypedDashboardSearch={setTypedDashboardSearch}
+									value={dashboardSearchInput}
+									onChange={setDashboardSearchInput}
 								/>
 							)}
 						</div>

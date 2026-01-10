@@ -1,7 +1,7 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
 import { useMemo } from "react";
-import { CountriesManager } from "~/components/ui/dashboard/CountriesManager";
 import {
 	DashboardEntityManager,
 	type EntityFormFieldsProps,
@@ -16,9 +16,9 @@ import { Edit } from "~/components/ui/shared/Icon";
 import { Image } from "~/components/ui/shared/Image";
 import styles from "~/components/ui/store/productCard.module.css";
 import { ASSETS_BASE_URL } from "~/constants/urls";
+import { getActiveCountries } from "~/data/countries";
 import {
 	brandsQueryOptions,
-	countriesQueryOptions,
 	productBrandCountsQueryOptions,
 } from "~/lib/queryOptions";
 import { createBrand } from "~/server_functions/dashboard/brands/createBrand";
@@ -27,6 +27,7 @@ import { updateBrand } from "~/server_functions/dashboard/brands/updateBrand";
 import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
 import { deleteProductImage } from "~/server_functions/dashboard/store/deleteProductImage";
 import type { Brand, BrandFormData } from "~/types";
+import { simpleSearchSchema } from "~/utils/searchSchemas";
 
 // Brand form fields component
 const BrandFormFields = ({
@@ -34,8 +35,8 @@ const BrandFormFields = ({
 	onFieldChange,
 	idPrefix,
 }: EntityFormFieldsProps<Brand, BrandFormData>) => {
-	// Fetch countries from database (already prefetched in loader)
-	const { data: countries = [] } = useSuspenseQuery(countriesQueryOptions());
+	// Get countries from hardcoded data
+	const countries = getActiveCountries();
 
 	return (
 		<>
@@ -172,14 +173,15 @@ const BrandList = ({ entities, onEdit }: EntityListProps<BrandWithCount>) => (
 export const Route = createFileRoute("/dashboard/brands")({
 	component: RouteComponent,
 	pendingComponent: BrandsPageSkeleton,
+	validateSearch: zodValidator(simpleSearchSchema),
 
-	// Loader prefetches brands, countries, and counts before component renders
+	// Loader prefetches brands and counts before component renders
 	// This ensures consistent server/client rendering and prevents hydration mismatches
+	// Countries are now hardcoded and don't need prefetching
 	loader: async ({ context: { queryClient } }) => {
 		// Prefetch all data to ensure consistent server/client rendering
 		await Promise.all([
 			queryClient.ensureQueryData(brandsQueryOptions()),
-			queryClient.ensureQueryData(countriesQueryOptions()),
 			queryClient.ensureQueryData(productBrandCountsQueryOptions()),
 		]);
 	},
@@ -187,6 +189,10 @@ export const Route = createFileRoute("/dashboard/brands")({
 
 function RouteComponent() {
 	const queryClient = useQueryClient();
+
+	// Get search params from URL (Zod ensures search is string | undefined)
+	const searchParams = Route.useSearch();
+	const searchTerm = searchParams.search ?? "";
 
 	// Load brands with Suspense (fast - guaranteed to be loaded by loader)
 	const { data: brands } = useSuspenseQuery(brandsQueryOptions());
@@ -267,15 +273,13 @@ function RouteComponent() {
 	return (
 		<div className="h-full overflow-auto">
 			<div className="space-y-6 px-6 py-6">
-				{/* Countries Management Section */}
-				<CountriesManager />
-
 				{/* Brands Management Section */}
 				<div>
 					<h2 className="text-lg font-semibold mb-4">Бренды</h2>
 					<DashboardEntityManager
 						config={entityManagerConfig}
 						data={brandsWithCounts}
+						searchTerm={searchTerm}
 					/>
 				</div>
 			</div>

@@ -93,23 +93,15 @@ export const categories = sqliteTable("categories", {
 	order: integer("order").notNull().default(0), // For sorting categories
 });
 
-export const countries = sqliteTable("countries", {
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	name: text("name").notNull(), // Display name: "Россия", "Германия"
-	code: text("code").notNull().unique(), // ISO country code: "RU", "DE", "IT", etc.
-	flagImage: text("flag_image"), // Path to flag image file (optional)
-	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
-	createdAt: integer("created_at", { mode: "timestamp" }),
-});
+// Countries table removed - now hardcoded in ~/data/countries.ts
+// This eliminates database queries and works perfectly with serverless architecture
 
 export const brands = sqliteTable("brands", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	name: text("name").notNull(),
 	slug: text("slug").notNull().unique(),
 	image: text("image"),
-	countryId: integer("country_id").references(() => countries.id, {
-		onDelete: "set null",
-	}), // Страна происхождения бренда - опционально
+	countryId: integer("country_id"), // Reference to hardcoded country ID from ~/data/countries.ts - optional
 	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 });
 
@@ -125,26 +117,15 @@ export const collections = sqliteTable("collections", {
 	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 });
 
-export const storeLocations = sqliteTable("store_locations", {
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	address: text("address").notNull(),
-	description: text("description"),
-	openingHours: text("opening_hours"),
-	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
-	createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-});
+// Store locations table removed - now hardcoded in ~/data/storeLocations.ts
+// This eliminates database queries and works perfectly with serverless architecture
 
 export const productStoreLocations = sqliteTable("product_store_locations", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	productId: integer("product_id").references(() => products.id, {
 		onDelete: "cascade",
 	}),
-	storeLocationId: integer("store_location_id").references(
-		() => storeLocations.id,
-		{
-			onDelete: "cascade",
-		},
-	),
+	storeLocationId: integer("store_location_id"), // Reference to hardcoded location ID from ~/data/storeLocations.ts
 	createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 });
 
@@ -263,12 +244,14 @@ export const schema = {
 	attributeValues,
 	variationAttributes,
 	categories,
-	countries,
+	// countries removed - now hardcoded in ~/data/countries.ts
 	brands,
 	collections,
-	storeLocations,
+	// storeLocations removed - now hardcoded in ~/data/storeLocations.ts
 	productStoreLocations,
 	// Order tables
 	orders,
 	orderItems,
+	// NOTE: FTS5 tables (products_fts, brands_fts, etc.) are NOT included here
+	// They are managed by raw SQL and excluded via drizzle.config.ts
 };

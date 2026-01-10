@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { getAllStoreLocations } from "~/data/storeLocations";
 import {
 	totalAttributesCountQueryOptions,
 	totalBrandsCountQueryOptions,
@@ -6,7 +7,6 @@ import {
 	totalCollectionsCountQueryOptions,
 	totalOrdersCountQueryOptions,
 	totalProductsCountQueryOptions,
-	totalStoreLocationsCountQueryOptions,
 } from "~/lib/queryOptions";
 
 /**
@@ -58,9 +58,9 @@ export function useAttributesCount() {
 }
 
 /**
- * Hook to get store locations count (efficient SQL COUNT)
+ * Hook to get store locations count (from hardcoded data)
  */
 export function useStoreLocationsCount() {
-	const { data } = useQuery(totalStoreLocationsCountQueryOptions());
-	return data ?? 0;
+	// Store locations are now hardcoded, so just return the count
+	return getAllStoreLocations().length;
 }

@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { eq, inArray, isNull, like, or, type SQL, sql } from "drizzle-orm";
+import { eq, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
 import { DB } from "~/db";
 import {
 	attributeValues,
@@ -9,18 +9,7 @@ import {
 	productVariations,
 	variationAttributes,
 } from "~/schema";
-import type {
-	ProductVariationWithAttributes,
-	ProductWithVariations,
-} from "~/types";
 import { buildFts5Query } from "~/utils/search/queryExpander";
-
-// Type for the joined query result
-type JoinedQueryResult = {
-	products: typeof products.$inferSelect;
-	product_variations: typeof productVariations.$inferSelect | null;
-	variation_attributes: typeof variationAttributes.$inferSelect | null;
-};
 
 export const getAllProducts = createServerFn({ method: "GET" })
 	.inputValidator(
@@ -58,7 +47,7 @@ export const getAllProducts = createServerFn({ method: "GET" })
 				typeof data.search === "string" ? data.search : undefined;
 			const normalizedSearch = rawSearch?.trim().replace(/\s+/g, " ");
 			const effectiveSearch =
-				normalizedSearch && normalizedSearch.length >= 2
+				normalizedSearch && normalizedSearch.length >= 3
 					? normalizedSearch
 					: undefined;
 
@@ -95,46 +84,41 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			// Build where clause (search + filters)
 			const conditions: SQL[] = [];
 
-			// Store FTS result IDs separately for ordering
+			// Store FTS result IDs for filtering and ordering (execute FTS5 query once)
 			let ftsProductIds: number[] | undefined;
 
 			if (effectiveSearch) {
-				// Use FTS5 for search (trigram tokenizer handles fuzzy matching)
+				// Use FTS5 for all searches (trigram tokenizer requires 3+ chars)
 				const ftsQuery = buildFts5Query(effectiveSearch, {
 					enablePrefixMatch: true,
 					operator: "AND",
 				});
 
 				if (ftsQuery) {
+					// Execute FTS5 query ONCE to get both IDs and ranking
 					try {
-						// Query FTS5 table for matching product IDs
-						// ORDER BY rank ensures most relevant results appear first
-						const ftsResults = await db.all<{ id: number }>(
-							sql`SELECT rowid as id FROM products_fts WHERE products_fts MATCH ${ftsQuery} ORDER BY rank`,
+						const ftsResults = await db.all<{ rowid: number; rank: number }>(
+							sql`SELECT rowid, rank FROM products_fts WHERE products_fts MATCH ${ftsQuery} ORDER BY rank`,
 						);
 
-						ftsProductIds = ftsResults.map((r) => r.id);
+						ftsProductIds = ftsResults.map((r) => r.rowid);
 
-						// Filter products by FTS results
-						if (ftsProductIds && ftsProductIds.length > 0) {
+						if (ftsProductIds.length > 0) {
+							// Use pure Drizzle inArray for WHERE clause (no subquery!)
 							conditions.push(inArray(products.id, ftsProductIds));
 						} else {
-							// No matches - return empty result
-							conditions.push(sql`1=0`);
+							// No FTS results, exclude all products
+							conditions.push(sql`1 = 0`);
 						}
 					} catch (error) {
-						console.error("FTS5 search error, falling back to LIKE:", error);
-						// Fallback to LIKE search if FTS5 fails
-						// Note: Only search fields that are indexed in FTS5
-						const searchTerm = effectiveSearch.toLowerCase();
-						const searchPattern = `%${searchTerm}%`;
-						conditions.push(
-							or(
-								like(sql`LOWER(${products.name})`, searchPattern),
-								like(sql`LOWER(${products.sku})`, searchPattern),
-							) ?? sql`1=0`,
-						);
+						console.error("FTS5 search error:", error);
+						// If FTS5 fails completely, exclude all products (shouldn't happen in production)
+						conditions.push(sql`1 = 0`);
 					}
+				} else {
+					// Search term too short (< 3 chars), exclude all products
+					// Minimum 3 characters required for FTS5 trigram tokenizer
+					conditions.push(sql`1 = 0`);
 				}
 			}
 			if (categoryFilter) {
@@ -323,8 +307,6 @@ export const getAllProducts = createServerFn({ method: "GET" })
 				.all();
 			const totalCount = totalCountResult[0]?.count ?? 0;
 
-			// Build the products query with conditional pagination
-			// Build a paged subquery to avoid large IN() parameter lists and ensure correct pagination
 			// Determine ordering
 			let orderSql: SQL | typeof products.name = products.name;
 			if (sort === "price-asc") {
@@ -336,178 +318,165 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			} else if (sort === "oldest") {
 				orderSql = sql`${products.createdAt} asc`;
 			} else if (effectiveSearch && ftsProductIds && ftsProductIds.length > 0) {
-				// Use FTS5 relevance order when search is active
-				// Create CASE statement to maintain FTS rank order
+				// Use pre-fetched FTS5 ranking (no duplicate query!)
+				// Build CASE statement to maintain FTS rank order from the single query we already executed
 				const caseStatements = ftsProductIds
 					.map((id, index) => `WHEN ${products.id.name} = ${id} THEN ${index}`)
 					.join(" ");
 				orderSql = sql.raw(`CASE ${caseStatements} ELSE 9999 END`);
-			} else if (effectiveSearch) {
-				// Fallback for non-FTS search
-				orderSql = sql`instr(lower(${products.name}), ${effectiveSearch.toLowerCase()}), ${products.name}`;
 			}
 
-			const subquery = sql`select ${products.id} from ${products}
-				where ${finalWhereCondition}
-				order by ${orderSql}
-				limit ${hasPagination ? pageLimit : totalCount}
-				offset ${hasPagination ? offsetValue : 0}`;
-
-			const baseQuery = db
+			// Build products query with conditional pagination
+			const productsQuery = db
 				.select()
 				.from(products)
-				.leftJoin(
-					productVariations,
-					eq(productVariations.productId, products.id),
-				)
-				.leftJoin(
-					variationAttributes,
-					eq(variationAttributes.productVariationId, productVariations.id),
-				)
-				.where(sql`${products.id} in (${subquery})`)
+				.where(finalWhereCondition)
 				.orderBy(orderSql);
 
-			// Apply pagination if provided
-			const rows: JoinedQueryResult[] = await baseQuery.all();
+			const productsResult =
+				offsetValue !== undefined && pageLimit
+					? await productsQuery.limit(pageLimit).offset(offsetValue).all()
+					: await productsQuery.all();
 
-			// Allow empty state: don't error when there are no products yet
+			// Get product IDs from current page
+			const activeProductIds = new Set(productsResult.map((p) => p.id));
 
-			// Group products and build variations
-			const productMap = new Map<number, ProductWithVariations>();
-			const variationMap = new Map<number, ProductVariationWithAttributes>();
+			// Fetch ONLY variations for the current page of products (not all variations in DB)
+			const filteredVariations =
+				activeProductIds.size > 0
+					? await db
+							.select()
+							.from(productVariations)
+							.where(
+								inArray(
+									productVariations.productId,
+									Array.from(activeProductIds),
+								),
+							)
+							.all()
+					: [];
 
-			for (const row of rows || []) {
-				const product = row.products;
-				const variation = row.product_variations;
-				const attribute = row.variation_attributes;
+			// Get variation IDs from the filtered variations
+			const activeVariationIds = new Set(filteredVariations.map((v) => v.id));
 
-				// Initialize product if not exists
-				if (!productMap.has(product.id)) {
-					// Process images - convert JSON array to comma-separated string
-					let imagesString = "";
-					if (product.images) {
-						try {
-							const imagesArray = JSON.parse(product.images) as string[];
-							imagesString = imagesArray.join(", ");
-						} catch {
-							// If it's already a comma-separated string, use it as-is
-							imagesString = product.images;
-						}
+			// Fetch ONLY attributes for these specific variations (not all attributes in DB)
+			const filteredAttributes =
+				activeVariationIds.size > 0
+					? await db
+							.select()
+							.from(variationAttributes)
+							.where(
+								inArray(
+									variationAttributes.productVariationId,
+									Array.from(activeVariationIds),
+								),
+							)
+							.all()
+					: [];
+
+			const variationsByProduct = new Map<
+				number,
+				(typeof productVariations.$inferSelect)[]
+			>();
+			filteredVariations.forEach((variation) => {
+				if (variation.productId) {
+					if (!variationsByProduct.has(variation.productId)) {
+						variationsByProduct.set(variation.productId, []);
 					}
-
-					// Process productAttributes - convert JSON string to array
-					let productAttributesArray: { attributeId: string; value: string }[] =
-						[];
-					if (product.productAttributes) {
-						try {
-							const parsed = JSON.parse(product.productAttributes);
-							// Convert object to array format expected by frontend
-							if (
-								typeof parsed === "object" &&
-								parsed !== null &&
-								!Array.isArray(parsed)
-							) {
-								// Convert object to array of {attributeId, value} pairs
-								productAttributesArray = Object.entries(parsed).map(
-									([key, value]) => ({
-										attributeId: key,
-										value: String(value),
-									}),
-								);
-							} else if (Array.isArray(parsed)) {
-								productAttributesArray = parsed;
-							}
-						} catch {
-							// If parsing fails, use empty array
-							productAttributesArray = [];
-						}
-					}
-
-					// Process tags - convert JSON string to array
-					let tagsArray: string[] = [];
-					if (product.tags) {
-						try {
-							const parsed = JSON.parse(product.tags);
-							if (Array.isArray(parsed)) {
-								tagsArray = parsed;
-							}
-						} catch {
-							// If parsing fails, use empty array
-							tagsArray = [];
-						}
-					}
-
-					productMap.set(product.id, {
-						...product,
-						images: imagesString,
-						productAttributes: JSON.stringify(productAttributesArray),
-						tags: JSON.stringify(tagsArray),
-						variations: [],
-					});
+					variationsByProduct.get(variation.productId)?.push(variation);
 				}
+			});
 
-				const currentProduct = productMap.get(product.id);
-				if (!currentProduct) {
-					continue; // Skip if product not found in map
-				}
-
-				// Process variations if product has them
-				if (variation) {
-					// Initialize variation if not exists
-					if (!variationMap.has(variation.id)) {
-						variationMap.set(variation.id, {
-							id: variation.id,
-							productId: variation.productId,
-							sku: variation.sku,
-							price: variation.price,
-							sort: variation.sort,
-							discount: variation.discount,
-							createdAt: variation.createdAt,
-							attributes: [],
-						});
+			const attributesByVariation = new Map<
+				number,
+				(typeof variationAttributes.$inferSelect)[]
+			>();
+			filteredAttributes.forEach((attr) => {
+				if (attr.productVariationId) {
+					if (!attributesByVariation.has(attr.productVariationId)) {
+						attributesByVariation.set(attr.productVariationId, []);
 					}
-
-					// Add attribute to variation if exists
-					if (attribute) {
-						const currentVariation = variationMap.get(variation.id);
-						if (!currentVariation) continue;
-						const existingAttribute = currentVariation.attributes.find(
-							(attr) => attr.attributeId === attribute.attributeId,
-						);
-
-						if (!existingAttribute) {
-							currentVariation.attributes.push({
-								attributeId: attribute.attributeId,
-								value: attribute.value,
-							});
-						}
+					const existingAttributes = attributesByVariation.get(
+						attr.productVariationId,
+					);
+					if (existingAttributes) {
+						existingAttributes.push(attr);
 					}
 				}
-			}
+			});
 
-			// Assign variations to products
-			for (const variation of variationMap.values()) {
-				const productId = rows.find(
-					(row) => row.product_variations?.id === variation.id,
-				)?.products.id;
-				if (productId) {
-					const product = productMap.get(productId);
-					if (
-						product &&
-						!product.variations?.find((v) => v.id === variation.id)
-					) {
-						product.variations?.push(variation);
+			const productsArray = productsResult.map((product) => {
+				const variations = variationsByProduct.get(product.id) || [];
+
+				const variationsWithAttributes = variations
+					.map((variation) => ({
+						...variation,
+						attributes: attributesByVariation.get(variation.id) || [],
+					}))
+					.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+
+				// Process images - convert JSON array to comma-separated string
+				let imagesString = "";
+				if (product.images) {
+					try {
+						const imagesArray = JSON.parse(product.images) as string[];
+						imagesString = imagesArray.join(", ");
+					} catch {
+						// If it's already a comma-separated string, use it as-is
+						imagesString = product.images;
 					}
 				}
-			}
 
-			// Sort variations by sort field
-			for (const product of productMap.values()) {
-				product.variations?.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
-			}
+				// Process productAttributes - convert JSON string to array
+				let productAttributesArray: { attributeId: string; value: string }[] =
+					[];
+				if (product.productAttributes) {
+					try {
+						const parsed = JSON.parse(product.productAttributes);
+						// Convert object to array format expected by frontend
+						if (
+							typeof parsed === "object" &&
+							parsed !== null &&
+							!Array.isArray(parsed)
+						) {
+							// Convert object to array of {attributeId, value} pairs
+							productAttributesArray = Object.entries(parsed).map(
+								([key, value]) => ({
+									attributeId: key,
+									value: String(value),
+								}),
+							);
+						} else if (Array.isArray(parsed)) {
+							productAttributesArray = parsed;
+						}
+					} catch {
+						// If parsing fails, use empty array
+						productAttributesArray = [];
+					}
+				}
 
-			// Preserve database ordering for relevance or name ordering
-			const productsArray = Array.from(productMap.values());
+				// Process tags - convert JSON string to array
+				let tagsArray: string[] = [];
+				if (product.tags) {
+					try {
+						const parsed = JSON.parse(product.tags);
+						if (Array.isArray(parsed)) {
+							tagsArray = parsed;
+						}
+					} catch {
+						// If parsing fails, use empty array
+						tagsArray = [];
+					}
+				}
+
+				return {
+					...product,
+					images: imagesString,
+					productAttributes: JSON.stringify(productAttributesArray),
+					tags: JSON.stringify(tagsArray),
+					variations: variationsWithAttributes,
+				};
+			});
 
 			const result = {
 				products: productsArray,

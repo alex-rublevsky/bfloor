@@ -4,6 +4,7 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
 import { useMemo } from "react";
 import AttributeValuesManager from "~/components/ui/dashboard/AttributeValuesManager";
 import {
@@ -24,6 +25,7 @@ import { createProductAttribute } from "~/server_functions/dashboard/attributes/
 import { deleteProductAttribute } from "~/server_functions/dashboard/attributes/deleteProductAttribute";
 import { updateProductAttribute } from "~/server_functions/dashboard/attributes/updateProductAttribute";
 import type { ProductAttribute } from "~/types";
+import { simpleSearchSchema } from "~/utils/searchSchemas";
 
 // Type for attribute with values
 type ProductAttributeWithCount = ProductAttribute & {
@@ -64,7 +66,6 @@ const AttributeList = ({
 			<EntityCardContent
 				name={attribute.name}
 				slug={attribute.slug}
-				isActive={attribute.isActive}
 				tags={attribute.values}
 			/>
 		)}
@@ -74,6 +75,7 @@ const AttributeList = ({
 export const Route = createFileRoute("/dashboard/attributes")({
 	component: AttributesPage,
 	pendingComponent: AttributesPageSkeleton,
+	validateSearch: zodValidator(simpleSearchSchema),
 	// Loader prefetches attributes (fast) before component renders
 	loader: async ({ context: { queryClient } }) => {
 		await queryClient.ensureQueryData(productAttributesQueryOptions());
@@ -82,6 +84,10 @@ export const Route = createFileRoute("/dashboard/attributes")({
 
 function AttributesPage() {
 	const queryClient = useQueryClient();
+
+	// Get search params from URL (Zod ensures search is string | undefined)
+	const searchParams = Route.useSearch();
+	const searchTerm = searchParams.search ?? "";
 
 	// Load attributes with Suspense (fast - guaranteed to be loaded by loader)
 	const { data: attributes } = useSuspenseQuery(
@@ -170,6 +176,7 @@ function AttributesPage() {
 			<DashboardEntityManager
 				config={entityManagerConfig}
 				data={attributesWithCounts}
+				searchTerm={searchTerm}
 			/>
 		</div>
 	);

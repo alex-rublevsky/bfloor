@@ -21,4 +21,13 @@ export default defineConfig({
 		url: requiredEnvVars.TURSO_DATABASE_URL,
 		authToken: requiredEnvVars.TURSO_AUTH_TOKEN,
 	},
+	// Exclude FTS5 virtual tables from Drizzle's schema introspection
+	// These tables are managed by raw SQL migrations and SQLite triggers
+	tablesFilter: [
+		"!*_fts",
+		"!*_fts_data",
+		"!*_fts_idx",
+		"!*_fts_docsize",
+		"!*_fts_config",
+	],
 });

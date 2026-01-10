@@ -3,14 +3,12 @@ import type {
 	brands,
 	categories,
 	collections,
-	countries,
 	orderItems,
 	orders,
 	productAttributes,
-	productStoreLocations,
 	products,
+	productStoreLocations,
 	productVariations,
-	storeLocations,
 } from "~/schema";
 
 // Products
@@ -58,17 +56,15 @@ export interface CategoryTreeNode extends Category {
 export type Brand = InferSelectModel<typeof brands>;
 export type NewBrand = InferInsertModel<typeof brands>;
 
-// Countries
-export type Country = InferSelectModel<typeof countries>;
-export type NewCountry = InferInsertModel<typeof countries>;
+// Countries - now hardcoded in ~/data/countries.ts
+// Types are exported from that file
 
 // Collections
 export type Collection = InferSelectModel<typeof collections>;
 export type NewCollection = InferInsertModel<typeof collections>;
 
-// Store Locations
-export type StoreLocation = InferSelectModel<typeof storeLocations>;
-export type NewStoreLocation = InferInsertModel<typeof storeLocations>;
+// Store Locations - now hardcoded in ~/data/storeLocations.ts
+// Types are exported from that file
 
 // Product Store Locations Junction Table
 export type ProductStoreLocation = InferSelectModel<
@@ -169,13 +165,7 @@ export interface BrandFormData {
 	[key: string]: unknown; // Allow additional fields for EntityFormData compatibility
 }
 
-export interface CountryFormData {
-	name: string;
-	code: string; // ISO country code (e.g., "RU", "DE")
-	flagImage?: string; // Path to flag image - optional
-	isActive: boolean;
-	[key: string]: unknown; // Allow additional fields for EntityFormData compatibility
-}
+// CountryFormData removed - countries are now hardcoded in ~/data/countries.ts
 
 export interface CollectionFormData {
 	name: string;
@@ -224,13 +214,7 @@ export interface BrandResponse extends ApiResponse<Brand> {
 	brand?: Brand;
 }
 
-export interface StoreLocationResponse extends ApiResponse<StoreLocation> {
-	storeLocation?: StoreLocation;
-}
-
-export interface StoreLocationsResponse extends ApiResponse<StoreLocation[]> {
-	storeLocations?: StoreLocation[];
-}
+// StoreLocationResponse and StoreLocationsResponse removed - store locations are now hardcoded
 
 /**
  * Minimal CartItem - only IDs and quantity

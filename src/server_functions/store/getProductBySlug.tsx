@@ -1,16 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
-import { eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { getCountryById } from "~/data/countries";
+import { getStoreLocationsByIds } from "~/data/storeLocations";
 import { DB } from "~/db";
 import {
 	brands,
 	categories,
 	collections,
-	countries,
 	productAttributes,
 	products,
 	productStoreLocations,
 	productVariations,
-	storeLocations,
 	variationAttributes,
 } from "~/schema";
 
@@ -19,6 +19,7 @@ type QueryResult = {
 	products: typeof products.$inferSelect;
 	categories: typeof categories.$inferSelect | null;
 	brands: typeof brands.$inferSelect | null;
+	collections: typeof collections.$inferSelect | null;
 	product_variations: typeof productVariations.$inferSelect | null;
 	variation_attributes: typeof variationAttributes.$inferSelect | null;
 };
@@ -34,6 +35,7 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 			.where(eq(products.slug, productId))
 			.leftJoin(categories, eq(products.categorySlug, categories.slug))
 			.leftJoin(brands, eq(products.brandSlug, brands.slug))
+			.leftJoin(collections, eq(products.collectionSlug, collections.slug))
 			.leftJoin(productVariations, eq(productVariations.productId, products.id))
 			.leftJoin(
 				variationAttributes,
@@ -50,48 +52,23 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 		const firstRow = result[0];
 		const baseProduct = firstRow.products;
 
-		// Fetch additional data in parallel
-		const [storeLocationsData, collectionData, countryData] = await Promise.all(
-			[
-				// Fetch store locations for this product
-				db
-					.select()
-					.from(productStoreLocations)
-					.where(eq(productStoreLocations.productId, baseProduct.id))
-					.all()
-					.then(async (relations) => {
-						if (relations.length === 0) return [];
-						const locationIds = relations
-							.map((r) => r.storeLocationId)
-							.filter((id): id is number => id !== null);
-						if (locationIds.length === 0) return [];
-						return db
-							.select()
-							.from(storeLocations)
-							.where(inArray(storeLocations.id, locationIds))
-							.all()
-							.catch(() => []);
-					}),
-				// Fetch collection if exists
-				baseProduct.collectionSlug
-					? db
-							.select()
-							.from(collections)
-							.where(eq(collections.slug, baseProduct.collectionSlug))
-							.limit(1)
-							.then((rows) => rows[0] || null)
-					: Promise.resolve(null),
-				// Fetch country if brand has countryId
-				firstRow.brands?.countryId
-					? db
-							.select()
-							.from(countries)
-							.where(eq(countries.id, firstRow.brands.countryId))
-							.limit(1)
-							.then((rows) => rows[0] || null)
-					: Promise.resolve(null),
-			],
-		);
+		// Fetch store location relations (many-to-many, cannot be joined in main query)
+		const storeLocationRelations = await db
+			.select()
+			.from(productStoreLocations)
+			.where(eq(productStoreLocations.productId, baseProduct.id))
+			.all();
+
+		// Get store locations from hardcoded data
+		const locationIds = storeLocationRelations
+			.map((r) => r.storeLocationId)
+			.filter((id): id is number => id !== null);
+		const storeLocationsData = getStoreLocationsByIds(locationIds);
+
+		// Get country from hardcoded data if brand has countryId
+		const countryData = firstRow.brands?.countryId
+			? getCountryById(firstRow.brands.countryId)
+			: null;
 
 		const variationsMap = new Map();
 
@@ -217,10 +194,10 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 							: null,
 					}
 				: null,
-			collection: collectionData
+			collection: firstRow.collections
 				? {
-						name: collectionData.name,
-						slug: collectionData.slug,
+						name: firstRow.collections.name,
+						slug: firstRow.collections.slug,
 					}
 				: null,
 			storeLocations: storeLocationsData.map((loc) => ({

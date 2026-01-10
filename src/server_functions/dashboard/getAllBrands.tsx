@@ -1,14 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { eq } from "drizzle-orm";
+import { getCountryById } from "~/data/countries";
 import { DB } from "~/db";
-import { brands, countries } from "~/schema";
+import { brands } from "~/schema";
 
 export const getAllBrands = createServerFn({ method: "GET" }).handler(
 	async () => {
 		try {
 			const db = DB();
-			// Join with countries to get flag image
+			// Get brands from database
 			const brandsResult = await db
 				.select({
 					id: brands.id,
@@ -17,14 +17,20 @@ export const getAllBrands = createServerFn({ method: "GET" }).handler(
 					image: brands.image,
 					countryId: brands.countryId,
 					isActive: brands.isActive,
-					countryFlagImage: countries.flagImage,
 				})
 				.from(brands)
-				.leftJoin(countries, eq(brands.countryId, countries.id))
 				.all();
 
+			// Map brands with country flag from hardcoded data
+			const brandsWithCountryFlag = brandsResult.map((brand) => ({
+				...brand,
+				countryFlagImage: brand.countryId
+					? getCountryById(brand.countryId)?.flagImage
+					: null,
+			}));
+
 			// Return empty array if no brands found instead of throwing error
-			return brandsResult || [];
+			return brandsWithCountryFlag || [];
 		} catch (error) {
 			console.error("Error fetching dashboard brands data:", error);
 			setResponseStatus(500);

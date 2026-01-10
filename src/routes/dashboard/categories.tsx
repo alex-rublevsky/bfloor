@@ -1,5 +1,6 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
 import { useMemo } from "react";
 import {
 	DashboardEntityManager,
@@ -27,6 +28,7 @@ import { deleteProductCategory } from "~/server_functions/dashboard/categories/d
 import { getAllProductCategories } from "~/server_functions/dashboard/categories/getAllProductCategories";
 import { updateProductCategory } from "~/server_functions/dashboard/categories/updateProductCategory";
 import type { Category, CategoryFormData } from "~/types";
+import { simpleSearchSchema } from "~/utils/searchSchemas";
 
 // Category with count type (for displaying product counts)
 interface CategoryWithCount extends Category {
@@ -134,6 +136,7 @@ const CategoryList = ({
 export const Route = createFileRoute("/dashboard/categories")({
 	component: RouteComponent,
 	pendingComponent: CategoriesPageSkeleton,
+	validateSearch: zodValidator(simpleSearchSchema),
 
 	// Loader prefetches categories and counts before component renders
 	// This ensures consistent server/client rendering and prevents hydration mismatches
@@ -147,6 +150,10 @@ export const Route = createFileRoute("/dashboard/categories")({
 });
 
 function RouteComponent() {
+	// Get search params from URL (Zod ensures search is string | undefined)
+	const searchParams = Route.useSearch();
+	const searchTerm = searchParams.search ?? "";
+
 	// Load categories with Suspense (fast - guaranteed to be loaded by loader)
 	const { data: categories } = useSuspenseQuery(categoriesQueryOptions());
 
@@ -206,6 +213,7 @@ function RouteComponent() {
 			<DashboardEntityManager
 				config={entityManagerConfig}
 				data={categoriesWithCounts}
+				searchTerm={searchTerm}
 			/>
 		</div>
 	);

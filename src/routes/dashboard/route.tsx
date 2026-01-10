@@ -1,19 +1,9 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
 import { Toaster } from "~/components/ui/shared/sonner";
 import { userDataQueryOptions } from "~/lib/queryOptions";
 import { getUserData } from "~/utils/auth-server-func";
-
-const validateSearch = (search: Record<string, unknown>) => {
-	const result: { search?: string } = {};
-	// Handle both string and number (numeric strings can be parsed as numbers by the router)
-	if (typeof search.search === "string") {
-		result.search = search.search;
-	} else if (typeof search.search === "number") {
-		// Convert number back to string (e.g., "12345" might be parsed as 12345)
-		result.search = String(search.search);
-	}
-	return result;
-};
+import { simpleSearchSchema } from "~/utils/searchSchemas";
 
 export const Route = createFileRoute("/dashboard")({
 	// beforeLoad temporarily disabled for local development access
@@ -46,7 +36,7 @@ export const Route = createFileRoute("/dashboard")({
 		return {};
 	},
 	component: RouteComponent,
-	validateSearch,
+	validateSearch: zodValidator(simpleSearchSchema),
 });
 
 function DashboardLayout() {

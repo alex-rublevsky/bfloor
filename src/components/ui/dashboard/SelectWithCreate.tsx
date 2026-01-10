@@ -1,4 +1,3 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { SlugField } from "~/components/ui/dashboard/SlugField";
@@ -12,8 +11,8 @@ import {
 	SelectValue,
 } from "~/components/ui/shared/Select";
 import { Switch } from "~/components/ui/shared/Switch";
+import { getActiveCountries } from "~/data/countries";
 import { useSlugGeneration } from "~/hooks/useSlugGeneration";
-import { countriesQueryOptions } from "~/lib/queryOptions";
 import { cn } from "~/lib/utils";
 import { createBrand } from "~/server_functions/dashboard/brands/createBrand";
 import { createProductCategory } from "~/server_functions/dashboard/categories/createProductCategory";
@@ -42,7 +41,7 @@ interface SelectWithCreateProps {
 	error?: string;
 }
 
-// Brand country select component that uses database countries
+// Brand country select component that uses hardcoded countries
 function BrandCountrySelect({
 	formData,
 	setFormData,
@@ -54,8 +53,8 @@ function BrandCountrySelect({
 	>;
 	entityType: "brand";
 }) {
-	// Fetch countries from database
-	const { data: countries = [] } = useSuspenseQuery(countriesQueryOptions());
+	// Get countries from hardcoded data
+	const countries = getActiveCountries();
 
 	return (
 		<div>
