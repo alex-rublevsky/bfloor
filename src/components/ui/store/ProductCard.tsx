@@ -379,9 +379,9 @@ function ProductCard({
 					</div>
 
 					{/* Content Section */}
-					<div className="flex flex-col h-auto md:h-full">
-						{/* Info Section */}
-						<div className="p-4 flex flex-col h-auto md:h-full">
+					<div className="flex flex-col h-auto md:h-full md:p-4 pb-4">
+						{/* Info Section - with horizontal and top padding on mobile, no padding on desktop */}
+						<div className="px-4 pt-4 md:px-0 md:pt-0 flex flex-col h-auto md:h-full">
 							{/* Price */}
 							<div className="flex flex-col mb-2">
 								<div className="flex flex-wrap items-center w-full gap-2">
@@ -434,7 +434,7 @@ function ProductCard({
 
 								{/* Product Name */}
 								<p
-									className="mb-3 text-foreground"
+									className="text-foreground"
 									style={
 										disableViewTransition
 											? undefined
@@ -487,55 +487,55 @@ function ProductCard({
 										</div>
 									)}
 							</div>
+						</div>
 
-							{/* Mobile Add to Cart button */}
-							<div className="md:hidden mt-auto">
-								<Button
-									type="button"
-									onClick={(e) => {
-										e.stopPropagation();
-										handleAddToCart(e);
-									}}
-									variant="cart-mobile"
-									disabled={!isAvailable}
+						{/* Mobile Add to Cart button - no horizontal padding, extends to edges */}
+						<div className="md:hidden">
+							<Button
+								type="button"
+								onClick={(e) => {
+									e.stopPropagation();
+									handleAddToCart(e);
+								}}
+								variant="cart-mobile"
+								disabled={!isAvailable}
+							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="16"
+									height="16"
+									fill="none"
+									viewBox="0 0 33 30"
+									className="cart-icon"
+									aria-label="В корзину"
 								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="16"
-										height="16"
-										fill="none"
-										viewBox="0 0 33 30"
-										className="cart-icon"
-										aria-label="В корзину"
-									>
-										<title>Add to cart</title>
-										<path
-											d="M1.94531 1.80127H7.27113L11.9244 18.602C12.2844 19.9016 13.4671 20.8013 14.8156 20.8013H25.6376C26.9423 20.8013 28.0974 19.958 28.495 18.7154L31.9453 7.9303H19.0041"
-											stroke="currentColor"
-											strokeWidth="2"
-											strokeLinecap="round"
-											strokeLinejoin="round"
-										/>
-										<circle
-											cx="13.4453"
-											cy="27.3013"
-											r="2.5"
-											fill="currentColor"
-										/>
-										<circle
-											cx="26.4453"
-											cy="27.3013"
-											r="2.5"
-											fill="currentColor"
-										/>
-									</svg>
-									{!isAddingToCart ? (
-										<span>В корзину</span>
-									) : (
-										<span>Добавление…</span>
-									)}
-								</Button>
-							</div>
+									<title>Add to cart</title>
+									<path
+										d="M1.94531 1.80127H7.27113L11.9244 18.602C12.2844 19.9016 13.4671 20.8013 14.8156 20.8013H25.6376C26.9423 20.8013 28.0974 19.958 28.495 18.7154L31.9453 7.9303H19.0041"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									/>
+									<circle
+										cx="13.4453"
+										cy="27.3013"
+										r="2.5"
+										fill="currentColor"
+									/>
+									<circle
+										cx="26.4453"
+										cy="27.3013"
+										r="2.5"
+										fill="currentColor"
+									/>
+								</svg>
+								{!isAddingToCart ? (
+									<span>В корзину</span>
+								) : (
+									<span>Добавление…</span>
+								)}
+							</Button>
 						</div>
 					</div>
 				</div>

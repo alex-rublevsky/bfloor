@@ -184,7 +184,7 @@ input.field-sizing-content[type="number"] {
 	--hue: 29.52;
 	--beige-hue: 84.88;
 
-	--background: oklch(0.9777 0.0154 var(--beige-hue));
+	--background: oklch(0.9794 0.021 var(--beige-hue));
 	--foreground: oklch(0.1532 0.0344 var(--hue));
 
 	--primary: oklch(0.3721 0.1297 var(--hue));
