@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { eq, inArray, type SQL, sql } from "drizzle-orm";
 import { DB } from "~/db";
 import { attributeValues, productAttributes, products } from "~/schema";
+import { getAttributeMappings } from "~/utils/attributeMapping";
 
 export interface AttributeFilterValue {
 	id: number;
@@ -82,14 +83,10 @@ export const getAttributeValuesForFiltering = createServerFn({ method: "GET" })
 					})
 					.from(products);
 
-		// Apply attribute filters if provided
-		if (Object.keys(attributeFilters).length > 0) {
-		// Get attribute slugs and value mappings
-		const allAttributes = await db.select().from(productAttributes).all();
-			const attributeIdToSlug = new Map<number, string>();
-			for (const attr of allAttributes) {
-				attributeIdToSlug.set(attr.id, attr.slug);
-			}
+	// Apply attribute filters if provided
+	if (Object.keys(attributeFilters).length > 0) {
+		// Get attribute slugs and value mappings (cached)
+		const { idToSlug: attributeIdToSlug } = await getAttributeMappings();
 
 			// Get standardized values for the selected attribute values
 			const allValueIds = new Set<number>();

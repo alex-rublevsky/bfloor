@@ -13,6 +13,7 @@ import {
 	productVariations,
 	variationAttributes,
 } from "~/schema";
+import { getAttributeMappings } from "~/utils/attributeMapping";
 
 // Type for the complex query result
 type QueryResult = {
@@ -100,12 +101,12 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 			}
 		});
 
-		// Fetch all attributes (cached by TanStack Query on client)
-		const allAttributes = await db.select().from(productAttributes).all();
-		const slugToIdMap: Record<string, string> = {};
-		for (const attr of allAttributes) {
-			slugToIdMap[attr.slug] = attr.id.toString();
-		}
+	// Fetch all attributes (cached)
+	const { slugToId } = await getAttributeMappings();
+	const slugToIdMap: Record<string, string> = {};
+	for (const [slug, id] of slugToId.entries()) {
+		slugToIdMap[slug] = id.toString();
+	}
 
 		// Map variation attributes from slugs to IDs
 		for (const variation of variationsMap.values()) {

@@ -10,6 +10,7 @@ import {
 	variationAttributes,
 } from "~/schema";
 import type { Product, ProductVariation } from "~/types";
+import { getAttributeMappings } from "~/utils/attributeMapping";
 import { buildFts5Query } from "~/utils/search/queryExpander";
 
 // Type for variation attributes from database result
@@ -133,14 +134,10 @@ export const getStoreData = createServerFn({ method: "GET" })
 				.where(whereCondition)
 				.all();
 
-			// Filter by attributes if provided
-			if (Object.keys(attributeFilters).length > 0) {
-			// Get attribute slugs and value mappings
-			const allAttributes = await db.select().from(productAttributes).all();
-				const attributeIdToSlug = new Map<number, string>();
-				for (const attr of allAttributes) {
-					attributeIdToSlug.set(attr.id, attr.slug);
-				}
+		// Filter by attributes if provided
+		if (Object.keys(attributeFilters).length > 0) {
+			// Get attribute slugs and value mappings (cached)
+			const { idToSlug: attributeIdToSlug } = await getAttributeMappings();
 
 				// Get standardized values for the selected attribute values
 				const allValueIds = new Set<number>();

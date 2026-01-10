@@ -9,6 +9,7 @@ import {
 	productVariations,
 	variationAttributes,
 } from "~/schema";
+import { getAttributeMappings } from "~/utils/attributeMapping";
 
 export const getProductBySlug = createServerFn({ method: "GET" })
 	.inputValidator((data: { id: number }) => data)
@@ -58,12 +59,12 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 			// Group variations with their attributes
 			const variationsMap = new Map();
 
-		// Fetch all available attributes to create slug-to-ID mapping
-		const allAttributes = await db.select().from(productAttributes).all();
+			// Fetch all available attributes to create slug-to-ID mapping (cached)
+			const { slugToId } = await getAttributeMappings();
 			const slugToIdMap: Record<string, string> = {};
-			allAttributes.forEach((attr) => {
-				slugToIdMap[attr.slug] = attr.id.toString();
-			});
+			for (const [slug, id] of slugToId.entries()) {
+				slugToIdMap[slug] = id.toString();
+			}
 
 			for (const row of variationsResult) {
 				if (!variationsMap.has(row.id)) {
@@ -100,14 +101,12 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 						parsed !== null &&
 						!Array.isArray(parsed)
 					) {
-					// Fetch all available attributes to create dynamic mapping
-					const allAttributes = await db.select().from(productAttributes).all();
-
-						// Create mapping from attribute slugs to IDs
-						const slugToIdMap: Record<string, string> = {};
-						allAttributes.forEach((attr) => {
-							slugToIdMap[attr.slug] = attr.id.toString();
-						});
+					// Fetch all available attributes to create dynamic mapping (cached)
+					const { slugToId } = await getAttributeMappings();
+					const slugToIdMap: Record<string, string> = {};
+					for (const [slug, id] of slugToId.entries()) {
+						slugToIdMap[slug] = id.toString();
+					}
 
 						// Convert object to array of {attributeId, value} pairs
 						productAttributesArray = Object.entries(parsed).map(

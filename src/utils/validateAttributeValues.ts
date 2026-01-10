@@ -1,7 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import type { SqliteRemoteDatabase } from "drizzle-orm/sqlite-proxy";
 import type * as schema from "~/schema";
-import { attributeValues, productAttributes } from "~/schema";
+import { attributeValues } from "~/schema";
+import { getAttributeMappings } from "./attributeMapping";
 
 /**
  * Validates that standardized attribute values exist in attribute_values table
@@ -17,13 +18,13 @@ export async function validateAttributeValues(
 		return errors;
 	}
 
-	// Get all attribute definitions to check which are standardized
-	const allAttributes = await db.select().from(productAttributes).all();
+	// Get all attribute definitions to check which are standardized (cached)
+	const { attributes, slugToId } = await getAttributeMappings();
 	const attributeMap = new Map(
-		allAttributes.map((attr) => [attr.id.toString(), attr]),
+		attributes.map((attr) => [attr.id.toString(), attr]),
 	);
 	const slugToIdMap = new Map(
-		allAttributes.map((attr) => [attr.slug, attr.id.toString()]),
+		Array.from(slugToId.entries()).map(([slug, id]) => [slug, id.toString()]),
 	);
 
 	// Process each attribute

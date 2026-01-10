@@ -3,13 +3,13 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq, inArray } from "drizzle-orm";
 import { DB } from "~/db";
 import {
-	productAttributes,
 	products,
 	productStoreLocations,
 	productVariations,
 	variationAttributes,
 } from "~/schema";
 import type { ProductFormData } from "~/types";
+import { convertAttributesToSlugFormat } from "~/utils/attributeMapping";
 import { validateAttributeValues } from "~/utils/validateAttributeValues";
 import { moveStagingImages } from "./moveStagingImages";
 
@@ -101,42 +101,17 @@ export const updateProduct = createServerFn({ method: "POST" })
 				}
 			}
 
-			// Convert attributes array to object format for database storage
-			// Format: { "attribute-slug": ["value1", "value2"] }
-			let attributesJson = null;
-			if (productData.attributes?.length) {
-				// Fetch all attributes to get slug mapping
-				const allAttributes = await db.select().from(productAttributes).all();
-				const idToSlugMap = new Map<string, string>();
-				for (const attr of allAttributes) {
-					idToSlugMap.set(attr.id.toString(), attr.slug);
-				}
+	// Convert attributes array to object format for database storage
+	// Format: { "attribute-slug": ["value1", "value2"] }
+	const attributesObject = await convertAttributesToSlugFormat(
+		productData.attributes || []
+	);
+	const attributesJson =
+		Object.keys(attributesObject).length > 0
+			? JSON.stringify(attributesObject)
+			: null;
 
-				const attributesObject: Record<string, string[]> = {};
-				for (const attr of productData.attributes) {
-					if (attr.value && attr.value.trim() !== "") {
-						// Convert attribute ID to slug
-						const slug = idToSlugMap.get(attr.attributeId) || attr.attributeId;
-
-						// Split comma-separated values and store as array
-						const values = attr.value
-							.split(",")
-							.map((v) => v.trim())
-							.filter(Boolean);
-
-						if (values.length > 0) {
-							attributesObject[slug] = values;
-						}
-					}
-				}
-
-				attributesJson =
-					Object.keys(attributesObject).length > 0
-						? JSON.stringify(attributesObject)
-						: null;
-			}
-
-			// Validate and prepare variations before any database changes
+		// Validate and prepare variations before any database changes
 			const shouldHaveVariations = productData.hasVariations === true;
 			const incomingVariations = shouldHaveVariations
 				? productData.variations || []
