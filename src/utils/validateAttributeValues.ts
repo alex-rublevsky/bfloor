@@ -19,9 +19,10 @@ export async function validateAttributeValues(
 	}
 
 	// Get all attribute definitions to check which are standardized (cached)
-	const { attributes, slugToId } = await getAttributeMappings();
+	const { attributes: attributeDefinitions, slugToId } =
+		await getAttributeMappings();
 	const attributeMap = new Map(
-		attributes.map((attr) => [attr.id.toString(), attr]),
+		attributeDefinitions.map((attr) => [attr.id.toString(), attr]),
 	);
 	const slugToIdMap = new Map(
 		Array.from(slugToId.entries()).map(([slug, id]) => [slug, id.toString()]),
