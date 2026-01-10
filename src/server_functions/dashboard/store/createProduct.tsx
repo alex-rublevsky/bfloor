@@ -125,7 +125,6 @@ export const createProduct = createServerFn({ method: "POST" })
 			Object.keys(attributesObject).length > 0
 				? JSON.stringify(attributesObject)
 				: null;
-			}
 
 			// Insert main product
 			const insertedProducts = await db

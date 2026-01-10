@@ -37,7 +37,7 @@ export async function getAttributeMappings(): Promise<{
 	timestamp: number;
 }> {
 	const now = Date.now();
-	
+
 	// Return cached data if still valid
 	if (attributeCache && now - attributeCache.timestamp < CACHE_TTL) {
 		return attributeCache;
