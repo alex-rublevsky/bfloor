@@ -910,3 +910,33 @@ input[type="number"] {
 		z-index: 50;
 	}
 }
+
+/* Scroll-aware navbar: hides on scroll down, shows on scroll up */
+.navbar-scroll-aware {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	width: 100%;
+	z-index: 10000;
+	background-color: rgba(var(--background-rgb, 246, 244, 242), 0.95);
+	transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	will-change: transform;
+}
+
+.navbar-scroll-aware.navbar-hidden {
+	transform: translateY(-100%);
+}
+
+.navbar-scroll-aware.navbar-visible {
+	transform: translateY(0);
+}
+
+/* Backdrop blur for modern browsers */
+@supports (backdrop-filter: blur(8px)) {
+	.navbar-scroll-aware {
+		background-color: rgba(var(--background-rgb, 246, 244, 242), 0.8);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+	}
+}

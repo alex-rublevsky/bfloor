@@ -12,6 +12,7 @@ import { Link } from "~/components/ui/shared/Link";
 import { SearchInput } from "~/components/ui/shared/SearchInput";
 import { getActionButtonsForRoute } from "~/config/dashboardActionButtons";
 import { usePrefetch } from "~/hooks/usePrefetch";
+import { useScrollDirection } from "~/hooks/useScrollDirection";
 import { useSearchPlaceholderWithCount } from "~/hooks/useSearchPlaceholderWithCount";
 import { useCart } from "~/lib/cartContext";
 import { useClientSearch } from "~/lib/clientSearchContext";
@@ -802,6 +803,9 @@ export function NavBar({ className }: Omit<NavBarProps, "items">) {
 	const isDashboard = pathname.startsWith("/dashboard");
 	const isMiscPage = pathname === "/dashboard/misc";
 
+	// Smart navbar: hides on scroll down, shows on scroll up
+	const { shouldShowNavbar } = useScrollDirection(100);
+
 	// Fetch userData using TanStack Query
 	// This is cached and shared across components, no prop drilling needed
 	const { data: userData } = useQuery({
@@ -874,7 +878,8 @@ export function NavBar({ className }: Omit<NavBarProps, "items">) {
 			<>
 				<nav
 					className={cn(
-						"sticky top-0 z-[100] bg-background/95 backdrop-blur-sm border-b border-border",
+						"navbar-scroll-aware border-b border-border",
+						shouldShowNavbar ? "navbar-visible" : "navbar-hidden",
 						className,
 					)}
 				>
@@ -994,7 +999,8 @@ export function NavBar({ className }: Omit<NavBarProps, "items">) {
 			<nav
 				style={{ viewTransitionName: "--persist-nav" }}
 				className={cn(
-					"sticky top-0 z-[10000] bg-background/95 backdrop-blur-sm border-b border-border",
+					"navbar-scroll-aware border-b border-border",
+					shouldShowNavbar ? "navbar-visible" : "navbar-hidden",
 					className,
 				)}
 			>
