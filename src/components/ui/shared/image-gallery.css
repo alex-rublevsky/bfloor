@@ -39,12 +39,12 @@
 	display: flex;
 	align-items: center;
 	content: "";
-	background-color: oklch(from var(--secondary) l c h / 0.7);
+	background-color: var(--muted);
 	transition: var(--transition-standard);
 }
 
 .embla__dot:hover {
-	background-color: var(--muted);
+	background-color: color-mix(in oklch, var(--muted) 40%, transparent);
 }
 
 .embla__dot--selected:after {
