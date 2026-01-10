@@ -487,7 +487,7 @@ const benefits = [
 
 function BenefitsSection() {
 	return (
-		<section className="w-full flex flex-row flex-wrap lg:flex-nowrap justify-center items-start gap-3 md:gap-6 min-h-[400px]">
+		<section className="w-full flex flex-row flex-wrap lg:flex-nowrap justify-center items-start gap-x-3 md:gap-x-6 gap-y-0 min-h-[400px]">
 			{benefits.map((benefit) => (
 				<BenefitEntry
 					key={benefit.title}
