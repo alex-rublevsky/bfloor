@@ -10,6 +10,7 @@ import { useCart } from "~/lib/cartContext";
 import { signOut } from "~/utils/auth-client";
 import { cn } from "~/utils/utils";
 import { CartDrawerContent } from "../store/CartDrawerContent";
+import { Button } from "./Button";
 import { MoreVertical } from "./Icon";
 import { MobileActionButtons } from "./nav/NavBarActionButtons";
 
@@ -148,21 +149,22 @@ export function BottomNavBar({
 						<div className="flex items-center justify-center gap-8">
 							{/* Products and Orders */}
 							{dashboardMobileItems.map((item) => (
-								<Link
+								<Button
 									key={item.url}
 									to={item.url}
+									variant={pathname === item.url ? "default" : "secondary"}
 									className={cn(
-										"flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-standard min-w-0",
+										"flex flex-col items-center gap-1 py-2 px-3 h-auto min-w-0",
 										pathname === item.url
-											? "text-primary bg-primary/10"
-											: "text-muted-foreground hover:text-foreground hover:bg-muted",
+											? "bg-primary/10 text-primary hover:bg-primary/10"
+											: "text-muted-foreground hover:text-foreground hover:bg-muted border-transparent",
 									)}
 								>
 									<span className="text-lg">{item.icon}</span>
 									<span className="text-xs font-medium text-center leading-tight">
 										{item.name}
 									</span>
-								</Link>
+								</Button>
 							))}
 
 							{/* Menu Button */}
@@ -206,15 +208,16 @@ export function BottomNavBar({
 
 											{/* Menu Items */}
 											{dashboardMenuItems.map((item) => (
-												<Link
+												<Button
 													key={item.url}
 													to={item.url}
 													onClick={() => setIsMenuOpen(false)}
-													className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-standard"
+													variant="secondary"
+													className="flex items-center justify-start gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-standard w-full h-auto rounded-none border-transparent"
 												>
 													<span className="text-base">{item.icon}</span>
 													<span>{item.name}</span>
-												</Link>
+												</Button>
 											))}
 
 											{/* Divider */}

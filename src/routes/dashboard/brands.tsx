@@ -116,13 +116,13 @@ const BrandList = ({ entities, onEdit }: EntityListProps<BrandWithCount>) => (
 							</div>
 						)}
 
-						{/* Desktop Edit Indicator - Centered on image (identical to ProductCard) */}
-						<div className="absolute inset-0 hidden md:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-10">
-							<div className="flex items-center justify-center gap-2 px-4 py-2 bg-background/70 backdrop-blur-sm rounded-md border border-border/50">
-								<Edit className="w-4 h-4" />
-								<span className="text-sm font-medium">Изменить</span>
-							</div>
+					{/* Desktop Edit Indicator - Centered on image (identical to ProductCard) */}
+					<div className="absolute inset-0 hidden md:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
+						<div className="flex items-center justify-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-[2px] rounded-md border border-border/30 text-primary">
+							<Edit className="w-4 h-4" />
+							<span className="text-sm font-medium">Изменить</span>
 						</div>
+					</div>
 					</div>
 
 					{/* Content Section */}

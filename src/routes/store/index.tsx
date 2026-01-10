@@ -8,9 +8,9 @@ import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
-import { Button } from "~/components/ui/shared/Button";
+import { ActiveFiltersDisplay } from "~/components/ui/shared/ActiveFiltersDisplay";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
-import { X } from "~/components/ui/shared/Icon";
+import { ProductGridSkeleton } from "~/components/ui/shared/ProductGridSkeleton";
 import ProductCard from "~/components/ui/store/ProductCard";
 import ProductFilters from "~/components/ui/store/ProductFilters";
 import { useClientSearch } from "~/lib/clientSearchContext";
@@ -21,7 +21,6 @@ import {
 	collectionsQueryOptions,
 	storeDataInfiniteQueryOptions,
 } from "~/lib/queryOptions.ts";
-import type { AttributeFilter } from "~/server_functions/store/getAttributeValuesForFiltering";
 import type { Brand, CategoryWithCount, Collection } from "~/types";
 import { seo } from "~/utils/seo";
 
@@ -97,177 +96,6 @@ function useResponsiveColumns() {
 	}, []);
 
 	return columnsPerRow;
-}
-
-// Component to display active filters as pills
-function ActiveFiltersDisplay({
-	categories,
-	selectedCategory,
-	brands,
-	selectedBrand,
-	collections,
-	selectedCollection,
-	attributeFilters,
-	selectedAttributeFilters,
-	onRemoveBrand,
-	onRemoveCollection,
-	onRemoveAttributeValue,
-}: {
-	categories: CategoryWithCount[];
-	selectedCategory: string | null;
-	brands: Brand[];
-	selectedBrand: string | null;
-	collections: Collection[];
-	selectedCollection: string | null;
-	attributeFilters: AttributeFilter[];
-	selectedAttributeFilters: Record<number, string[]>;
-	onRemoveBrand: () => void;
-	onRemoveCollection: () => void;
-	onRemoveAttributeValue: (attributeId: number, valueId: string) => void;
-}) {
-	// Get category name
-	const categoryName = useMemo(() => {
-		if (!selectedCategory) return null;
-		const category = categories.find((c) => c.slug === selectedCategory);
-		return category?.name ?? null;
-	}, [categories, selectedCategory]);
-
-	// Get brand name
-	const brandName = useMemo(() => {
-		if (!selectedBrand) return null;
-		const brand = brands.find((b) => b.slug === selectedBrand);
-		return brand?.name ?? null;
-	}, [brands, selectedBrand]);
-
-	// Get collection name
-	const collectionName = useMemo(() => {
-		if (!selectedCollection) return null;
-		const collection = collections.find((c) => c.slug === selectedCollection);
-		return collection?.name ?? null;
-	}, [collections, selectedCollection]);
-
-	// Get attribute filter pills with IDs for removal
-	const attributePills = useMemo(() => {
-		const pills: Array<{
-			attributeId: number;
-			attributeName: string;
-			values: Array<{ id: string; name: string }>;
-		}> = [];
-
-		for (const [attributeIdStr, valueIds] of Object.entries(
-			selectedAttributeFilters,
-		)) {
-			const attributeId = parseInt(attributeIdStr, 10);
-			if (Number.isNaN(attributeId) || valueIds.length === 0) continue;
-
-			const attributeFilter = attributeFilters.find(
-				(af) => af.attributeId === attributeId,
-			);
-			if (!attributeFilter) continue;
-
-			const values = valueIds
-				.map((valueId) => {
-					const value = attributeFilter.values.find(
-						(v) => v.id.toString() === valueId || v.slug === valueId,
-					);
-					return value ? { id: valueId, name: value.value } : null;
-				})
-				.filter((v): v is { id: string; name: string } => v !== null);
-
-			if (values.length > 0) {
-				pills.push({
-					attributeId,
-					attributeName: attributeFilter.attributeName,
-					values,
-				});
-			}
-		}
-
-		return pills;
-	}, [attributeFilters, selectedAttributeFilters]);
-
-	// Show skeleton for title if category is selected but name isn't loaded yet
-	const showTitleSkeleton = selectedCategory && !categoryName;
-
-	return (
-		<div className="px-4 pt-6 pb-4">
-			{/* Title */}
-			{showTitleSkeleton ? (
-				<div className="h-10 md:h-12 bg-muted animate-pulse rounded w-48 mb-3" />
-			) : (
-				<h1
-					key={categoryName ?? "all"}
-					className="text-2xl md:text-3xl font-semibold mb-3"
-					style={{
-						animation: "fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-					}}
-				>
-					{categoryName ?? "Все товары"}
-				</h1>
-			)}
-
-			{/* Filter Pills */}
-			{(brandName || collectionName || attributePills.length > 0) && (
-				<div className="flex flex-wrap gap-2">
-					{brandName && (
-						<span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground transition-all duration-200 hover:bg-muted/80">
-							<span>{brandName}</span>
-							<Button
-								type="button"
-								onClick={onRemoveBrand}
-								className="h-4 w-4 p-0 rounded-full hover:bg-background/50 transition-standard"
-								aria-label={`Remove ${brandName} filter`}
-							>
-								<X
-									size={14}
-									className="text-muted-foreground hover:text-foreground"
-								/>
-							</Button>
-						</span>
-					)}
-					{collectionName && (
-						<span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground transition-all duration-200 hover:bg-muted/80">
-							<span>{collectionName}</span>
-							<Button
-								type="button"
-								onClick={onRemoveCollection}
-								className="h-4 w-4 p-0 rounded-full hover:bg-background/50 transition-standard"
-								aria-label={`Remove ${collectionName} filter`}
-							>
-								<X
-									size={14}
-									className="text-muted-foreground hover:text-foreground"
-								/>
-							</Button>
-						</span>
-					)}
-					{attributePills.map((pill) =>
-						pill.values.map((value) => (
-							<span
-								key={`${pill.attributeId}-${value.id}`}
-								className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground transition-all duration-200 hover:bg-muted/80"
-							>
-								<span>{value.name}</span>
-								<Button
-									type="button"
-									onClick={() =>
-										onRemoveAttributeValue(pill.attributeId, value.id)
-									}
-									className="h-4 w-4 p-0 rounded-full hover:bg-background/50 transition-standard"
-									aria-label={`Remove ${value.name} filter`}
-								>
-									<X
-										size={14}
-										className="text-muted-foreground hover:text-foreground"
-									/>
-								</Button>
-							</span>
-						)),
-					)}
-				</div>
-			)}
-		</div>
-	);
 }
 
 // Cache for virtualizer measurements - persists across navigations
@@ -624,8 +452,8 @@ function StorePage() {
 		}
 	}, [virtualItems, hasNextPage, isFetchingNextPage, rowCount, fetchNextPage]);
 
-	// Determine if we should show the full skeleton or just the products skeleton
-	const showFullSkeleton = !storeData && (isLoadingProducts || isFetching);
+	// Determine if we should show the skeleton
+	const showSkeleton = !storeData || isFetching;
 
 	return (
 		<>
@@ -670,28 +498,10 @@ function StorePage() {
 						updateAttributeFilter(attributeId, newValues);
 					}}
 				/>
-				{/* Products List - Show skeleton during initial load, otherwise show products */}
-				{showFullSkeleton ? (
-					// Products skeleton during initial load
-					<div className="py-4 flex-1">
-						<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
-							{Array.from({ length: 18 }, (_, i) => `skeleton-${i}`).map(
-								(key) => (
-									<div key={key} className="w-full bg-background">
-										<div className="aspect-square bg-muted animate-pulse" />
-										<div className="p-4 flex flex-col space-y-2">
-											<div className="h-7 bg-muted animate-pulse rounded w-20 mb-2" />
-											<div className="h-5 bg-muted animate-pulse rounded w-3/4 mb-3" />
-											<div className="md:hidden mt-auto">
-												<div className="h-10 bg-muted animate-pulse rounded w-full" />
-											</div>
-										</div>
-									</div>
-								),
-							)}
-						</div>
-					</div>
-				) : displayProducts.length === 0 && !isFetching ? (
+				{/* Products List - Show skeleton during loading, otherwise show products */}
+				{showSkeleton ? (
+					<ProductGridSkeleton itemCount={18} />
+				) : displayProducts.length === 0 ? (
 					<EmptyState
 						entityType="products"
 						isSearchResult={!!normalizedSearch}

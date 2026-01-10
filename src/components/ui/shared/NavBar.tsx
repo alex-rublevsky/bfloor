@@ -80,28 +80,25 @@ const DashboardNavLinks = ({
 }) => (
 	<div
 		className={cn(
-			"flex  rounded-full border  border-border bg-background p-[0.3rem]",
+			"flex gap-[0.25rem] rounded-[1.1875rem] border border-border bg-background p-[0.25rem]",
 			className,
 		)}
 	>
 		{dashboardNavItems.map((item) => (
-			<Link
+			<Button
 				key={item.url}
-				href={item.url}
+				to={item.url}
 				onMouseEnter={() => {
 					// Prefetch orders data on hover
 					if (item.url === "/dashboard/orders") {
 						prefetchDashboardOrders();
 					}
 				}}
-				className={cn(
-					"relative z-10 block cursor-pointer px-3 py-1.5 text-xs text-foreground rounded-full transition-standard hover:bg-primary/20 whitespace-nowrap flex-shrink-0",
-					pathname === item.url &&
-						"bg-primary text-primary-foreground mix-blend-normal hover:bg-primary",
-				)}
+				variant={pathname === item.url ? "default" : "secondary"}
+				size="sm"
 			>
 				{item.name}
-			</Link>
+			</Button>
 		))}
 	</div>
 );

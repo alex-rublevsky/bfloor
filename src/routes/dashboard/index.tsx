@@ -10,7 +10,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { AdminProductCard } from "~/components/ui/dashboard/AdminProductCard";
 import { ProductsPageSkeleton } from "~/components/ui/dashboard/skeletons/ProductsPageSkeleton";
+import { ActiveFiltersDisplay } from "~/components/ui/shared/ActiveFiltersDisplay";
 import { EmptyState } from "~/components/ui/shared/EmptyState";
+import { ProductGridSkeleton } from "~/components/ui/shared/ProductGridSkeleton";
 import ProductFilters from "~/components/ui/store/ProductFilters";
 import {
 	attributeValuesForFilteringQueryOptions,
@@ -308,7 +310,6 @@ function RouteComponent() {
 	// Use infinite query to track loading state
 	const {
 		data: productsData,
-		isLoading,
 		isFetching,
 		fetchNextPage,
 		hasNextPage,
@@ -324,8 +325,6 @@ function RouteComponent() {
 			withoutCollectionOnly: showWithoutCollectionOnly,
 			sort: sortBy,
 		}),
-		// Preserve previous data while new search loads
-		placeholderData: (prev) => prev,
 	});
 
 	// Fetch attribute filters based on current filters (including attribute filters)
@@ -439,10 +438,8 @@ function RouteComponent() {
 		}
 	}, [virtualItems, hasNextPage, isFetchingNextPage, rowCount, fetchNextPage]);
 
-	// Show skeleton only on very first load with no data
-	if (!productsData && (isLoading || isFetching)) {
-		return <ProductsPageSkeleton />;
-	}
+	// Determine if we should show the skeleton
+	const showSkeleton = !productsData || isFetching;
 
 	return (
 		<>
@@ -483,8 +480,41 @@ function RouteComponent() {
 					showWithoutCollectionOnly={showWithoutCollectionOnly}
 					onShowWithoutCollectionOnlyChange={updateWithoutCollectionOnly}
 				/>
-				{/* Products List - Virtualized for performance */}
-				{displayProducts.length === 0 && !isFetching ? (
+				{/* Active Filters Display - Always show, even during loading */}
+				<ActiveFiltersDisplay
+					categories={categories.map(
+						(c): CategoryWithCount => ({
+							...c,
+							count: 0,
+						}),
+					)}
+					selectedCategory={selectedCategory}
+					brands={brands}
+					selectedBrand={selectedBrand}
+					collections={collections}
+					selectedCollection={selectedCollection}
+					attributeFilters={attributeFilters}
+					selectedAttributeFilters={selectedAttributeFilters}
+					showUncategorizedOnly={showUncategorizedOnly}
+					showWithoutBrandOnly={showWithoutBrandOnly}
+					showWithoutCollectionOnly={showWithoutCollectionOnly}
+					onRemoveBrand={() => updateBrand(null)}
+					onRemoveCollection={() => updateCollection(null)}
+					onRemoveAttributeValue={(attributeId, valueId) => {
+						const currentValues = selectedAttributeFilters[attributeId] || [];
+						const newValues = currentValues.filter((id) => id !== valueId);
+						updateAttributeFilter(attributeId, newValues);
+					}}
+					onRemoveUncategorizedOnly={() => updateUncategorizedOnly(false)}
+					onRemoveWithoutBrandOnly={() => updateWithoutBrandOnly(false)}
+					onRemoveWithoutCollectionOnly={() =>
+						updateWithoutCollectionOnly(false)
+					}
+				/>
+				{/* Products List - Show skeleton during loading, otherwise show products */}
+				{showSkeleton ? (
+					<ProductGridSkeleton itemCount={18} />
+				) : displayProducts.length === 0 ? (
 					<EmptyState
 						entityType="products"
 						isSearchResult={!!normalizedSearch}
