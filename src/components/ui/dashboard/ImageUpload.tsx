@@ -110,19 +110,19 @@ function SortableImageItem({
 					type="button"
 					{...attributes}
 					{...listeners}
-					className="absolute top-1 left-1 p-1.5 bg-primary text-primary-foreground rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+					className="absolute top-1 left-1 p-1.5 bg-primary rounded opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
 					title="Перетащите для перемещения"
 				>
-					<GripVertical className="w-3 h-3" />
+					<GripVertical className="w-3 h-3 text-background" />
 				</button>
 				{/* Delete Button */}
 				<button
 					type="button"
 					onClick={() => onRemove(index)}
-					className="absolute top-1 right-1 p-1.5 bg-destructive text-destructive-foreground rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90 cursor-pointer"
+					className="absolute top-1 right-1 p-1.5 bg-accent rounded opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-accent/90 cursor-pointer"
 					title="Убрать изображение"
 				>
-					<Trash size={12} />
+					<Trash size={12} className="text-background" />
 				</button>
 			</div>
 			<div className="p-2 bg-background border-t border-border">

@@ -128,7 +128,7 @@ section.embla {
 }
 
 .embla__button:disabled {
-	color: var(--secondary);
+	color: var(--muted);
 	cursor: not-allowed;
 }
 .embla__button__svg {
