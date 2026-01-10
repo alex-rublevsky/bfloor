@@ -18,7 +18,7 @@ export async function validateAttributeValues(
 	}
 
 	// Get all attribute definitions to check which are standardized
-	const allAttributes = await db.select().from(productAttributes);
+	const allAttributes = await db.select().from(productAttributes).all();
 	const attributeMap = new Map(
 		allAttributes.map((attr) => [attr.id.toString(), attr]),
 	);

@@ -3,6 +3,7 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
 import { DB } from "~/db";
 import {
+	productAttributes,
 	products,
 	productStoreLocations,
 	productVariations,
@@ -115,15 +116,34 @@ export const createProduct = createServerFn({ method: "POST" })
 				imagesArray.length > 0 ? JSON.stringify(imagesArray) : "";
 
 			// Convert attributes array back to object format for database storage
+			// Format: { "attribute-slug": ["value1", "value2"] }
 			let attributesJson = null;
 			if (productData.attributes?.length) {
-				// Convert array of {attributeId, value} to object format
-				const attributesObject: Record<string, string> = {};
-				productData.attributes.forEach((attr) => {
+				// Fetch all attributes to get slug mapping
+				const allAttributes = await db.select().from(productAttributes).all();
+				const idToSlugMap = new Map<string, string>();
+				for (const attr of allAttributes) {
+					idToSlugMap.set(attr.id.toString(), attr.slug);
+				}
+
+				const attributesObject: Record<string, string[]> = {};
+				for (const attr of productData.attributes) {
 					if (attr.value && attr.value.trim() !== "") {
-						attributesObject[attr.attributeId] = attr.value;
+						// Convert attribute ID to slug
+						const slug = idToSlugMap.get(attr.attributeId) || attr.attributeId;
+
+						// Split comma-separated values and store as array
+						const values = attr.value
+							.split(",")
+							.map((v) => v.trim())
+							.filter(Boolean);
+
+						if (values.length > 0) {
+							attributesObject[slug] = values;
+						}
 					}
-				});
+				}
+
 				attributesJson =
 					Object.keys(attributesObject).length > 0
 						? JSON.stringify(attributesObject)

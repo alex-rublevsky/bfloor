@@ -84,8 +84,8 @@ export const getAttributeValuesForFiltering = createServerFn({ method: "GET" })
 
 		// Apply attribute filters if provided
 		if (Object.keys(attributeFilters).length > 0) {
-			// Get attribute slugs and value mappings
-			const allAttributes = await db.select().from(productAttributes);
+		// Get attribute slugs and value mappings
+		const allAttributes = await db.select().from(productAttributes).all();
 			const attributeIdToSlug = new Map<number, string>();
 			for (const attr of allAttributes) {
 				attributeIdToSlug.set(attr.id, attr.slug);

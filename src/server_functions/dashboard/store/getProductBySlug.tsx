@@ -58,8 +58,8 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 			// Group variations with their attributes
 			const variationsMap = new Map();
 
-			// Fetch all available attributes to create slug-to-ID mapping
-			const allAttributes = await db.select().from(productAttributes);
+		// Fetch all available attributes to create slug-to-ID mapping
+		const allAttributes = await db.select().from(productAttributes).all();
 			const slugToIdMap: Record<string, string> = {};
 			allAttributes.forEach((attr) => {
 				slugToIdMap[attr.slug] = attr.id.toString();
@@ -100,8 +100,8 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 						parsed !== null &&
 						!Array.isArray(parsed)
 					) {
-						// Fetch all available attributes to create dynamic mapping
-						const allAttributes = await db.select().from(productAttributes);
+					// Fetch all available attributes to create dynamic mapping
+					const allAttributes = await db.select().from(productAttributes).all();
 
 						// Create mapping from attribute slugs to IDs
 						const slugToIdMap: Record<string, string> = {};
