@@ -96,6 +96,7 @@ const DashboardNavLinks = ({
 				}}
 				variant={pathname === item.url ? "default" : "secondary"}
 				size="sm"
+				className={pathname === item.url ? "" : "border-0"}
 			>
 				{item.name}
 			</Button>
