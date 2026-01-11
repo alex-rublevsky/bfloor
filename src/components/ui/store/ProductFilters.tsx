@@ -39,12 +39,6 @@ interface ProductFiltersProps {
 	attributeFilters?: AttributeFilter[];
 	selectedAttributeFilters?: Record<number, string[]>; // attributeId -> array of value IDs (as strings)
 	onAttributeFilterChange?: (attributeId: number, valueIds: string[]) => void;
-	showUncategorizedOnly?: boolean;
-	onShowUncategorizedOnlyChange?: (checked: boolean) => void;
-	showWithoutBrandOnly?: boolean;
-	onShowWithoutBrandOnlyChange?: (checked: boolean) => void;
-	showWithoutCollectionOnly?: boolean;
-	onShowWithoutCollectionOnlyChange?: (checked: boolean) => void;
 }
 
 const ProductFilters = memo(function ProductFilters({
@@ -65,12 +59,6 @@ const ProductFilters = memo(function ProductFilters({
 	attributeFilters = [],
 	selectedAttributeFilters = {},
 	onAttributeFilterChange,
-	showUncategorizedOnly = false,
-	onShowUncategorizedOnlyChange,
-	showWithoutBrandOnly = false,
-	onShowWithoutBrandOnlyChange,
-	showWithoutCollectionOnly = false,
-	onShowWithoutCollectionOnlyChange,
 }: ProductFiltersProps) {
 	useDeviceType();
 	// no masked backdrop needed in current layout
@@ -78,9 +66,6 @@ const ProductFilters = memo(function ProductFilters({
 
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 	const drawerFormId = useId();
-	const uncategorizedCheckboxId = useId();
-	const withoutBrandCheckboxId = useId();
-	const withoutCollectionCheckboxId = useId();
 
 	// Local state for filter values (only applied when "Apply" is clicked)
 	const [localCategory, setLocalCategory] = useState<string | null>(
@@ -96,12 +81,6 @@ const ProductFilters = memo(function ProductFilters({
 	const [localAttributeFilters, setLocalAttributeFilters] = useState<
 		Record<number, string[]>
 	>(selectedAttributeFilters);
-	const [localShowUncategorizedOnly, setLocalShowUncategorizedOnly] =
-		useState<boolean>(showUncategorizedOnly);
-	const [localShowWithoutBrandOnly, setLocalShowWithoutBrandOnly] =
-		useState<boolean>(showWithoutBrandOnly);
-	const [localShowWithoutCollectionOnly, setLocalShowWithoutCollectionOnly] =
-		useState<boolean>(showWithoutCollectionOnly);
 
 	const handlePriceRangeChange = useCallback((newValue: number[]) => {
 		const range: [number, number] = [newValue[0], newValue[1]];
@@ -114,24 +93,10 @@ const ProductFilters = memo(function ProductFilters({
 
 	const handleBrandChange = useCallback((brand: string | null) => {
 		setLocalBrand(brand);
-		// Clear without brand filter when selecting a brand
-		setLocalShowWithoutBrandOnly((prev) => {
-			if (brand && prev) {
-				return false;
-			}
-			return prev;
-		});
 	}, []);
 
 	const handleCollectionChange = useCallback((collection: string | null) => {
 		setLocalCollection(collection);
-		// Clear without collection filter when selecting a collection
-		setLocalShowWithoutCollectionOnly((prev) => {
-			if (collection && prev) {
-				return false;
-			}
-			return prev;
-		});
 	}, []);
 
 	// Sync local state with props when drawer opens or props change
@@ -143,9 +108,6 @@ const ProductFilters = memo(function ProductFilters({
 			setLocalPriceRange(currentPriceRange);
 			setLocalSortBy(sortBy);
 			setLocalAttributeFilters(selectedAttributeFilters);
-			setLocalShowUncategorizedOnly(showUncategorizedOnly);
-			setLocalShowWithoutBrandOnly(showWithoutBrandOnly);
-			setLocalShowWithoutCollectionOnly(showWithoutCollectionOnly);
 		}
 	}, [
 		isDrawerOpen,
@@ -155,9 +117,6 @@ const ProductFilters = memo(function ProductFilters({
 		currentPriceRange,
 		sortBy,
 		selectedAttributeFilters,
-		showUncategorizedOnly,
-		showWithoutBrandOnly,
-		showWithoutCollectionOnly,
 	]);
 
 	const hasAnyActiveFilters =
@@ -166,19 +125,13 @@ const ProductFilters = memo(function ProductFilters({
 		(localCollection && localCollection.length > 0) ||
 		localPriceRange[0] !== priceRange.min ||
 		localPriceRange[1] !== priceRange.max ||
-		Object.keys(localAttributeFilters).length > 0 ||
-		localShowUncategorizedOnly ||
-		localShowWithoutBrandOnly ||
-		localShowWithoutCollectionOnly;
+		Object.keys(localAttributeFilters).length > 0;
 
 	const resetAll = () => {
 		setLocalCategory(null);
 		setLocalBrand(null);
 		setLocalCollection(null);
 		setLocalPriceRange([priceRange.min, priceRange.max]);
-		setLocalShowUncategorizedOnly(false);
-		setLocalShowWithoutBrandOnly(false);
-		setLocalShowWithoutCollectionOnly(false);
 		// Reset all attribute filters
 		setLocalAttributeFilters({});
 	};
@@ -206,9 +159,6 @@ const ProductFilters = memo(function ProductFilters({
 		onCollectionChange?.(localCollection);
 		onPriceRangeChange?.(localPriceRange);
 		onSortChange?.(localSortBy);
-		onShowUncategorizedOnlyChange?.(localShowUncategorizedOnly);
-		onShowWithoutBrandOnlyChange?.(localShowWithoutBrandOnly);
-		onShowWithoutCollectionOnlyChange?.(localShowWithoutCollectionOnly);
 		// Apply attribute filters
 		if (onAttributeFilterChange) {
 			// Collect all attribute IDs that need to be updated (from both current and local)
@@ -245,9 +195,6 @@ const ProductFilters = memo(function ProductFilters({
 		setLocalPriceRange(currentPriceRange);
 		setLocalSortBy(sortBy);
 		setLocalAttributeFilters(selectedAttributeFilters);
-		setLocalShowUncategorizedOnly(showUncategorizedOnly);
-		setLocalShowWithoutBrandOnly(showWithoutBrandOnly);
-		setLocalShowWithoutCollectionOnly(showWithoutCollectionOnly);
 		setIsDrawerOpen(false);
 	};
 
@@ -306,26 +253,6 @@ const ProductFilters = memo(function ProductFilters({
 			<div key="categories" className="min-w-fit">
 				<div className="flex items-center justify-between mb-2">
 					<div className="text-sm font-medium">Категории</div>
-					{/* Show only uncategorized checkbox */}
-					{onShowUncategorizedOnlyChange && (
-						<label
-							htmlFor={uncategorizedCheckboxId}
-							className="flex items-center space-x-1.5 cursor-pointer"
-						>
-							<Checkbox
-								id={uncategorizedCheckboxId}
-								checked={localShowUncategorizedOnly}
-								onCheckedChange={(checked) => {
-									setLocalShowUncategorizedOnly(!!checked);
-									// Clear category selection when enabling uncategorized filter
-									if (checked) {
-										setLocalCategory(null);
-									}
-								}}
-							/>
-							<span className="text-sm">без</span>
-						</label>
-					)}
 				</div>
 				<CheckboxList
 					items={categories.map((cat) => ({
@@ -337,10 +264,6 @@ const ProductFilters = memo(function ProductFilters({
 						// Single-select behavior: if checked, select this one; if unchecked, clear selection
 						const categorySlug = checked ? String(itemId) : null;
 						handleMainCategoryChange(categorySlug);
-						// Clear uncategorized filter when selecting a category
-						if (categorySlug && localShowUncategorizedOnly) {
-							setLocalShowUncategorizedOnly(false);
-						}
 					}}
 					idPrefix="filter-category"
 					scrollable={true}
@@ -355,26 +278,6 @@ const ProductFilters = memo(function ProductFilters({
 				<div key="brands" className="min-w-fit">
 					<div className="flex items-center justify-between mb-2">
 						<div className="text-sm font-medium">Бренды</div>
-						{/* Show only without brand checkbox */}
-						{onShowWithoutBrandOnlyChange && (
-							<label
-								htmlFor={withoutBrandCheckboxId}
-								className="flex items-center space-x-1.5 cursor-pointer"
-							>
-								<Checkbox
-									id={withoutBrandCheckboxId}
-									checked={localShowWithoutBrandOnly}
-									onCheckedChange={(checked) => {
-										setLocalShowWithoutBrandOnly(!!checked);
-										// Clear brand selection when enabling without brand filter
-										if (checked) {
-											setLocalBrand(null);
-										}
-									}}
-								/>
-								<span className="text-sm">без</span>
-							</label>
-						)}
 					</div>
 					<CheckboxList
 						items={brands.map((brand) => ({
@@ -401,26 +304,6 @@ const ProductFilters = memo(function ProductFilters({
 				<div key="collections" className="min-w-fit">
 					<div className="flex items-center justify-between mb-2">
 						<div className="text-sm font-medium">Коллекции</div>
-						{/* Show only without collection checkbox */}
-						{onShowWithoutCollectionOnlyChange && (
-							<label
-								htmlFor={withoutCollectionCheckboxId}
-								className="flex items-center space-x-1.5 cursor-pointer"
-							>
-								<Checkbox
-									id={withoutCollectionCheckboxId}
-									checked={localShowWithoutCollectionOnly}
-									onCheckedChange={(checked) => {
-										setLocalShowWithoutCollectionOnly(!!checked);
-										// Clear collection selection when enabling without collection filter
-										if (checked) {
-											setLocalCollection(null);
-										}
-									}}
-								/>
-								<span className="text-sm">без</span>
-							</label>
-						)}
 					</div>
 					<CheckboxList
 						items={collections.map((collection) => ({

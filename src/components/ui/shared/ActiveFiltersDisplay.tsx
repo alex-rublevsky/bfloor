@@ -20,13 +20,6 @@ interface ActiveFiltersDisplayProps {
 	onRemoveBrand: () => void;
 	onRemoveCollection: () => void;
 	onRemoveAttributeValue: (attributeId: number, valueId: string) => void;
-	// Dashboard-specific filters (optional)
-	showUncategorizedOnly?: boolean;
-	showWithoutBrandOnly?: boolean;
-	showWithoutCollectionOnly?: boolean;
-	onRemoveUncategorizedOnly?: () => void;
-	onRemoveWithoutBrandOnly?: () => void;
-	onRemoveWithoutCollectionOnly?: () => void;
 }
 
 /**
@@ -42,15 +35,9 @@ export function ActiveFiltersDisplay({
 	selectedCollection,
 	attributeFilters,
 	selectedAttributeFilters,
-	showUncategorizedOnly = false,
-	showWithoutBrandOnly = false,
-	showWithoutCollectionOnly = false,
 	onRemoveBrand,
 	onRemoveCollection,
 	onRemoveAttributeValue,
-	onRemoveUncategorizedOnly,
-	onRemoveWithoutBrandOnly,
-	onRemoveWithoutCollectionOnly,
 }: ActiveFiltersDisplayProps) {
 	// Get category name
 	const categoryName = useMemo(() => {
@@ -136,10 +123,7 @@ export function ActiveFiltersDisplay({
 			{/* Filter Pills */}
 			{(brandName ||
 				collectionName ||
-				attributePills.length > 0 ||
-				showUncategorizedOnly ||
-				showWithoutBrandOnly ||
-				showWithoutCollectionOnly) && (
+				attributePills.length > 0) && (
 				<div className="flex flex-wrap gap-2">
 					{brandName && (
 						<span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground transition-all duration-200 hover:bg-muted/80">
@@ -165,54 +149,6 @@ export function ActiveFiltersDisplay({
 								onClick={onRemoveCollection}
 								className="h-4 w-4 p-0 rounded-full hover:bg-background/50 transition-standard"
 								aria-label={`Remove ${collectionName} filter`}
-							>
-								<X
-									size={14}
-									className="text-muted-foreground hover:text-foreground"
-								/>
-							</button>
-						</span>
-					)}
-					{showUncategorizedOnly && onRemoveUncategorizedOnly && (
-						<span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground transition-all duration-200 hover:bg-muted/80">
-							<span>Без категории</span>
-							<button
-								type="button"
-								onClick={onRemoveUncategorizedOnly}
-								className="h-4 w-4 p-0 rounded-full hover:bg-background/50 transition-standard"
-								aria-label="Remove uncategorized filter"
-							>
-								<X
-									size={14}
-									className="text-muted-foreground hover:text-foreground"
-								/>
-							</button>
-						</span>
-					)}
-					{showWithoutBrandOnly && onRemoveWithoutBrandOnly && (
-						<span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground transition-all duration-200 hover:bg-muted/80">
-							<span>Без бренда</span>
-							<button
-								type="button"
-								onClick={onRemoveWithoutBrandOnly}
-								className="h-4 w-4 p-0 rounded-full hover:bg-background/50 transition-standard"
-								aria-label="Remove without brand filter"
-							>
-								<X
-									size={14}
-									className="text-muted-foreground hover:text-foreground"
-								/>
-							</button>
-						</span>
-					)}
-					{showWithoutCollectionOnly && onRemoveWithoutCollectionOnly && (
-						<span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground transition-all duration-200 hover:bg-muted/80">
-							<span>Без коллекции</span>
-							<button
-								type="button"
-								onClick={onRemoveWithoutCollectionOnly}
-								className="h-4 w-4 p-0 rounded-full hover:bg-background/50 transition-standard"
-								aria-label="Remove without collection filter"
 							>
 								<X
 									size={14}

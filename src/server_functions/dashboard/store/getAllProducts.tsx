@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { eq, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
+import { eq, inArray, type SQL, sql } from "drizzle-orm";
 import { DB } from "~/db";
 import {
 	attributeValues,
@@ -23,9 +23,6 @@ export const getAllProducts = createServerFn({ method: "GET" })
 				brandSlug?: string;
 				collectionSlug?: string;
 				attributeFilters?: Record<number, string[]>; // attributeId -> array of value IDs
-				uncategorizedOnly?: boolean;
-				withoutBrandOnly?: boolean;
-				withoutCollectionOnly?: boolean;
 				tag?: string;
 				hasDiscount?: boolean;
 				isFeatured?: boolean;
@@ -63,12 +60,9 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			const collectionFilter =
 				data.collectionSlug && data.collectionSlug.length > 0
 					? data.collectionSlug
-					: undefined;
-			const attributeFilters = data.attributeFilters || {};
-			const uncategorizedOnlyFilter = data.uncategorizedOnly === true;
-			const withoutBrandOnlyFilter = data.withoutBrandOnly === true;
-			const withoutCollectionOnlyFilter = data.withoutCollectionOnly === true;
-			const tagFilter = data.tag && data.tag.length > 0 ? data.tag : undefined;
+			: undefined;
+		const attributeFilters = data.attributeFilters || {};
+		const tagFilter = data.tag && data.tag.length > 0 ? data.tag : undefined;
 			const hasDiscountFilter = data.hasDiscount === true;
 			const isFeaturedFilter = data.isFeatured === true;
 			const productIdsFilter =
@@ -128,33 +122,10 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			if (brandFilter) {
 				conditions.push(eq(products.brandSlug, brandFilter));
 			}
-			if (collectionFilter) {
-				conditions.push(eq(products.collectionSlug, collectionFilter));
-			}
-			if (uncategorizedOnlyFilter) {
-				// Filter products where categorySlug is null or empty
-				conditions.push(
-					or(isNull(products.categorySlug), eq(products.categorySlug, "")) ??
-						sql`1=0`,
-				);
-			}
-			if (withoutBrandOnlyFilter) {
-				// Filter products where brandSlug is null or empty
-				conditions.push(
-					or(isNull(products.brandSlug), eq(products.brandSlug, "")) ??
-						sql`1=0`,
-				);
-			}
-			if (withoutCollectionOnlyFilter) {
-				// Filter products where collectionSlug is null or empty
-				conditions.push(
-					or(
-						isNull(products.collectionSlug),
-						eq(products.collectionSlug, ""),
-					) ?? sql`1=0`,
-				);
-			}
-			if (tagFilter) {
+		if (collectionFilter) {
+			conditions.push(eq(products.collectionSlug, collectionFilter));
+		}
+		if (tagFilter) {
 				// Filter products where tags JSON array contains the tag
 				// Using LIKE for simplicity (matches JSON array format: ["tag1","tag2"])
 				conditions.push(sql`${products.tags} LIKE ${`%"${tagFilter}"%`}`);

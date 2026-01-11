@@ -38,18 +38,6 @@ const searchParamsSchema = z.object({
 	brand: z.string().optional(),
 	collection: z.string().optional(),
 	attributeFilters: z.string().optional(), // JSON string of Record<number, string[]>
-	uncategorizedOnly: z
-		.union([z.boolean(), z.string()])
-		.transform((val) => (typeof val === "string" ? val === "true" : val))
-		.optional(),
-	withoutBrandOnly: z
-		.union([z.boolean(), z.string()])
-		.transform((val) => (typeof val === "string" ? val === "true" : val))
-		.optional(),
-	withoutCollectionOnly: z
-		.union([z.boolean(), z.string()])
-		.transform((val) => (typeof val === "string" ? val === "true" : val))
-		.optional(),
 	sort: z
 		.enum(["relevant", "name", "price-asc", "price-desc", "newest", "oldest"])
 		.optional(),
@@ -58,9 +46,6 @@ const searchParamsSchema = z.object({
 // Default values for search params (used for stripping defaults from URL)
 const defaultSearchValues = {
 	sort: "relevant" as const,
-	uncategorizedOnly: false,
-	withoutBrandOnly: false,
-	withoutCollectionOnly: false,
 };
 
 export const Route = createFileRoute("/dashboard/")({
@@ -162,14 +147,6 @@ function RouteComponent() {
 	const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([
 		0, 1000000,
 	]);
-	const [showUncategorizedOnly, setShowUncategorizedOnly] = useState<boolean>(
-		searchParams.uncategorizedOnly ?? false,
-	);
-	const [showWithoutBrandOnly, setShowWithoutBrandOnly] = useState<boolean>(
-		searchParams.withoutBrandOnly ?? false,
-	);
-	const [showWithoutCollectionOnly, setShowWithoutCollectionOnly] =
-		useState<boolean>(searchParams.withoutCollectionOnly ?? false);
 
 	// Sync state with URL when search params change (e.g., from browser back/forward)
 	useEffect(() => {
@@ -180,18 +157,12 @@ function RouteComponent() {
 			parseAttributeFilters(searchParams.attributeFilters),
 		);
 		setSortBy(searchParams.sort ?? "relevant");
-		setShowUncategorizedOnly(searchParams.uncategorizedOnly ?? false);
-		setShowWithoutBrandOnly(searchParams.withoutBrandOnly ?? false);
-		setShowWithoutCollectionOnly(searchParams.withoutCollectionOnly ?? false);
 	}, [
 		searchParams.category,
 		searchParams.brand,
 		searchParams.collection,
 		searchParams.attributeFilters,
 		searchParams.sort,
-		searchParams.uncategorizedOnly,
-		searchParams.withoutBrandOnly,
-		searchParams.withoutCollectionOnly,
 		parseAttributeFilters,
 	]);
 
@@ -274,39 +245,6 @@ function RouteComponent() {
 		});
 	};
 
-	const updateUncategorizedOnly = (checked: boolean) => {
-		setShowUncategorizedOnly(checked);
-		navigate({
-			search: (prev) => ({
-				...prev,
-				uncategorizedOnly: checked ? true : undefined,
-			}),
-			replace: true,
-		});
-	};
-
-	const updateWithoutBrandOnly = (checked: boolean) => {
-		setShowWithoutBrandOnly(checked);
-		navigate({
-			search: (prev) => ({
-				...prev,
-				withoutBrandOnly: checked ? true : undefined,
-			}),
-			replace: true,
-		});
-	};
-
-	const updateWithoutCollectionOnly = (checked: boolean) => {
-		setShowWithoutCollectionOnly(checked);
-		navigate({
-			search: (prev) => ({
-				...prev,
-				withoutCollectionOnly: checked ? true : undefined,
-			}),
-			replace: true,
-		});
-	};
-
 	// Use infinite query to track loading state
 	const {
 		data: productsData,
@@ -320,9 +258,6 @@ function RouteComponent() {
 			brandSlug: selectedBrand ?? undefined,
 			collectionSlug: selectedCollection ?? undefined,
 			attributeFilters: selectedAttributeFilters,
-			uncategorizedOnly: showUncategorizedOnly,
-			withoutBrandOnly: showWithoutBrandOnly,
-			withoutCollectionOnly: showWithoutCollectionOnly,
 			sort: sortBy,
 		}),
 	});
@@ -477,12 +412,6 @@ function RouteComponent() {
 					attributeFilters={attributeFilters}
 					selectedAttributeFilters={selectedAttributeFilters}
 					onAttributeFilterChange={updateAttributeFilter}
-					showUncategorizedOnly={showUncategorizedOnly}
-					onShowUncategorizedOnlyChange={updateUncategorizedOnly}
-					showWithoutBrandOnly={showWithoutBrandOnly}
-					onShowWithoutBrandOnlyChange={updateWithoutBrandOnly}
-					showWithoutCollectionOnly={showWithoutCollectionOnly}
-					onShowWithoutCollectionOnlyChange={updateWithoutCollectionOnly}
 				/>
 				{/* Active Filters Display - Always show, even during loading */}
 				<ActiveFiltersDisplay
@@ -499,9 +428,6 @@ function RouteComponent() {
 					selectedCollection={selectedCollection}
 					attributeFilters={attributeFilters}
 					selectedAttributeFilters={selectedAttributeFilters}
-					showUncategorizedOnly={showUncategorizedOnly}
-					showWithoutBrandOnly={showWithoutBrandOnly}
-					showWithoutCollectionOnly={showWithoutCollectionOnly}
 					onRemoveBrand={() => updateBrand(null)}
 					onRemoveCollection={() => updateCollection(null)}
 					onRemoveAttributeValue={(attributeId, valueId) => {
@@ -509,11 +435,6 @@ function RouteComponent() {
 						const newValues = currentValues.filter((id) => id !== valueId);
 						updateAttributeFilter(attributeId, newValues);
 					}}
-					onRemoveUncategorizedOnly={() => updateUncategorizedOnly(false)}
-					onRemoveWithoutBrandOnly={() => updateWithoutBrandOnly(false)}
-					onRemoveWithoutCollectionOnly={() =>
-						updateWithoutCollectionOnly(false)
-					}
 				/>
 				{/* Products List - Show skeleton during loading, otherwise show products */}
 				{showSkeleton ? (

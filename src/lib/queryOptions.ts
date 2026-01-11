@@ -267,9 +267,6 @@ export const productsInfiniteQueryOptions = (
 		brandSlug?: string | null;
 		collectionSlug?: string | null;
 		attributeFilters?: Record<number, string[]>; // attributeId -> array of value IDs
-		uncategorizedOnly?: boolean;
-		withoutBrandOnly?: boolean;
-		withoutCollectionOnly?: boolean;
 		sort?:
 			| "relevant"
 			| "name"
@@ -288,9 +285,6 @@ export const productsInfiniteQueryOptions = (
 				brandSlug: filters?.brandSlug ?? null,
 				collectionSlug: filters?.collectionSlug ?? null,
 				attributeFilters: filters?.attributeFilters ?? {},
-				uncategorizedOnly: filters?.uncategorizedOnly ?? false,
-				withoutBrandOnly: filters?.withoutBrandOnly ?? false,
-				withoutCollectionOnly: filters?.withoutCollectionOnly ?? false,
 				sort: filters?.sort ?? "relevant",
 			},
 		],
@@ -304,9 +298,6 @@ export const productsInfiniteQueryOptions = (
 					brandSlug: filters?.brandSlug ?? undefined,
 					collectionSlug: filters?.collectionSlug ?? undefined,
 					attributeFilters: filters?.attributeFilters ?? undefined,
-					uncategorizedOnly: filters?.uncategorizedOnly ?? undefined,
-					withoutBrandOnly: filters?.withoutBrandOnly ?? undefined,
-					withoutCollectionOnly: filters?.withoutCollectionOnly ?? undefined,
 					sort: filters?.sort ?? undefined,
 				},
 			}),
