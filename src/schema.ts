@@ -1,4 +1,10 @@
-import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+	integer,
+	real,
+	sqliteTable,
+	text,
+	unique,
+} from "drizzle-orm/sqlite-core";
 
 // System Tables
 
@@ -71,6 +77,27 @@ export const attributeValues = sqliteTable("attribute_values", {
 	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 	createdAt: integer("created_at", { mode: "timestamp" }),
 });
+
+// Junction table for product attributes (normalized for performance)
+export const productAttributeValues = sqliteTable(
+	"product_attribute_values",
+	{
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		productId: integer("product_id")
+			.references(() => products.id, { onDelete: "cascade" })
+			.notNull(),
+		attributeId: integer("attribute_id")
+			.references(() => productAttributes.id, { onDelete: "cascade" })
+			.notNull(),
+		valueId: integer("value_id")
+			.references(() => attributeValues.id, { onDelete: "cascade" })
+			.notNull(),
+		createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+	},
+	// Unique constraint: prevent duplicate attribute values per product
+	// This also creates a composite index for query performance
+	(table) => [unique().on(table.productId, table.attributeId, table.valueId)],
+);
 
 export const variationAttributes = sqliteTable("variation_attributes", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
@@ -242,6 +269,7 @@ export const schema = {
 	productVariations,
 	productAttributes,
 	attributeValues,
+	productAttributeValues,
 	variationAttributes,
 	categories,
 	// countries removed - now hardcoded in ~/data/countries.ts

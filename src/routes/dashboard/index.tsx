@@ -14,11 +14,12 @@ import { ActiveFiltersDisplay } from "~/components/ui/shared/ActiveFiltersDispla
 import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { ProductGridSkeleton } from "~/components/ui/shared/ProductGridSkeleton";
 import ProductFilters from "~/components/ui/store/ProductFilters";
+import { getAllStoreLocations } from "~/data/storeLocations";
 import {
 	attributeValuesForFilteringQueryOptions,
-	brandsQueryOptions,
 	categoriesQueryOptions,
-	collectionsQueryOptions,
+	filteredBrandsDashboardQueryOptions,
+	filteredCollectionsDashboardQueryOptions,
 	productsInfiniteQueryOptions,
 } from "~/lib/queryOptions";
 import type {
@@ -37,6 +38,7 @@ const searchParamsSchema = z.object({
 	category: z.string().optional(),
 	brand: z.string().optional(),
 	collection: z.string().optional(),
+	storeLocation: z.number().optional(),
 	attributeFilters: z.string().optional(), // JSON string of Record<number, string[]>
 	sort: z
 		.enum(["relevant", "name", "price-asc", "price-desc", "newest", "oldest"])
@@ -138,6 +140,9 @@ function RouteComponent() {
 	const [selectedCollection, setSelectedCollection] = useState<string | null>(
 		searchParams.collection ?? null,
 	);
+	const [selectedStoreLocation, setSelectedStoreLocation] = useState<
+		number | null
+	>(searchParams.storeLocation ?? null);
 	const [selectedAttributeFilters, setSelectedAttributeFilters] = useState<
 		Record<number, string[]>
 	>(parseAttributeFilters(searchParams.attributeFilters));
@@ -153,6 +158,7 @@ function RouteComponent() {
 		setSelectedCategory(searchParams.category ?? null);
 		setSelectedBrand(searchParams.brand ?? null);
 		setSelectedCollection(searchParams.collection ?? null);
+		setSelectedStoreLocation(searchParams.storeLocation ?? null);
 		setSelectedAttributeFilters(
 			parseAttributeFilters(searchParams.attributeFilters),
 		);
@@ -161,6 +167,7 @@ function RouteComponent() {
 		searchParams.category,
 		searchParams.brand,
 		searchParams.collection,
+		searchParams.storeLocation,
 		searchParams.attributeFilters,
 		searchParams.sort,
 		parseAttributeFilters,
@@ -206,6 +213,17 @@ function RouteComponent() {
 			search: (prev) => ({
 				...prev,
 				collection: collection ?? undefined,
+			}),
+			replace: true,
+		});
+	};
+
+	const updateStoreLocation = (locationId: number | null) => {
+		setSelectedStoreLocation(locationId);
+		navigate({
+			search: (prev) => ({
+				...prev,
+				storeLocation: locationId ?? undefined,
 			}),
 			replace: true,
 		});
@@ -257,7 +275,11 @@ function RouteComponent() {
 			categorySlug: selectedCategory ?? undefined,
 			brandSlug: selectedBrand ?? undefined,
 			collectionSlug: selectedCollection ?? undefined,
+			storeLocationId: selectedStoreLocation ?? undefined,
 			attributeFilters: selectedAttributeFilters,
+			minPrice: currentPriceRange[0] !== 0 ? currentPriceRange[0] : undefined,
+			maxPrice:
+				currentPriceRange[1] !== 1000000 ? currentPriceRange[1] : undefined,
 			sort: sortBy,
 		}),
 	});
@@ -273,18 +295,29 @@ function RouteComponent() {
 		),
 	});
 
-	// Fetch all reference data separately with aggressive caching (3-day stale time)
+	// Fetch filtered brands and collections based on current filters
 	const { data: brands = [] } = useQuery({
-		...brandsQueryOptions(),
+		...filteredBrandsDashboardQueryOptions(
+			selectedCategory ?? undefined,
+			selectedCollection ?? undefined,
+			selectedStoreLocation ?? undefined,
+		),
 	});
 
 	const { data: collections = [] } = useQuery({
-		...collectionsQueryOptions(),
+		...filteredCollectionsDashboardQueryOptions(
+			selectedCategory ?? undefined,
+			selectedBrand ?? undefined,
+			selectedStoreLocation ?? undefined,
+		),
 	});
 
 	const { data: categories = [] } = useQuery({
 		...categoriesQueryOptions(),
 	});
+
+	// Get store locations (hardcoded data)
+	const storeLocations = getAllStoreLocations();
 
 	// Listen for action button clicks from navbar - navigate to create page
 	useEffect(() => {
@@ -402,6 +435,9 @@ function RouteComponent() {
 					}))}
 					selectedCollection={selectedCollection}
 					onCollectionChange={updateCollection}
+					storeLocations={storeLocations}
+					selectedStoreLocation={selectedStoreLocation}
+					onStoreLocationChange={updateStoreLocation}
 					priceRange={{ min: 0, max: 1000000 }}
 					currentPriceRange={currentPriceRange}
 					onPriceRangeChange={setCurrentPriceRange}
@@ -426,10 +462,13 @@ function RouteComponent() {
 					selectedBrand={selectedBrand}
 					collections={collections}
 					selectedCollection={selectedCollection}
+					storeLocations={storeLocations}
+					selectedStoreLocation={selectedStoreLocation}
 					attributeFilters={attributeFilters}
 					selectedAttributeFilters={selectedAttributeFilters}
 					onRemoveBrand={() => updateBrand(null)}
 					onRemoveCollection={() => updateCollection(null)}
+					onRemoveStoreLocation={() => updateStoreLocation(null)}
 					onRemoveAttributeValue={(attributeId, valueId) => {
 						const currentValues = selectedAttributeFilters[attributeId] || [];
 						const newValues = currentValues.filter((id) => id !== valueId);

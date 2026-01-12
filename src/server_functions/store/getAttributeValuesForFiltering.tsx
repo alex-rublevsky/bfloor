@@ -1,8 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
-import { eq, inArray, type SQL, sql } from "drizzle-orm";
+import { eq, type SQL, sql } from "drizzle-orm";
 import { DB } from "~/db";
-import { attributeValues, productAttributes, products } from "~/schema";
-import { getAttributeMappings } from "~/utils/attributeMapping";
+import {
+	attributeValues,
+	productAttributes,
+	productAttributeValues,
+	products,
+	productStoreLocations,
+} from "~/schema";
 
 export interface AttributeFilterValue {
 	id: number;
@@ -23,8 +28,7 @@ export interface AttributeFilter {
  * Only returns attributes that have standardized values (valueType = 'standardized' or 'both')
  * Only shows values that exist in products matching the current filter context
  *
- * Note: When showing values for an attribute, we consider filters for category/brand/collection
- * AND all other attribute filters (but not the attribute itself, so users can unselect values)
+ * Uses junction table for efficient SQL-based filtering and counting
  */
 export const getAttributeValuesForFiltering = createServerFn({ method: "GET" })
 	.inputValidator(
@@ -33,25 +37,17 @@ export const getAttributeValuesForFiltering = createServerFn({ method: "GET" })
 				categorySlug?: string;
 				brandSlug?: string;
 				collectionSlug?: string;
-				attributeFilters?: Record<number, string[]>; // attributeId -> array of value IDs
+				storeLocationId?: number;
+				attributeFilters?: Record<number, string[]>; // attributeId -> array of value IDs (as strings)
 			} = {},
 		) => data,
 	)
 	.handler(async ({ data = {} }): Promise<AttributeFilter[]> => {
 		const db = DB();
 
-		// First, get all attributes that have standardized values
-		const allAttributes = await db
-			.select()
-			.from(productAttributes)
-			.where(sql`${productAttributes.valueType} IN ('standardized', 'both')`);
-
-		if (allAttributes.length === 0) {
-			return [];
-		}
-
-		// Build where condition for products matching current filters
+		// Build WHERE conditions for products
 		const productConditions: SQL[] = [eq(products.isActive, true)];
+
 		if (data.categorySlug) {
 			productConditions.push(eq(products.categorySlug, data.categorySlug));
 		}
@@ -61,232 +57,158 @@ export const getAttributeValuesForFiltering = createServerFn({ method: "GET" })
 		if (data.collectionSlug) {
 			productConditions.push(eq(products.collectionSlug, data.collectionSlug));
 		}
-		const attributeFilters = data.attributeFilters || {};
-		const productWhereCondition =
-			productConditions.length > 0
-				? sql.join(productConditions, sql` AND `)
-				: undefined;
 
-		// Get all products matching basic filters (category/brand/collection)
-		let matchingProducts = productWhereCondition
-			? await db
-					.select({
-						id: products.id,
-						productAttributes: products.productAttributes,
-					})
-					.from(products)
-					.where(productWhereCondition)
-			: await db
-					.select({
-						id: products.id,
-						productAttributes: products.productAttributes,
-					})
-					.from(products);
+		// Build base query with all necessary joins
+		let query = db
+			.select({
+				attributeId: productAttributes.id,
+				attributeName: productAttributes.name,
+				attributeSlug: productAttributes.slug,
+				valueId: attributeValues.id,
+				value: attributeValues.value,
+				valueSlug: attributeValues.slug,
+				valueSortOrder: attributeValues.sortOrder,
+				productId: productAttributeValues.productId,
+			})
+			.from(productAttributeValues)
+			.innerJoin(products, eq(products.id, productAttributeValues.productId))
+			.innerJoin(
+				productAttributes,
+				eq(productAttributes.id, productAttributeValues.attributeId),
+			)
+			.innerJoin(
+				attributeValues,
+				eq(attributeValues.id, productAttributeValues.valueId),
+			)
+			.where(
+				sql.join(
+					[
+						...productConditions,
+						eq(attributeValues.isActive, true),
+						sql`${productAttributes.valueType} IN ('standardized', 'both')`,
+					],
+					sql` AND `,
+				),
+			)
+			.$dynamic();
 
-	// Apply attribute filters if provided
-	if (Object.keys(attributeFilters).length > 0) {
-		// Get attribute slugs and value mappings (cached)
-		const { idToSlug: attributeIdToSlug } = await getAttributeMappings();
+		// Handle store location filter (requires additional join)
+		if (data.storeLocationId !== undefined) {
+			query = query.innerJoin(
+				productStoreLocations,
+				sql`${productStoreLocations.productId} = ${products.id} AND ${productStoreLocations.storeLocationId} = ${data.storeLocationId}`,
+			);
+		}
 
-			// Get standardized values for the selected attribute values
-			const allValueIds = new Set<number>();
-			for (const valueIds of Object.values(attributeFilters)) {
-				for (const valueId of valueIds) {
-					const numId = parseInt(valueId, 10);
-					if (!Number.isNaN(numId)) {
-						allValueIds.add(numId);
+		// Handle attribute filters (filter by other attributes)
+		if (
+			data.attributeFilters &&
+			Object.keys(data.attributeFilters).length > 0
+		) {
+			for (const [attrIdStr, valueIdStrs] of Object.entries(
+				data.attributeFilters,
+			)) {
+				const attrId = parseInt(attrIdStr, 10);
+				const valueIds = valueIdStrs.map((id) => parseInt(id, 10));
+
+				// For each attribute filter, ensure product has that attribute with one of the specified values
+				query = query.where(
+					sql`EXISTS (
+						SELECT 1 FROM ${productAttributeValues} pav_filter
+						WHERE pav_filter.product_id = ${products.id}
+						  AND pav_filter.attribute_id = ${attrId}
+						  AND pav_filter.value_id IN (${sql.join(valueIds, sql`, `)})
+					)`,
+				);
+			}
+		}
+
+		// Execute query
+		const results = await query;
+
+		// Group results by attribute and count unique products per value
+		const attributeMap = new Map<
+			number,
+			{
+				attributeId: number;
+				attributeName: string;
+				attributeSlug: string;
+				values: Map<
+					number,
+					{
+						id: number;
+						value: string;
+						slug: string | null;
+						sortOrder: number;
+						productIds: Set<number>;
 					}
-				}
+				>;
+			}
+		>();
+
+		for (const row of results) {
+			// Get or create attribute entry
+			if (!attributeMap.has(row.attributeId)) {
+				attributeMap.set(row.attributeId, {
+					attributeId: row.attributeId,
+					attributeName: row.attributeName,
+					attributeSlug: row.attributeSlug,
+					values: new Map(),
+				});
 			}
 
-			const stdValues =
-				allValueIds.size > 0
-					? await db
-							.select()
-							.from(attributeValues)
-							.where(inArray(attributeValues.id, Array.from(allValueIds)))
-					: [];
+			const attrEntry = attributeMap.get(row.attributeId);
+			if (!attrEntry) continue;
 
-			// Create a map of attributeId -> Set of value strings
-			const attributeValueMap = new Map<number, Set<string>>();
-			for (const stdValue of stdValues) {
-				if (!attributeValueMap.has(stdValue.attributeId)) {
-					attributeValueMap.set(stdValue.attributeId, new Set());
-				}
-				attributeValueMap.get(stdValue.attributeId)?.add(stdValue.value);
+			// Get or create value entry
+			if (!attrEntry.values.has(row.valueId)) {
+				attrEntry.values.set(row.valueId, {
+					id: row.valueId,
+					value: row.value,
+					slug: row.valueSlug,
+					sortOrder: row.valueSortOrder,
+					productIds: new Set(),
+				});
 			}
 
-			// Filter products by attribute values
-			matchingProducts = matchingProducts.filter((product) => {
-				if (!product.productAttributes) return false;
-
-				try {
-					const parsed = JSON.parse(product.productAttributes);
-					let productAttrs: Array<{ attributeId: string; value: string }> = [];
-
-					// Handle both object and array formats
-					if (typeof parsed === "object" && parsed !== null) {
-						if (Array.isArray(parsed)) {
-							productAttrs = parsed;
-						} else {
-							// Convert object to array format
-							productAttrs = Object.entries(parsed).map(([key, value]) => ({
-								attributeId: key,
-								value: String(value),
-							}));
-						}
-					}
-
-					// Check if product matches all attribute filters
-					for (const [attributeId] of Object.entries(attributeFilters)) {
-						const attrIdNum = parseInt(attributeId, 10);
-						if (Number.isNaN(attrIdNum)) continue;
-
-						const expectedValues = attributeValueMap.get(attrIdNum);
-						if (!expectedValues || expectedValues.size === 0) continue;
-
-						// Find product's attribute value
-						const productAttr = productAttrs.find((attr) => {
-							const numericId = parseInt(attr.attributeId, 10);
-							if (!Number.isNaN(numericId) && numericId === attrIdNum) {
-								return true;
-							}
-							const slug = attributeIdToSlug.get(attrIdNum);
-							return slug && attr.attributeId === slug;
-						});
-
-						if (!productAttr) return false;
-
-						// Check if product's value matches any of the selected values
-						const productValues = productAttr.value
-							.split(",")
-							.map((v) => v.trim())
-							.filter(Boolean);
-
-						const hasMatch = productValues.some((pv) => expectedValues.has(pv));
-						if (!hasMatch) return false;
-					}
-
-					return true;
-				} catch {
-					// Invalid JSON, exclude product
-					return false;
-				}
-			});
-		}
-
-		// Get all standardized attribute values
-		const allStandardizedValues = await db
-			.select()
-			.from(attributeValues)
-			.where(eq(attributeValues.isActive, true));
-
-		// Create a map of attributeId -> values
-		const valuesByAttribute = new Map<number, typeof allStandardizedValues>();
-		for (const value of allStandardizedValues) {
-			if (!valuesByAttribute.has(value.attributeId)) {
-				valuesByAttribute.set(value.attributeId, []);
+			// Add product ID to this value's set
+			const valueEntry = attrEntry.values.get(row.valueId);
+			if (valueEntry) {
+				valueEntry.productIds.add(row.productId);
 			}
-			valuesByAttribute.get(value.attributeId)?.push(value);
 		}
 
-		// Create a map of attribute slug -> attribute ID
-		const slugToIdMap = new Map<string, number>();
-		for (const attr of allAttributes) {
-			slugToIdMap.set(attr.slug, attr.id);
-		}
-
-		// Count occurrences of each attribute value in matching products
-		const valueCounts = new Map<string, number>(); // key: "attributeId:value", value: count
-
-		for (const product of matchingProducts) {
-			if (!product.productAttributes) continue;
-
-			try {
-				const parsed = JSON.parse(product.productAttributes);
-				let productAttrs: Array<{ attributeId: string; value: string }> = [];
-
-				// Handle both object and array formats
-				if (typeof parsed === "object" && parsed !== null) {
-					if (Array.isArray(parsed)) {
-						productAttrs = parsed;
-					} else {
-						// Convert object to array format
-						productAttrs = Object.entries(parsed).map(([key, value]) => ({
-							attributeId: key,
-							value: String(value),
-						}));
-					}
-				}
-
-				// Process each attribute value
-				for (const attr of productAttrs) {
-					// Resolve attribute ID (could be slug or numeric ID)
-					let attributeId: number | null = null;
-					const numericId = parseInt(attr.attributeId, 10);
-					if (!Number.isNaN(numericId) && slugToIdMap.has(attr.attributeId)) {
-						attributeId = numericId;
-					} else if (slugToIdMap.has(attr.attributeId)) {
-						attributeId = slugToIdMap.get(attr.attributeId) ?? null;
-					}
-
-					if (!attributeId) continue;
-
-					// Handle comma-separated values
-					const values = attr.value
-						.split(",")
-						.map((v) => v.trim())
-						.filter(Boolean);
-
-					for (const value of values) {
-						const key = `${attributeId}:${value}`;
-						valueCounts.set(key, (valueCounts.get(key) || 0) + 1);
-					}
-				}
-			} catch {}
-		}
-
-		// Build result: only include attributes that have at least one value with count > 0
+		// Transform to final format
 		const result: AttributeFilter[] = [];
 
-		for (const attr of allAttributes) {
-			const values = valuesByAttribute.get(attr.id) || [];
-			const filterValues: AttributeFilterValue[] = [];
+		for (const attrEntry of attributeMap.values()) {
+			const values: AttributeFilterValue[] = [];
 
-			for (const stdValue of values) {
-				const key = `${attr.id}:${stdValue.value}`;
-				const count = valueCounts.get(key) || 0;
+			for (const valueEntry of attrEntry.values.values()) {
+				values.push({
+					id: valueEntry.id,
+					value: valueEntry.value,
+					slug: valueEntry.slug,
+					count: valueEntry.productIds.size,
+				});
+			}
 
-				// Only include values that appear in at least one product
-				if (count > 0) {
-					filterValues.push({
-						id: stdValue.id,
-						value: stdValue.value,
-						slug: stdValue.slug || null,
-						count,
-					});
+			// Sort values by sortOrder, then by value
+			values.sort((a, b) => {
+				const aSortOrder = attrEntry.values.get(a.id)?.sortOrder ?? 0;
+				const bSortOrder = attrEntry.values.get(b.id)?.sortOrder ?? 0;
+				if (aSortOrder !== bSortOrder) {
+					return aSortOrder - bSortOrder;
 				}
-			}
+				return a.value.localeCompare(b.value);
+			});
 
-			// Only include attributes that have at least one value
-			if (filterValues.length > 0) {
-				// Sort by sortOrder, then by value
-				filterValues.sort((a, b) => {
-					const aSortOrder = values.find((v) => v.id === a.id)?.sortOrder ?? 0;
-					const bSortOrder = values.find((v) => v.id === b.id)?.sortOrder ?? 0;
-					if (aSortOrder !== bSortOrder) {
-						return aSortOrder - bSortOrder;
-					}
-					return a.value.localeCompare(b.value);
-				});
-
-				result.push({
-					attributeId: attr.id,
-					attributeName: attr.name,
-					attributeSlug: attr.slug,
-					values: filterValues,
-				});
-			}
+			result.push({
+				attributeId: attrEntry.attributeId,
+				attributeName: attrEntry.attributeName,
+				attributeSlug: attrEntry.attributeSlug,
+				values,
+			});
 		}
 
 		// Sort attributes by name

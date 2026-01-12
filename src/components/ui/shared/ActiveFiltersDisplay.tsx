@@ -15,10 +15,13 @@ interface ActiveFiltersDisplayProps {
 	selectedBrand: string | null;
 	collections: Collection[];
 	selectedCollection: string | null;
+	storeLocations?: Array<{ id: number; address: string }>;
+	selectedStoreLocation?: number | null;
 	attributeFilters: AttributeFilter[];
 	selectedAttributeFilters: Record<number, string[]>;
 	onRemoveBrand: () => void;
 	onRemoveCollection: () => void;
+	onRemoveStoreLocation?: () => void;
 	onRemoveAttributeValue: (attributeId: number, valueId: string) => void;
 }
 
@@ -33,10 +36,13 @@ export function ActiveFiltersDisplay({
 	selectedBrand,
 	collections,
 	selectedCollection,
+	storeLocations = [],
+	selectedStoreLocation = null,
 	attributeFilters,
 	selectedAttributeFilters,
 	onRemoveBrand,
 	onRemoveCollection,
+	onRemoveStoreLocation,
 	onRemoveAttributeValue,
 }: ActiveFiltersDisplayProps) {
 	// Get category name
@@ -59,6 +65,13 @@ export function ActiveFiltersDisplay({
 		const collection = collections.find((c) => c.slug === selectedCollection);
 		return collection?.name ?? null;
 	}, [collections, selectedCollection]);
+
+	// Get store location address
+	const storeLocationAddress = useMemo(() => {
+		if (selectedStoreLocation === null) return null;
+		const location = storeLocations.find((l) => l.id === selectedStoreLocation);
+		return location?.address ?? null;
+	}, [storeLocations, selectedStoreLocation]);
 
 	// Get attribute filter pills with IDs for removal
 	const attributePills = useMemo(() => {
@@ -123,6 +136,7 @@ export function ActiveFiltersDisplay({
 			{/* Filter Pills */}
 			{(brandName ||
 				collectionName ||
+				storeLocationAddress ||
 				attributePills.length > 0) && (
 				<div className="flex flex-wrap gap-2">
 					{brandName && (
@@ -149,6 +163,22 @@ export function ActiveFiltersDisplay({
 								onClick={onRemoveCollection}
 								className="h-4 w-4 p-0 rounded-full hover:bg-background/50 transition-standard"
 								aria-label={`Remove ${collectionName} filter`}
+							>
+								<X
+									size={14}
+									className="text-muted-foreground hover:text-foreground"
+								/>
+							</button>
+						</span>
+					)}
+					{storeLocationAddress && onRemoveStoreLocation && (
+						<span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground transition-all duration-200 hover:bg-muted/80">
+							<span>{storeLocationAddress}</span>
+							<button
+								type="button"
+								onClick={onRemoveStoreLocation}
+								className="h-4 w-4 p-0 rounded-full hover:bg-background/50 transition-standard"
+								aria-label={`Remove ${storeLocationAddress} filter`}
 							>
 								<X
 									size={14}

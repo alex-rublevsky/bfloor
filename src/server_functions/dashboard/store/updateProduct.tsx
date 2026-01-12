@@ -3,13 +3,18 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq, inArray } from "drizzle-orm";
 import { DB } from "~/db";
 import {
+	productAttributeValues,
 	products,
 	productStoreLocations,
 	productVariations,
 	variationAttributes,
 } from "~/schema";
 import type { ProductFormData } from "~/types";
-import { convertAttributesToSlugFormat } from "~/utils/attributeMapping";
+import {
+	convertAttributesToSlugFormat,
+	getAttributeMappings,
+} from "~/utils/attributeMapping";
+import { getBatchValueIds } from "~/utils/attributeValueLookup";
 import { validateAttributeValues } from "~/utils/validateAttributeValues";
 import { moveStagingImages } from "./moveStagingImages";
 
@@ -101,17 +106,17 @@ export const updateProduct = createServerFn({ method: "POST" })
 				}
 			}
 
-	// Convert attributes array to object format for database storage
-	// Format: { "attribute-slug": ["value1", "value2"] }
-	const attributesObject = await convertAttributesToSlugFormat(
-		productData.attributes || []
-	);
-	const attributesJson =
-		Object.keys(attributesObject).length > 0
-			? JSON.stringify(attributesObject)
-			: null;
+			// Convert attributes array to object format for database storage
+			// Format: { "attribute-slug": ["value1", "value2"] }
+			const attributesObject = await convertAttributesToSlugFormat(
+				productData.attributes || [],
+			);
+			const attributesJson =
+				Object.keys(attributesObject).length > 0
+					? JSON.stringify(attributesObject)
+					: null;
 
-		// Validate and prepare variations before any database changes
+			// Validate and prepare variations before any database changes
 			const shouldHaveVariations = productData.hasVariations === true;
 			const incomingVariations = shouldHaveVariations
 				? productData.variations || []
@@ -455,6 +460,82 @@ export const updateProduct = createServerFn({ method: "POST" })
 				}
 			};
 
+			// Handle product attributes - update junction table for standardized attributes
+			const handleProductAttributes = async () => {
+				if (!productData.attributes || productData.attributes.length === 0) {
+					// No attributes, delete all existing junction table rows
+					await db
+						.delete(productAttributeValues)
+						.where(eq(productAttributeValues.productId, productId));
+					return;
+				}
+
+				// Get attribute mappings to determine which are standardized
+				const { attributes: attributeDefinitions } =
+					await getAttributeMappings();
+				const attributeDefMap = new Map(
+					attributeDefinitions.map((attr) => [attr.id, attr]),
+				);
+
+				// Filter for standardized attributes only
+				const standardizedAttrs = productData.attributes.filter((attr) => {
+					const attrId = parseInt(attr.attributeId, 10);
+					const attrDef = attributeDefMap.get(attrId);
+					return attrDef?.valueType === "standardized";
+				});
+
+				// Delete old junction table rows
+				await db
+					.delete(productAttributeValues)
+					.where(eq(productAttributeValues.productId, productId));
+
+				// Insert new junction table rows
+				if (standardizedAttrs.length > 0) {
+					// OPTIMIZED: Collect all attribute-value pairs for batch lookup
+					const attributeValuePairs = standardizedAttrs.map((attr) => {
+						const attrId = parseInt(attr.attributeId, 10);
+						const values = attr.value
+							.split(",")
+							.map((v) => v.trim())
+							.filter(Boolean);
+						return { attributeId: attrId, values };
+					});
+
+					// Single query to get all value IDs at once
+					const batchValueIds = await getBatchValueIds(db, attributeValuePairs);
+
+					// Build junction rows
+					const junctionRows: Array<{
+						productId: number;
+						attributeId: number;
+						valueId: number;
+						createdAt: Date;
+					}> = [];
+
+					for (const pair of attributeValuePairs) {
+						const valueIdMap = batchValueIds.get(pair.attributeId);
+						if (!valueIdMap) continue;
+
+						for (const value of pair.values) {
+							const valueId = valueIdMap.get(value);
+							if (valueId) {
+								junctionRows.push({
+									productId: productId,
+									attributeId: pair.attributeId,
+									valueId: valueId,
+									createdAt: new Date(),
+								});
+							}
+						}
+					}
+
+					// Batch insert all junction rows
+					if (junctionRows.length > 0) {
+						await db.insert(productAttributeValues).values(junctionRows);
+					}
+				}
+			};
+
 			// Update product and related data
 			const [updatedProductResult] = await Promise.all([
 				// Update main product and return updated row to avoid extra query
@@ -501,6 +582,7 @@ export const updateProduct = createServerFn({ method: "POST" })
 					.returning(),
 				handleVariations(),
 				handleStoreLocations(),
+				handleProductAttributes(),
 			]);
 
 			return {

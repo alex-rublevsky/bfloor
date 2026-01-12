@@ -3,13 +3,11 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq, inArray, type SQL, sql } from "drizzle-orm";
 import { DB } from "~/db";
 import {
-	attributeValues,
-	productAttributes,
 	products,
+	productStoreLocations,
 	productVariations,
 	variationAttributes,
 } from "~/schema";
-import { getAttributeMappings } from "~/utils/attributeMapping";
 import { buildFts5Query } from "~/utils/search/queryExpander";
 
 export const getAllProducts = createServerFn({ method: "GET" })
@@ -22,7 +20,10 @@ export const getAllProducts = createServerFn({ method: "GET" })
 				categorySlug?: string;
 				brandSlug?: string;
 				collectionSlug?: string;
+				storeLocationId?: number;
 				attributeFilters?: Record<number, string[]>; // attributeId -> array of value IDs
+				minPrice?: number;
+				maxPrice?: number;
 				tag?: string;
 				hasDiscount?: boolean;
 				isFeatured?: boolean;
@@ -60,9 +61,17 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			const collectionFilter =
 				data.collectionSlug && data.collectionSlug.length > 0
 					? data.collectionSlug
-			: undefined;
-		const attributeFilters = data.attributeFilters || {};
-		const tagFilter = data.tag && data.tag.length > 0 ? data.tag : undefined;
+					: undefined;
+			const storeLocationFilter =
+				typeof data.storeLocationId === "number"
+					? data.storeLocationId
+					: undefined;
+			const attributeFilters = data.attributeFilters || {};
+			const minPriceFilter =
+				typeof data.minPrice === "number" ? data.minPrice : undefined;
+			const maxPriceFilter =
+				typeof data.maxPrice === "number" ? data.maxPrice : undefined;
+			const tagFilter = data.tag && data.tag.length > 0 ? data.tag : undefined;
 			const hasDiscountFilter = data.hasDiscount === true;
 			const isFeaturedFilter = data.isFeatured === true;
 			const productIdsFilter =
@@ -122,10 +131,16 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			if (brandFilter) {
 				conditions.push(eq(products.brandSlug, brandFilter));
 			}
-		if (collectionFilter) {
-			conditions.push(eq(products.collectionSlug, collectionFilter));
-		}
-		if (tagFilter) {
+			if (collectionFilter) {
+				conditions.push(eq(products.collectionSlug, collectionFilter));
+			}
+			if (minPriceFilter !== undefined) {
+				conditions.push(sql`${products.price} >= ${minPriceFilter}`);
+			}
+			if (maxPriceFilter !== undefined) {
+				conditions.push(sql`${products.price} <= ${maxPriceFilter}`);
+			}
+			if (tagFilter) {
 				// Filter products where tags JSON array contains the tag
 				// Using LIKE for simplicity (matches JSON array format: ["tag1","tag2"])
 				conditions.push(sql`${products.tags} LIKE ${`%"${tagFilter}"%`}`);
@@ -144,123 +159,30 @@ export const getAllProducts = createServerFn({ method: "GET" })
 				// Filter products by specific IDs
 				conditions.push(inArray(products.id, productIdsFilter));
 			}
-			const whereCondition =
-				conditions.length > 0 ? sql.join(conditions, sql` AND `) : sql`1=1`;
+			// Handle store location filter using EXISTS subquery (single query, more efficient)
+			if (storeLocationFilter !== undefined) {
+				conditions.push(sql`EXISTS (
+					SELECT 1 FROM ${productStoreLocations}
+					WHERE ${productStoreLocations.productId} = ${products.id}
+					  AND ${productStoreLocations.storeLocationId} = ${storeLocationFilter}
+				)`);
+			}
 
-			// Get all products matching basic filters first
-			let allMatchingProducts = await db
-				.select()
-				.from(products)
-				.where(whereCondition)
-				.all();
+			// Handle attribute filters using junction table (SQL-based, much faster!)
+			if (Object.keys(attributeFilters).length > 0) {
+				for (const [attrIdStr, valueIdStrs] of Object.entries(
+					attributeFilters,
+				)) {
+					const attrId = parseInt(attrIdStr, 10);
+					const valueIds = valueIdStrs.map((id) => parseInt(id, 10));
 
-		// Filter by attributes if provided
-		if (Object.keys(attributeFilters).length > 0) {
-			// Get attribute slugs and value mappings (cached)
-			const { idToSlug: attributeIdToSlug } = await getAttributeMappings();
-
-				// Get standardized values for the selected attribute values
-				const allValueIds = new Set<number>();
-				for (const valueIds of Object.values(attributeFilters)) {
-					for (const valueId of valueIds) {
-						const numId = parseInt(valueId, 10);
-						if (!Number.isNaN(numId)) {
-							allValueIds.add(numId);
-						}
-					}
-				}
-
-				const stdValues =
-					allValueIds.size > 0
-						? await db
-								.select()
-								.from(attributeValues)
-								.where(inArray(attributeValues.id, Array.from(allValueIds)))
-						: [];
-
-				// Create a map of attributeId -> Set of value strings
-				const attributeValueMap = new Map<number, Set<string>>();
-				for (const stdValue of stdValues) {
-					if (!attributeValueMap.has(stdValue.attributeId)) {
-						attributeValueMap.set(stdValue.attributeId, new Set());
-					}
-					attributeValueMap.get(stdValue.attributeId)?.add(stdValue.value);
-				}
-
-				// Filter products by attribute values
-				allMatchingProducts = allMatchingProducts.filter((product) => {
-					if (!product.productAttributes) return false;
-
-					try {
-						const parsed = JSON.parse(product.productAttributes);
-						let productAttrs: Array<{ attributeId: string; value: string }> =
-							[];
-
-						// Handle both object and array formats
-						if (typeof parsed === "object" && parsed !== null) {
-							if (Array.isArray(parsed)) {
-								productAttrs = parsed;
-							} else {
-								// Convert object to array format
-								productAttrs = Object.entries(parsed).map(([key, value]) => ({
-									attributeId: key,
-									value: String(value),
-								}));
-							}
-						}
-
-						// Check if product matches all attribute filters
-						for (const [attributeId, _valueIds] of Object.entries(
-							attributeFilters,
-						)) {
-							const attrIdNum = parseInt(attributeId, 10);
-							if (Number.isNaN(attrIdNum)) continue;
-
-							const expectedValues = attributeValueMap.get(attrIdNum);
-							if (!expectedValues || expectedValues.size === 0) continue;
-
-							// Find product's attribute value
-							const productAttr = productAttrs.find((attr) => {
-								const numericId = parseInt(attr.attributeId, 10);
-								if (!Number.isNaN(numericId) && numericId === attrIdNum) {
-									return true;
-								}
-								const slug = attributeIdToSlug.get(attrIdNum);
-								return slug && attr.attributeId === slug;
-							});
-
-							if (!productAttr) return false;
-
-							// Check if product's value matches any of the selected values
-							const productValues = productAttr.value
-								.split(",")
-								.map((v) => v.trim())
-								.filter(Boolean);
-
-							const hasMatch = productValues.some((pv) =>
-								expectedValues.has(pv),
-							);
-							if (!hasMatch) return false;
-						}
-
-						return true;
-					} catch {
-						// Invalid JSON, exclude product
-						return false;
-					}
-				});
-
-				// Get product IDs after attribute filtering
-				const filteredProductIds = new Set(
-					allMatchingProducts.map((p) => p.id),
-				);
-
-				// Update where condition to include product IDs
-				if (filteredProductIds.size > 0) {
-					conditions.push(inArray(products.id, Array.from(filteredProductIds)));
-				} else {
-					// No products match, return empty result
-					conditions.push(sql`1 = 0`);
+					// For each attribute filter, add EXISTS subquery
+					conditions.push(sql`EXISTS (
+					SELECT 1 FROM product_attribute_values pav
+					WHERE pav.product_id = ${products.id}
+					  AND pav.attribute_id = ${attrId}
+					  AND pav.value_id IN (${sql.join(valueIds, sql`, `)})
+				)`);
 				}
 			}
 
@@ -294,92 +216,130 @@ export const getAllProducts = createServerFn({ method: "GET" })
 				orderSql = sql.raw(`CASE ${caseStatements} ELSE 9999 END`);
 			}
 
-			// Build products query with conditional pagination
-			const productsQuery = db
-				.select()
-				.from(products)
-				.where(finalWhereCondition)
-				.orderBy(orderSql);
-
-			const productsResult =
+			// OPTIMIZED: Single query with LEFT JOINs to fetch products, variations, and attributes
+			// This replaces 3 separate queries (products → variations → attributes)
+			const productsWithRelations =
 				offsetValue !== undefined && pageLimit
-					? await productsQuery.limit(pageLimit).offset(offsetValue).all()
-					: await productsQuery.all();
-
-			// Get product IDs from current page
-			const activeProductIds = new Set(productsResult.map((p) => p.id));
-
-			// Fetch ONLY variations for the current page of products (not all variations in DB)
-			const filteredVariations =
-				activeProductIds.size > 0
 					? await db
-							.select()
-							.from(productVariations)
-							.where(
-								inArray(
-									productVariations.productId,
-									Array.from(activeProductIds),
-								),
+							.select({
+								product: products,
+								variation: productVariations,
+								attribute: variationAttributes,
+							})
+							.from(products)
+							.leftJoin(
+								productVariations,
+								eq(productVariations.productId, products.id),
 							)
-							.all()
-					: [];
-
-			// Get variation IDs from the filtered variations
-			const activeVariationIds = new Set(filteredVariations.map((v) => v.id));
-
-			// Fetch ONLY attributes for these specific variations (not all attributes in DB)
-			const filteredAttributes =
-				activeVariationIds.size > 0
-					? await db
-							.select()
-							.from(variationAttributes)
-							.where(
-								inArray(
+							.leftJoin(
+								variationAttributes,
+								eq(
 									variationAttributes.productVariationId,
-									Array.from(activeVariationIds),
+									productVariations.id,
 								),
 							)
+							.where(finalWhereCondition)
+							.orderBy(orderSql)
+							.limit(pageLimit)
+							.offset(offsetValue)
 							.all()
-					: [];
+					: await db
+							.select({
+								product: products,
+								variation: productVariations,
+								attribute: variationAttributes,
+							})
+							.from(products)
+							.leftJoin(
+								productVariations,
+								eq(productVariations.productId, products.id),
+							)
+							.leftJoin(
+								variationAttributes,
+								eq(
+									variationAttributes.productVariationId,
+									productVariations.id,
+								),
+							)
+							.where(finalWhereCondition)
+							.orderBy(orderSql)
+							.all();
+
+			// Group results by product (in-memory grouping is fast)
+			const productsMap = new Map<
+				number,
+				{
+					product: typeof products.$inferSelect;
+					variations: Map<
+						number,
+						{
+							variation: typeof productVariations.$inferSelect;
+							attributes: Array<typeof variationAttributes.$inferSelect>;
+						}
+					>;
+				}
+			>();
+
+			for (const row of productsWithRelations) {
+				// Get or create product entry
+				if (!productsMap.has(row.product.id)) {
+					productsMap.set(row.product.id, {
+						product: row.product,
+						variations: new Map(),
+					});
+				}
+
+				const productEntry = productsMap.get(row.product.id);
+				if (!productEntry) continue;
+
+				// Add variation if exists
+				if (row.variation) {
+					if (!productEntry.variations.has(row.variation.id)) {
+						productEntry.variations.set(row.variation.id, {
+							variation: row.variation,
+							attributes: [],
+						});
+					}
+
+					// Add attribute if exists
+					if (row.attribute) {
+						const variationEntry = productEntry.variations.get(
+							row.variation.id,
+						);
+						if (variationEntry) {
+							variationEntry.attributes.push(row.attribute);
+						}
+					}
+				}
+			}
+
+			// Convert map to array format
+			const productsResult = Array.from(productsMap.values()).map((entry) => ({
+				...entry.product,
+			}));
 
 			const variationsByProduct = new Map<
 				number,
-				(typeof productVariations.$inferSelect)[]
+				Array<{
+					variation: typeof productVariations.$inferSelect;
+					attributes: Array<typeof variationAttributes.$inferSelect>;
+				}>
 			>();
-			filteredVariations.forEach((variation) => {
-				if (variation.productId) {
-					if (!variationsByProduct.has(variation.productId)) {
-						variationsByProduct.set(variation.productId, []);
-					}
-					variationsByProduct.get(variation.productId)?.push(variation);
-				}
-			});
 
-			const attributesByVariation = new Map<
-				number,
-				(typeof variationAttributes.$inferSelect)[]
-			>();
-			filteredAttributes.forEach((attr) => {
-				if (attr.productVariationId) {
-					if (!attributesByVariation.has(attr.productVariationId)) {
-						attributesByVariation.set(attr.productVariationId, []);
-					}
-					const existingAttributes = attributesByVariation.get(
-						attr.productVariationId,
-					);
-					if (existingAttributes) {
-						existingAttributes.push(attr);
-					}
+			for (const [productId, entry] of productsMap.entries()) {
+				const variations = Array.from(entry.variations.values());
+				if (variations.length > 0) {
+					variationsByProduct.set(productId, variations);
 				}
-			});
+			}
 
 			const productsArray = productsResult.map((product) => {
-				const variations = variationsByProduct.get(product.id) || [];
+				const variationEntries = variationsByProduct.get(product.id) || [];
 
-				const variationsWithAttributes = variations
-					.map((variation) => ({
-						...variation,
-						attributes: attributesByVariation.get(variation.id) || [],
+				const variationsWithAttributes = variationEntries
+					.map((entry) => ({
+						...entry.variation,
+						attributes: entry.attributes,
 					}))
 					.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
 
@@ -395,7 +355,8 @@ export const getAllProducts = createServerFn({ method: "GET" })
 					}
 				}
 
-				// Process productAttributes - convert JSON string to array
+				// Process productAttributes - convert JSON string to array format
+				// This transformation is needed for the client
 				let productAttributesArray: { attributeId: string; value: string }[] =
 					[];
 				if (product.productAttributes) {
@@ -423,7 +384,7 @@ export const getAllProducts = createServerFn({ method: "GET" })
 					}
 				}
 
-				// Process tags - convert JSON string to array
+				// Process tags - convert JSON string to array format
 				let tagsArray: string[] = [];
 				if (product.tags) {
 					try {

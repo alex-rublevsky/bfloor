@@ -13,12 +13,13 @@ import { EmptyState } from "~/components/ui/shared/EmptyState";
 import { ProductGridSkeleton } from "~/components/ui/shared/ProductGridSkeleton";
 import ProductCard from "~/components/ui/store/ProductCard";
 import ProductFilters from "~/components/ui/store/ProductFilters";
+import { getAllStoreLocations } from "~/data/storeLocations";
 import { useClientSearch } from "~/lib/clientSearchContext";
 import {
 	attributeValuesForFilteringQueryOptions,
-	brandsQueryOptions,
 	categoriesQueryOptions,
-	collectionsQueryOptions,
+	filteredBrandsQueryOptions,
+	filteredCollectionsQueryOptions,
 	storeDataInfiniteQueryOptions,
 } from "~/lib/queryOptions.ts";
 import type { Brand, CategoryWithCount, Collection } from "~/types";
@@ -29,6 +30,7 @@ const searchParamsSchema = z.object({
 	category: z.string().optional(),
 	brand: z.string().optional(),
 	collection: z.string().optional(),
+	storeLocation: z.number().optional(),
 	attributeFilters: z.string().optional(), // JSON string of Record<number, string[]>
 	sort: z
 		.enum(["relevant", "name", "price-asc", "price-desc", "newest", "oldest"])
@@ -154,6 +156,9 @@ function StorePage() {
 	const [selectedCollection, setSelectedCollection] = useState<string | null>(
 		searchParams.collection ?? null,
 	);
+	const [selectedStoreLocation, setSelectedStoreLocation] = useState<
+		number | null
+	>(searchParams.storeLocation ?? null);
 	const [selectedAttributeFilters, setSelectedAttributeFilters] = useState<
 		Record<number, string[]>
 	>(parseAttributeFilters(searchParams.attributeFilters));
@@ -169,6 +174,7 @@ function StorePage() {
 		setSelectedCategory(searchParams.category ?? null);
 		setSelectedBrand(searchParams.brand ?? null);
 		setSelectedCollection(searchParams.collection ?? null);
+		setSelectedStoreLocation(searchParams.storeLocation ?? null);
 		setSelectedAttributeFilters(
 			parseAttributeFilters(searchParams.attributeFilters),
 		);
@@ -177,6 +183,7 @@ function StorePage() {
 		searchParams.category,
 		searchParams.brand,
 		searchParams.collection,
+		searchParams.storeLocation,
 		searchParams.attributeFilters,
 		searchParams.sort,
 	]);
@@ -226,6 +233,17 @@ function StorePage() {
 		});
 	};
 
+	const updateStoreLocation = (locationId: number | null) => {
+		setSelectedStoreLocation(locationId);
+		navigate({
+			search: (prev) => ({
+				...prev,
+				storeLocation: locationId ?? undefined,
+			}),
+			replace: true,
+		});
+	};
+
 	const updateSort = (sort: typeof sortBy) => {
 		setSortBy(sort);
 		navigate({
@@ -263,7 +281,6 @@ function StorePage() {
 	// Use infinite query to track loading state (same as dashboard)
 	const {
 		data: storeData,
-		isLoading: isLoadingProducts,
 		isFetching,
 		fetchNextPage,
 		hasNextPage,
@@ -273,7 +290,11 @@ function StorePage() {
 			categorySlug: selectedCategory ?? undefined,
 			brandSlug: selectedBrand ?? undefined,
 			collectionSlug: selectedCollection ?? undefined,
+			storeLocationId: selectedStoreLocation ?? undefined,
 			attributeFilters: selectedAttributeFilters,
+			minPrice: currentPriceRange[0] !== 0 ? currentPriceRange[0] : undefined,
+			maxPrice:
+				currentPriceRange[1] !== 1000000 ? currentPriceRange[1] : undefined,
 			sort: sortBy,
 		}),
 	});
@@ -289,18 +310,29 @@ function StorePage() {
 		),
 	});
 
-	// Fetch all reference data separately with aggressive caching (3-day stale time)
+	// Fetch filtered brands and collections based on current filters
 	const { data: brands = [] } = useQuery({
-		...brandsQueryOptions(),
+		...filteredBrandsQueryOptions(
+			selectedCategory ?? undefined,
+			selectedCollection ?? undefined,
+			selectedStoreLocation ?? undefined,
+		),
 	});
 
 	const { data: collections = [] } = useQuery({
-		...collectionsQueryOptions(),
+		...filteredCollectionsQueryOptions(
+			selectedCategory ?? undefined,
+			selectedBrand ?? undefined,
+			selectedStoreLocation ?? undefined,
+		),
 	});
 
 	const { data: categories = [] } = useQuery({
 		...categoriesQueryOptions(),
 	});
+
+	// Get store locations (hardcoded data)
+	const storeLocations = getAllStoreLocations();
 
 	// Memoize transformed data to avoid recalculating on every render
 	const categoriesWithCount = useMemo(
@@ -326,25 +358,14 @@ function StorePage() {
 	);
 
 	// Merge products from all pages (same as dashboard)
-	const products = useMemo(
+	// Price filtering is now done server-side, so no need for client-side filtering
+	const displayProducts = useMemo(
 		() =>
 			storeData?.pages
 				?.flatMap((page) => page?.products ?? [])
 				?.filter(Boolean) ?? [],
 		[storeData?.pages],
 	);
-
-	// Apply price range filter client-side (not supported server-side)
-	const displayProducts = useMemo(() => {
-		if (currentPriceRange[0] === 0 && currentPriceRange[1] === 1000000) {
-			// No price filter applied
-			return products;
-		}
-		return products.filter((product) => {
-			const price = product.price || 0;
-			return price >= currentPriceRange[0] && price <= currentPriceRange[1];
-		});
-	}, [products, currentPriceRange]);
 
 	// Scroll restoration for virtualized list
 	// Following TanStack Router docs: https://tanstack.com/router/v1/docs/framework/react/guide/scroll-restoration#manual-scroll-restoration
@@ -473,6 +494,9 @@ function StorePage() {
 					collections={collectionsForFilters}
 					selectedCollection={selectedCollection}
 					onCollectionChange={updateCollection}
+					storeLocations={storeLocations}
+					selectedStoreLocation={selectedStoreLocation}
+					onStoreLocationChange={updateStoreLocation}
 					priceRange={{ min: 0, max: 1000000 }}
 					currentPriceRange={currentPriceRange}
 					onPriceRangeChange={setCurrentPriceRange}
@@ -492,10 +516,13 @@ function StorePage() {
 					selectedBrand={selectedBrand}
 					collections={collections}
 					selectedCollection={selectedCollection}
+					storeLocations={storeLocations}
+					selectedStoreLocation={selectedStoreLocation}
 					attributeFilters={attributeFilters}
 					selectedAttributeFilters={selectedAttributeFilters}
 					onRemoveBrand={() => updateBrand(null)}
 					onRemoveCollection={() => updateCollection(null)}
+					onRemoveStoreLocation={() => updateStoreLocation(null)}
 					onRemoveAttributeValue={(attributeId, valueId) => {
 						const currentValues = selectedAttributeFilters[attributeId] || [];
 						const newValues = currentValues.filter((id) => id !== valueId);

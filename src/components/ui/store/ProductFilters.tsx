@@ -1,11 +1,15 @@
-import { memo, useCallback, useEffect, useId, useState } from "react";
-import { DashboardFormDrawer } from "~/components/ui/dashboard/DashboardFormDrawer";
+import { memo, useCallback, useState } from "react";
 import { Button } from "~/components/ui/shared/Button";
-import { Checkbox } from "~/components/ui/shared/Checkbox";
 import {
 	CheckboxList,
 	type CheckboxListItem,
 } from "~/components/ui/shared/CheckboxList";
+import {
+	Drawer,
+	DrawerBody,
+	DrawerContent,
+	DrawerFooter,
+} from "~/components/ui/shared/Drawer";
 import {
 	Select,
 	SelectContent,
@@ -28,6 +32,9 @@ interface ProductFiltersProps {
 	collections?: { slug: string; name: string }[];
 	selectedCollection?: string | null;
 	onCollectionChange?: (collection: string | null) => void;
+	storeLocations?: { id: number; address: string }[];
+	selectedStoreLocation?: number | null;
+	onStoreLocationChange?: (locationId: number | null) => void;
 	priceRange: {
 		min: number;
 		max: number;
@@ -51,6 +58,9 @@ const ProductFilters = memo(function ProductFilters({
 	collections = [],
 	selectedCollection = null,
 	onCollectionChange,
+	storeLocations = [],
+	selectedStoreLocation = null,
+	onStoreLocationChange,
 	priceRange,
 	currentPriceRange,
 	onPriceRangeChange,
@@ -62,140 +72,84 @@ const ProductFilters = memo(function ProductFilters({
 }: ProductFiltersProps) {
 	useDeviceType();
 	// no masked backdrop needed in current layout
-	const desktopSortId = useId();
 
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-	const drawerFormId = useId();
 
-	// Local state for filter values (only applied when "Apply" is clicked)
-	const [localCategory, setLocalCategory] = useState<string | null>(
-		selectedCategory,
+	// REACTIVE FILTERS: Changes apply immediately (no "Apply" button needed)
+	// Local state is removed - we update global state directly
+
+	// REACTIVE: Apply changes immediately
+	const handlePriceRangeChange = useCallback(
+		(newValue: number[]) => {
+			const range: [number, number] = [newValue[0], newValue[1]];
+			onPriceRangeChange?.(range);
+		},
+		[onPriceRangeChange],
 	);
-	const [localBrand, setLocalBrand] = useState<string | null>(selectedBrand);
-	const [localCollection, setLocalCollection] = useState<string | null>(
-		selectedCollection,
+
+	const handleMainCategoryChange = useCallback(
+		(category: string | null) => {
+			onCategoryChange(category);
+		},
+		[onCategoryChange],
 	);
-	const [localPriceRange, setLocalPriceRange] =
-		useState<[number, number]>(currentPriceRange);
-	const [localSortBy, setLocalSortBy] = useState<string>(sortBy);
-	const [localAttributeFilters, setLocalAttributeFilters] = useState<
-		Record<number, string[]>
-	>(selectedAttributeFilters);
 
-	const handlePriceRangeChange = useCallback((newValue: number[]) => {
-		const range: [number, number] = [newValue[0], newValue[1]];
-		setLocalPriceRange(range);
-	}, []);
+	const handleBrandChange = useCallback(
+		(brand: string | null) => {
+			onBrandChange?.(brand);
+		},
+		[onBrandChange],
+	);
 
-	const handleMainCategoryChange = useCallback((category: string | null) => {
-		setLocalCategory(category);
-	}, []);
+	const handleCollectionChange = useCallback(
+		(collection: string | null) => {
+			onCollectionChange?.(collection);
+		},
+		[onCollectionChange],
+	);
 
-	const handleBrandChange = useCallback((brand: string | null) => {
-		setLocalBrand(brand);
-	}, []);
+	const handleStoreLocationChange = useCallback(
+		(locationId: number | null) => {
+			onStoreLocationChange?.(locationId);
+		},
+		[onStoreLocationChange],
+	);
 
-	const handleCollectionChange = useCallback((collection: string | null) => {
-		setLocalCollection(collection);
-	}, []);
-
-	// Sync local state with props when drawer opens or props change
-	useEffect(() => {
-		if (isDrawerOpen) {
-			setLocalCategory(selectedCategory);
-			setLocalBrand(selectedBrand);
-			setLocalCollection(selectedCollection);
-			setLocalPriceRange(currentPriceRange);
-			setLocalSortBy(sortBy);
-			setLocalAttributeFilters(selectedAttributeFilters);
-		}
-	}, [
-		isDrawerOpen,
-		selectedCategory,
-		selectedBrand,
-		selectedCollection,
-		currentPriceRange,
-		sortBy,
-		selectedAttributeFilters,
-	]);
-
-	const hasAnyActiveFilters =
-		(localCategory && localCategory.length > 0) ||
-		(localBrand && localBrand.length > 0) ||
-		(localCollection && localCollection.length > 0) ||
-		localPriceRange[0] !== priceRange.min ||
-		localPriceRange[1] !== priceRange.max ||
-		Object.keys(localAttributeFilters).length > 0;
-
-	const resetAll = () => {
-		setLocalCategory(null);
-		setLocalBrand(null);
-		setLocalCollection(null);
-		setLocalPriceRange([priceRange.min, priceRange.max]);
-		// Reset all attribute filters
-		setLocalAttributeFilters({});
-	};
+	const handleSortChange = useCallback(
+		(sort: string) => {
+			onSortChange?.(sort);
+		},
+		[onSortChange],
+	);
 
 	const handleAttributeFilterChange = useCallback(
 		(attributeId: number) => (valueIds: string[]) => {
-			setLocalAttributeFilters((prev) => {
-				const newFilters = { ...prev };
-				if (valueIds.length === 0) {
-					delete newFilters[attributeId];
-				} else {
-					newFilters[attributeId] = valueIds;
-				}
-				return newFilters;
-			});
+			onAttributeFilterChange?.(attributeId, valueIds);
 		},
-		[],
+		[onAttributeFilterChange],
 	);
 
-	const handleDrawerSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		// Apply all local filter values to the actual filters
-		onCategoryChange(localCategory);
-		onBrandChange?.(localBrand);
-		onCollectionChange?.(localCollection);
-		onPriceRangeChange?.(localPriceRange);
-		onSortChange?.(localSortBy);
-		// Apply attribute filters
+	const hasAnyActiveFilters =
+		(selectedCategory && selectedCategory.length > 0) ||
+		(selectedBrand && selectedBrand.length > 0) ||
+		(selectedCollection && selectedCollection.length > 0) ||
+		selectedStoreLocation !== null ||
+		currentPriceRange[0] !== priceRange.min ||
+		currentPriceRange[1] !== priceRange.max ||
+		Object.keys(selectedAttributeFilters).length > 0;
+
+	const resetAll = () => {
+		onCategoryChange(null);
+		onBrandChange?.(null);
+		onCollectionChange?.(null);
+		onStoreLocationChange?.(null);
+		onPriceRangeChange?.([priceRange.min, priceRange.max]);
+		// Reset all attribute filters
 		if (onAttributeFilterChange) {
-			// Collect all attribute IDs that need to be updated (from both current and local)
-			const allAttributeIds = new Set<number>();
 			for (const attr of attributeFilters) {
-				allAttributeIds.add(attr.attributeId);
-			}
-			for (const attributeId of Object.keys(localAttributeFilters).map(
-				Number,
-			)) {
-				allAttributeIds.add(attributeId);
-			}
-			// Update each attribute filter to match local state
-			for (const attributeId of allAttributeIds) {
-				const localValueIds = localAttributeFilters[attributeId] || [];
-				const currentValueIds = selectedAttributeFilters[attributeId] || [];
-				// Only update if the values have changed
-				if (
-					localValueIds.length !== currentValueIds.length ||
-					!localValueIds.every((id) => currentValueIds.includes(id))
-				) {
-					onAttributeFilterChange(attributeId, localValueIds);
-				}
+				onAttributeFilterChange(attr.attributeId, []);
 			}
 		}
-		setIsDrawerOpen(false);
-	};
-
-	const handleDrawerCancel = () => {
-		// Reset local state to match current props when canceling
-		setLocalCategory(selectedCategory);
-		setLocalBrand(selectedBrand);
-		setLocalCollection(selectedCollection);
-		setLocalPriceRange(currentPriceRange);
-		setLocalSortBy(sortBy);
-		setLocalAttributeFilters(selectedAttributeFilters);
-		setIsDrawerOpen(false);
 	};
 
 	// Render filter content (shared between desktop and mobile)
@@ -207,11 +161,8 @@ const ProductFilters = memo(function ProductFilters({
 		filterSections.push(
 			<div key="sort" className="min-w-fit">
 				<div className="text-sm font-medium mb-2">Сортировка</div>
-				<Select value={localSortBy} onValueChange={setLocalSortBy}>
-					<SelectTrigger
-						id={desktopSortId}
-						className="text-xs font-normal field-sizing-content"
-					>
+				<Select value={sortBy} onValueChange={handleSortChange}>
+					<SelectTrigger className="text-xs font-normal field-sizing-content">
 						<SelectValue placeholder="Выберите сортировку" />
 					</SelectTrigger>
 					<SelectContent className="bg-background text-xs font-normal">
@@ -236,7 +187,7 @@ const ProductFilters = memo(function ProductFilters({
 		filterSections.push(
 			<div key="price" className="min-w-fit">
 				<Slider
-					value={localPriceRange}
+					value={currentPriceRange}
 					min={priceRange.min}
 					max={priceRange.max}
 					step={1}
@@ -259,7 +210,7 @@ const ProductFilters = memo(function ProductFilters({
 						id: cat.slug,
 						label: cat.name,
 					}))}
-					selectedIds={localCategory ? [localCategory] : []}
+					selectedIds={selectedCategory ? [selectedCategory] : []}
 					onItemChange={(itemId, checked) => {
 						// Single-select behavior: if checked, select this one; if unchecked, clear selection
 						const categorySlug = checked ? String(itemId) : null;
@@ -272,8 +223,8 @@ const ProductFilters = memo(function ProductFilters({
 			</div>,
 		);
 
-		// Brands filter
-		if (brands.length > 0) {
+		// Brands filter - only show if more than 1 option
+		if (brands.length > 1) {
 			filterSections.push(
 				<div key="brands" className="min-w-fit">
 					<div className="flex items-center justify-between mb-2">
@@ -284,7 +235,7 @@ const ProductFilters = memo(function ProductFilters({
 							id: brand.slug,
 							label: brand.name,
 						}))}
-						selectedIds={localBrand ? [localBrand] : []}
+						selectedIds={selectedBrand ? [selectedBrand] : []}
 						onItemChange={(itemId, checked) => {
 							// Single-select behavior: if checked, select this one; if unchecked, clear selection
 							const brandSlug = checked ? String(itemId) : null;
@@ -298,8 +249,8 @@ const ProductFilters = memo(function ProductFilters({
 			);
 		}
 
-		// Collections filter
-		if (collections.length > 0) {
+		// Collections filter - only show if more than 1 option
+		if (collections.length > 1) {
 			filterSections.push(
 				<div key="collections" className="min-w-fit">
 					<div className="flex items-center justify-between mb-2">
@@ -310,7 +261,7 @@ const ProductFilters = memo(function ProductFilters({
 							id: collection.slug,
 							label: collection.name,
 						}))}
-						selectedIds={localCollection ? [localCollection] : []}
+						selectedIds={selectedCollection ? [selectedCollection] : []}
 						onItemChange={(itemId, checked) => {
 							// Single-select behavior: if checked, select this one; if unchecked, clear selection
 							const collectionSlug = checked ? String(itemId) : null;
@@ -324,10 +275,41 @@ const ProductFilters = memo(function ProductFilters({
 			);
 		}
 
-		// Attribute filters
+		// Store Locations filter - only show if more than 1 option
+		if (storeLocations.length > 1) {
+			filterSections.push(
+				<div key="store-locations" className="min-w-fit">
+					<div className="flex items-center justify-between mb-2">
+						<div className="text-sm font-medium">Адрес магазина</div>
+					</div>
+					<CheckboxList
+						items={storeLocations.map((location) => ({
+							id: location.id,
+							label: location.address,
+						}))}
+						selectedIds={
+							selectedStoreLocation !== null ? [selectedStoreLocation] : []
+						}
+						onItemChange={(itemId, checked) => {
+							// Single-select behavior: if checked, select this one; if unchecked, clear selection
+							const locationId = checked ? Number(itemId) : null;
+							handleStoreLocationChange(locationId);
+						}}
+						idPrefix="filter-store-location"
+						scrollable={true}
+						maxHeight="200px"
+					/>
+				</div>,
+			);
+		}
+
+		// Attribute filters - only show if more than 1 value option
 		attributeFilters.forEach((attrFilter) => {
+			// Skip if only 1 value available (no choice to make)
+			if (attrFilter.values.length <= 1) return;
+
 			const selectedValueIds =
-				localAttributeFilters[attrFilter.attributeId] || [];
+				selectedAttributeFilters[attrFilter.attributeId] || [];
 			// Convert to CheckboxList format
 			const checkboxItems: CheckboxListItem[] = attrFilter.values.map((v) => ({
 				id: v.id.toString(),
@@ -378,7 +360,7 @@ const ProductFilters = memo(function ProductFilters({
 			<Button
 				size="sm"
 				onClick={() => setIsDrawerOpen(true)}
-				className="fixed left-2 md:left-1/2 md:-translate-x-1/2 bottom-22 md:bottom-4 z-[100] inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-3 py-2 text-xs shadow-md"
+				className="fixed left-2 md:left-1/2 md:-translate-x-1/2 bottom-22 md:bottom-4 z-100 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-3 py-2 text-xs shadow-md"
 				aria-label="Открыть фильтры"
 			>
 				<svg
@@ -398,33 +380,42 @@ const ProductFilters = memo(function ProductFilters({
 				Фильтры
 			</Button>
 
-			{/* Drawer using DashboardFormDrawer */}
-			<DashboardFormDrawer
-				isOpen={isDrawerOpen}
-				onOpenChange={setIsDrawerOpen}
-				title=""
-				formId={drawerFormId}
-				isSubmitting={false}
-				submitButtonText="Применить"
-				submittingText="Применение..."
-				onCancel={handleDrawerCancel}
-				layout="single-column"
-				footerActions={
-					hasAnyActiveFilters ? (
-						<Button type="button" variant="accent" size="sm" onClick={resetAll}>
-							Сбросить все фильтры
-						</Button>
-					) : (
-						<span className="text-lg font-semibold leading-none tracking-tight">
-							Фильтры
-						</span>
-					)
-				}
-			>
-				<form onSubmit={handleDrawerSubmit} id={drawerFormId}>
-					{renderFilterContent()}
-				</form>
-			</DashboardFormDrawer>
+			{/* Drawer - REACTIVE: Changes apply immediately */}
+			<Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+				<DrawerContent width="full" className="border-primary">
+					<DrawerBody className="w-full">
+						<div className="space-y-4">{renderFilterContent()}</div>
+					</DrawerBody>
+
+					<DrawerFooter className="border-t border-border bg-background px-4 sm:px-6 lg:px-8">
+						<div className="flex justify-between items-center w-full">
+							<div>
+								{hasAnyActiveFilters ? (
+									<Button
+										type="button"
+										variant="accent"
+										size="sm"
+										onClick={resetAll}
+									>
+										Сбросить все фильтры
+									</Button>
+								) : (
+									<span className="text-lg font-semibold leading-none tracking-tight">
+										Фильтры
+									</span>
+								)}
+							</div>
+							<Button
+								variant="secondary"
+								type="button"
+								onClick={() => setIsDrawerOpen(false)}
+							>
+								Закрыть
+							</Button>
+						</div>
+					</DrawerFooter>
+				</DrawerContent>
+			</Drawer>
 		</>
 	);
 });
