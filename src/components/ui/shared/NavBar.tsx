@@ -642,6 +642,9 @@ const CatalogDropdown = () => {
 	// Load category counts separately (streams in after categories)
 	const { data: counts } = useQuery(productCategoryCountsQueryOptions());
 
+	// Get prefetch hook for category hover
+	const { prefetchStoreWithCategory, prefetchStoreDefault } = usePrefetch();
+
 	// Filter active categories and sort by order
 	const activeCategories = useMemo(() => {
 		return categories
@@ -653,13 +656,16 @@ const CatalogDropdown = () => {
 			}));
 	}, [categories, counts]);
 
-	// Handle mouse enter - open dropdown
+	// Handle mouse enter - open dropdown and prefetch default store view
 	const handleMouseEnter = () => {
 		if (closeTimeoutRef.current) {
 			clearTimeout(closeTimeoutRef.current);
 			closeTimeoutRef.current = null;
 		}
 		setIsOpen(true);
+		// Prefetch default store view when user hovers over catalog button
+		// This ensures instant load if they click the button (vs clicking a category)
+		prefetchStoreDefault();
 	};
 
 	// Handle mouse leave - close dropdown with small delay
@@ -754,6 +760,10 @@ const CatalogDropdown = () => {
 							key={category.slug}
 							href={`/store?category=${category.slug}`}
 							disableAnimation={true}
+							onMouseEnter={() => {
+								// Prefetch store data for this category on hover
+								prefetchStoreWithCategory(category.slug);
+							}}
 							className="whitespace-normal! flex items-center justify-between w-full px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground! transition-standard"
 						>
 							<span className="flex-1 min-w-0 pr-3 wrap-break-word">

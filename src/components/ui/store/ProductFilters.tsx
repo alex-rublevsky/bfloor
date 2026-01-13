@@ -19,6 +19,7 @@ import {
 } from "~/components/ui/shared/Select";
 import { Slider } from "~/components/ui/shared/Slider";
 import { useDeviceType } from "~/hooks/use-mobile";
+import { usePrefetch } from "~/hooks/usePrefetch";
 import type { AttributeFilter } from "~/server_functions/store/getAttributeValuesForFiltering";
 import type { CategoryWithCount } from "~/types";
 
@@ -46,6 +47,7 @@ interface ProductFiltersProps {
 	attributeFilters?: AttributeFilter[];
 	selectedAttributeFilters?: Record<number, string[]>; // attributeId -> array of value IDs (as strings)
 	onAttributeFilterChange?: (attributeId: number, valueIds: string[]) => void;
+	onFiltersOpen?: () => void; // Callback when filter drawer opens (for lazy loading)
 }
 
 const ProductFilters = memo(function ProductFilters({
@@ -69,11 +71,29 @@ const ProductFilters = memo(function ProductFilters({
 	attributeFilters = [],
 	selectedAttributeFilters = {},
 	onAttributeFilterChange,
+	onFiltersOpen,
 }: ProductFiltersProps) {
 	useDeviceType();
 	// no masked backdrop needed in current layout
 
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+	const { prefetchFilterOptions } = usePrefetch();
+
+	// Prefetch filter options when user hovers over filters button
+	const handleFiltersButtonHover = useCallback(() => {
+		prefetchFilterOptions(
+			selectedCategory ?? undefined,
+			selectedBrand ?? undefined,
+			selectedCollection ?? undefined,
+			selectedAttributeFilters,
+		);
+	}, [
+		prefetchFilterOptions,
+		selectedCategory,
+		selectedBrand,
+		selectedCollection,
+		selectedAttributeFilters,
+	]);
 
 	// REACTIVE FILTERS: Changes apply immediately (no "Apply" button needed)
 	// Local state is removed - we update global state directly
@@ -359,7 +379,11 @@ const ProductFilters = memo(function ProductFilters({
 			{/* Filters button - desktop and mobile */}
 			<Button
 				size="sm"
-				onClick={() => setIsDrawerOpen(true)}
+				onClick={() => {
+					setIsDrawerOpen(true);
+					onFiltersOpen?.(); // Trigger lazy loading
+				}}
+				onMouseEnter={handleFiltersButtonHover}
 				className="fixed left-2 md:left-1/2 md:-translate-x-1/2 bottom-22 md:bottom-4 z-100 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-3 py-2 text-xs shadow-md"
 				aria-label="Открыть фильтры"
 			>

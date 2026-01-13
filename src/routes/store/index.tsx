@@ -58,6 +58,10 @@ export const Route = createFileRoute("/store/")({
 			}),
 		],
 	}),
+
+	loader: async ({ context: { queryClient } }) => {
+		await queryClient.ensureQueryData(categoriesQueryOptions());
+	},
 });
 
 // Hook to get responsive columns per row based on screen size
@@ -168,6 +172,8 @@ function StorePage() {
 	const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([
 		0, 1000000,
 	]);
+	// Track if filter drawer has been opened (for lazy loading attribute filters)
+	const [filtersOpened, setFiltersOpened] = useState(false);
 
 	// Sync state with URL when search params change (e.g., from browser back/forward)
 	useEffect(() => {
@@ -301,6 +307,7 @@ function StorePage() {
 
 	// Fetch attribute filters based on current filters (including attribute filters)
 	// This ensures only values available in the current filtered product set are shown
+	// OPTIMIZATION: Only fetch when filter drawer has been opened (lazy loading)
 	const { data: attributeFilters = [] } = useQuery({
 		...attributeValuesForFilteringQueryOptions(
 			selectedCategory ?? undefined,
@@ -308,6 +315,7 @@ function StorePage() {
 			selectedCollection ?? undefined,
 			selectedAttributeFilters,
 		),
+		enabled: filtersOpened, // Only fetch after user opens filters
 	});
 
 	// Fetch filtered brands and collections based on current filters
@@ -507,6 +515,7 @@ function StorePage() {
 					attributeFilters={attributeFilters}
 					selectedAttributeFilters={selectedAttributeFilters}
 					onAttributeFilterChange={updateAttributeFilter}
+					onFiltersOpen={() => setFiltersOpened(true)} // Track when filters open
 				/>
 				{/* Active Filters Display - Always show, even during loading */}
 				<ActiveFiltersDisplay

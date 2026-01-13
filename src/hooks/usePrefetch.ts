@@ -7,8 +7,12 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import {
+	attributeValuesForFilteringQueryOptions,
 	dashboardOrdersQueryOptions,
+	filteredBrandsQueryOptions,
+	filteredCollectionsQueryOptions,
 	productQueryOptions,
+	storeDataInfiniteQueryOptions,
 	storeDataQueryOptions,
 } from "~/lib/queryOptions";
 import { getProductBySlug } from "~/server_functions/dashboard/store/getProductBySlug";
@@ -45,6 +49,70 @@ export function usePrefetch() {
 	};
 
 	/**
+	 * Prefetch store data for a specific category
+	 * Use on category link hover in navigation dropdown
+	 * Only prefetches products, NOT filter options (those prefetch on filters button hover)
+	 */
+	const prefetchStoreWithCategory = (categorySlug: string) => {
+		// Prefetch products for this category
+		queryClient.prefetchInfiniteQuery(
+			storeDataInfiniteQueryOptions("", {
+				categorySlug,
+				brandSlug: null,
+				collectionSlug: null,
+				storeLocationId: null,
+				attributeFilters: {},
+				sort: "relevant",
+			}),
+		);
+	};
+
+	/**
+	 * Prefetch filter options for the current category
+	 * Use on filters button hover on store page
+	 * Only fetches what's needed for the active filters
+	 */
+	const prefetchFilterOptions = (
+		categorySlug?: string,
+		brandSlug?: string,
+		collectionSlug?: string,
+		attributeFilters?: Record<number, string[]>,
+	) => {
+		// Prefetch filter options based on current context
+		queryClient.prefetchQuery(
+			filteredBrandsQueryOptions(categorySlug, collectionSlug, undefined),
+		);
+		queryClient.prefetchQuery(
+			filteredCollectionsQueryOptions(categorySlug, brandSlug, undefined),
+		);
+		queryClient.prefetchQuery(
+			attributeValuesForFilteringQueryOptions(
+				categorySlug,
+				brandSlug,
+				collectionSlug,
+				attributeFilters,
+			),
+		);
+	};
+
+	/**
+	 * Prefetch default store view (all products, no filters)
+	 * Use on catalog button hover
+	 */
+	const prefetchStoreDefault = () => {
+		queryClient.prefetchInfiniteQuery(
+			storeDataInfiniteQueryOptions("", {
+				categorySlug: null,
+				brandSlug: null,
+				collectionSlug: null,
+				storeLocationId: null,
+				attributeFilters: {},
+				sort: "relevant",
+			}),
+		);
+	};
+
+	/**
 	 * Prefetch dashboard orders
 	 * Use on dashboard navigation link hover
 	 */
@@ -56,6 +124,9 @@ export function usePrefetch() {
 		prefetchProduct,
 		prefetchDashboardProduct,
 		prefetchStore,
+		prefetchStoreWithCategory,
+		prefetchStoreDefault,
+		prefetchFilterOptions,
 		prefetchDashboardOrders,
 	};
 }
