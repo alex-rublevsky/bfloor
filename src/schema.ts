@@ -54,6 +54,7 @@ export const productVariations = sqliteTable("product_variations", {
 	price: real("price").notNull(), // Using real for decimal in SQLite
 	discount: integer("discount"), // Discount percentage for this variation
 	sort: integer("sort"),
+	variationAttributes: text("variation_attributes"), // JSON stored as text - dual storage pattern
 	createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
 });
 

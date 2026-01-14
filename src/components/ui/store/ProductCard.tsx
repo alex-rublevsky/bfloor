@@ -13,7 +13,12 @@ import {
 import { useVariationSelection } from "~/hooks/useVariationSelection";
 import { useCart } from "~/lib/cartContext";
 import { storeDataQueryOptions } from "~/lib/queryOptions";
-import type { Product, ProductVariation, VariationAttribute } from "~/types";
+import type {
+	Product,
+	ProductAttribute,
+	ProductVariation,
+	VariationAttribute,
+} from "~/types";
 import { FilterGroup } from "../shared/FilterGroup";
 import { Icon } from "../shared/Icon";
 import styles from "./productCard.module.css";
@@ -106,12 +111,17 @@ const getDefaultVariation = (
 // Helper function to convert variation attributes to URL search params
 const getVariationSearchParams = (
 	variation: ProductVariationWithAttributes | null,
+	attributes: ProductAttribute[],
 ): Record<string, string> => {
 	if (!variation) return {};
 
 	const params: Record<string, string> = {};
 	variation.attributes.forEach((attr: VariationAttribute) => {
-		const paramName = attr.attributeId.toLowerCase();
+		// Convert numeric attribute ID to slug for URL
+		const attribute = attributes.find(
+			(a) => a.id.toString() === attr.attributeId,
+		);
+		const paramName = attribute?.slug || attr.attributeId.toLowerCase();
 		params[paramName] = attr.value;
 	});
 
@@ -127,21 +137,17 @@ function ProductCard({
 }) {
 	const [isAddingToCart, setIsAddingToCart] = useState(false);
 	const [isHovering, setIsHovering] = useState(false);
-	const { addProductToCart, cart } = useCart();
+	const { addProductToCart } = useCart();
 	const { prefetchProduct } = usePrefetch();
 	const queryClient = useQueryClient();
 	const { data: attributes } = useProductAttributes();
 
 	// Use the variation selection hook
-	const {
-		selectedVariation,
-		selectedAttributes,
-		selectVariation,
-		isAttributeValueAvailable,
-	} = useVariationSelection({
-		product,
-		cartItems: cart.items,
-	});
+	const { selectedVariation, selectedAttributes, selectVariation } =
+		useVariationSelection({
+			product,
+			attributes: attributes || [], // Pass attributes for proper display
+		});
 
 	// Calculate default variation and search params for the Link
 	const defaultVariation = useMemo(
@@ -156,13 +162,13 @@ function ProductCard({
 	);
 
 	const linkSearchParams = useMemo(() => {
-		const params = getVariationSearchParams(defaultVariation);
+		const params = getVariationSearchParams(defaultVariation, attributes || []);
 		// Add imageIndex when hovering and there are multiple images
 		if (isHovering && imageArray.length > 1) {
 			params.imageIndex = "1"; // Second image (0-indexed)
 		}
 		return params;
-	}, [defaultVariation, isHovering, imageArray.length]);
+	}, [defaultVariation, isHovering, imageArray.length, attributes]);
 
 	// Get unique attribute values for a specific attribute ID - memoized
 	const getUniqueAttributeValues = useCallback(
@@ -479,9 +485,6 @@ function ProductCard({
 													}}
 													showAllOption={false}
 													variant="product"
-													getOptionAvailability={(value) =>
-														isAttributeValueAvailable(attributeId, value)
-													}
 												/>
 											))}
 										</div>

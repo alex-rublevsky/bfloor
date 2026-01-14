@@ -2,23 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq, inArray, type SQL, sql } from "drizzle-orm";
 import { DB } from "~/db";
-import {
-	products,
-	productStoreLocations,
-	productVariations,
-	variationAttributes,
-} from "~/schema";
+import { products, productStoreLocations, productVariations } from "~/schema";
 import type { Product, ProductVariation } from "~/types";
 import { buildFts5Query } from "~/utils/search/queryExpander";
-
-// Type for variation attributes from database result
-type VariationAttributeResult = {
-	id: number;
-	productVariationId: number | null;
-	attributeId: string;
-	value: string;
-	createdAt: Date;
-};
 
 // GET server function with pagination and filter support (same as dashboard getAllProducts but only returns active products)
 export const getStoreData = createServerFn({ method: "GET" })
@@ -199,27 +185,19 @@ export const getStoreData = createServerFn({ method: "GET" })
 				orderSql = sql.raw(`CASE ${caseStatements} ELSE 9999 END`);
 			}
 
-			// OPTIMIZED: Single query with LEFT JOINs to fetch products, variations, and attributes
-			// This replaces 3 separate queries (products → variations → attributes)
+			// OPTIMIZED: Single query with LEFT JOIN to fetch products and variations
+			// Variation attributes are in JSON field (dual storage pattern) - no extra join needed
 			const productsWithRelations =
 				offsetValue !== undefined && pageLimit
 					? await db
 							.select({
 								product: products,
 								variation: productVariations,
-								attribute: variationAttributes,
 							})
 							.from(products)
 							.leftJoin(
 								productVariations,
 								eq(productVariations.productId, products.id),
-							)
-							.leftJoin(
-								variationAttributes,
-								eq(
-									variationAttributes.productVariationId,
-									productVariations.id,
-								),
 							)
 							.where(finalWhereCondition)
 							.orderBy(orderSql)
@@ -230,19 +208,11 @@ export const getStoreData = createServerFn({ method: "GET" })
 							.select({
 								product: products,
 								variation: productVariations,
-								attribute: variationAttributes,
 							})
 							.from(products)
 							.leftJoin(
 								productVariations,
 								eq(productVariations.productId, products.id),
-							)
-							.leftJoin(
-								variationAttributes,
-								eq(
-									variationAttributes.productVariationId,
-									productVariations.id,
-								),
 							)
 							.where(finalWhereCondition)
 							.orderBy(orderSql)
@@ -253,13 +223,7 @@ export const getStoreData = createServerFn({ method: "GET" })
 				number,
 				{
 					product: Product;
-					variations: Map<
-						number,
-						{
-							variation: ProductVariation;
-							attributes: VariationAttributeResult[];
-						}
-					>;
+					variations: Map<number, ProductVariation>;
 				}
 			>();
 
@@ -275,25 +239,13 @@ export const getStoreData = createServerFn({ method: "GET" })
 				const productEntry = productsMap.get(row.product.id);
 				if (!productEntry) continue;
 
-				// Add variation if exists
+				// Add variation if exists (attributes are in JSON field)
 				if (row.variation) {
 					if (!productEntry.variations.has(row.variation.id)) {
-						productEntry.variations.set(row.variation.id, {
-							variation: row.variation as ProductVariation,
-							attributes: [],
-						});
-					}
-
-					// Add attribute if exists
-					if (row.attribute) {
-						const variationEntry = productEntry.variations.get(
+						productEntry.variations.set(
 							row.variation.id,
+							row.variation as ProductVariation,
 						);
-						if (variationEntry) {
-							variationEntry.attributes.push(
-								row.attribute as VariationAttributeResult,
-							);
-						}
 					}
 				}
 			}
@@ -303,30 +255,37 @@ export const getStoreData = createServerFn({ method: "GET" })
 				(entry) => entry.product,
 			);
 
-			const variationsByProduct = new Map<
-				number,
-				Array<{
-					variation: ProductVariation;
-					attributes: VariationAttributeResult[];
-				}>
-			>();
+			const variationsByProduct = new Map<number, ProductVariation[]>();
 
 			for (const [productId, entry] of productsMap.entries()) {
 				const variations = Array.from(entry.variations.values());
 				if (variations.length > 0) {
-					variationsByProduct.set(productId, variations);
+					// Parse variation attributes from JSON field (dual storage pattern)
+					const variationsWithParsedAttrs = variations.map((v) => {
+						let attributes = [];
+						if (v.variationAttributes) {
+							try {
+								attributes = JSON.parse(v.variationAttributes);
+							} catch (error) {
+								console.error("Failed to parse variation attributes:", error);
+								attributes = [];
+							}
+						}
+						return {
+							...v,
+							attributes,
+						};
+					});
+					variationsByProduct.set(productId, variationsWithParsedAttrs);
 				}
 			}
 
 			const productsArray = productsResult.map((product: Product) => {
 				const variationEntries = variationsByProduct.get(product.id) || [];
 
-				const variationsWithAttributes = variationEntries
-					.map((entry) => ({
-						...entry.variation,
-						attributes: entry.attributes,
-					}))
-					.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+				const variationsWithAttributes = variationEntries.sort(
+					(a, b) => (a.sort ?? 0) - (b.sort ?? 0),
+				);
 
 				return {
 					...product,

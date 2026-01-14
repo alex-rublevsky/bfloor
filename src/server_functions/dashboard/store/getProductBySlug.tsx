@@ -2,13 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
 import { DB } from "~/db";
-import {
-	productAttributes,
-	products,
-	productStoreLocations,
-	productVariations,
-	variationAttributes,
-} from "~/schema";
+import { products, productStoreLocations, productVariations } from "~/schema";
 import { getAttributeMappings } from "~/utils/attributeMapping";
 
 export const getProductBySlug = createServerFn({ method: "GET" })
@@ -28,20 +22,8 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 				await Promise.all([
 					db.select().from(products).where(eq(products.id, productId)).limit(1),
 					db
-						.select({
-							id: productVariations.id,
-							sku: productVariations.sku,
-							price: productVariations.price,
-							sort: productVariations.sort,
-							discount: productVariations.discount,
-							attributeId: variationAttributes.attributeId,
-							attributeValue: variationAttributes.value,
-						})
+						.select()
 						.from(productVariations)
-						.leftJoin(
-							variationAttributes,
-							eq(variationAttributes.productVariationId, productVariations.id),
-						)
 						.where(eq(productVariations.productId, productId)),
 					db
 						.select()
@@ -56,39 +38,27 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 
 			const product = productResult[0];
 
-			// Group variations with their attributes
-			const variationsMap = new Map();
-
-			// Fetch all available attributes to create slug-to-ID mapping (cached)
-			const { slugToId } = await getAttributeMappings();
-			const slugToIdMap: Record<string, string> = {};
-			for (const [slug, id] of slugToId.entries()) {
-				slugToIdMap[slug] = id.toString();
-			}
-
-			for (const row of variationsResult) {
-				if (!variationsMap.has(row.id)) {
-					variationsMap.set(row.id, {
-						id: row.id.toString(),
-						sku: row.sku,
-						price: row.price,
-						sort: row.sort,
-						discount: row.discount,
-						attributes: [],
-					});
+			// Parse variations with their attributes from JSON (dual storage pattern)
+			const variations = variationsResult.map((row) => {
+				let attributes = [];
+				if (row.variationAttributes) {
+					try {
+						attributes = JSON.parse(row.variationAttributes);
+					} catch (error) {
+						console.error("Failed to parse variation attributes:", error);
+						attributes = [];
+					}
 				}
 
-				if (row.attributeId && row.attributeValue) {
-					// Map slug to ID for consistency with productAttributes
-					const attributeId = slugToIdMap[row.attributeId] || row.attributeId;
-					variationsMap.get(row.id).attributes.push({
-						attributeId: attributeId,
-						value: row.attributeValue,
-					});
-				}
-			}
-
-			const variations = Array.from(variationsMap.values());
+				return {
+					id: row.id.toString(),
+					sku: row.sku,
+					price: row.price,
+					sort: row.sort,
+					discount: row.discount,
+					attributes: attributes,
+				};
+			});
 
 			// Process productAttributes - convert JSON string to array
 			let productAttributesArray: { attributeId: string; value: string }[] = [];
@@ -101,12 +71,12 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 						parsed !== null &&
 						!Array.isArray(parsed)
 					) {
-					// Fetch all available attributes to create dynamic mapping (cached)
-					const { slugToId } = await getAttributeMappings();
-					const slugToIdMap: Record<string, string> = {};
-					for (const [slug, id] of slugToId.entries()) {
-						slugToIdMap[slug] = id.toString();
-					}
+						// Fetch all available attributes to create dynamic mapping (cached)
+						const { slugToId } = await getAttributeMappings();
+						const slugToIdMap: Record<string, string> = {};
+						for (const [slug, id] of slugToId.entries()) {
+							slugToIdMap[slug] = id.toString();
+						}
 
 						// Convert object to array of {attributeId, value} pairs
 						productAttributesArray = Object.entries(parsed).map(

@@ -314,7 +314,6 @@ function ProductPage() {
 	// Use variation selection hook with URL state for product page
 	const { selectedVariation, selectedAttributes } = useVariationSelection({
 		product: productWithDetails as unknown as ProductWithVariations | null,
-		cartItems: cart.items,
 		search, // Providing search enables URL state mode
 		onVariationChange: () => setQuantity(1), // Reset quantity when variation changes
 		attributes: attributes || [], // Pass database attributes for slug conversion

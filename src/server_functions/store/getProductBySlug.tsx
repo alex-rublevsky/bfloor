@@ -7,13 +7,10 @@ import {
 	brands,
 	categories,
 	collections,
-	productAttributes,
 	products,
 	productStoreLocations,
 	productVariations,
-	variationAttributes,
 } from "~/schema";
-import { getAttributeMappings } from "~/utils/attributeMapping";
 
 // Type for the complex query result
 type QueryResult = {
@@ -22,7 +19,6 @@ type QueryResult = {
 	brands: typeof brands.$inferSelect | null;
 	collections: typeof collections.$inferSelect | null;
 	product_variations: typeof productVariations.$inferSelect | null;
-	variation_attributes: typeof variationAttributes.$inferSelect | null;
 };
 
 export const getProductBySlug = createServerFn({ method: "GET" })
@@ -38,10 +34,6 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 			.leftJoin(brands, eq(products.brandSlug, brands.slug))
 			.leftJoin(collections, eq(products.collectionSlug, collections.slug))
 			.leftJoin(productVariations, eq(productVariations.productId, products.id))
-			.leftJoin(
-				variationAttributes,
-				eq(variationAttributes.productVariationId, productVariations.id),
-			)
 			.all();
 
 		if (!result || result.length === 0) {
@@ -78,6 +70,18 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 
 			const variationId = row.product_variations.id;
 			if (!variationsMap.has(variationId)) {
+				// Parse variation attributes from JSON field (dual storage pattern)
+				// No ID resolution needed - display values are already stored
+				let attributes = [];
+				if (row.product_variations.variationAttributes) {
+					try {
+						attributes = JSON.parse(row.product_variations.variationAttributes);
+					} catch (error) {
+						console.error("Failed to parse variation attributes:", error);
+						attributes = [];
+					}
+				}
+
 				variationsMap.set(variationId, {
 					id: variationId,
 					productId: row.product_variations.productId,
@@ -86,39 +90,10 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 					sort: row.product_variations.sort || 0,
 					discount: row.product_variations.discount,
 					createdAt: row.product_variations.createdAt,
-					attributes: [],
-				});
-			}
-
-			if (row.variation_attributes) {
-				variationsMap.get(variationId)?.attributes.push({
-					id: row.variation_attributes.id,
-					productVariationId: row.variation_attributes.productVariationId,
-					attributeId: row.variation_attributes.attributeId,
-					value: row.variation_attributes.value,
-					createdAt: row.variation_attributes.createdAt,
+					attributes: attributes,
 				});
 			}
 		});
-
-	// Fetch all attributes (cached)
-	const { slugToId } = await getAttributeMappings();
-	const slugToIdMap: Record<string, string> = {};
-	for (const [slug, id] of slugToId.entries()) {
-		slugToIdMap[slug] = id.toString();
-	}
-
-		// Map variation attributes from slugs to IDs
-		for (const variation of variationsMap.values()) {
-			if (variation.attributes && variation.attributes.length > 0) {
-				variation.attributes = variation.attributes.map(
-					(attr: { attributeId: string; value: string }) => ({
-						...attr,
-						attributeId: slugToIdMap[attr.attributeId] || attr.attributeId,
-					}),
-				);
-			}
-		}
 
 		// Process images - parse JSON string or comma-separated string to array for frontend
 		let imagesArray: string[] = [];

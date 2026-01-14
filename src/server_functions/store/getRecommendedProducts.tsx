@@ -2,16 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq, sql } from "drizzle-orm";
 import { DB } from "~/db";
-import { products, productVariations, variationAttributes } from "~/schema";
-
-// Type for variation attributes from database result
-type VariationAttributeResult = {
-	id: number;
-	productVariationId: number | null;
-	attributeId: string;
-	value: string;
-	createdAt: Date;
-};
+import { products, productVariations } from "~/schema";
 
 /**
  * Get recommended (featured) products
@@ -69,93 +60,81 @@ export const getRecommendedProducts = createServerFn({ method: "GET" })
 				};
 			}
 
-			// OPTIMIZATION: Single query with LEFT JOINs (like getAllProducts)
-			// This is 67% faster than 3 separate queries
-			const productsWithRelations = await db
-				.select({
-					product: products,
-					variation: productVariations,
-					attribute: variationAttributes,
-				})
-				.from(products)
-				.leftJoin(
-					productVariations,
-					eq(productVariations.productId, products.id),
-				)
-				.leftJoin(
-					variationAttributes,
-					eq(variationAttributes.productVariationId, productVariations.id),
-				)
-				.where(whereCondition)
-				.orderBy(products.name)
-				.all();
+		// OPTIMIZATION: Single query with LEFT JOIN for variations
+		// Variation attributes are in JSON field (dual storage pattern)
+		const productsWithRelations = await db
+			.select({
+				product: products,
+				variation: productVariations,
+			})
+			.from(products)
+			.leftJoin(
+				productVariations,
+				eq(productVariations.productId, products.id),
+			)
+			.where(whereCondition)
+			.orderBy(products.name)
+			.all();
 
-			// Group results by product
-			const productMap = new Map<
-				number,
-				{
-					product: typeof products.$inferSelect;
-					variations: Map<
-						number,
-						{
-							variation: typeof productVariations.$inferSelect;
-							attributes: VariationAttributeResult[];
-						}
-					>;
-				}
-			>();
+		// Group results by product
+		const productMap = new Map<
+			number,
+			{
+				product: typeof products.$inferSelect;
+				variations: Map<number, typeof productVariations.$inferSelect>;
+			}
+		>();
 
-			for (const row of productsWithRelations) {
-				if (!row.product.id) continue;
+		for (const row of productsWithRelations) {
+			if (!row.product.id) continue;
 
-				// Initialize product entry if needed
-				if (!productMap.has(row.product.id)) {
-					productMap.set(row.product.id, {
-						product: row.product,
-						variations: new Map(),
-					});
-				}
-
-				const productEntry = productMap.get(row.product.id);
-				if (!productEntry) continue;
-
-				// Add variation if exists
-				if (row.variation?.id) {
-					if (!productEntry.variations.has(row.variation.id)) {
-						productEntry.variations.set(row.variation.id, {
-							variation: row.variation,
-							attributes: [],
-						});
-					}
-
-					// Add attribute if exists
-					if (row.attribute?.id) {
-						const variationEntry = productEntry.variations.get(
-							row.variation.id,
-						);
-						if (variationEntry) {
-							variationEntry.attributes.push(row.attribute);
-						}
-					}
-				}
+			// Initialize product entry if needed
+			if (!productMap.has(row.product.id)) {
+				productMap.set(row.product.id, {
+					product: row.product,
+					variations: new Map(),
+				});
 			}
 
-			// Build products array with variations and attributes
-			const productsArray = Array.from(productMap.values()).map(
-				({ product, variations }) => {
-					const variationsArray = Array.from(variations.values())
-						.map(({ variation, attributes }) => ({
+			const productEntry = productMap.get(row.product.id);
+			if (!productEntry) continue;
+
+			// Add variation if exists (attributes are in JSON field)
+			if (row.variation?.id) {
+				if (!productEntry.variations.has(row.variation.id)) {
+					productEntry.variations.set(row.variation.id, row.variation);
+				}
+			}
+		}
+
+		// Build products array with variations and parsed attributes
+		const productsArray = Array.from(productMap.values()).map(
+			({ product, variations }) => {
+				const variationsArray = Array.from(variations.values())
+					.map((variation) => {
+						// Parse variation attributes from JSON field (dual storage pattern)
+						let attributes = [];
+						if (variation.variationAttributes) {
+							try {
+								attributes = JSON.parse(variation.variationAttributes);
+							} catch (error) {
+								console.error("Failed to parse variation attributes:", error);
+								attributes = [];
+							}
+						}
+						return {
 							...variation,
 							attributes,
-						}))
-						.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+						};
+					})
+					.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
 
-					return {
-						...product,
-						variations: variationsArray,
-					};
-				},
-			);
+				return {
+					...product,
+					variations: variationsArray,
+				};
+			},
+		);
 
 			return {
 				products: productsArray,

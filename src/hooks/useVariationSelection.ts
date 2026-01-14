@@ -1,11 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
-import {
-	getAttributeNameFromSlug,
-	getAttributeSlug,
-} from "~/hooks/useProductAttributes";
 import type {
-	CartItem,
 	ProductAttribute,
 	ProductVariation,
 	ProductWithVariations,
@@ -14,7 +9,6 @@ import type {
 
 interface UseVariationSelectionProps {
 	product: ProductWithVariations | null;
-	cartItems: CartItem[];
 	search?: Record<string, string | undefined>; // If provided, uses URL state
 	onVariationChange?: () => void;
 	attributes?: ProductAttribute[]; // Database attributes for slug conversion
@@ -24,14 +18,10 @@ interface UseVariationSelectionReturn {
 	selectedVariation: ProductVariation | null;
 	selectedAttributes: Record<string, string>;
 	selectVariation: (attributeId: string, value: string) => void;
-	isAttributeValueAvailable: (attributeId: string, value: string) => boolean;
-	clearVariation?: (attributeId: string) => void;
-	clearAllVariations?: () => void;
 }
 
 export function useVariationSelection({
 	product,
-	cartItems: _cartItems,
 	search,
 	onVariationChange,
 	attributes = [],
@@ -52,18 +42,23 @@ export function useVariationSelection({
 		Object.entries(search).forEach(([paramName, value]) => {
 			if (!value) return;
 
-			// Convert slug back to attribute name
-			const attributeName = getAttributeNameFromSlug(paramName, attributes);
+			// Find the attribute by slug in the database attributes
+			const dbAttribute = attributes.find((attr) => attr.slug === paramName);
 
-			if (
-				attributeName &&
-				product?.variations?.some((variation) =>
-					variation.attributes.some(
-						(attr: VariationAttribute) => attr.attributeId === attributeName,
-					),
-				)
-			) {
-				attributesMap[attributeName] = value;
+			if (dbAttribute) {
+				// Use the numeric ID as string (e.g., "20") to match variation.attributes
+				const attributeId = dbAttribute.id.toString();
+
+				// Check if any variation has this attribute
+				if (
+					product?.variations?.some((variation) =>
+						variation.attributes.some(
+							(attr: VariationAttribute) => attr.attributeId === attributeId,
+						),
+					)
+				) {
+					attributesMap[attributeId] = value;
+				}
 			}
 		});
 
@@ -75,7 +70,7 @@ export function useVariationSelection({
 		? urlSelectedAttributes
 		: localSelectedAttributes;
 
-	// Auto-select first available variation for product cards
+	// Auto-select first available variation for product cards (local state mode)
 	useMemo(() => {
 		if (useUrlState || !product?.hasVariations || !product.variations?.length)
 			return;
@@ -94,6 +89,36 @@ export function useVariationSelection({
 			setLocalSelectedAttributes(autoAttributes);
 		}
 	}, [useUrlState, product, localSelectedAttributes]);
+
+	// Auto-select first variation for product page (URL state mode) if no selection yet
+	useMemo(() => {
+		if (!useUrlState || !product?.hasVariations || !product.variations?.length)
+			return;
+		if (Object.keys(urlSelectedAttributes).length > 0) return;
+
+		// Only auto-select if there's exactly one variation
+		if (product.variations.length === 1) {
+			const firstVariation = product.variations[0];
+			if (firstVariation?.attributes?.length > 0) {
+				const urlParams: Record<string, string> = {};
+				firstVariation.attributes.forEach((attr: VariationAttribute) => {
+					const dbAttribute = attributes.find(
+						(a) => a.id.toString() === attr.attributeId,
+					);
+					const slug = dbAttribute?.slug || attr.attributeId;
+					urlParams[slug] = attr.value;
+				});
+
+				// Update URL with the auto-selected variation
+				navigate({
+					search: urlParams as unknown as Parameters<
+						typeof navigate
+					>[0]["search"],
+					replace: true,
+				});
+			}
+		}
+	}, [useUrlState, product, urlSelectedAttributes, attributes, navigate]);
 
 	// Get all unique attribute IDs
 	const allAttributeIds = useMemo(() => {
@@ -136,43 +161,15 @@ export function useVariationSelection({
 		);
 	}, [product, selectedAttributes, allAttributeIds]);
 
-	// Check if attribute value is available
-	const isAttributeValueAvailable = useCallback(
-		(attributeId: string, value: string): boolean => {
-			if (!product?.variations) return false;
-
-			const variationsWithValue = product.variations.filter((variation) =>
-				variation.attributes.some(
-					(attr: VariationAttribute) =>
-						attr.attributeId === attributeId && attr.value === value,
-				),
-			);
-
-			return variationsWithValue.some((variation) => {
-				const testAttributes = { ...selectedAttributes, [attributeId]: value };
-
-				const matches = Object.entries(testAttributes).every(([attrId, val]) =>
-					variation.attributes.some(
-						(attr: VariationAttribute) =>
-							attr.attributeId === attrId && attr.value === val,
-					),
-				);
-
-				return matches;
-			});
-		},
-		[product, selectedAttributes],
-	);
-
 	// Select variation - handles both URL and local state
 	const selectVariation = useCallback(
 		(attributeId: string, value: string) => {
 			if (!product?.variations) return;
 
-			// Find best matching variation
+			// Find matching variation
 			const desiredAttributes = { ...selectedAttributes, [attributeId]: value };
 
-			let targetVariation = product.variations.find((variation) => {
+			const targetVariation = product.variations.find((variation) => {
 				return Object.entries(desiredAttributes).every(([attrId, val]) =>
 					variation.attributes.some(
 						(attr: VariationAttribute) =>
@@ -182,37 +179,12 @@ export function useVariationSelection({
 			});
 
 			if (!targetVariation) {
-				const candidateVariations = product.variations.filter((variation) =>
-					variation.attributes.some(
-						(attr: VariationAttribute) =>
-							attr.attributeId === attributeId && attr.value === value,
-					),
-				);
-
-				candidateVariations.sort((a, b) => {
-					const aMatches = Object.entries(selectedAttributes).filter(
-						([attrId, val]) =>
-							attrId !== attributeId &&
-							a.attributes.some(
-								(attr: VariationAttribute) =>
-									attr.attributeId === attrId && attr.value === val,
-							),
-					).length;
-					const bMatches = Object.entries(selectedAttributes).filter(
-						([attrId, val]) =>
-							attrId !== attributeId &&
-							b.attributes.some(
-								(attr: VariationAttribute) =>
-									attr.attributeId === attrId && attr.value === val,
-							),
-					).length;
-					return bMatches - aMatches;
-				});
-
-				targetVariation = candidateVariations[0];
+				// No exact match found, do nothing
+				return;
 			}
 
-			if (targetVariation) {
+			// Update state with the selected variation
+			{
 				const newAttributes: Record<string, string> = {};
 				targetVariation.attributes.forEach((attr: VariationAttribute) => {
 					newAttributes[attr.attributeId] = attr.value;
@@ -223,7 +195,12 @@ export function useVariationSelection({
 					const urlParams: Record<string, string | undefined> = {};
 
 					targetVariation.attributes.forEach((attr: VariationAttribute) => {
-						const slug = getAttributeSlug(attr.attributeId, attributes);
+						// attr.attributeId is a numeric ID string (e.g., "20")
+						// Find the corresponding attribute to get its slug
+						const dbAttribute = attributes.find(
+							(a) => a.id.toString() === attr.attributeId,
+						);
+						const slug = dbAttribute?.slug || attr.attributeId;
 						urlParams[slug] = attr.value;
 					});
 
@@ -251,48 +228,9 @@ export function useVariationSelection({
 		],
 	);
 
-	// Clear functions (only for URL state)
-	const clearVariation = useCallback(
-		(attributeId: string) => {
-			if (!useUrlState) return;
-
-			const slug = getAttributeSlug(attributeId, attributes);
-			const newSearch = { ...search };
-			delete newSearch[slug];
-
-			navigate({
-				search: newSearch as unknown as Parameters<
-					typeof navigate
-				>[0]["search"],
-				replace: true,
-			});
-			onVariationChange?.();
-		},
-		[useUrlState, search, navigate, onVariationChange, attributes],
-	);
-
-	const clearAllVariations = useCallback(() => {
-		if (!useUrlState) return;
-
-		// Clear all attribute parameters from URL
-		const newSearch = { ...search };
-		attributes.forEach((attr) => {
-			delete newSearch[attr.slug];
-		});
-
-		navigate({
-			search: newSearch as unknown as Parameters<typeof navigate>[0]["search"],
-			replace: true,
-		});
-		onVariationChange?.();
-	}, [useUrlState, navigate, onVariationChange, search, attributes]);
-
 	return {
 		selectedVariation,
 		selectedAttributes,
 		selectVariation,
-		isAttributeValueAvailable,
-		clearVariation,
-		clearAllVariations,
 	};
 }
