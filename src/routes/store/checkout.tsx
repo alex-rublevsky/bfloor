@@ -13,7 +13,7 @@ import {
 	useProductAttributes,
 } from "~/hooks/useProductAttributes";
 import { useCart } from "~/lib/cartContext";
-import { storeDataQueryOptions } from "~/lib/queryOptions";
+import { getStoreProductsFromInfiniteCache } from "~/utils/storeCache";
 import { createOrder } from "~/server_functions/dashboard/orders/orderCreation";
 import { sendOrderEmails } from "~/server_functions/sendOrderEmails";
 import type { ProductWithVariations } from "~/types";
@@ -230,10 +230,7 @@ function CheckoutScreen() {
 		}
 
 		// Get products from TanStack Query cache for server validation
-		const storeData = queryClient.getQueryData(
-			storeDataQueryOptions().queryKey,
-		);
-		const products = storeData?.products || [];
+		const products = getStoreProductsFromInfiniteCache(queryClient);
 
 		// Use the mutation instead of manual fetch
 		orderMutation.mutate({

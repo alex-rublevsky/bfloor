@@ -187,6 +187,12 @@ export const variationAttributes = sqliteTable(
 			table.attributeId,
 			table.value,
 		),
+		// Composite index for JOIN operations when fetching variation with attributes
+		// Used in updateProduct.tsx: LEFT JOIN variationAttributes ON productVariationId
+		index("idx_variation_attributes_variation_attr").on(
+			table.productVariationId,
+			table.attributeId,
+		),
 	],
 );
 

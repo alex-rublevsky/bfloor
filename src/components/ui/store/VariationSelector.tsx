@@ -1,9 +1,10 @@
-import { useCallback } from "react";
+import { useMemo } from "react";
 import {
 	getAttributeDisplayName,
 	useProductAttributes,
 } from "~/hooks/useProductAttributes";
 import type { ProductWithVariations, VariationAttribute } from "~/types";
+import { sortVariationsForDisplay } from "~/utils/variationSort";
 
 interface VariationSelectorProps {
 	product: ProductWithVariations;
@@ -19,36 +20,39 @@ export function VariationSelector({
 }: VariationSelectorProps) {
 	const { data: attributes } = useProductAttributes();
 
-	// Get all unique attributes for this product
-	const availableAttributes = useCallback(() => {
+	// Get all unique attributes for this product (respect variation sort order)
+	// Memoized to avoid recalculating on every render
+	const productAttributes = useMemo(() => {
 		if (!product.variations || product.variations.length === 0) return [];
 
-		const attributeMap = new Map<string, Set<string>>();
+		const sortedVariations = sortVariationsForDisplay(product.variations);
 
-		product.variations.forEach((variation) => {
+		const attributeMap = new Map<
+			string,
+			{ values: string[]; seen: Set<string> }
+		>();
+
+		sortedVariations.forEach((variation) => {
 			variation.attributes.forEach((attr: VariationAttribute) => {
 				if (!attributeMap.has(attr.attributeId)) {
-					attributeMap.set(attr.attributeId, new Set());
+					attributeMap.set(attr.attributeId, { values: [], seen: new Set() });
 				}
-				attributeMap.get(attr.attributeId)?.add(attr.value);
+				const entry = attributeMap.get(attr.attributeId);
+				if (entry && !entry.seen.has(attr.value)) {
+					entry.seen.add(attr.value);
+					entry.values.push(attr.value);
+				}
 			});
 		});
 
-		return Array.from(attributeMap.entries()).map(([attributeId, values]) => ({
+		return Array.from(attributeMap.entries()).map(([attributeId, entry]) => ({
 			attributeId,
 			displayName: getAttributeDisplayName(attributeId, attributes || []),
-			values: Array.from(values).sort(),
+			values: entry.values,
 		}));
 	}, [product.variations, attributes]);
 
-	const productAttributes = availableAttributes();
-
-	const handleAttributeChange = useCallback(
-		(attributeId: string, value: string) => {
-			onAttributeChange(attributeId, value);
-		},
-		[onAttributeChange],
-	);
+	// Directly use onAttributeChange - no need for wrapper callback
 
 	if (productAttributes.length === 0) {
 		return null;
@@ -66,7 +70,7 @@ export function VariationSelector({
 								<button
 									key={value}
 									type="button"
-									onClick={() => handleAttributeChange(attributeId, value)}
+									onClick={() => onAttributeChange(attributeId, value)}
 									className={`px-3 py-2 text-sm rounded-md border transition-colors ${
 										isSelected
 											? "bg-red-600 text-white border-red-600"

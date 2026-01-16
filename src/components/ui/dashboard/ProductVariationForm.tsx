@@ -15,12 +15,17 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { Button } from "~/components/ui/shared/Button";
+import { CheckboxList } from "~/components/ui/shared/CheckboxList";
 import { Input } from "~/components/ui/shared/input";
 import {
 	generateVariationSKU,
 	useProductAttributes,
 } from "~/hooks/useProductAttributes";
+import { allAttributeValuesByAttributeQueryOptions } from "~/lib/queryOptions";
+import type { AttributeValue } from "~/server_functions/dashboard/attributes/getAllAttributeValuesByAttribute";
 import type { ProductAttribute } from "~/types";
 
 // Define the Variation type
@@ -47,9 +52,11 @@ function SortableVariationItem({
 	onUpdate,
 	selectedAttributes,
 	productAttributes,
+	attributeMap,
 	productSlug,
 	variations,
 	onChange,
+	allAttributeValues,
 }: {
 	variation: Variation;
 	onRemove: (id: string) => void;
@@ -60,9 +67,11 @@ function SortableVariationItem({
 	) => void;
 	selectedAttributes: string[];
 	productAttributes: ProductAttribute[];
+	attributeMap: Map<string, ProductAttribute>;
 	productSlug: string;
 	variations: Variation[];
 	onChange: (variations: Variation[]) => void;
+	allAttributeValues?: Record<number, AttributeValue[]>;
 }) {
 	const {
 		attributes,
@@ -96,18 +105,54 @@ function SortableVariationItem({
 			productAttributes,
 		);
 
-		// Update the variation with both new values atomically
-		onChange(
-			variations.map((v) =>
-				v.id === variation.id
-					? {
-							...v,
-							attributeValues: newAttributeValues,
-							sku: newSKU,
-						}
-					: v,
-			),
+		// Update only the specific variation instead of mapping all variations
+		// Find index first to avoid unnecessary array operations
+		const variationIndex = variations.findIndex((v) => v.id === variation.id);
+		if (variationIndex === -1) return;
+
+		const newVariations = [...variations];
+		newVariations[variationIndex] = {
+			...variations[variationIndex],
+			attributeValues: newAttributeValues,
+			sku: newSKU,
+		};
+		onChange(newVariations);
+	};
+
+	const handleStandardizedValueToggle = (
+		attributeId: string,
+		valueId: string,
+		checked: boolean,
+		allowMultiple: boolean,
+		standardizedValues: Array<{ id: number; value: string; isActive: boolean }>,
+	) => {
+		const selectedValue = standardizedValues.find(
+			(v) => v.id.toString() === valueId,
 		);
+		if (!selectedValue) return;
+
+		const currentValue = variation.attributeValues[attributeId] || "";
+		const currentValues = currentValue
+			? currentValue
+					.split(",")
+					.map((v) => v.trim())
+					.filter(Boolean)
+			: [];
+
+		let newValue = "";
+		if (allowMultiple) {
+			let nextValues = currentValues;
+			if (checked && !currentValues.includes(selectedValue.value)) {
+				nextValues = [...currentValues, selectedValue.value];
+			} else if (!checked) {
+				nextValues = currentValues.filter((v) => v !== selectedValue.value);
+			}
+			newValue = nextValues.join(",");
+		} else {
+			newValue = checked ? selectedValue.value : "";
+		}
+
+		handleAttributeValueChange(attributeId, newValue);
 	};
 
 	return (
@@ -194,27 +239,90 @@ function SortableVariationItem({
 					</div>
 					<div className="grid grid-cols-2 gap-2">
 						{selectedAttributes.map((attributeId) => {
-							const attribute = productAttributes.find(
-								(attr) => attr.id.toString() === attributeId,
-							);
+							// Use lookup map for O(1) access instead of O(n) find
+							const attribute = attributeMap.get(attributeId);
 							if (!attribute) return null;
+
+							const isStandardized =
+								attribute.valueType === "standardized" ||
+								attribute.valueType === "both";
+							const standardizedValues: AttributeValue[] =
+								allAttributeValues?.[attribute.id] || [];
+							const allowMultiple = attribute.allowMultipleValues === true;
+
+							// Optimize selectedIds calculation using a value-to-id map
+							const selectedIds =
+								isStandardized && standardizedValues.length > 0
+									? (() => {
+											// Create value-to-id map for O(1) lookup instead of O(n) find
+											const valueToIdMap = new Map<string, string>();
+											standardizedValues.forEach((sv) => {
+												valueToIdMap.set(sv.value, sv.id.toString());
+											});
+
+											const currentValue = variation.attributeValues[attributeId] || "";
+											return currentValue
+												.split(",")
+												.map((v) => v.trim())
+												.filter(Boolean)
+												.map((value) => valueToIdMap.get(value))
+												.filter((valueId): valueId is string => valueId !== undefined);
+										})()
+									: [];
 
 							return (
 								<div key={attributeId}>
-									<Input
-										id={`attr-${variation.id}-${attributeId}`}
-										type="text"
-										label={attribute.name}
-										value={variation.attributeValues[attributeId] || ""}
-										onChange={(e) => {
-											e.stopPropagation();
-											handleAttributeValueChange(attributeId, e.target.value);
-										}}
-										onPointerDown={(e) => e.stopPropagation()}
-										onClick={(e) => e.stopPropagation()}
-										labelBackgroundColor="bg-muted"
-										className="text-sm"
-									/>
+									{isStandardized && standardizedValues.length > 0 ? (
+										<div className="space-y-2">
+											<label
+												htmlFor={`attr-${variation.id}-${attributeId}`}
+												className="block text-sm font-medium text-foreground"
+											>
+												{attribute.name}
+												{allowMultiple && (
+													<span className="text-xs text-muted-foreground ml-2">
+														(можно выбрать несколько)
+													</span>
+												)}
+											</label>
+											<CheckboxList
+												items={standardizedValues.map(
+													(stdValue: AttributeValue) => ({
+														id: stdValue.id.toString(),
+														label: stdValue.value,
+														isActive: stdValue.isActive,
+													}),
+												)}
+												selectedIds={selectedIds}
+												onItemChange={(valueId, checked) => {
+													handleStandardizedValueToggle(
+														attributeId,
+														valueId as string,
+														checked,
+														allowMultiple,
+														standardizedValues,
+													);
+												}}
+												idPrefix={`attr-${variation.id}-${attributeId}-value`}
+												showOnlyActive={true}
+											/>
+										</div>
+									) : (
+										<Input
+											id={`attr-${variation.id}-${attributeId}`}
+											type="text"
+											label={attribute.name}
+											value={variation.attributeValues[attributeId] || ""}
+											onChange={(e) => {
+												e.stopPropagation();
+												handleAttributeValueChange(attributeId, e.target.value);
+											}}
+											onPointerDown={(e) => e.stopPropagation()}
+											onClick={(e) => e.stopPropagation()}
+											labelBackgroundColor="bg-muted"
+											className="text-sm"
+										/>
+									)}
 								</div>
 							);
 						})}
@@ -232,6 +340,18 @@ export default function ProductVariationForm({
 	onChange,
 }: ProductVariationFormProps) {
 	const { data: attributes } = useProductAttributes();
+	const { data: allAttributeValues } = useQuery(
+		allAttributeValuesByAttributeQueryOptions(),
+	);
+
+	// Create attribute lookup map for O(1) access instead of O(n) find
+	const attributeMap = useMemo(() => {
+		const map = new Map<string, ProductAttribute>();
+		(attributes || []).forEach((attr) => {
+			map.set(attr.id.toString(), attr);
+		});
+		return map;
+	}, [attributes]);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor),
@@ -339,9 +459,11 @@ export default function ProductVariationForm({
 									onUpdate={handleUpdateVariation}
 									selectedAttributes={selectedAttributes}
 									productAttributes={attributes || []}
+									attributeMap={attributeMap}
 									productSlug={productSlug}
 									variations={variations}
 									onChange={onChange}
+									allAttributeValues={allAttributeValues}
 								/>
 							))}
 						</div>
