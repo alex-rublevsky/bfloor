@@ -1,9 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { DB } from "~/db";
 import { products, productStoreLocations, productVariations } from "~/schema";
-import { getAttributeMappings } from "~/utils/attributeMapping";
+import {
+	parseProductAttributes,
+	parseVariationAttributes,
+} from "~/utils/productParsing";
 
 export const getProductBySlug = createServerFn({ method: "GET" })
 	.inputValidator((data: { id: number }) => data)
@@ -17,38 +20,46 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 				throw new Error("Invalid product ID");
 			}
 
-			// Fetch product with all its data
-			const [productResult, variationsResult, storeLocationsResult] =
-				await Promise.all([
-					db.select().from(products).where(eq(products.id, productId)).limit(1),
-					db
-						.select()
-						.from(productVariations)
-						.where(eq(productVariations.productId, productId)),
-					db
-						.select()
-						.from(productStoreLocations)
-						.where(eq(productStoreLocations.productId, productId)),
-				]);
+			// Fetch product with store locations in main query (all products have store locations)
+			const productResult = await db
+				.select({
+					products: products,
+					storeLocationIds: sql<string | null>`(
+						SELECT GROUP_CONCAT(${productStoreLocations.storeLocationId})
+						FROM ${productStoreLocations}
+						WHERE ${productStoreLocations.productId} = ${products.id}
+					)`,
+				})
+				.from(products)
+				.where(eq(products.id, productId))
+				.limit(1);
 
 			if (!productResult[0]) {
 				setResponseStatus(404);
 				throw new Error("Product not found");
 			}
 
-			const product = productResult[0];
+			const product = productResult[0].products;
+
+			// Fetch variations only if hasVariations = true
+			const variationsResult = product.hasVariations
+				? await db
+						.select()
+						.from(productVariations)
+						.where(eq(productVariations.productId, productId))
+				: [];
+
+			// Parse store location IDs from comma-separated string (all products have store locations)
+			const storeLocationIds: number[] = productResult[0].storeLocationIds
+				? productResult[0].storeLocationIds
+						.split(",")
+						.map((id) => parseInt(id, 10))
+						.filter((id): id is number => !Number.isNaN(id))
+				: [];
 
 			// Parse variations with their attributes from JSON (dual storage pattern)
 			const variations = variationsResult.map((row) => {
-				let attributes = [];
-				if (row.variationAttributes) {
-					try {
-						attributes = JSON.parse(row.variationAttributes);
-					} catch (error) {
-						console.error("Failed to parse variation attributes:", error);
-						attributes = [];
-					}
-				}
+				const attributes = parseVariationAttributes(row.variationAttributes);
 
 				return {
 					id: row.id.toString(),
@@ -60,44 +71,12 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 				};
 			});
 
-			// Process productAttributes - convert JSON string to array
-			let productAttributesArray: { attributeId: string; value: string }[] = [];
-			if (product.productAttributes) {
-				try {
-					const parsed = JSON.parse(product.productAttributes);
-					// Convert object to array format expected by frontend
-					if (
-						typeof parsed === "object" &&
-						parsed !== null &&
-						!Array.isArray(parsed)
-					) {
-						// Fetch all available attributes to create dynamic mapping (cached)
-						const { slugToId } = await getAttributeMappings();
-						const slugToIdMap: Record<string, string> = {};
-						for (const [slug, id] of slugToId.entries()) {
-							slugToIdMap[slug] = id.toString();
-						}
-
-						// Convert object to array of {attributeId, value} pairs
-						productAttributesArray = Object.entries(parsed).map(
-							([key, value]) => ({
-								attributeId: slugToIdMap[key] || key, // Use mapped ID or fallback to key
-								value: String(value),
-							}),
-						);
-					} else if (Array.isArray(parsed)) {
-						productAttributesArray = parsed;
-					}
-				} catch (error) {
-					console.error("Error parsing product attributes:", error);
-					productAttributesArray = [];
-				}
-			}
-
-			// Process store locations
-			const storeLocationIds = storeLocationsResult.map(
-				(location) => location.storeLocationId,
+			// Parse productAttributes - now standardized as array format
+			const productAttributesArray = parseProductAttributes(
+				product.productAttributes,
 			);
+
+			// Store location IDs already parsed from main query
 
 			const productWithDetails = {
 				id: product.id,

@@ -10,10 +10,7 @@ import {
 	variationAttributes,
 } from "~/schema";
 import type { ProductFormData } from "~/types";
-import {
-	convertAttributesToSlugFormat,
-	getAttributeMappings,
-} from "~/utils/attributeMapping";
+import { getAttributeMappings } from "~/utils/attributeMapping";
 import { getBatchValueIds } from "~/utils/attributeValueLookup";
 import { validateAttributeValues } from "~/utils/validateAttributeValues";
 import { moveStagingImages } from "./moveStagingImages";
@@ -106,14 +103,11 @@ export const updateProduct = createServerFn({ method: "POST" })
 				}
 			}
 
-			// Convert attributes array to object format for database storage
-			// Format: { "attribute-slug": ["value1", "value2"] }
-			const attributesObject = await convertAttributesToSlugFormat(
-				productData.attributes || [],
-			);
+			// Store attributes as array format for consistency
+			// Format: [{"attributeId": "5", "value": "Дерево"}]
 			const attributesJson =
-				Object.keys(attributesObject).length > 0
-					? JSON.stringify(attributesObject)
+				productData.attributes && productData.attributes.length > 0
+					? JSON.stringify(productData.attributes)
 					: null;
 
 			// Validate and prepare variations before any database changes

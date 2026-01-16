@@ -12,13 +12,16 @@ import {
 } from "~/hooks/useProductAttributes";
 import { useVariationSelection } from "~/hooks/useVariationSelection";
 import { useCart } from "~/lib/cartContext";
-import { storeDataQueryOptions } from "~/lib/queryOptions";
 import type {
 	Product,
 	ProductAttribute,
 	ProductVariation,
+	ProductWithDetails,
 	VariationAttribute,
 } from "~/types";
+import { parseImages, parseProductAttributes } from "~/utils/productParsing";
+import { getStoreProductsFromInfiniteCache } from "~/utils/storeCache";
+import { sortVariationsForDisplay } from "~/utils/variationSort";
 import { FilterGroup } from "../shared/FilterGroup";
 import { Icon } from "../shared/Icon";
 import styles from "./productCard.module.css";
@@ -42,29 +45,13 @@ interface ProductVariationWithAttributes extends ProductVariation {
 	attributes: VariationAttribute[];
 }
 
-// Memoize expensive calculations outside component
-const calculateImageArray = (images: string | null): string[] => {
-	if (!images) return [];
-	try {
-		return JSON.parse(images) as string[];
-	} catch {
-		// Fallback to comma-separated parsing for backward compatibility
-		return images
-			.split(",")
-			.map((img) => img.trim())
-			.filter(Boolean);
-	}
-};
-
 const calculateUniqueAttributeValues = (
 	variations: ProductVariationWithAttributes[] | undefined,
 	attributeId: string,
 ): string[] => {
 	if (!variations) return [];
 
-	const sortedVariations = [...variations].sort(
-		(a, b) => (b.sort ?? 0) - (a.sort ?? 0),
-	);
+	const sortedVariations = sortVariationsForDisplay(variations);
 
 	const values = new Set<string>();
 	sortedVariations.forEach((variation) => {
@@ -100,12 +87,28 @@ const getDefaultVariation = (
 ): ProductVariationWithAttributes | null => {
 	if (!product?.variations || !product.hasVariations) return null;
 
-	// Find the first variation by sort order
-	const sortedVariations = [...product.variations].sort((a, b) => {
-		return (b.sort ?? 0) - (a.sort ?? 0);
+	const sortedVariations = sortVariationsForDisplay(product.variations);
+
+	const requiredAttributeIds = new Set<string>();
+	sortedVariations.forEach((variation) => {
+		variation.attributes.forEach((attr: VariationAttribute) => {
+			requiredAttributeIds.add(attr.attributeId);
+		});
 	});
 
-	return sortedVariations[0] || null;
+	const requiredIds = Array.from(requiredAttributeIds);
+	const completeVariation =
+		requiredIds.length > 0
+			? sortedVariations.find((variation) =>
+					requiredIds.every((attrId) =>
+						variation.attributes.some(
+							(attr: VariationAttribute) => attr.attributeId === attrId,
+						),
+					),
+				)
+			: sortedVariations[0];
+
+	return completeVariation || sortedVariations[0] || null;
 };
 
 // Helper function to convert variation attributes to URL search params
@@ -145,9 +148,9 @@ function ProductCard({
 	// Use the variation selection hook
 	const { selectedVariation, selectedAttributes, selectVariation } =
 		useVariationSelection({
-			product,
+		product,
 			attributes: attributes || [], // Pass attributes for proper display
-		});
+	});
 
 	// Calculate default variation and search params for the Link
 	const defaultVariation = useMemo(
@@ -157,8 +160,24 @@ function ProductCard({
 
 	// Memoize expensive calculations - must be before linkSearchParams
 	const imageArray = useMemo(
-		() => calculateImageArray(product.images),
+		() => parseImages(product.images),
 		[product.images],
+	);
+	const parsedProductAttributes = useMemo(
+		() => parseProductAttributes(product.productAttributes),
+		[product.productAttributes],
+	);
+	const seededProduct = useMemo<ProductWithDetails>(
+		() => ({
+			...product,
+			images: imageArray,
+			productAttributes: parsedProductAttributes,
+			category: null,
+			brand: null,
+			collection: null,
+			storeLocations: [],
+		}),
+		[product, imageArray, parsedProductAttributes],
 	);
 
 	const linkSearchParams = useMemo(() => {
@@ -212,10 +231,7 @@ function ProductCard({
 			try {
 				// Try to get products from TanStack Query cache for validation (optional)
 				// If cache is empty, the function will use the product directly
-				const storeData = queryClient.getQueryData(
-					storeDataQueryOptions().queryKey,
-				);
-				const products = storeData?.products || [];
+				const products = getStoreProductsFromInfiniteCache(queryClient);
 
 				// Use the context function directly
 				// Products array is optional - if empty, validation uses product directly
@@ -248,7 +264,13 @@ function ProductCard({
 			className="block h-full relative"
 			preload="intent"
 			viewTransition={true}
-			onMouseEnter={() => prefetchProduct(product.slug)}
+			onMouseEnter={() => {
+				prefetchProduct(product.slug);
+				queryClient.setQueryData(
+					["bfloorProduct", product.slug],
+					(existing) => existing ?? seededProduct,
+				);
+			}}
 		>
 			<div
 				className="w-full product-card overflow-hidden  group"
@@ -391,7 +413,7 @@ function ProductCard({
 							{/* Price */}
 							<div className="flex flex-col mb-2">
 								<div className="flex flex-wrap items-center w-full gap-2">
-									<div className="flex flex-col items-baseline gap-0 flex-shrink-0">
+									<div className="flex flex-col items-baseline gap-0 shrink-0">
 										{product.discount ? (
 											<>
 												<div className="whitespace-nowrap flex items-baseline gap-0.5">

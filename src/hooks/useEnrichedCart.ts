@@ -8,8 +8,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { CartItem } from "~/lib/cartContext";
-import { storeDataQueryOptions } from "~/lib/queryOptions";
 import type { ProductWithDetails, ProductWithVariations } from "~/types";
+import { getStoreProductsFromInfiniteCache } from "~/utils/storeCache";
 
 /**
  * Enriched cart item with all display data
@@ -28,10 +28,8 @@ export function useEnrichedCart(cartItems: CartItem[]): EnrichedCartItem[] {
 	const queryClient = useQueryClient();
 
 	return useMemo(() => {
-		const storeData = queryClient.getQueryData(
-			storeDataQueryOptions().queryKey,
-		);
-		const products: ProductWithVariations[] = storeData?.products || [];
+		const products: ProductWithVariations[] =
+			getStoreProductsFromInfiniteCache(queryClient);
 		const productQueries = queryClient
 			.getQueryCache()
 			.findAll({ queryKey: ["bfloorProduct"] });

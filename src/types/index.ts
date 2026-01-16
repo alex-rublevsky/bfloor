@@ -228,7 +228,9 @@ export interface CartItem {
 	addedAt: number; // Timestamp for sorting/debugging
 }
 
-export interface ProductWithDetails extends Omit<Product, "productAttributes"> {
+export interface ProductWithDetails
+	extends Omit<Product, "productAttributes" | "images"> {
+	images: string[];
 	category?: {
 		name: string;
 		slug: string;

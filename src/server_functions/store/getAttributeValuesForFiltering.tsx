@@ -29,6 +29,8 @@ export interface AttributeFilter {
  * Only shows values that exist in products matching the current filter context
  *
  * Uses junction table for efficient SQL-based filtering and counting
+ *
+ * @param includeInactive - If true, includes inactive products (for dashboard). Defaults to false (client-side).
  */
 export const getAttributeValuesForFiltering = createServerFn({ method: "GET" })
 	.inputValidator(
@@ -39,6 +41,7 @@ export const getAttributeValuesForFiltering = createServerFn({ method: "GET" })
 				collectionSlug?: string;
 				storeLocationId?: number;
 				attributeFilters?: Record<number, string[]>; // attributeId -> array of value IDs (as strings)
+				includeInactive?: boolean; // If true, don't filter by isActive (for dashboard)
 			} = {},
 		) => data,
 	)
@@ -46,7 +49,11 @@ export const getAttributeValuesForFiltering = createServerFn({ method: "GET" })
 		const db = DB();
 
 		// Build WHERE conditions for products
-		const productConditions: SQL[] = [eq(products.isActive, true)];
+		// Only filter by isActive if includeInactive is not true (client-side behavior)
+		const productConditions: SQL[] = [];
+		if (!data.includeInactive) {
+			productConditions.push(eq(products.isActive, true));
+		}
 
 		if (data.categorySlug) {
 			productConditions.push(eq(products.categorySlug, data.categorySlug));
@@ -68,7 +75,7 @@ export const getAttributeValuesForFiltering = createServerFn({ method: "GET" })
 				value: attributeValues.value,
 				valueSlug: attributeValues.slug,
 				valueSortOrder: attributeValues.sortOrder,
-				productId: productAttributeValues.productId,
+				productCount: sql<number>`COUNT(DISTINCT ${productAttributeValues.productId})`,
 			})
 			.from(productAttributeValues)
 			.innerJoin(products, eq(products.id, productAttributeValues.productId))
@@ -83,12 +90,23 @@ export const getAttributeValuesForFiltering = createServerFn({ method: "GET" })
 			.where(
 				sql.join(
 					[
-						...productConditions,
+						...(productConditions.length > 0
+							? productConditions
+							: [sql`1=1`]),
 						eq(attributeValues.isActive, true),
 						sql`${productAttributes.valueType} IN ('standardized', 'both')`,
 					],
 					sql` AND `,
 				),
+			)
+			.groupBy(
+				productAttributes.id,
+				productAttributes.name,
+				productAttributes.slug,
+				attributeValues.id,
+				attributeValues.value,
+				attributeValues.slug,
+				attributeValues.sortOrder,
 			)
 			.$dynamic();
 
@@ -126,7 +144,7 @@ export const getAttributeValuesForFiltering = createServerFn({ method: "GET" })
 		// Execute query
 		const results = await query;
 
-		// Group results by attribute and count unique products per value
+		// Group results by attribute and use SQL counts (already aggregated)
 		const attributeMap = new Map<
 			number,
 			{
@@ -140,7 +158,7 @@ export const getAttributeValuesForFiltering = createServerFn({ method: "GET" })
 						value: string;
 						slug: string | null;
 						sortOrder: number;
-						productIds: Set<number>;
+						count: number;
 					}
 				>;
 			}
@@ -167,14 +185,8 @@ export const getAttributeValuesForFiltering = createServerFn({ method: "GET" })
 					value: row.value,
 					slug: row.valueSlug,
 					sortOrder: row.valueSortOrder,
-					productIds: new Set(),
+					count: row.productCount ?? 0,
 				});
-			}
-
-			// Add product ID to this value's set
-			const valueEntry = attrEntry.values.get(row.valueId);
-			if (valueEntry) {
-				valueEntry.productIds.add(row.productId);
 			}
 		}
 
@@ -189,7 +201,7 @@ export const getAttributeValuesForFiltering = createServerFn({ method: "GET" })
 					id: valueEntry.id,
 					value: valueEntry.value,
 					slug: valueEntry.slug,
-					count: valueEntry.productIds.size,
+					count: valueEntry.count,
 				});
 			}
 

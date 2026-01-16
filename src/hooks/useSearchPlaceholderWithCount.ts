@@ -1,57 +1,44 @@
+import { useQuery } from "@tanstack/react-query";
 import { useRouterState } from "@tanstack/react-router";
-import {
-	useAttributesCount,
-	useBrandsCount,
-	useCategoriesCount,
-	useCollectionsCount,
-	useOrdersCount,
-	useProductsCount,
-	useStoreLocationsCount,
-} from "./useEntityCounts";
+import { productCategoryCountsQueryOptions } from "~/lib/queryOptions";
 
 /**
- * Hook that returns the appropriate search placeholder with count for the current route
+ * Hook that returns the total product count by summing all category counts
+ *
+ * This is efficient because:
+ * - Category counts are already fetched for the navigation bar (visible on all pages)
+ * - We just sum the existing cached data - no additional query needed
+ * - The data is already in TanStack Query cache
+ */
+function useProductsCountFromCategories(): number {
+	const { data: categoryCounts } = useQuery(
+		productCategoryCountsQueryOptions(),
+	);
+
+	if (!categoryCounts) return 0;
+
+	// Sum all category counts to get total product count
+	return Object.values(categoryCounts).reduce((sum, count) => sum + count, 0);
+}
+
+/**
+ * Hook that returns the appropriate search placeholder for the current route
+ *
+ * For products/dashboard routes: Shows count derived from category counts (already in cache)
+ * For all other routes: Simple placeholder without count
  */
 export function useSearchPlaceholderWithCount() {
 	const pathname = useRouterState().location.pathname;
+	const isDashboard = pathname.startsWith("/dashboard");
 
-	// Always call all hooks (they handle their own conditional logic)
-	const productsCount = useProductsCount();
-	const categoriesCount = useCategoriesCount();
-	const brandsCount = useBrandsCount();
-	const collectionsCount = useCollectionsCount();
-	const ordersCount = useOrdersCount();
-	const attributesCount = useAttributesCount();
-	const storeLocationsCount = useStoreLocationsCount();
+	// Always call the hook (React rules), but only use it for dashboard routes
+	const productsCount = useProductsCountFromCategories();
 
-	// Generate placeholder based on current route
-	// For dashboard routes, show specific entity counts based on the base route
-	if (pathname.startsWith("/dashboard")) {
-		// Check for specific dashboard routes that have their own entity types
-		if (pathname.startsWith("/dashboard/categories")) {
-			return `Искать среди ${categoriesCount} категорий`;
-		}
-		if (pathname.startsWith("/dashboard/brands")) {
-			return `Искать среди ${brandsCount} брендов`;
-		}
-		if (pathname.startsWith("/dashboard/collections")) {
-			return `Искать среди ${collectionsCount} коллекций`;
-		}
-		if (pathname.startsWith("/dashboard/attributes")) {
-			return `Искать среди ${attributesCount} атрибутов`;
-		}
-		if (pathname.startsWith("/dashboard/orders")) {
-			return `Искать среди ${ordersCount} заказов`;
-		}
-		if (pathname.startsWith("/dashboard/misc")) {
-			return `Искать среди ${storeLocationsCount} адресов`;
-		}
-		// For all other dashboard routes (including /dashboard, /dashboard/products.*, etc.)
-		// default to products count
+	// For dashboard routes (which show products), derive count from category counts
+	if (isDashboard) {
 		return `Искать среди ${productsCount} товаров`;
 	}
 
-	// For all other routes (including store and index), show product count
-	// This allows users to see product count when searching from any page
-	return `Искать среди ${productsCount} товаров`;
+	// For all other routes (store, index, etc.)
+	return "Я ищу...";
 }

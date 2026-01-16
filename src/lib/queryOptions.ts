@@ -22,12 +22,6 @@ import { getProductCategoryCounts } from "~/server_functions/dashboard/categorie
 import { getAllCollections } from "~/server_functions/dashboard/collections/getAllCollections";
 import { getProductCollectionCounts } from "~/server_functions/dashboard/collections/getProductCollectionCounts";
 import { getAllBrands } from "~/server_functions/dashboard/getAllBrands";
-import { getTotalAttributesCount } from "~/server_functions/dashboard/getTotalAttributesCount";
-import { getTotalBrandsCount } from "~/server_functions/dashboard/getTotalBrandsCount";
-import { getTotalCategoriesCount } from "~/server_functions/dashboard/getTotalCategoriesCount";
-import { getTotalCollectionsCount } from "~/server_functions/dashboard/getTotalCollectionsCount";
-import { getTotalOrdersCount } from "~/server_functions/dashboard/getTotalOrdersCount";
-import { getTotalProductsCount } from "~/server_functions/dashboard/getTotalProductsCount";
 import { getAllOrders } from "~/server_functions/dashboard/orders/getAllOrders";
 import { getAllProducts } from "~/server_functions/dashboard/store/getAllProducts";
 import { getFilteredBrandsDashboard } from "~/server_functions/dashboard/store/getFilteredBrands";
@@ -38,28 +32,10 @@ import { getAttributeValuesForFiltering } from "~/server_functions/store/getAttr
 import { getFilteredBrands } from "~/server_functions/store/getFilteredBrands";
 import { getFilteredCollections } from "~/server_functions/store/getFilteredCollections";
 import { getProductBySlug } from "~/server_functions/store/getProductBySlug";
+import { getProductDetailsBySlug } from "~/server_functions/store/getProductDetailsBySlug";
 import { getRecommendedProducts } from "~/server_functions/store/getRecommendedProducts";
+import type { ProductWithDetails } from "~/types";
 import { getUserData } from "~/utils/auth-server-func";
-
-/**
- * Store data query options (DEPRECATED - use storeDataInfiniteQueryOptions)
- * Used for: legacy /store route
- *
- * Cache Strategy: Aggressive caching
- * - Data cached in memory for 3 days
- * - Kept in memory for 7 days
- * - Only refetches on manual invalidation or after 3 days
- */
-export const storeDataQueryOptions = () =>
-	queryOptions({
-		queryKey: ["bfloorStoreData"],
-		queryFn: async () => getStoreData(),
-		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - data considered fresh
-		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
-		retry: 3,
-		refetchOnWindowFocus: false, // Don't refetch on window focus
-		refetchOnMount: false, // Don't refetch on component mount if data is fresh
-	});
 
 // Type for paginated response from getStoreData and getAllProducts
 type PaginatedResponse = {
@@ -67,8 +43,8 @@ type PaginatedResponse = {
 	pagination?: {
 		page: number;
 		limit: number;
-		totalCount: number;
-		totalPages: number;
+		totalCount?: number;
+		totalPages?: number;
 		hasNextPage: boolean;
 		hasPreviousPage: boolean;
 	};
@@ -122,7 +98,7 @@ export const storeDataInfiniteQueryOptions = (
 			getStoreData({
 				data: {
 					page: pageParam as number,
-					limit: 50,
+					limit: 30,
 					search,
 					categorySlug: filters?.categorySlug ?? undefined,
 					brandSlug: filters?.brandSlug ?? undefined,
@@ -183,6 +159,7 @@ export const attributeValuesForFilteringQueryOptions = (
 					brandSlug,
 					collectionSlug,
 					attributeFilters: attributeFilters ?? undefined,
+					includeInactive: false, // Client-side: filter by isActive
 				},
 			}),
 		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - values change based on filters (increased from 1 hour)
@@ -345,20 +322,122 @@ export const filteredCollectionsDashboardQueryOptions = (
 	});
 
 /**
+ * Attribute values for filtering query options (Dashboard version - includes inactive products)
+ * Used for: Dashboard pages to show available attribute values for filtering
+ *
+ * Cache Strategy: Moderate caching for filter-dependent data
+ * - Values cached for 3 days per filter combination
+ * - Kept in memory for 7 days
+ * - Query key includes all filters so cache invalidates when filters change
+ */
+export const attributeValuesForFilteringDashboardQueryOptions = (
+	categorySlug?: string,
+	brandSlug?: string,
+	collectionSlug?: string,
+	attributeFilters?: Record<number, string[]>,
+	storeLocationId?: number,
+) =>
+	queryOptions({
+		queryKey: [
+			"attributeValuesForFilteringDashboard",
+			{
+				categorySlug: categorySlug ?? null,
+				brandSlug: brandSlug ?? null,
+				collectionSlug: collectionSlug ?? null,
+				attributeFilters: JSON.stringify(attributeFilters ?? {}),
+				storeLocationId: storeLocationId ?? null,
+			},
+		],
+		queryFn: async () =>
+			getAttributeValuesForFiltering({
+				data: {
+					categorySlug,
+					brandSlug,
+					collectionSlug,
+					attributeFilters: attributeFilters ?? undefined,
+					storeLocationId,
+					includeInactive: true, // Dashboard: include inactive products
+				},
+			}),
+		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - values change based on filters
+		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
  * Product by slug query options
  * Used for: /store/$productId route and prefetching individual products
  *
- * Cache Strategy: Aggressive caching for individual products
+ * OPTIMIZED CACHING STRATEGY:
+ * This function implements a smart caching strategy that minimizes database queries:
+ *
+ * 1. If product is already cached (from list views like getAllProducts/getStoreData):
+ *    - Uses getProductDetailsBySlug to fetch only product details (no variations)
+ *    - Merges with cached product, preserving cached variations
+ *    - Why? Variations are often already in cache from list views, so we avoid re-fetching
+ *
+ * 2. If product is NOT cached (direct navigation to product page):
+ *    - Uses getProductBySlug to fetch complete product data including variations
+ *    - Why? We need everything, so fetch it all in one go
+ *
+ * Benefits:
+ * - Reduces database queries when navigating from list → detail pages
+ * - Different cache keys allow both "full product" and "product details" to coexist
+ * - Variations are only fetched once (from list view), then reused
+ *
+ * Cache Settings:
  * - Individual products cached for 3 days
  * - Cached in memory for 7 days
  * - Perfect for product detail pages
  */
-export const productQueryOptions = (productId: string) =>
-	queryOptions({
+/**
+ * Merge cached product with fresh details
+ *
+ * OPTIMIZED MERGE STRATEGY:
+ * - Uses cached product as base (includes variations already parsed from list view)
+ * - Overwrites with details (includes parsed images/attributes from getProductDetailsBySlug)
+ * - Preserves variations from cache (avoids re-parsing, already optimized)
+ *
+ * Performance: O(n) object spread where n ≈ 20-30 properties (~0.01ms)
+ * This is already optimal - object spread is the fastest way to merge objects in JS
+ */
+const mergeCachedProductWithDetails = (
+	cachedProduct: ProductWithDetails,
+	details: ProductWithDetails,
+): ProductWithDetails => ({
+	...cachedProduct,
+	...details,
+	// Preserve variations from cache if they exist (already parsed from list view)
+	// Only use details.variations if cache has none (shouldn't happen, but defensive)
+	// This avoids re-parsing variations that are already in cache
+	variations:
+		cachedProduct.variations && cachedProduct.variations.length > 0
+			? cachedProduct.variations
+			: details.variations,
+});
+
+export const productQueryOptions = (
+	productId: string,
+	cachedProduct?: ProductWithDetails | null,
+) =>
+	queryOptions<ProductWithDetails>({
 		queryKey: ["bfloorProduct", productId],
-		queryFn: async () => {
+		queryFn: async (): Promise<ProductWithDetails> => {
 			try {
-				return await getProductBySlug({ data: productId });
+				if (cachedProduct) {
+					// Product is in cache - fetch only details (no variations) and merge
+					// This is more efficient since variations are already cached from list view
+					const details = (await getProductDetailsBySlug({
+						data: productId,
+					})) as ProductWithDetails;
+					return mergeCachedProductWithDetails(cachedProduct, details);
+				}
+				// Product not in cache - fetch everything including variations
+				return (await getProductBySlug({
+					data: productId,
+				})) as ProductWithDetails;
 			} catch (error) {
 				if (error instanceof Error && error.message === "Product not found") {
 					throw notFound();
@@ -463,7 +542,7 @@ export const productsInfiniteQueryOptions = (
 			getAllProducts({
 				data: {
 					page: pageParam as number,
-					limit: 50,
+					limit: 30,
 					search,
 					categorySlug: filters?.categorySlug ?? undefined,
 					brandSlug: filters?.brandSlug ?? undefined,
@@ -796,7 +875,7 @@ export const productsByTagInfiniteQueryOptions = (tag: string) =>
 				data: {
 					tag,
 					page: pageParam as number,
-					limit: 20, // Smaller page size for carousel
+					limit: 10, // Smaller page size for carousel
 					sort: "name",
 				},
 			}),
@@ -828,120 +907,6 @@ export const productsByTagInfiniteQueryOptions = (tag: string) =>
  */
 
 /**
- * Total products count query options
- * Used for: Navigation/search placeholder on dashboard and store pages
- *
- * Cache Strategy: Aggressive caching for counts
- * - Count cached for 3 days (products change but counts are relatively static)
- * - Kept in memory for 7 days
- */
-export const totalProductsCountQueryOptions = () =>
-	queryOptions({
-		queryKey: ["totalProductsCount"],
-		queryFn: async () => getTotalProductsCount(),
-		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - counts are relatively static
-		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
-		retry: 3,
-		refetchOnWindowFocus: false,
-		refetchOnMount: false,
-	});
-
-/**
- * Total categories count query options
- * Used for: Navigation/search placeholder on categories page
- *
- * Cache Strategy: Aggressive caching for counts
- * - Count cached for 7 days (categories are very static)
- * - Kept in memory for 14 days
- */
-export const totalCategoriesCountQueryOptions = () =>
-	queryOptions({
-		queryKey: ["totalCategoriesCount"],
-		queryFn: async () => getTotalCategoriesCount(),
-		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - categories are very static
-		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
-		retry: 3,
-		refetchOnWindowFocus: false,
-		refetchOnMount: false,
-	});
-
-/**
- * Total brands count query options
- * Used for: Navigation/search placeholder on brands page
- *
- * Cache Strategy: Aggressive caching for counts
- * - Count cached for 7 days (brands are very static)
- * - Kept in memory for 14 days
- */
-export const totalBrandsCountQueryOptions = () =>
-	queryOptions({
-		queryKey: ["totalBrandsCount"],
-		queryFn: async () => getTotalBrandsCount(),
-		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - brands are very static
-		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
-		retry: 3,
-		refetchOnWindowFocus: false,
-		refetchOnMount: false,
-	});
-
-/**
- * Total collections count query options
- * Used for: Navigation/search placeholder on collections page
- *
- * Cache Strategy: Aggressive caching for counts
- * - Count cached for 7 days (collections are very static)
- * - Kept in memory for 14 days
- */
-export const totalCollectionsCountQueryOptions = () =>
-	queryOptions({
-		queryKey: ["totalCollectionsCount"],
-		queryFn: async () => getTotalCollectionsCount(),
-		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - collections are very static
-		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
-		retry: 3,
-		refetchOnWindowFocus: false,
-		refetchOnMount: false,
-	});
-
-/**
- * Total orders count query options
- * Used for: Navigation/search placeholder on orders page
- *
- * Cache Strategy: Moderate caching for dynamic data
- * - Count cached for 1 day (orders are dynamic but counts are cacheable)
- * - Kept in memory for 3 days
- */
-export const totalOrdersCountQueryOptions = () =>
-	queryOptions({
-		queryKey: ["totalOrdersCount"],
-		queryFn: async () => getTotalOrdersCount(),
-		staleTime: 1000 * 60 * 60 * 24, // 1 day - orders are dynamic but counts cacheable
-		gcTime: 1000 * 60 * 60 * 24 * 3, // 3 days - keep in memory
-		retry: 3,
-		refetchOnWindowFocus: false,
-		refetchOnMount: false,
-	});
-
-/**
- * Total attributes count query options
- * Used for: Navigation/search placeholder on attributes page
- *
- * Cache Strategy: Aggressive caching for counts
- * - Count cached for 7 days (attributes are very static)
- * - Kept in memory for 14 days
- */
-export const totalAttributesCountQueryOptions = () =>
-	queryOptions({
-		queryKey: ["totalAttributesCount"],
-		queryFn: async () => getTotalAttributesCount(),
-		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - attributes are very static
-		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
-		retry: 3,
-		refetchOnWindowFocus: false,
-		refetchOnMount: false,
-	});
-
-/**
  * Discounted products infinite query options
  * Used for: ProductSlider component (simple mode) with pagination and infinite scrolling
  *
@@ -958,7 +923,7 @@ export const discountedProductsInfiniteQueryOptions = () =>
 				data: {
 					hasDiscount: true,
 					page: pageParam as number,
-					limit: 20,
+					limit: 12,
 					sort: "name",
 				},
 			}),
@@ -997,7 +962,7 @@ export const recommendedProductsInfiniteQueryOptions = () =>
 			getRecommendedProducts({
 				data: {
 					page: pageParam as number,
-					limit: 20,
+					limit: 12,
 				},
 			}),
 		staleTime: 1000 * 60 * 60 * 24 * 30, // 30 days - extreme caching for static-like data
@@ -1038,7 +1003,7 @@ export const recentlyVisitedProductsInfiniteQueryOptions = (
 				data: {
 					productIds,
 					page: pageParam as number,
-					limit: 20,
+					limit: 12,
 					sort: "newest", // Show most recently visited first
 				},
 			}),

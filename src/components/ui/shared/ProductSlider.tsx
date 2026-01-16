@@ -12,20 +12,20 @@ import {
 	discountedProductsInfiniteQueryOptions,
 	productsByTagInfiniteQueryOptions,
 	recentlyVisitedProductsInfiniteQueryOptions,
-	recommendedProductsInfiniteQueryOptions,
 } from "~/lib/queryOptions";
 import type { ProductWithVariations } from "~/types";
+import { getStoreProductsFromInfiniteCache } from "~/utils/storeCache";
 import { EmblaArrowButtons } from "../shared/EmblaArrowButtons";
 import ProductCard from "../store/ProductCard";
 import "./product-slider.css";
 
-type ProductSliderMode = "simple" | "tabs" | "recommended";
+type ProductSliderMode = "simple" | "tabs" | "recentlyVisited";
 
 interface ProductSliderProps {
 	mode?: ProductSliderMode;
 	title: string;
 	tags?: readonly ProductTag[];
-	recentlyVisitedProductIds?: number[]; // For recommended mode - show recently visited if available
+	recentlyVisitedProductIds?: number[];
 }
 
 export default function ProductSlider({
@@ -47,36 +47,56 @@ export default function ProductSlider({
 		if (mode === "tabs" && selectedTag) {
 			return productsByTagInfiniteQueryOptions(selectedTag);
 		}
-		if (mode === "recommended") {
-			// Show recently visited if available, otherwise show recommended
-			if (recentlyVisitedProductIds.length > 0) {
-				return recentlyVisitedProductsInfiniteQueryOptions(
-					recentlyVisitedProductIds,
-				);
-			}
-			return recommendedProductsInfiniteQueryOptions();
+		if (mode === "recentlyVisited") {
+			return recentlyVisitedProductsInfiniteQueryOptions(
+				recentlyVisitedProductIds,
+			);
 		}
 		return discountedProductsInfiniteQueryOptions();
 	}, [mode, selectedTag, recentlyVisitedProductIds]);
 
 	const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-		useInfiniteQuery(
-			queryOptions as ReturnType<typeof discountedProductsInfiniteQueryOptions>,
-		);
+		useInfiniteQuery({
+			...(queryOptions as ReturnType<
+				typeof discountedProductsInfiniteQueryOptions
+			>),
+			enabled: mode !== "recentlyVisited" && !(mode === "tabs" && !selectedTag),
+		});
 
 	// Merge products from all pages
 	const products = useMemo(() => {
+		if (mode === "recentlyVisited") {
+			const storeProducts = getStoreProductsFromInfiniteCache(queryClient);
+			const productQueries = queryClient
+				.getQueryCache()
+				.findAll({ queryKey: ["bfloorProduct"] });
+			const productCacheMap = new Map<number, ProductWithVariations>();
+			for (const query of productQueries) {
+				const product = query.state.data as ProductWithVariations | undefined;
+				if (product?.id) {
+					productCacheMap.set(product.id, product);
+				}
+			}
+
+			return recentlyVisitedProductIds
+				.map((id) => {
+					return (
+						storeProducts.find((product) => product.id === id) ??
+						productCacheMap.get(id) ??
+						null
+					);
+				})
+				.filter((product): product is ProductWithVariations =>
+					Boolean(product?.isActive),
+				);
+		}
+
 		const allProducts =
 			data?.pages
 				?.flatMap((page) => page?.products ?? [])
 				?.filter((product: ProductWithVariations) => product.isActive) ?? [];
 		return allProducts;
-	}, [data]);
-
-	// Get total count from first page pagination (for tab buttons)
-	const totalCount = useMemo(() => {
-		return data?.pages?.[0]?.pagination?.totalCount ?? 0;
-	}, [data]);
+	}, [mode, data, queryClient, recentlyVisitedProductIds]);
 
 	// Update hasMoreToLoad ref when hasNextPage changes
 	useEffect(() => {
@@ -200,6 +220,11 @@ export default function ProductSlider({
 	// const { selectedIndex, scrollSnaps, onDotButtonClick } =
 	// 	useDotButton(emblaApi);
 
+	// Don't render if no products (for recently visited mode)
+	if (mode === "recentlyVisited" && products.length === 0) {
+		return null;
+	}
+
 	return (
 		<section className="embla pb-42 product-slider-section no-padding">
 			{/* Header Row - Title/Tags and Arrows */}
@@ -209,8 +234,7 @@ export default function ProductSlider({
 					{mode === "tabs" && (
 						<div className="product-slider__tags">
 							{tags.map((tag) => {
-								const productCount =
-									tag === selectedTag ? totalCount : undefined;
+								const productCount = undefined;
 
 								return (
 									<button
@@ -264,8 +288,8 @@ export default function ProductSlider({
 					<p className="text-muted-foreground">
 						{mode === "tabs"
 							? "Нет товаров для выбранной категории"
-							: mode === "recommended"
-								? "Нет рекомендуемых товаров"
+							: mode === "recentlyVisited"
+								? "Нет просмотренных товаров"
 								: "Нет товаров"}
 					</p>
 				</div>
@@ -282,7 +306,7 @@ export default function ProductSlider({
 									<div className="px-1 md:px-1.5">
 										<ProductCard
 											product={product}
-											disableViewTransition={mode === "recommended"}
+											disableViewTransition={mode === "recentlyVisited"}
 										/>
 									</div>
 								</div>
@@ -297,23 +321,6 @@ export default function ProductSlider({
 							)}
 						</div>
 					</div>
-
-					{/* Dot Indicators - Commented out */}
-					{/* {products.length > 1 && (
-						<div className="embla__dots-container">
-							<div className="embla__dots">
-								{scrollSnaps.map((_, index) => (
-									<DotButton
-										key={`dot-${products[index]?.id ?? index}`}
-										onClick={() => onDotButtonClick(index)}
-										className={`embla__dot ${
-											index === selectedIndex ? "embla__dot--selected" : ""
-										}`}
-									/>
-								))}
-							</div>
-						</div>
-					)} */}
 				</>
 			)}
 		</section>

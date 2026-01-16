@@ -13,7 +13,6 @@ import {
 	filteredCollectionsQueryOptions,
 	productQueryOptions,
 	storeDataInfiniteQueryOptions,
-	storeDataQueryOptions,
 } from "~/lib/queryOptions";
 import { getProductBySlug } from "~/server_functions/dashboard/store/getProductBySlug";
 
@@ -45,7 +44,16 @@ export function usePrefetch() {
 	 * Use on homepage store link hover
 	 */
 	const prefetchStore = () => {
-		queryClient.prefetchQuery(storeDataQueryOptions());
+		queryClient.prefetchInfiniteQuery(
+			storeDataInfiniteQueryOptions("", {
+				categorySlug: null,
+				brandSlug: null,
+				collectionSlug: null,
+				storeLocationId: null,
+				attributeFilters: {},
+				sort: "relevant",
+			}),
+		);
 	};
 
 	/**

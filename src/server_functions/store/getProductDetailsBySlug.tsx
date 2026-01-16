@@ -1,16 +1,23 @@
 /**
- * Get Product By Slug (With Variations)
+ * Get Product Details By Slug (Without Variations)
  *
  * CACHING STRATEGY:
- * This function fetches the COMPLETE product data including variations.
- * It's used when:
- * - Product is NOT in cache (direct navigation to product page)
- * - Full product data is needed (including variations)
+ * This function is designed to work with TanStack Query's caching system to optimize
+ * performance when navigating from list views to detail pages.
  *
- * For optimized caching when product is already cached from list views,
- * see: getProductDetailsBySlug (fetches without variations, merges with cache)
+ * How it works:
+ * 1. List views (getAllProducts/getStoreData) cache products WITH variations
+ * 2. When navigating to a detail page:
+ *    - If product is already cached: Use this function to fetch only details (no variations)
+ *      and merge with cached data (preserving cached variations)
+ *    - If product is NOT cached: Use getProductBySlug to fetch everything including variations
  *
- * See: src/lib/queryOptions.ts - productQueryOptions() for the caching logic
+ * Why separate functions?
+ * - Different cache keys allow both "full product" and "product details" to exist in cache
+ * - Performance: When product is cached, we only fetch what's missing (details), not variations
+ * - Variations are often already in cache from list views, so re-fetching is wasteful
+ *
+ * See: src/lib/queryOptions.ts - productQueryOptions() for the merge logic
  */
 
 import { createServerFn } from "@tanstack/react-start";
@@ -22,22 +29,17 @@ import {
 	brands,
 	categories,
 	collections,
-	products,
 	productStoreLocations,
-	productVariations,
+	products,
 } from "~/schema";
-import type { VariationAttribute } from "~/types";
-import {
-	parseImages,
-	parseProductAttributes,
-	parseVariationAttributes,
-} from "~/utils/productParsing";
+import { parseImages, parseProductAttributes } from "~/utils/productParsing";
 
-export const getProductBySlug = createServerFn({ method: "GET" })
+export const getProductDetailsBySlug = createServerFn({ method: "GET" })
 	.inputValidator((productId: string) => productId)
 	.handler(async ({ data: productId }) => {
 		const db = DB();
 
+		// Single query with GROUP_CONCAT for store locations (optimized - same as getProductBySlug)
 		const result = await db
 			.select({
 				products: products,
@@ -80,42 +82,15 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 			? getCountryById(firstRow.brands.countryId)
 			: null;
 
-		let variationsArray: Array<{
-			id: number;
-			productId: number | null;
-			sku: string;
-			price: number;
-			sort: number;
-			discount: number | null;
-			createdAt: Date;
-			attributes: VariationAttribute[];
-		}> = [];
-
-		if (baseProduct.hasVariations) {
-			const variations = await db
-				.select()
-				.from(productVariations)
-				.where(eq(productVariations.productId, baseProduct.id))
-				.all();
-
-			variationsArray = variations.map((variation) => ({
-				id: variation.id,
-				productId: variation.productId,
-				sku: variation.sku,
-				price: variation.price,
-				sort: variation.sort || 0,
-				discount: variation.discount,
-				createdAt: variation.createdAt,
-				attributes: parseVariationAttributes(variation.variationAttributes),
-			}));
-		}
-
+		// Use utility functions for parsing (consistent with getProductBySlug)
 		const imagesArray = parseImages(baseProduct.images);
 		const productAttributesArray = parseProductAttributes(
 			baseProduct.productAttributes,
 		);
 
-		const productWithDetails = {
+		// Return product WITHOUT variations - variations should come from cache
+		// The merge logic in productQueryOptions will preserve cached variations
+		return {
 			...baseProduct,
 			images: imagesArray, // Return as array - TanStack will serialize/deserialize automatically
 			productAttributes: productAttributesArray,
@@ -150,8 +125,6 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 				description: loc.description,
 				openingHours: loc.openingHours,
 			})),
-			variations: variationsArray,
+			variations: [], // Intentionally empty - variations come from cache
 		};
-
-		return productWithDetails;
 	});

@@ -10,7 +10,9 @@ import {
 // System Tables
 
 // Products and Related Tables
-export const products = sqliteTable("products", {
+export const products = sqliteTable(
+	"products",
+	{
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	categorySlug: text("category_slug").references(() => categories.slug, {
 		onDelete: "cascade",
@@ -31,7 +33,9 @@ export const products = sqliteTable("products", {
 	tags: text("tags"), // Теги для категоризации товаров (JSON массив) - опционально
 	price: real("price").notNull().default(0), // Make price non-nullable with default value (for flooring: price per m²)
 	squareMetersPerPack: real("square_meters_per_pack"), // For flooring products: area coverage per pack
-	unitOfMeasurement: text("unit_of_measurement").notNull().default("упаковка"), // Единица количества: погонный метр, квадратный метр, литр, штука, упаковка
+		unitOfMeasurement: text("unit_of_measurement")
+			.notNull()
+			.default("упаковка"), // Единица количества: погонный метр, квадратный метр, литр, штука, упаковка
 	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 	isFeatured: integer("is_featured", { mode: "boolean" })
 		.notNull()
@@ -43,9 +47,32 @@ export const products = sqliteTable("products", {
 	productAttributes: text("product_attributes"), // JSON stored as text
 	dimensions: text("dimensions"), // Характеристики товара (габариты) - text field for non-filterable product details
 	createdAt: integer("created_at", { mode: "timestamp" }),
-});
+	},
+	(table) => [
+		index("idx_products_active").on(table.isActive),
+		index("idx_products_category").on(table.categorySlug, table.isActive),
+		index("idx_products_brand").on(table.brandSlug, table.isActive),
+		index("idx_products_collection").on(table.collectionSlug, table.isActive),
+		index("idx_products_price").on(table.price),
+		index("idx_products_active_price").on(table.isActive, table.price),
+		index("idx_products_active_name").on(table.isActive, table.name),
+		index("idx_products_active_created_at").on(table.isActive, table.createdAt),
+		index("idx_products_active_featured_name").on(
+			table.isActive,
+			table.isFeatured,
+			table.name,
+		),
+		index("idx_products_store_location").on(
+			table.storeLocationId,
+			table.isActive,
+		),
+		index("idx_products_has_variations").on(table.hasVariations),
+	],
+);
 
-export const productVariations = sqliteTable("product_variations", {
+export const productVariations = sqliteTable(
+	"product_variations",
+	{
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	productId: integer("product_id").references(() => products.id, {
 		onDelete: "cascade",
@@ -54,9 +81,17 @@ export const productVariations = sqliteTable("product_variations", {
 	price: real("price").notNull(), // Using real for decimal in SQLite
 	discount: integer("discount"), // Discount percentage for this variation
 	sort: integer("sort"),
-	variationAttributes: text("variation_attributes"), // JSON stored as text - dual storage pattern
+		variationAttributes: text("variation_attributes"), // JSON stored as text - dual storage pattern
 	createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
-});
+	},
+	(table) => [
+		index("idx_product_variations_product_id").on(table.productId),
+		index("idx_product_variations_product_sort").on(
+			table.productId,
+			table.sort,
+		),
+	],
+);
 
 export const productAttributes = sqliteTable("product_attributes", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
@@ -68,7 +103,9 @@ export const productAttributes = sqliteTable("product_attributes", {
 		.default(false),
 });
 
-export const attributeValues = sqliteTable("attribute_values", {
+export const attributeValues = sqliteTable(
+	"attribute_values",
+	{
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	attributeId: integer("attribute_id")
 		.references(() => productAttributes.id, { onDelete: "cascade" })
@@ -78,7 +115,19 @@ export const attributeValues = sqliteTable("attribute_values", {
 	sortOrder: integer("sort_order").notNull().default(0),
 	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 	createdAt: integer("created_at", { mode: "timestamp" }),
-});
+	},
+	(table) => [
+		index("idx_attribute_values_attribute_id").on(table.attributeId),
+		index("idx_attribute_values_attribute_active").on(
+			table.attributeId,
+			table.isActive,
+		),
+		index("idx_attribute_values_attribute_sort").on(
+			table.attributeId,
+			table.sortOrder,
+		),
+	],
+);
 
 // Junction table for product attributes (normalized for performance)
 export const productAttributeValues = sqliteTable(
@@ -119,7 +168,9 @@ export const productAttributeValues = sqliteTable(
 	],
 );
 
-export const variationAttributes = sqliteTable("variation_attributes", {
+export const variationAttributes = sqliteTable(
+	"variation_attributes",
+	{
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	productVariationId: integer("product_variation_id").references(
 		() => productVariations.id,
@@ -128,7 +179,16 @@ export const variationAttributes = sqliteTable("variation_attributes", {
 	attributeId: text("attributeId").notNull(), // Keep as string for backward compatibility
 	value: text("value").notNull(),
 	createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
-});
+	},
+	(table) => [
+		index("idx_variation_attributes_variation_id").on(table.productVariationId),
+		index("idx_variation_attributes_attr_id").on(table.attributeId),
+		index("idx_variation_attributes_attr_value").on(
+			table.attributeId,
+			table.value,
+		),
+	],
+);
 
 export const categories = sqliteTable("categories", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
@@ -167,16 +227,29 @@ export const collections = sqliteTable("collections", {
 // Store locations table removed - now hardcoded in ~/data/storeLocations.ts
 // This eliminates database queries and works perfectly with serverless architecture
 
-export const productStoreLocations = sqliteTable("product_store_locations", {
+export const productStoreLocations = sqliteTable(
+	"product_store_locations",
+	{
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	productId: integer("product_id").references(() => products.id, {
 		onDelete: "cascade",
 	}),
 	storeLocationId: integer("store_location_id"), // Reference to hardcoded location ID from ~/data/storeLocations.ts
 	createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-});
+	},
+	(table) => [
+		index("idx_product_store_locations_product_id").on(table.productId),
+		index("idx_product_store_locations_location_id").on(table.storeLocationId),
+		index("idx_product_store_locations_product_location").on(
+			table.productId,
+			table.storeLocationId,
+		),
+	],
+);
 
-export const orders = sqliteTable("orders", {
+export const orders = sqliteTable(
+	"orders",
+	{
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	status: text("status").notNull().default("pending"),
 	subtotalAmount: real("subtotalAmount").notNull(), // Base price before discounts
@@ -190,9 +263,16 @@ export const orders = sqliteTable("orders", {
 	notes: text("notes"),
 	createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
 	completedAt: integer("completedAt", { mode: "timestamp" }),
-});
+	},
+	(table) => [
+		index("idx_orders_created_at").on(table.createdAt),
+		index("idx_orders_status_created").on(table.status, table.createdAt),
+	],
+);
 
-export const orderItems = sqliteTable("order_items", {
+export const orderItems = sqliteTable(
+	"order_items",
+	{
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	orderId: integer("orderId")
 		.references(() => orders.id, { onDelete: "cascade" })
@@ -210,7 +290,13 @@ export const orderItems = sqliteTable("order_items", {
 	finalAmount: real("finalAmount").notNull(), // Unit amount after discount × quantity
 	attributes: text("attributes"), // JSON stored as text
 	createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
-});
+	},
+	(table) => [
+		index("idx_order_items_order_id").on(table.orderId),
+		index("idx_order_items_product_id").on(table.productId),
+		index("idx_order_items_variation_id").on(table.productVariationId),
+	],
+);
 
 // Inquiries
 // export const inquiries = sqliteTable('inquiries', {

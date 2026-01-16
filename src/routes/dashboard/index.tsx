@@ -16,7 +16,7 @@ import { ProductGridSkeleton } from "~/components/ui/shared/ProductGridSkeleton"
 import ProductFilters from "~/components/ui/store/ProductFilters";
 import { getAllStoreLocations } from "~/data/storeLocations";
 import {
-	attributeValuesForFilteringQueryOptions,
+	attributeValuesForFilteringDashboardQueryOptions,
 	categoriesQueryOptions,
 	filteredBrandsDashboardQueryOptions,
 	filteredCollectionsDashboardQueryOptions,
@@ -287,11 +287,12 @@ function RouteComponent() {
 	// Fetch attribute filters based on current filters (including attribute filters)
 	// This ensures only values available in the current filtered product set are shown
 	const { data: attributeFilters = [] } = useQuery({
-		...attributeValuesForFilteringQueryOptions(
+		...attributeValuesForFilteringDashboardQueryOptions(
 			selectedCategory ?? undefined,
 			selectedBrand ?? undefined,
 			selectedCollection ?? undefined,
 			selectedAttributeFilters,
+			selectedStoreLocation ?? undefined,
 		),
 	});
 
@@ -399,7 +400,7 @@ function RouteComponent() {
 		// Fetch next page when user scrolls near the end
 		// lastItem.index is the row index, rowCount is total rows
 		// Trigger when within 15 rows of the end (prefetch for smooth scrolling)
-		const threshold = rowCount - 8;
+		const threshold = rowCount - 4;
 
 		if (lastItem.index >= threshold) {
 			fetchNextPage();

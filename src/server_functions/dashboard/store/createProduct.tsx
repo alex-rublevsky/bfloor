@@ -10,10 +10,7 @@ import {
 	variationAttributes,
 } from "~/schema";
 import type { ProductFormData } from "~/types";
-import {
-	convertAttributesToSlugFormat,
-	getAttributeMappings,
-} from "~/utils/attributeMapping";
+import { getAttributeMappings } from "~/utils/attributeMapping";
 import { getBatchValueIds } from "~/utils/attributeValueLookup";
 import { getStorageBucket } from "~/utils/storage";
 import { validateAttributeValues } from "~/utils/validateAttributeValues";
@@ -56,10 +53,26 @@ export const createProduct = createServerFn({ method: "POST" })
 
 			// Validate standardized attribute values BEFORE moving images
 			// This prevents orphaned images if validation fails
+			const attributeValidationInputs: Array<{
+				attributeId: string;
+				value: string;
+			}> = [];
 			if (productData.attributes?.length) {
+				attributeValidationInputs.push(...productData.attributes);
+			}
+			if (productData.variations?.length) {
+				const variationAttributes = productData.variations.flatMap(
+					(v) => v.attributes || [],
+				);
+				if (variationAttributes.length > 0) {
+					attributeValidationInputs.push(...variationAttributes);
+				}
+			}
+
+			if (attributeValidationInputs.length > 0) {
 				const validationErrors = await validateAttributeValues(
 					db,
-					productData.attributes,
+					attributeValidationInputs,
 				);
 
 				if (validationErrors.length > 0) {
@@ -120,14 +133,11 @@ export const createProduct = createServerFn({ method: "POST" })
 			const imagesJson =
 				imagesArray.length > 0 ? JSON.stringify(imagesArray) : "";
 
-			// Convert attributes array to object format for database storage
-			// Format: { "attribute-slug": ["value1", "value2"] }
-			const attributesObject = await convertAttributesToSlugFormat(
-				productData.attributes || [],
-			);
+			// Store attributes as array format for consistency
+			// Format: [{"attributeId": "5", "value": "Дерево"}]
 			const attributesJson =
-				Object.keys(attributesObject).length > 0
-					? JSON.stringify(attributesObject)
+				productData.attributes && productData.attributes.length > 0
+					? JSON.stringify(productData.attributes)
 					: null;
 
 			// Insert main product
