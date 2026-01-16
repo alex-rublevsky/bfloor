@@ -3,7 +3,6 @@ import { useMemo } from "react";
 import {
 	DrawerBody,
 	DrawerClose,
-	DrawerDescription,
 	DrawerHeader,
 	DrawerTitle,
 } from "~/components/ui/shared/Drawer";
@@ -40,7 +39,6 @@ export function CatalogDrawerContent() {
 		<>
 			<DrawerHeader>
 				<DrawerTitle>Каталог</DrawerTitle>
-				<DrawerDescription>Выберите категорию товаров</DrawerDescription>
 			</DrawerHeader>
 
 			<DrawerBody>
