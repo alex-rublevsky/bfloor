@@ -19,6 +19,7 @@ import { NavBar } from "~/components/ui/shared/NavBar";
 import { Toaster } from "~/components/ui/shared/sonner";
 import { CartProvider } from "~/lib/cartContext";
 import { ClientSearchProvider } from "~/lib/clientSearchContext";
+import { userDataQueryOptions } from "~/lib/queryOptions";
 import { seo } from "~/utils/seo";
 import appCss from "../styles/app.css?url";
 
@@ -33,6 +34,10 @@ const queryClient = new QueryClient({
 });
 
 export const Route = createRootRoute({
+	loader: async ({ context: { queryClient } }) => {
+		// Prefetch userData at root level - cached once for all routes
+		await queryClient.ensureQueryData(userDataQueryOptions());
+	},
 	head: () => ({
 		meta: [
 			{
