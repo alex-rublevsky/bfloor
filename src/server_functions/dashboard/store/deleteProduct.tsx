@@ -1,12 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { DB } from "~/db";
-import {
-	products,
-	productVariations,
-	variationAttributes,
-} from "~/schema";
+import { products, productVariations, variationAttributes } from "~/schema";
 import { getStorageBucket } from "~/utils/storage";
 
 export const deleteProduct = createServerFn({ method: "POST" })
@@ -70,19 +66,19 @@ export const deleteProduct = createServerFn({ method: "POST" })
 
 			// Delete related data first (foreign key constraints)
 
-			// Get all variations for this product
+			// Get all variation IDs for this product
 			const existingVariations = await db
-				.select()
+				.select({ id: productVariations.id })
 				.from(productVariations)
 				.where(eq(productVariations.productId, productId));
 
-			// Delete variation attributes for all variations
-			if (existingVariations.length > 0) {
-				for (const variation of existingVariations) {
-					await db
-						.delete(variationAttributes)
-						.where(eq(variationAttributes.productVariationId, variation.id));
-				}
+			const variationIds = existingVariations.map((variation) => variation.id);
+
+			// Delete variation attributes in a single query
+			if (variationIds.length > 0) {
+				await db
+					.delete(variationAttributes)
+					.where(inArray(variationAttributes.productVariationId, variationIds));
 
 				// Delete variations
 				await db
