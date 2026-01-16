@@ -13,40 +13,40 @@ import {
 export const products = sqliteTable(
 	"products",
 	{
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	categorySlug: text("category_slug").references(() => categories.slug, {
-		onDelete: "cascade",
-	}),
-	brandSlug: text("brand_slug").references(() => brands.slug, {
-		onDelete: "cascade",
-	}),
-	collectionSlug: text("collection_slug").references(() => collections.slug, {
-		onDelete: "set null",
-	}),
-	storeLocationId: integer("store_location_id"),
-	name: text("name").notNull(),
-	slug: text("slug").notNull().unique(),
-	sku: text("sku"), // Product SKU/Article number - optional
-	images: text("images"), // JSON stored as text
-	description: text("description"),
-	importantNote: text("important_note"), // Важная заметка с поддержкой Markdown - опционально
-	tags: text("tags"), // Теги для категоризации товаров (JSON массив) - опционально
-	price: real("price").notNull().default(0), // Make price non-nullable with default value (for flooring: price per m²)
-	squareMetersPerPack: real("square_meters_per_pack"), // For flooring products: area coverage per pack
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		categorySlug: text("category_slug").references(() => categories.slug, {
+			onDelete: "cascade",
+		}),
+		brandSlug: text("brand_slug").references(() => brands.slug, {
+			onDelete: "cascade",
+		}),
+		collectionSlug: text("collection_slug").references(() => collections.slug, {
+			onDelete: "set null",
+		}),
+		storeLocationId: integer("store_location_id"),
+		name: text("name").notNull(),
+		slug: text("slug").notNull().unique(),
+		sku: text("sku"), // Product SKU/Article number - optional
+		images: text("images"), // JSON stored as text
+		description: text("description"),
+		importantNote: text("important_note"), // Важная заметка с поддержкой Markdown - опционально
+		tags: text("tags"), // Теги для категоризации товаров (JSON массив) - опционально
+		price: real("price").notNull().default(0), // Make price non-nullable with default value (for flooring: price per m²)
+		squareMetersPerPack: real("square_meters_per_pack"), // For flooring products: area coverage per pack
 		unitOfMeasurement: text("unit_of_measurement")
 			.notNull()
 			.default("упаковка"), // Единица количества: погонный метр, квадратный метр, литр, штука, упаковка
-	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
-	isFeatured: integer("is_featured", { mode: "boolean" })
-		.notNull()
-		.default(false),
-	discount: integer("discount"), // Percentage discount (e.g., 20 for 20% off)
-	hasVariations: integer("has_variations", { mode: "boolean" })
-		.notNull()
-		.default(false),
-	productAttributes: text("product_attributes"), // JSON stored as text
-	dimensions: text("dimensions"), // Характеристики товара (габариты) - text field for non-filterable product details
-	createdAt: integer("created_at", { mode: "timestamp" }),
+		isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+		isFeatured: integer("is_featured", { mode: "boolean" })
+			.notNull()
+			.default(false),
+		discount: integer("discount"), // Percentage discount (e.g., 20 for 20% off)
+		hasVariations: integer("has_variations", { mode: "boolean" })
+			.notNull()
+			.default(false),
+		productAttributes: text("product_attributes"), // JSON stored as text
+		dimensions: text("dimensions"), // Характеристики товара (габариты) - text field for non-filterable product details
+		createdAt: integer("created_at", { mode: "timestamp" }),
 	},
 	(table) => [
 		index("idx_products_active").on(table.isActive),
@@ -73,16 +73,16 @@ export const products = sqliteTable(
 export const productVariations = sqliteTable(
 	"product_variations",
 	{
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	productId: integer("product_id").references(() => products.id, {
-		onDelete: "cascade",
-	}),
-	sku: text("sku").notNull().unique(),
-	price: real("price").notNull(), // Using real for decimal in SQLite
-	discount: integer("discount"), // Discount percentage for this variation
-	sort: integer("sort"),
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		productId: integer("product_id").references(() => products.id, {
+			onDelete: "cascade",
+		}),
+		sku: text("sku").notNull().unique(),
+		price: real("price").notNull(), // Using real for decimal in SQLite
+		discount: integer("discount"), // Discount percentage for this variation
+		sort: integer("sort"),
 		variationAttributes: text("variation_attributes"), // JSON stored as text - dual storage pattern
-	createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
+		createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
 	},
 	(table) => [
 		index("idx_product_variations_product_id").on(table.productId),
@@ -106,15 +106,15 @@ export const productAttributes = sqliteTable("product_attributes", {
 export const attributeValues = sqliteTable(
 	"attribute_values",
 	{
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	attributeId: integer("attribute_id")
-		.references(() => productAttributes.id, { onDelete: "cascade" })
-		.notNull(),
-	value: text("value").notNull(), // Display value: "ПВХ плитка"
-	slug: text("slug"), // Optional: "pvh-plitka" for URLs
-	sortOrder: integer("sort_order").notNull().default(0),
-	isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
-	createdAt: integer("created_at", { mode: "timestamp" }),
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		attributeId: integer("attribute_id")
+			.references(() => productAttributes.id, { onDelete: "cascade" })
+			.notNull(),
+		value: text("value").notNull(), // Display value: "ПВХ плитка"
+		slug: text("slug"), // Optional: "pvh-plitka" for URLs
+		sortOrder: integer("sort_order").notNull().default(0),
+		isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+		createdAt: integer("created_at", { mode: "timestamp" }),
 	},
 	(table) => [
 		index("idx_attribute_values_attribute_id").on(table.attributeId),
@@ -171,14 +171,14 @@ export const productAttributeValues = sqliteTable(
 export const variationAttributes = sqliteTable(
 	"variation_attributes",
 	{
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	productVariationId: integer("product_variation_id").references(
-		() => productVariations.id,
-		{ onDelete: "cascade" },
-	),
-	attributeId: text("attributeId").notNull(), // Keep as string for backward compatibility
-	value: text("value").notNull(),
-	createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		productVariationId: integer("product_variation_id").references(
+			() => productVariations.id,
+			{ onDelete: "cascade" },
+		),
+		attributeId: text("attributeId").notNull(), // Keep as string for backward compatibility
+		value: text("value").notNull(),
+		createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
 	},
 	(table) => [
 		index("idx_variation_attributes_variation_id").on(table.productVariationId),
@@ -236,12 +236,12 @@ export const collections = sqliteTable("collections", {
 export const productStoreLocations = sqliteTable(
 	"product_store_locations",
 	{
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	productId: integer("product_id").references(() => products.id, {
-		onDelete: "cascade",
-	}),
-	storeLocationId: integer("store_location_id"), // Reference to hardcoded location ID from ~/data/storeLocations.ts
-	createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		productId: integer("product_id").references(() => products.id, {
+			onDelete: "cascade",
+		}),
+		storeLocationId: integer("store_location_id"), // Reference to hardcoded location ID from ~/data/storeLocations.ts
+		createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 	},
 	(table) => [
 		index("idx_product_store_locations_product_id").on(table.productId),
@@ -256,19 +256,19 @@ export const productStoreLocations = sqliteTable(
 export const orders = sqliteTable(
 	"orders",
 	{
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	status: text("status").notNull().default("pending"),
-	subtotalAmount: real("subtotalAmount").notNull(), // Base price before discounts
-	discountAmount: real("discountAmount").notNull().default(0), // Total discounts applied
-	shippingAmount: real("shippingAmount").notNull().default(0),
-	totalAmount: real("totalAmount").notNull(), // Final total (subtotal - discount + shipping)
-	currency: text("currency").notNull().default("CAD"),
-	paymentMethod: text("paymentMethod"),
-	paymentStatus: text("paymentStatus").notNull().default("pending"),
-	shippingMethod: text("shippingMethod"),
-	notes: text("notes"),
-	createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
-	completedAt: integer("completedAt", { mode: "timestamp" }),
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		status: text("status").notNull().default("pending"),
+		subtotalAmount: real("subtotalAmount").notNull(), // Base price before discounts
+		discountAmount: real("discountAmount").notNull().default(0), // Total discounts applied
+		shippingAmount: real("shippingAmount").notNull().default(0),
+		totalAmount: real("totalAmount").notNull(), // Final total (subtotal - discount + shipping)
+		currency: text("currency").notNull().default("CAD"),
+		paymentMethod: text("paymentMethod"),
+		paymentStatus: text("paymentStatus").notNull().default("pending"),
+		shippingMethod: text("shippingMethod"),
+		notes: text("notes"),
+		createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
+		completedAt: integer("completedAt", { mode: "timestamp" }),
 	},
 	(table) => [
 		index("idx_orders_created_at").on(table.createdAt),
@@ -279,23 +279,23 @@ export const orders = sqliteTable(
 export const orderItems = sqliteTable(
 	"order_items",
 	{
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	orderId: integer("orderId")
-		.references(() => orders.id, { onDelete: "cascade" })
-		.notNull(),
-	productId: integer("productId")
-		.references(() => products.id, { onDelete: "cascade" })
-		.notNull(),
-	productVariationId: integer("productVariationId").references(
-		() => productVariations.id,
-		{ onDelete: "set null" },
-	),
-	quantity: integer("quantity").notNull(),
-	unitAmount: real("unitAmount").notNull(),
-	discountPercentage: integer("discountPercentage"),
-	finalAmount: real("finalAmount").notNull(), // Unit amount after discount × quantity
-	attributes: text("attributes"), // JSON stored as text
-	createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		orderId: integer("orderId")
+			.references(() => orders.id, { onDelete: "cascade" })
+			.notNull(),
+		productId: integer("productId")
+			.references(() => products.id, { onDelete: "cascade" })
+			.notNull(),
+		productVariationId: integer("productVariationId").references(
+			() => productVariations.id,
+			{ onDelete: "set null" },
+		),
+		quantity: integer("quantity").notNull(),
+		unitAmount: real("unitAmount").notNull(),
+		discountPercentage: integer("discountPercentage"),
+		finalAmount: real("finalAmount").notNull(), // Unit amount after discount × quantity
+		attributes: text("attributes"), // JSON stored as text
+		createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
 	},
 	(table) => [
 		index("idx_order_items_order_id").on(table.orderId),

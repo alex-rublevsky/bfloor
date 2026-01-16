@@ -56,7 +56,7 @@ const buildDefaultAttributes = (
 			for (const attr of variation.attributes) {
 				if (!defaults[attr.attributeId]) {
 					defaults[attr.attributeId] = attr.value;
-}
+				}
 			}
 		}
 	}
@@ -149,7 +149,8 @@ export function useVariationSelection({
 	// Create a lookup map for variations by their attribute combination (key: "attrId1:value1|attrId2:value2")
 	// This avoids O(n*m*k) complexity when finding variations
 	const variationLookupMap = useMemo(() => {
-		if (!product?.variations) return new Map<string, ProductVariationWithAttributes>();
+		if (!product?.variations)
+			return new Map<string, ProductVariationWithAttributes>();
 
 		const map = new Map<string, ProductVariationWithAttributes>();
 		product.variations.forEach((variation) => {
@@ -255,7 +256,13 @@ export function useVariationSelection({
 
 		const key = createLookupKey(selectedAttributes);
 		return variationLookupMap.get(key) || null;
-	}, [product, selectedAttributes, allAttributeIds, variationLookupMap, createLookupKey]);
+	}, [
+		product,
+		selectedAttributes,
+		allAttributeIds,
+		variationLookupMap,
+		createLookupKey,
+	]);
 
 	// Reuse the attributeIdToSlugMap created above
 
@@ -286,7 +293,8 @@ export function useVariationSelection({
 
 				targetVariation.attributes.forEach((attr: VariationAttribute) => {
 					// Use lookup map instead of find (O(1) instead of O(n))
-					const slug = attributeIdToSlugMap.get(attr.attributeId) || attr.attributeId;
+					const slug =
+						attributeIdToSlugMap.get(attr.attributeId) || attr.attributeId;
 					urlParams[slug] = attr.value;
 				});
 

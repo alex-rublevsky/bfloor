@@ -260,13 +260,16 @@ function SortableVariationItem({
 												valueToIdMap.set(sv.value, sv.id.toString());
 											});
 
-											const currentValue = variation.attributeValues[attributeId] || "";
+											const currentValue =
+												variation.attributeValues[attributeId] || "";
 											return currentValue
 												.split(",")
 												.map((v) => v.trim())
 												.filter(Boolean)
 												.map((value) => valueToIdMap.get(value))
-												.filter((valueId): valueId is string => valueId !== undefined);
+												.filter(
+													(valueId): valueId is string => valueId !== undefined,
+												);
 										})()
 									: [];
 
