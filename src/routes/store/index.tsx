@@ -22,7 +22,12 @@ import {
 	filteredCollectionsQueryOptions,
 	storeDataInfiniteQueryOptions,
 } from "~/lib/queryOptions.ts";
-import type { Brand, CategoryWithCount, Collection } from "~/types";
+import type {
+	Brand,
+	CategoryWithCount,
+	Collection,
+	ProductWithVariations,
+} from "~/types";
 import { seo } from "~/utils/seo";
 
 // Zod schema for search params validation (without uncategorized filters for store page)
@@ -325,6 +330,7 @@ function StorePage() {
 			selectedCollection ?? undefined,
 			selectedStoreLocation ?? undefined,
 		),
+		enabled: filtersOpened,
 	});
 
 	const { data: collections = [] } = useQuery({
@@ -333,6 +339,7 @@ function StorePage() {
 			selectedBrand ?? undefined,
 			selectedStoreLocation ?? undefined,
 		),
+		enabled: filtersOpened,
 	});
 
 	const { data: categories = [] } = useQuery({
@@ -367,10 +374,10 @@ function StorePage() {
 
 	// Merge products from all pages (same as dashboard)
 	// Price filtering is now done server-side, so no need for client-side filtering
-	const displayProducts = useMemo(
+	const displayProducts = useMemo<ProductWithVariations[]>(
 		() =>
 			storeData?.pages
-				?.flatMap((page) => page?.products ?? [])
+				?.flatMap((page) => (page?.products ?? []) as ProductWithVariations[])
 				?.filter(Boolean) ?? [],
 		[storeData?.pages],
 	);
@@ -474,7 +481,7 @@ function StorePage() {
 		if (!lastItem || !hasNextPage || isFetchingNextPage) return;
 
 		// Fetch next page when user scrolls near the end
-		const threshold = rowCount - 8;
+		const threshold = rowCount - 4;
 
 		if (lastItem.index >= threshold) {
 			fetchNextPage();
