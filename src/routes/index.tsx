@@ -10,9 +10,7 @@ import { PRODUCT_TAGS } from "~/constants/units";
 import {
 	categoriesQueryOptions,
 	discountedProductsInfiniteQueryOptions,
-	productCategoryCountsQueryOptions,
 	productsByTagInfiniteQueryOptions,
-	totalProductsCountQueryOptions,
 } from "~/lib/queryOptions";
 import { seo } from "~/utils/seo";
 
@@ -35,8 +33,6 @@ export const Route = createFileRoute("/")({
 		// Prefetch first tag products (default for tabs carousel) and discounted products
 		await Promise.all([
 			queryClient.ensureQueryData(categoriesQueryOptions()),
-			queryClient.ensureQueryData(productCategoryCountsQueryOptions()),
-			queryClient.ensureQueryData(totalProductsCountQueryOptions()),
 			queryClient.prefetchInfiniteQuery(
 				productsByTagInfiniteQueryOptions(PRODUCT_TAGS[0]),
 			),
