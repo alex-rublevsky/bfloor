@@ -74,9 +74,16 @@ function EditProductPage() {
 		},
 		onSubmit: async (submissionData) => {
 			// Delete removed images first
+			// Pass current images to check for duplicate references before deleting
 			if (productForm.deletedImages.length > 0) {
+				const currentImages = submissionData.images || "";
 				const deletePromises = productForm.deletedImages.map((filename) =>
-					deleteProductImage({ data: { filename } }).catch((error) => {
+					deleteProductImage({
+						data: {
+							filename,
+							currentImages, // Pass current images to check for duplicates
+						},
+					}).catch((error) => {
 						console.error(`Failed to delete ${filename}:`, error);
 					}),
 				);

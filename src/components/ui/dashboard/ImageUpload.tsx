@@ -852,10 +852,14 @@ export function ImageUpload({
 		onImagesChange(newImagesString);
 
 		// Immediately delete from R2 storage
+		// Pass current images to check for duplicate references before deleting
 		try {
 			console.log("🗑️ Deleting image from R2:", imageToRemove);
 			const deleteResult = await deleteProductImage({
-				data: { filename: imageToRemove },
+				data: {
+					filename: imageToRemove,
+					currentImages: newImagesString, // Pass remaining images to check for duplicates
+				},
 			});
 
 			if (deleteResult?.success) {
