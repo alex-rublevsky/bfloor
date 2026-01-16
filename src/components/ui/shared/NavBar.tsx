@@ -24,8 +24,9 @@ import {
 import { signOut } from "~/utils/auth-client";
 import { cn } from "~/utils/utils";
 import { CartDrawerContent } from "../store/CartDrawerContent";
+import { CatalogDrawerContent } from "../store/CatalogDrawerContent";
 import { BottomNavBar } from "./BottomNavBar";
-import { Button } from "./Button";
+import { Button, buttonVariants } from "./Button";
 import {
 	ArrowLeftFromLine,
 	Icon,
@@ -628,9 +629,10 @@ const PhoneDropdown = () => {
 	);
 };
 
-// Catalog Dropdown Component - with safe triangle for gap bridging
+// Catalog Dropdown Component - with safe triangle for gap bridging on desktop, drawer on mobile
 const CatalogDropdown = () => {
-	const [isOpen, setIsOpen] = useState(false);
+	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const menuRef = useRef<HTMLDivElement>(null);
 	const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -662,7 +664,7 @@ const CatalogDropdown = () => {
 			clearTimeout(closeTimeoutRef.current);
 			closeTimeoutRef.current = null;
 		}
-		setIsOpen(true);
+		setIsDropdownOpen(true);
 		// Prefetch default store view when user hovers over catalog button
 		// This ensures instant load if they click the button (vs clicking a category)
 		prefetchStoreDefault();
@@ -671,38 +673,18 @@ const CatalogDropdown = () => {
 	// Handle mouse leave - close dropdown with small delay
 	const handleMouseLeave = () => {
 		closeTimeoutRef.current = setTimeout(() => {
-			setIsOpen(false);
+			setIsDropdownOpen(false);
 		}, 150);
 	};
 
-	// Handle click for mobile devices
-	const handleClick = (e: React.MouseEvent) => {
-		if (window.matchMedia("(hover: none)").matches) {
-			e.preventDefault();
-			setIsOpen((prev) => !prev);
+	// Prefetch when drawer opens
+	const handleDrawerOpenChange = (open: boolean) => {
+		setIsDrawerOpen(open);
+		if (open) {
+			// Prefetch default store view when drawer opens
+			prefetchStoreDefault();
 		}
 	};
-
-	// Close dropdown when clicking outside (mobile only)
-	useEffect(() => {
-		if (!isOpen) return;
-
-		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				containerRef.current &&
-				!containerRef.current.contains(event.target as Node)
-			) {
-				setIsOpen(false);
-			}
-		};
-
-		if (window.matchMedia("(hover: none)").matches) {
-			document.addEventListener("mousedown", handleClickOutside);
-			return () => {
-				document.removeEventListener("mousedown", handleClickOutside);
-			};
-		}
-	}, [isOpen]);
 
 	// Cleanup timeout on unmount
 	useEffect(() => {
@@ -714,71 +696,82 @@ const CatalogDropdown = () => {
 	}, []);
 
 	return (
-		<div
-			ref={containerRef}
-			className="dropdown-container catalog-dropdown-container"
-			onMouseEnter={handleMouseEnter}
-			onMouseLeave={handleMouseLeave}
-			onClick={handleClick}
-			onKeyDown={(e) => {
-				if (e.key === "Enter" || e.key === " ") {
-					handleClick(e as unknown as React.MouseEvent);
-				}
-			}}
-			role="menu"
-		>
-			<Button to="/store" variant="accent" size="sm">
-				Каталог
-			</Button>
-			{/* Safe triangle bridge for gap between trigger and menu */}
-			{isOpen &&
-				containerRef.current &&
-				menuRef.current &&
-				window.matchMedia("(hover: hover)").matches && (
+		<>
+			{/* Desktop: Dropdown behavior - hidden on mobile, visible on md and above */}
+			<div
+				ref={containerRef}
+				className="hidden md:block dropdown-container catalog-dropdown-container"
+				onMouseEnter={handleMouseEnter}
+				onMouseLeave={handleMouseLeave}
+				role="menu"
+			>
+				<Button to="/store" variant="accent" size="sm">
+					Каталог
+				</Button>
+				{/* Safe triangle bridge for gap between trigger and menu */}
+				{isDropdownOpen && containerRef.current && menuRef.current && (
 					<SafeArea
 						anchor={containerRef.current}
 						submenu={menuRef.current}
 						onMouseEnter={handleMouseEnter}
 					/>
 				)}
-			{/* Dropdown menu - JS hover on desktop, JS state on mobile */}
-			<div
-				ref={menuRef}
-				className="dropdown-menu catalog-dropdown-menu"
-				data-open={isOpen ? "true" : "false"}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				role="menu"
-			>
-				{activeCategories.length === 0 ? (
-					<div className="px-4 py-2 text-sm text-muted-foreground">
-						Нет категорий
-					</div>
-				) : (
-					activeCategories.map((category) => (
-						<Link
-							key={category.slug}
-							href={`/store?category=${category.slug}`}
-							disableAnimation={true}
-							onMouseEnter={() => {
-								// Prefetch store data for this category on hover
-								prefetchStoreWithCategory(category.slug);
-							}}
-							className="whitespace-normal! flex items-center justify-between w-full px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground! transition-standard"
-						>
-							<span className="flex-1 min-w-0 pr-3 wrap-break-word">
-								{category.name}
-							</span>
-							{category.productCount !== null && (
-								<span className="text-xs opacity-70 shrink-0">
-									{category.productCount}
+				{/* Dropdown menu - JS hover on desktop */}
+				<div
+					ref={menuRef}
+					className="dropdown-menu catalog-dropdown-menu"
+					data-open={isDropdownOpen ? "true" : "false"}
+					onMouseEnter={handleMouseEnter}
+					onMouseLeave={handleMouseLeave}
+					role="menu"
+				>
+					{activeCategories.length === 0 ? (
+						<div className="px-4 py-2 text-sm text-muted-foreground">
+							Нет категорий
+						</div>
+					) : (
+						activeCategories.map((category) => (
+							<Link
+								key={category.slug}
+								href={`/store?category=${category.slug}`}
+								disableAnimation={true}
+								onMouseEnter={() => {
+									// Prefetch store data for this category on hover
+									prefetchStoreWithCategory(category.slug);
+								}}
+								className="whitespace-normal! flex items-center justify-between w-full px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground! transition-standard"
+							>
+								<span className="flex-1 min-w-0 pr-3 wrap-break-word">
+									{category.name}
 								</span>
-							)}
-						</Link>
-					))
-				)}
+								{category.productCount !== null && (
+									<span className="text-xs opacity-70 shrink-0">
+										{category.productCount}
+									</span>
+								)}
+							</Link>
+						))
+					)}
+				</div>
 			</div>
-		</div>
+
+			{/* Mobile: Drawer behavior - visible on mobile, hidden on md and above */}
+			<div className="block md:hidden">
+				<Drawer open={isDrawerOpen} onOpenChange={handleDrawerOpenChange}>
+					<DrawerTrigger asChild>
+						<button
+							type="button"
+							className={cn(buttonVariants({ variant: "accent", size: "sm" }))}
+						>
+							Каталог
+						</button>
+					</DrawerTrigger>
+					<DrawerContent>
+						<CatalogDrawerContent />
+					</DrawerContent>
+				</Drawer>
+			</div>
+		</>
 	);
 };
 
