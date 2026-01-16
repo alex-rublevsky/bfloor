@@ -1,8 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { eq, sql } from "drizzle-orm";
+import { inArray, sql } from "drizzle-orm";
 import { DB } from "~/db";
 import { products, productVariations } from "~/schema";
+import { parseVariationAttributes } from "~/utils/productParsing";
 
 /**
  * Get recommended (featured) products
@@ -28,21 +29,13 @@ export const getRecommendedProducts = createServerFn({ method: "GET" })
 			// Build where clause: only active and featured products
 			const whereCondition = sql`${products.isActive} = 1 AND ${products.isFeatured} = 1`;
 
-			// Get total count for pagination info
-			const totalCountResult = await db
-				.select({ count: sql<number>`COUNT(*)` })
-				.from(products)
-				.where(whereCondition)
-				.all();
-			const totalCount = totalCountResult[0]?.count ?? 0;
-
-			// Get products ordered by name (consistent ordering for caching)
+			// Fetch products ordered by name (consistent ordering for caching)
 			const productsResult = await db
 				.select()
 				.from(products)
 				.where(whereCondition)
 				.orderBy(products.name)
-				.limit(pageLimit)
+				.limit(pageLimit + 1)
 				.offset(offsetValue)
 				.all();
 
@@ -52,98 +45,59 @@ export const getRecommendedProducts = createServerFn({ method: "GET" })
 					pagination: {
 						page,
 						limit: pageLimit,
-						totalCount: 0,
-						totalPages: 0,
 						hasNextPage: false,
 						hasPreviousPage: false,
 					},
 				};
 			}
 
-		// OPTIMIZATION: Single query with LEFT JOIN for variations
-		// Variation attributes are in JSON field (dual storage pattern)
-		const productsWithRelations = await db
-			.select({
-				product: products,
-				variation: productVariations,
-			})
-			.from(products)
-			.leftJoin(
-				productVariations,
-				eq(productVariations.productId, products.id),
-			)
-			.where(whereCondition)
-			.orderBy(products.name)
-			.all();
+			const hasNextPage = productsResult.length > pageLimit;
+			const pagedProducts = productsResult.slice(0, pageLimit);
 
-		// Group results by product
-		const productMap = new Map<
-			number,
-			{
-				product: typeof products.$inferSelect;
-				variations: Map<number, typeof productVariations.$inferSelect>;
-			}
-		>();
+			const productIdsWithVariations = pagedProducts
+				.filter((product) => product.hasVariations)
+				.map((product) => product.id);
+			const variationsByProduct = new Map<
+				number,
+				(typeof productVariations.$inferSelect)[]
+			>();
 
-		for (const row of productsWithRelations) {
-			if (!row.product.id) continue;
+			if (productIdsWithVariations.length > 0) {
+				const variations = await db
+					.select()
+					.from(productVariations)
+					.where(inArray(productVariations.productId, productIdsWithVariations))
+					.all();
 
-			// Initialize product entry if needed
-			if (!productMap.has(row.product.id)) {
-				productMap.set(row.product.id, {
-					product: row.product,
-					variations: new Map(),
-				});
-			}
-
-			const productEntry = productMap.get(row.product.id);
-			if (!productEntry) continue;
-
-			// Add variation if exists (attributes are in JSON field)
-			if (row.variation?.id) {
-				if (!productEntry.variations.has(row.variation.id)) {
-					productEntry.variations.set(row.variation.id, row.variation);
+				for (const variation of variations) {
+					if (!variation.productId) continue;
+					const existing = variationsByProduct.get(variation.productId) ?? [];
+					existing.push(variation);
+					variationsByProduct.set(variation.productId, existing);
 				}
 			}
-		}
 
-		// Build products array with variations and parsed attributes
-		const productsArray = Array.from(productMap.values()).map(
-			({ product, variations }) => {
-				const variationsArray = Array.from(variations.values())
-					.map((variation) => {
-						// Parse variation attributes from JSON field (dual storage pattern)
-						let attributes = [];
-						if (variation.variationAttributes) {
-							try {
-								attributes = JSON.parse(variation.variationAttributes);
-							} catch (error) {
-								console.error("Failed to parse variation attributes:", error);
-								attributes = [];
-							}
-						}
-						return {
-							...variation,
-							attributes,
-						};
-					})
+			const productsArray = pagedProducts.map((product) => {
+				const variations = variationsByProduct.get(product.id) || [];
+				const variationsArray = variations
+					.map((variation) => ({
+						...variation,
+						attributes: parseVariationAttributes(variation.variationAttributes),
+					}))
 					.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
 
 				return {
 					...product,
 					variations: variationsArray,
 				};
-			},
-		);
+			});
 
 			return {
 				products: productsArray,
 				pagination: {
 					page,
 					limit: pageLimit,
-					totalCount,
-					totalPages: Math.ceil(totalCount / pageLimit),
-					hasNextPage: offsetValue + pageLimit < totalCount,
+					hasNextPage,
 					hasPreviousPage: page > 1,
 				},
 			};
