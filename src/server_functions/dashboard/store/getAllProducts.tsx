@@ -267,17 +267,9 @@ export const getAllProducts = createServerFn({ method: "GET" })
 					}))
 					.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
 
-				// Process images - convert JSON array to comma-separated string
-				let imagesString = "";
-				if (product.images) {
-					try {
-						const imagesArray = JSON.parse(product.images) as string[];
-						imagesString = imagesArray.join(", ");
-					} catch {
-						// If it's already a comma-separated string, use it as-is
-						imagesString = product.images;
-					}
-				}
+				// Keep images as JSON string (same format as stored in DB)
+				// ProductCard uses parseImages() which expects JSON string or array
+				// This matches the behavior of getStoreData which works correctly
 
 				// Parse productAttributes - now standardized as array format
 				const productAttributesArray = parseProductAttributes(
@@ -300,7 +292,8 @@ export const getAllProducts = createServerFn({ method: "GET" })
 
 				return {
 					...product,
-					images: imagesString,
+					// Keep images as JSON string - parseImages() in ProductCard will handle parsing
+					images: product.images || "",
 					productAttributes: JSON.stringify(productAttributesArray),
 					tags: JSON.stringify(tagsArray),
 					variations: variationsWithAttributes,
