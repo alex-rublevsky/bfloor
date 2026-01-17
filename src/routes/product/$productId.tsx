@@ -39,7 +39,6 @@ import type {
 	VariationAttribute,
 } from "~/types";
 import { formatContentForDisplay } from "~/utils/contentUtils";
-import { parseImages, parseProductAttributes } from "~/utils/productParsing";
 import { seo } from "~/utils/seo";
 import { getStoreProductsFromInfiniteCache } from "~/utils/storeCache";
 
@@ -60,7 +59,7 @@ const findAttributeByIdOrSlugOrName = (
 /**
  * Optimized cache lookup using Map-based utility for O(1) product ID lookup
  * Then finds by slug (O(n) where n = cached products, but much faster than nested loops)
- * 
+ *
  * Performance: ~10-100ms faster than previous O(n×m) linear search through pages
  */
 const getCachedProductFromStore = (
@@ -75,15 +74,15 @@ const getCachedProductFromStore = (
 
 /**
  * Get cached product for detail page merge
- * 
+ *
  * OPTIMIZATION: Don't parse images/attributes here - they'll be overwritten by
  * getProductDetailsBySlug anyway. This eliminates double parsing.
- * 
+ *
  * The merge strategy:
  * - Uses cached product for variations (already parsed from list view)
  * - Uses details from getProductDetailsBySlug for everything else (already parsed)
  * - No double parsing needed!
- * 
+ *
  * Type note: Cached product has images/attributes as strings (DB format), but
  * ProductWithDetails expects arrays. This is fine because details will overwrite
  * them with parsed arrays in the merge.
@@ -99,6 +98,7 @@ const getCachedProductForDetails = (
 	// Don't parse images/attributes here - they'll be parsed once in getProductDetailsBySlug
 	// and used in the merge. This eliminates double parsing.
 	// Type assertion is safe because details will overwrite images/attributes with correct types
+	// Cast through unknown first to handle incompatible types (images: string | null vs string[])
 	return {
 		...cachedProduct,
 		// Images and attributes will be parsed by getProductDetailsBySlug and merged
@@ -107,7 +107,7 @@ const getCachedProductForDetails = (
 		brand: null,
 		collection: null,
 		storeLocations: [],
-	} as ProductWithDetails;
+	} as unknown as ProductWithDetails;
 };
 
 // Inline skeleton components for progressive loading
@@ -1118,8 +1118,8 @@ function ProductPage() {
 					/>
 				</div>
 
-				{/* Rest of content with padding */}
-				<div className="max-w-7xl mx-auto px-4 py-8">
+				{/* Rest of content with padding - add bottom padding for fixed price bar on mobile only */}
+				<div className="max-w-7xl mx-auto px-4 py-8 pb-32 md:pb-8">
 					<div className="flex flex-col gap-8">
 						{/* Product Info */}
 						<div className="w-full">
@@ -1336,67 +1336,69 @@ function ProductPage() {
 										/>
 									)}
 
-									{/* Price and Add to Cart */}
-									{currentDiscount && currentDiscount > 0 ? (
-										/* With discount: Grid layout with button spanning both rows */
-										<div className="bg-muted rounded-lg p-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 items-stretch">
-											{/* Discount Row */}
-											<div className="flex items-baseline gap-4">
-												<div className="text-left">Скидка</div>
-												<span className="text-lg line-through">
-													{originalTotalPrice.toLocaleString()} р
-												</span>
-												<span className="px-2 py-1 bg-accent text-accent-foreground text-sm font-semibold rounded-[5px]">
-													{currentDiscount}%
-												</span>
-											</div>
-
-											{/* Add to Cart Button - spans both rows */}
-											<div className="row-span-2 flex">
-												<Button
-													onClick={handleAddToCart}
-													disabled={!canAddToCart}
-													size="lg"
-													className="w-full h-full"
-												>
-													{!canAddToCart ? "Недоступно" : "В корзину"}
-												</Button>
-											</div>
-
-											{/* Total Row */}
-											<div className="flex items-baseline gap-4">
-												<div className="text-left">Итого</div>
-												<span className="text-3xl font-bold">
-													{totalPrice.toLocaleString()} р
-												</span>
-											</div>
-										</div>
-									) : (
-										/* Without discount: Label above price */
-										<div className="bg-muted rounded-lg p-2 flex flex-row gap-4 items-stretch">
-											{/* Price Display - stacked vertically */}
-											<div className="flex flex-col">
-												<div className="text-sm text-muted-foreground">
-													Итого
+									{/* Price and Add to Cart - Hidden on mobile (shown in fixed bar), visible on tablet */}
+									<div className="hidden md:block">
+										{currentDiscount && currentDiscount > 0 ? (
+											/* With discount: Grid layout with button spanning both rows */
+											<div className="bg-muted rounded-lg p-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 items-stretch">
+												{/* Discount Row */}
+												<div className="flex items-baseline gap-4">
+													<div className="text-left">Скидка</div>
+													<span className="text-lg line-through">
+														{originalTotalPrice.toLocaleString()} р
+													</span>
+													<span className="px-2 py-1 bg-accent text-accent-foreground text-sm font-semibold rounded-[5px]">
+														{currentDiscount}%
+													</span>
 												</div>
-												<span className="text-3xl font-bold">
-													{totalPrice.toLocaleString()} р
-												</span>
-											</div>
 
-											{/* Add to Cart Button */}
-											<div className="flex-1 flex">
-												<Button
-													onClick={handleAddToCart}
-													disabled={!canAddToCart}
-													size="lg"
-													className="w-full h-full"
-												>
-													{!canAddToCart ? "Недоступно" : "В корзину"}
-												</Button>
+												{/* Add to Cart Button - spans both rows */}
+												<div className="row-span-2 flex">
+													<Button
+														onClick={handleAddToCart}
+														disabled={!canAddToCart}
+														size="sm"
+														className="w-full h-full"
+													>
+														{!canAddToCart ? "Недоступно" : "В корзину"}
+													</Button>
+												</div>
+
+												{/* Total Row */}
+												<div className="flex items-baseline gap-4">
+													<div className="text-left">Итого</div>
+													<span className="text-xl font-bold">
+														{totalPrice.toLocaleString()} р
+													</span>
+												</div>
 											</div>
-										</div>
-									)}
+										) : (
+											/* Without discount: Label above price */
+											<div className="bg-muted rounded-lg p-2 flex flex-row gap-4 items-stretch">
+												{/* Price Display - stacked vertically */}
+												<div className="flex flex-col">
+													<div className="text-sm text-muted-foreground">
+														Итого
+													</div>
+													<span className="text-xl font-bold">
+														{totalPrice.toLocaleString()} р
+													</span>
+												</div>
+
+												{/* Add to Cart Button */}
+												<div className="flex-1 flex">
+													<Button
+														onClick={handleAddToCart}
+														disabled={!canAddToCart}
+														size="sm"
+														className="w-full h-full"
+													>
+														{!canAddToCart ? "Недоступно" : "В корзину"}
+													</Button>
+												</div>
+											</div>
+										)}
+									</div>
 
 									{/* Store Locations */}
 									{productWithDetails?.storeLocations &&
@@ -1637,6 +1639,99 @@ function ProductPage() {
 					/>
 				</div>
 			)}
+
+			{/* Fixed Price and Add to Cart Bar - Mobile only (< 768px), positioned above bottom nav */}
+			<div className="md:hidden fixed bottom-[72px] left-0 right-0 z-9999">
+				{currentDiscount && currentDiscount > 0 ? (
+					/* With discount: Grid layout with button spanning both rows */
+					<div className="bg-muted grid grid-cols-[auto_1fr] grid-rows-2 items-stretch shadow-lg border-t border-border">
+						{/* Left column - Price info with padding, spans both rows, content-sized */}
+						<div className="row-span-2 px-2 py-2 flex flex-col justify-center space-y-1 min-w-0">
+							{/* Discount Row - adapts to price width */}
+							<div className="flex items-baseline gap-2 flex-wrap">
+								<div className="text-left whitespace-nowrap">Скидка</div>
+								<span className="text-sm line-through whitespace-nowrap">
+									{originalTotalPrice.toLocaleString()} р
+								</span>
+								<span className="px-2 py-1 bg-accent text-accent-foreground text-xs font-semibold rounded-[5px] whitespace-nowrap">
+									{currentDiscount}%
+								</span>
+							</div>
+
+							{/* Total Row - with quantity on the right, price determines width */}
+							<div className="flex items-baseline justify-between gap-2 min-w-0">
+								<div className="flex items-baseline gap-2 min-w-0">
+									<div className="text-left whitespace-nowrap">Итого</div>
+									<span className="text-xl font-bold whitespace-nowrap">
+										{totalPrice.toLocaleString()} р
+									</span>
+								</div>
+								<div className="flex items-baseline gap-1 text-xs text-muted-foreground whitespace-nowrap shrink-0">
+									<span>{quantity}</span>
+									<span>
+										{isFlooringProduct
+											? "упак"
+											: getUnitShortLabel(
+													productWithDetails?.unitOfMeasurement,
+												)}
+									</span>
+								</div>
+							</div>
+						</div>
+
+						{/* Add to Cart Button - spans both rows, flush with edges */}
+						<div className="row-span-2 flex">
+							<Button
+								onClick={handleAddToCart}
+								disabled={!canAddToCart}
+								size="sm"
+								className="w-full h-full rounded-none"
+							>
+								{!canAddToCart ? "Недоступно" : "В корзину"}
+							</Button>
+						</div>
+					</div>
+				) : (
+					/* Without discount: Label above price */
+					<div className="bg-muted flex flex-row items-stretch shadow-lg border-t border-border">
+						{/* Price Display - stacked vertically with padding, content-sized */}
+						<div className="flex flex-col px-2 py-2 min-w-0">
+							<div className="flex items-baseline justify-between gap-2">
+								<div className="text-sm text-muted-foreground whitespace-nowrap">
+									Итого
+								</div>
+								<div className="flex items-baseline gap-1 text-xs text-muted-foreground whitespace-nowrap shrink-0">
+									<span>{quantity}</span>
+									<span>
+										{isFlooringProduct
+											? "упак"
+											: getUnitShortLabel(
+													productWithDetails?.unitOfMeasurement,
+												)}
+									</span>
+								</div>
+							</div>
+							<div className="flex items-baseline">
+								<span className="text-xl font-bold whitespace-nowrap">
+									{totalPrice.toLocaleString()} р
+								</span>
+							</div>
+						</div>
+
+						{/* Add to Cart Button - flush with edges */}
+						<div className="flex-1 flex">
+							<Button
+								onClick={handleAddToCart}
+								disabled={!canAddToCart}
+								size="sm"
+								className="w-full h-full rounded-none"
+							>
+								{!canAddToCart ? "Недоступно" : "В корзину"}
+							</Button>
+						</div>
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }
