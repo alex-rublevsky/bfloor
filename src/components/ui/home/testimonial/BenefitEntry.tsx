@@ -15,8 +15,10 @@ export default function BenefitEntry({
 				{icon}
 			</div>
 			<div className="flex flex-col gap-1 md:gap-2 w-fit min-w-0 max-w-[16ch] md:max-w-[20ch] lg:max-w-[28ch] xl:max-w-[30ch]">
-				<h5 className="font-medium text-sm md:text-base">{title}</h5>
-				<p className="text-xs md:text-sm text-muted-foreground">
+				<h6 className="text-sm! sm:text-base! lg:text-lg! leading-tight!">
+					{title}
+				</h6>
+				<p className="text-xs md:text-sm text-muted-foreground leading-tight!">
 					{description}
 				</p>
 			</div>

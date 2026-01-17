@@ -556,9 +556,9 @@ h5 {
 }
 
 h6 {
-	font-size: 1.2rem;
+	font-size: 1.15rem;
 	line-height: 1.2;
-	font-weight: 300;
+	font-weight: 400;
 	letter-spacing: 1.2%;
 	color: var(--foreground);
 }
@@ -932,13 +932,6 @@ input[type="number"] {
 	width: 28rem;
 	min-width: 28rem;
 	max-width: 28rem;
-}
-
-/* Hide catalog dropdown on mobile (handled by BottomNavBar) */
-@media (max-width: 1023px) {
-	.catalog-dropdown-container .catalog-dropdown-menu {
-		display: none;
-	}
 }
 
 /* Virtualized product rows - ensure hovered cards appear above other rows */

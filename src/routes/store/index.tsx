@@ -72,9 +72,9 @@ function StoreCatalogPage() {
 	}, [categories, counts]);
 
 	return (
-		<div className="h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] flex flex-col min-h-0">
-			{/* Full-height catalog grid - no scroll on desktop, minimal on mobile */}
-			<div className="flex-1 min-h-0 overflow-auto">
+		<div className="min-h-[calc(100vh-4rem)] flex flex-col">
+			{/* Catalog grid - window scrolls so navbar hide/show on scroll works */}
+			<div className="flex-1 min-h-0">
 				<div className="max-w-6xl mx-auto px-4 py-6 md:py-10">
 					<h1 className="text-2xl md:text-3xl font-semibold mb-6 md:mb-8">
 						Каталог

@@ -24,9 +24,8 @@ import {
 import { signOut } from "~/utils/auth-client";
 import { cn } from "~/utils/utils";
 import { CartDrawerContent } from "../store/CartDrawerContent";
-import { CatalogDrawerContent } from "../store/CatalogDrawerContent";
 import { BottomNavBar } from "./BottomNavBar";
-import { Button, buttonVariants } from "./Button";
+import { Button } from "./Button";
 import {
 	ArrowLeftFromLine,
 	Icon,
@@ -629,10 +628,9 @@ const PhoneDropdown = () => {
 	);
 };
 
-// Catalog Dropdown Component - with safe triangle for gap bridging on desktop, drawer on mobile
+// Catalog Dropdown Component - dropdown on hover at all screen sizes (safe triangle for gap bridging)
 const CatalogDropdown = () => {
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const menuRef = useRef<HTMLDivElement>(null);
 	const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -676,14 +674,6 @@ const CatalogDropdown = () => {
 		}, 150);
 	};
 
-	// Prefetch when drawer opens
-	const handleDrawerOpenChange = (open: boolean) => {
-		setIsDrawerOpen(open);
-		if (open) {
-			prefetchStoreCatalog();
-		}
-	};
-
 	// Cleanup timeout on unmount
 	useEffect(() => {
 		return () => {
@@ -694,82 +684,62 @@ const CatalogDropdown = () => {
 	}, []);
 
 	return (
-		<>
-			{/* Desktop: Dropdown behavior - hidden on mobile, visible on md and above */}
+		<div
+			ref={containerRef}
+			className="dropdown-container catalog-dropdown-container"
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={handleMouseLeave}
+			role="menu"
+		>
+			<Button to="/store" variant="accent" size="sm">
+				Каталог
+			</Button>
+			{/* Safe triangle bridge for gap between trigger and menu */}
+			{isDropdownOpen && containerRef.current && menuRef.current && (
+				<SafeArea
+					anchor={containerRef.current}
+					submenu={menuRef.current}
+					onMouseEnter={handleMouseEnter}
+				/>
+			)}
+			{/* Dropdown menu - hover to open at all screen sizes */}
 			<div
-				ref={containerRef}
-				className="hidden md:block dropdown-container catalog-dropdown-container"
+				ref={menuRef}
+				className="dropdown-menu catalog-dropdown-menu"
+				data-open={isDropdownOpen ? "true" : "false"}
 				onMouseEnter={handleMouseEnter}
 				onMouseLeave={handleMouseLeave}
 				role="menu"
 			>
-				<Button to="/store" variant="accent" size="sm">
-					Каталог
-				</Button>
-				{/* Safe triangle bridge for gap between trigger and menu */}
-				{isDropdownOpen && containerRef.current && menuRef.current && (
-					<SafeArea
-						anchor={containerRef.current}
-						submenu={menuRef.current}
-						onMouseEnter={handleMouseEnter}
-					/>
-				)}
-				{/* Dropdown menu - JS hover on desktop */}
-				<div
-					ref={menuRef}
-					className="dropdown-menu catalog-dropdown-menu"
-					data-open={isDropdownOpen ? "true" : "false"}
-					onMouseEnter={handleMouseEnter}
-					onMouseLeave={handleMouseLeave}
-					role="menu"
-				>
-					{activeCategories.length === 0 ? (
-						<div className="px-4 py-2 text-sm text-muted-foreground">
-							Нет категорий
-						</div>
-					) : (
-						activeCategories.map((category) => (
-							<Link
-								key={category.slug}
-								href={`/store/${category.slug}`}
-								variant="category"
-								disableAnimation={true}
-								onMouseEnter={() => {
-									// Prefetch store data for this category on hover
-									prefetchStoreWithCategory(category.slug);
-								}}
-							>
-								<span className="flex-1 min-w-0 pr-3 wrap-break-word">
-									{category.name}
-								</span>
-								{category.productCount !== null && (
-									<span className="text-xs opacity-70 shrink-0">
-										{category.productCount}
-									</span>
-								)}
-							</Link>
-						))
-					)}
-				</div>
-			</div>
-
-			{/* Mobile: Drawer behavior - visible on mobile, hidden on md and above */}
-			<div className="block md:hidden">
-				<Drawer open={isDrawerOpen} onOpenChange={handleDrawerOpenChange}>
-					<DrawerTrigger asChild>
-						<button
-							type="button"
-							className={cn(buttonVariants({ variant: "accent", size: "sm" }))}
+				{activeCategories.length === 0 ? (
+					<div className="px-4 py-2 text-sm text-muted-foreground">
+						Нет категорий
+					</div>
+				) : (
+					activeCategories.map((category) => (
+						<Link
+							key={category.slug}
+							href={`/store/${category.slug}`}
+							variant="category"
+							disableAnimation={true}
+							onMouseEnter={() => {
+								// Prefetch store data for this category on hover
+								prefetchStoreWithCategory(category.slug);
+							}}
 						>
-							Каталог
-						</button>
-					</DrawerTrigger>
-					<DrawerContent>
-						<CatalogDrawerContent />
-					</DrawerContent>
-				</Drawer>
+							<span className="flex-1 min-w-0 pr-3 wrap-break-word">
+								{category.name}
+							</span>
+							{category.productCount !== null && (
+								<span className="text-xs opacity-70 shrink-0">
+									{category.productCount}
+								</span>
+							)}
+						</Link>
+					))
+				)}
 			</div>
-		</>
+		</div>
 	);
 };
 
