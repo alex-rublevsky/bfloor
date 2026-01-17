@@ -256,7 +256,7 @@ function ProductCard({
 
 	return (
 		<Link
-			to="/store/$productId"
+			to="/product/$productId"
 			params={{
 				productId: product.slug,
 			}}

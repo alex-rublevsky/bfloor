@@ -344,7 +344,7 @@ export function Banner() {
 			desktop: `${ASSETS_BASE_URL}/banners/elochka.webp`,
 			mobile: `${ASSETS_BASE_URL}/banners/elochka-mobile.webp`,
 			// TODO: make it elochka
-			url: "/store?category=laminate",
+			url: "/store/laminate",
 		},
 		{
 			desktop: `${ASSETS_BASE_URL}/banners/cork.webp`,

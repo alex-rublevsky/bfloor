@@ -29,6 +29,7 @@ import { getFilteredCollectionsDashboard } from "~/server_functions/dashboard/st
 import { getProductBySlug as getDashboardProductBySlug } from "~/server_functions/dashboard/store/getProductBySlug";
 import { getStoreData } from "~/server_functions/store/getAllProducts";
 import { getAttributeValuesForFiltering } from "~/server_functions/store/getAttributeValuesForFiltering";
+import { getCategoryBySlug } from "~/server_functions/store/getCategoryBySlug";
 import { getFilteredBrands } from "~/server_functions/store/getFilteredBrands";
 import { getFilteredCollections } from "~/server_functions/store/getFilteredCollections";
 import { getProductBySlug } from "~/server_functions/store/getProductBySlug";
@@ -368,7 +369,7 @@ export const attributeValuesForFilteringDashboardQueryOptions = (
 
 /**
  * Product by slug query options
- * Used for: /store/$productId route and prefetching individual products
+ * Used for: /product/$productId route and prefetching individual products
  *
  * OPTIMIZED CACHING STRATEGY:
  * This function implements a smart caching strategy that minimizes database queries:
@@ -679,6 +680,26 @@ export const categoriesQueryOptions = () =>
 	queryOptions({
 		queryKey: ["bfloorCategories"],
 		queryFn: async () => getAllProductCategories(),
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - categories rarely change
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
+		retry: 3,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Category by slug query options
+ * Used for: /store/$categorySlug route for category validation and meta tags
+ *
+ * Cache Strategy: Maximum caching for static data
+ * - Category cached for 7 days (very static)
+ * - Kept in memory for 14 days
+ * - No automatic refetching
+ */
+export const categoryQueryOptions = (categorySlug: string) =>
+	queryOptions({
+		queryKey: ["category", categorySlug],
+		queryFn: async () => getCategoryBySlug({ data: categorySlug }),
 		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - categories rarely change
 		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
 		retry: 3,

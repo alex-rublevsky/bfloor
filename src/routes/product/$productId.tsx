@@ -204,7 +204,7 @@ function ProductNotFoundComponent() {
 	);
 }
 
-export const Route = createFileRoute("/store/$productId")({
+export const Route = createFileRoute("/product/$productId")({
 	component: ProductPage,
 	errorComponent: ProductErrorComponent,
 	notFoundComponent: ProductNotFoundComponent,

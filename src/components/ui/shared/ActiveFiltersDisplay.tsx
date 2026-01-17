@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { X } from "~/components/ui/shared/Icon";
-import type { Brand, CategoryWithCount, Collection } from "~/types";
+import type { Brand, Collection } from "~/types";
 
 interface AttributeFilter {
 	attributeId: number;
@@ -9,8 +9,7 @@ interface AttributeFilter {
 }
 
 interface ActiveFiltersDisplayProps {
-	categories: CategoryWithCount[];
-	selectedCategory: string | null;
+	categoryName: string | null; // Category name from route params or null for main store page
 	brands: Brand[];
 	selectedBrand: string | null;
 	collections: Collection[];
@@ -30,8 +29,7 @@ interface ActiveFiltersDisplayProps {
  * Used on both store page and dashboard products page
  */
 export function ActiveFiltersDisplay({
-	categories,
-	selectedCategory,
+	categoryName,
 	brands,
 	selectedBrand,
 	collections,
@@ -45,12 +43,6 @@ export function ActiveFiltersDisplay({
 	onRemoveStoreLocation,
 	onRemoveAttributeValue,
 }: ActiveFiltersDisplayProps) {
-	// Get category name
-	const categoryName = useMemo(() => {
-		if (!selectedCategory) return null;
-		const category = categories.find((c) => c.slug === selectedCategory);
-		return category?.name ?? null;
-	}, [categories, selectedCategory]);
 
 	// Get brand name
 	const brandName = useMemo(() => {
@@ -113,8 +105,8 @@ export function ActiveFiltersDisplay({
 		return pills;
 	}, [attributeFilters, selectedAttributeFilters]);
 
-	// Show skeleton for title if category is selected but name isn't loaded yet
-	const showTitleSkeleton = selectedCategory && !categoryName;
+	// Show skeleton for title if category name is expected but not loaded yet
+	const showTitleSkeleton = false; // Category name comes from route loader, so it's always available
 
 	return (
 		<div className="px-4 pt-6 pb-4">

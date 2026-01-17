@@ -51,7 +51,7 @@ export function CatalogDrawerContent() {
 						{activeCategories.map((category) => (
 							<DrawerClose asChild key={category.slug}>
 								<Link
-									href={`/store?category=${category.slug}`}
+									href={`/store/${category.slug}`}
 									disableAnimation={true}
 									onMouseEnter={() => {
 										// Prefetch store data for this category on hover

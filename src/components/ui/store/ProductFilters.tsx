@@ -21,12 +21,8 @@ import { Slider } from "~/components/ui/shared/Slider";
 import { useDeviceType } from "~/hooks/use-mobile";
 import { usePrefetch } from "~/hooks/usePrefetch";
 import type { AttributeFilter } from "~/server_functions/store/getAttributeValuesForFiltering";
-import type { CategoryWithCount } from "~/types";
 
 interface ProductFiltersProps {
-	categories: CategoryWithCount[];
-	selectedCategory: string | null;
-	onCategoryChange: (category: string | null) => void;
 	brands?: { slug: string; name: string }[];
 	selectedBrand?: string | null;
 	onBrandChange?: (brand: string | null) => void;
@@ -51,9 +47,6 @@ interface ProductFiltersProps {
 }
 
 const ProductFilters = memo(function ProductFilters({
-	categories,
-	selectedCategory,
-	onCategoryChange,
 	brands = [],
 	selectedBrand = null,
 	onBrandChange,
@@ -80,16 +73,17 @@ const ProductFilters = memo(function ProductFilters({
 	const { prefetchFilterOptions } = usePrefetch();
 
 	// Prefetch filter options when user hovers over filters button
+	// Note: category is now in route params, not filter state
 	const handleFiltersButtonHover = useCallback(() => {
+		// Category will be passed from route context if needed
 		prefetchFilterOptions(
-			selectedCategory ?? undefined,
+			undefined, // Category comes from route, not filter state
 			selectedBrand ?? undefined,
 			selectedCollection ?? undefined,
 			selectedAttributeFilters,
 		);
 	}, [
 		prefetchFilterOptions,
-		selectedCategory,
 		selectedBrand,
 		selectedCollection,
 		selectedAttributeFilters,
@@ -105,13 +99,6 @@ const ProductFilters = memo(function ProductFilters({
 			onPriceRangeChange?.(range);
 		},
 		[onPriceRangeChange],
-	);
-
-	const handleMainCategoryChange = useCallback(
-		(category: string | null) => {
-			onCategoryChange(category);
-		},
-		[onCategoryChange],
 	);
 
 	const handleBrandChange = useCallback(
@@ -150,7 +137,6 @@ const ProductFilters = memo(function ProductFilters({
 	);
 
 	const hasAnyActiveFilters =
-		(selectedCategory && selectedCategory.length > 0) ||
 		(selectedBrand && selectedBrand.length > 0) ||
 		(selectedCollection && selectedCollection.length > 0) ||
 		selectedStoreLocation !== null ||
@@ -159,7 +145,6 @@ const ProductFilters = memo(function ProductFilters({
 		Object.keys(selectedAttributeFilters).length > 0;
 
 	const resetAll = () => {
-		onCategoryChange(null);
 		onBrandChange?.(null);
 		onCollectionChange?.(null);
 		onStoreLocationChange?.(null);
@@ -215,30 +200,6 @@ const ProductFilters = memo(function ProductFilters({
 					showTooltip
 					tooltipContent={(value) => `${value} р`}
 					label="Цена"
-				/>
-			</div>,
-		);
-
-		// Categories filter
-		filterSections.push(
-			<div key="categories" className="min-w-fit">
-				<div className="flex items-center justify-between mb-2">
-					<div className="text-sm font-medium">Категории</div>
-				</div>
-				<CheckboxList
-					items={categories.map((cat) => ({
-						id: cat.slug,
-						label: cat.name,
-					}))}
-					selectedIds={selectedCategory ? [selectedCategory] : []}
-					onItemChange={(itemId, checked) => {
-						// Single-select behavior: if checked, select this one; if unchecked, clear selection
-						const categorySlug = checked ? String(itemId) : null;
-						handleMainCategoryChange(categorySlug);
-					}}
-					idPrefix="filter-category"
-					scrollable={true}
-					maxHeight="200px"
 				/>
 			</div>,
 		);

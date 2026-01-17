@@ -56,26 +56,24 @@ export function SearchSuggestions({
 		(suggestion: SearchSuggestion) => {
 			onClose();
 
-			// For categories, brands, and collections - navigate to store with filter
+			// For categories - navigate to category page (categories are now pages, not filters)
+			// For brands and collections - navigate to store with filter
 			// Clear the search input since the filter is now active
 			if (suggestion.type === "category" && suggestion.metadata?.slug) {
 				onClearSearch?.(); // Clear search input
 				navigate({
-					to: "/store",
-					search: { category: suggestion.metadata.slug },
+					to: `/store/${suggestion.metadata.slug}`,
 				});
 			} else if (suggestion.type === "brand" && suggestion.metadata?.slug) {
-				onClearSearch?.(); // Clear search input
-				navigate({ to: "/store", search: { brand: suggestion.metadata.slug } });
+				onClearSearch?.();
+				// Catalog doesn't support filters - user picks category then filters there
+				navigate({ to: "/store" });
 			} else if (
 				suggestion.type === "collection" &&
 				suggestion.metadata?.slug
 			) {
-				onClearSearch?.(); // Clear search input
-				navigate({
-					to: "/store",
-					search: { collection: suggestion.metadata.slug },
-				});
+				onClearSearch?.();
+				navigate({ to: "/store" });
 			} else {
 				// For products - use the search functionality
 				// Keep the search input (it's the active filter)

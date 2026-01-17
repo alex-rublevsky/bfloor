@@ -54,7 +54,7 @@ function CheckoutScreen() {
 	const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
 		notes: "",
 		shippingMethod: "standard",
-	});
+	})
 
 	// Order creation mutation with much better UX
 	const orderMutation = useMutation({
@@ -87,18 +87,18 @@ function CheckoutScreen() {
 						},
 						totalAmount: total,
 					},
-				});
+				})
 
 				return {
 					orderId: orderResult.orderId,
 					emailWarnings: emailResult.emailWarnings,
-				};
+				}
 			} catch (_emailError) {
 				// Order succeeded, but emails failed - still return success
 				return {
 					orderId: orderResult.orderId,
 					emailWarnings: ["Не удалось отправить письма с подтверждением"],
-				};
+				}
 			}
 		},
 		onSuccess: ({ orderId, emailWarnings }) => {
@@ -107,14 +107,14 @@ function CheckoutScreen() {
 				toast.warning(
 					`Заказ успешно размещён! ${emailWarnings.join(", ")}. Наша команда свяжется с вами в ближайшее время.`,
 					{ duration: 5000 },
-				);
+				)
 			} else {
 				toast.success(
 					"Заказ размещён и письма с подтверждением отправлены! 🎉",
 					{
 						duration: 3000,
 					},
-				);
+				)
 			}
 
 			// Pass display-ready order data optimistically to success page
@@ -139,7 +139,7 @@ function CheckoutScreen() {
 				totalAmount: total,
 				shippingAmount: 0, // Always 0 for new orders
 				timestamp: Date.now(),
-			};
+			}
 
 			// Store in sessionStorage for the success page
 			sessionStorage.setItem("orderSuccess", JSON.stringify(orderData));
@@ -147,9 +147,9 @@ function CheckoutScreen() {
 			// Small delay to ensure success message is seen, then redirect
 			setTimeout(() => {
 				// Clear the cart AFTER redirect to avoid showing "cart is empty"
-				clearCart();
+				clearCart()
 				window.location.href = `/order/${orderId}?new=true`;
-			}, 1000);
+			}, 1000)
 		},
 		onError: (error: Error) => {
 			toast.error(
@@ -158,9 +158,9 @@ function CheckoutScreen() {
 				{
 					duration: 5000,
 				},
-			);
+			)
 		},
-	});
+	})
 
 	const isLoading = orderMutation.isPending;
 
@@ -175,7 +175,7 @@ function CheckoutScreen() {
 				formElement.requestSubmit();
 			}
 		}
-	};
+	}
 
 	// Get dynamic button text with fun loading messages
 	const getButtonText = () => {
@@ -186,20 +186,20 @@ function CheckoutScreen() {
 				"🎨 Подготавливаем ваши прекрасные товары...",
 				"📦 Создаём ваш заказ с любовью...",
 				"💫 Творим нашу магию...",
-			];
+			]
 			const randomMessage =
 				loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
 			return randomMessage;
 		}
 		if (cart.items.length === 0) return "Корзина пуста";
 		return "Оформить заказ";
-	};
+	}
 
 	// Get dynamic button variant based on state
 	const getButtonVariant = () => {
 		if (cart.items.length === 0) return "destructive";
 		return "default";
-	};
+	}
 
 	// Only redirect if cart is empty AND cart has been loaded AND order is not complete
 	//   useEffect(() => {
@@ -217,8 +217,8 @@ function CheckoutScreen() {
 		setCustomerInfo((prev) => ({
 			...prev,
 			[name]: value,
-		}));
-	};
+		}))
+	}
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -226,7 +226,7 @@ function CheckoutScreen() {
 		// If cart is empty
 		if (cart.items.length === 0) {
 			toast.error("Ваша корзина пуста");
-			return;
+			return
 		}
 
 		// Get products from TanStack Query cache for server validation
@@ -237,14 +237,14 @@ function CheckoutScreen() {
 			customerInfo,
 			cartItems: enrichedItems,
 			products: products as unknown as ProductWithVariations[], // Type assertion to resolve type mismatch
-		});
-	};
+		})
+	}
 
 	// Calculate cart totals
 	const subtotal = enrichedItems.reduce(
 		(total, item) => total + item.price * item.quantity,
 		0,
-	);
+	)
 
 	// Calculate total discounts
 	const totalDiscount = enrichedItems.reduce((total, item) => {
@@ -393,8 +393,8 @@ function CheckoutScreen() {
 									{/* Product info */}
 									<div className="grow">
 										<Link
-											href={`/store/${item.productId}`}
-											id={`product-${item.productId}`}
+											href={`/product/${item.productSlug}`}
+											id={"product-${item.productId}"}
 										>
 											{item.productName}
 										</Link>
@@ -447,5 +447,5 @@ function CheckoutScreen() {
 				</div>
 			</div>
 		</div>
-	);
+	)
 }

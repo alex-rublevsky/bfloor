@@ -1,0 +1,28 @@
+/**
+ * Hardcoded catalog images per category slug. No DB calls.
+ *
+ * Key = category slug. Value = { image, productSlug? }.
+ * - image: path relative to ASSETS_BASE_URL.
+ * - productSlug: when set, the catalog card uses viewTransitionName
+ *   `product-image-${productSlug}` so it morphs into that product’s card on the
+ *   category page. ProductCard and product page already use `product-image-${slug}`,
+ *   so catalog → category and category → product transitions both work.
+ *
+ * Example: "dirt-proof" uses antikabluk’s image; productSlug "antikabluk" makes
+ * the catalog image transition into the antikabluk ProductCard in the feed.
+ */
+export const CATEGORY_CATALOG_IMAGES: Record<
+	string,
+	{ image: string; productSlug?: string }
+> = {
+	"dirt-proof": { image: "2025/09/antikabluk.png", productSlug: "antikabluk" },
+	"inzhenernaya-doska": {
+		image: "2024/07/auswood-new-12-oak-madeira.jpg",
+		productSlug: "dub-madejra",
+	},
+	sporty: {
+		image: "2024/08/pas30.jpeg",
+		productSlug: "iskusstvennaya-trava-landshaft-30-mm",
+	},
+	laminate: { image: "2024/01/813.png", productSlug: "buk-zbirog" },
+};

@@ -212,7 +212,7 @@ function EditProductPage() {
 						className="flex items-center gap-2"
 					>
 						<Link
-							to="/store/$productId"
+							to="/product/$productId"
 							params={{
 								productId: loaderData.product.slug,
 							}}

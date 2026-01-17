@@ -645,7 +645,7 @@ const CatalogDropdown = () => {
 	const { data: counts } = useQuery(productCategoryCountsQueryOptions());
 
 	// Get prefetch hook for category hover
-	const { prefetchStoreWithCategory, prefetchStoreDefault } = usePrefetch();
+	const { prefetchStoreWithCategory, prefetchStoreCatalog } = usePrefetch();
 
 	// Filter active categories and sort by order
 	const activeCategories = useMemo(() => {
@@ -658,16 +658,15 @@ const CatalogDropdown = () => {
 			}));
 	}, [categories, counts]);
 
-	// Handle mouse enter - open dropdown and prefetch default store view
+	// Handle mouse enter - open dropdown and prefetch catalog (categories)
 	const handleMouseEnter = () => {
 		if (closeTimeoutRef.current) {
 			clearTimeout(closeTimeoutRef.current);
 			closeTimeoutRef.current = null;
 		}
 		setIsDropdownOpen(true);
-		// Prefetch default store view when user hovers over catalog button
-		// This ensures instant load if they click the button (vs clicking a category)
-		prefetchStoreDefault();
+		// Prefetch catalog page data when user hovers over catalog button
+		prefetchStoreCatalog();
 	};
 
 	// Handle mouse leave - close dropdown with small delay
@@ -681,8 +680,7 @@ const CatalogDropdown = () => {
 	const handleDrawerOpenChange = (open: boolean) => {
 		setIsDrawerOpen(open);
 		if (open) {
-			// Prefetch default store view when drawer opens
-			prefetchStoreDefault();
+			prefetchStoreCatalog();
 		}
 	};
 
@@ -733,7 +731,7 @@ const CatalogDropdown = () => {
 						activeCategories.map((category) => (
 							<Link
 								key={category.slug}
-								href={`/store?category=${category.slug}`}
+								href={`/store/${category.slug}`}
 								disableAnimation={true}
 								onMouseEnter={() => {
 									// Prefetch store data for this category on hover

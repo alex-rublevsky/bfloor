@@ -8,9 +8,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
 	attributeValuesForFilteringQueryOptions,
+	categoriesQueryOptions,
 	dashboardOrdersQueryOptions,
 	filteredBrandsQueryOptions,
 	filteredCollectionsQueryOptions,
+	productCategoryCountsQueryOptions,
 	productQueryOptions,
 	storeDataInfiniteQueryOptions,
 } from "~/lib/queryOptions";
@@ -104,20 +106,12 @@ export function usePrefetch() {
 	};
 
 	/**
-	 * Prefetch default store view (all products, no filters)
-	 * Use on catalog button hover
+	 * Prefetch store catalog page (categories + counts)
+	 * Use on catalog button hover - /store is now a category picker, not all products
 	 */
-	const prefetchStoreDefault = () => {
-		queryClient.prefetchInfiniteQuery(
-			storeDataInfiniteQueryOptions("", {
-				categorySlug: null,
-				brandSlug: null,
-				collectionSlug: null,
-				storeLocationId: null,
-				attributeFilters: {},
-				sort: "relevant",
-			}),
-		);
+	const prefetchStoreCatalog = () => {
+		queryClient.prefetchQuery(categoriesQueryOptions());
+		queryClient.prefetchQuery(productCategoryCountsQueryOptions());
 	};
 
 	/**
@@ -133,7 +127,7 @@ export function usePrefetch() {
 		prefetchDashboardProduct,
 		prefetchStore,
 		prefetchStoreWithCategory,
-		prefetchStoreDefault,
+		prefetchStoreCatalog,
 		prefetchFilterOptions,
 		prefetchDashboardOrders,
 	};

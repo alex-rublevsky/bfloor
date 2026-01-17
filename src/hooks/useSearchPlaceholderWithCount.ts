@@ -22,23 +22,20 @@ function useProductsCountFromCategories(): number {
 }
 
 /**
- * Hook that returns the appropriate search placeholder for the current route
+ * Hook that returns the appropriate search placeholder with product count
  *
- * For products/dashboard routes: Shows count derived from category counts (already in cache)
- * For all other routes: Simple placeholder without count
+ * Shows total product count derived from category counts (already in cache)
+ * Works for both dashboard and client/store routes
  */
 export function useSearchPlaceholderWithCount() {
-	const pathname = useRouterState().location.pathname;
-	const isDashboard = pathname.startsWith("/dashboard");
-
-	// Always call the hook (React rules), but only use it for dashboard routes
+	// Get total product count by summing all category counts
 	const productsCount = useProductsCountFromCategories();
 
-	// For dashboard routes (which show products), derive count from category counts
-	if (isDashboard) {
+	// Show count if available, otherwise show simple placeholder
+	if (productsCount > 0) {
 		return `Искать среди ${productsCount} товаров`;
 	}
 
-	// For all other routes (store, index, etc.)
+	// Fallback while counts are loading or if no products
 	return "Я ищу...";
 }
