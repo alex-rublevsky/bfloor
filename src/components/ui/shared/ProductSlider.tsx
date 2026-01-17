@@ -220,12 +220,12 @@ export default function ProductSlider({
 	// const { selectedIndex, scrollSnaps, onDotButtonClick } =
 	// 	useDotButton(emblaApi);
 
-	// Don't render if no products (for recently visited mode)
+	// Don't render if no products (for recently visited mode) — nothing in DOM, including wrapper
 	if (mode === "recentlyVisited" && products.length === 0) {
 		return null;
 	}
 
-	return (
+	const section = (
 		<section className="embla pb-42 product-slider-section no-padding">
 			{/* Header Row - Title/Tags and Arrows */}
 			<div className="product-slider__header">
@@ -325,4 +325,13 @@ export default function ProductSlider({
 			)}
 		</section>
 	);
+
+	if (mode === "recentlyVisited") {
+		return (
+			<div className="pt-20 w-full overflow-x-hidden">
+				{section}
+			</div>
+		);
+	}
+	return section;
 }

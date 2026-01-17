@@ -2,9 +2,9 @@ import { Link } from "./Link";
 
 export function Footer() {
 	return (
-		<footer className="flex flex-col items-center justify-center py-16">
+		<footer className="flex flex-col items-center justify-center pt-16 pb-38 md:pb-16">
 			{/* TODO: set the year to a reactive value */}
-			<div className="flex gap-2">
+			<div className="flex gap-2 flex-wrap justify-center items-center">
 				<p className=""> © Все права защищены ООО "BeautyFloor" 2025</p>
 				{/* TODO: add link www.rublevsky.studio */}
 				<p className="">

@@ -720,7 +720,7 @@ function ProductPage() {
 															{currentPrice.toLocaleString()} р
 														</div>
 													)}
-													<div className="text-2xl font-bold text-foreground">
+													<div className="text-2xl font-bold text-foreground leading-tight!">
 														{displayPrice.toLocaleString()} р
 													</div>
 												</div>
@@ -852,9 +852,9 @@ function ProductPage() {
 														<div className="text-sm text-muted-foreground">
 															Итого
 														</div>
-														<span className="text-3xl font-bold">
+														<h5 className="">
 															{totalPrice.toLocaleString()} р
-														</span>
+														</h5>
 													</div>
 
 													{/* Add to Cart Button */}
@@ -1119,7 +1119,7 @@ function ProductPage() {
 				</div>
 
 				{/* Rest of content with padding - add bottom padding for fixed price bar on mobile only */}
-				<div className="max-w-7xl mx-auto px-4 py-8 pb-32 md:pb-8">
+				<div className="max-w-7xl mx-auto px-4 py-8 pb-8">
 					<div className="flex flex-col gap-8">
 						{/* Product Info */}
 						<div className="w-full">
@@ -1629,15 +1629,13 @@ function ProductPage() {
 				</div>
 			</div>
 
-			{/* Recently Visited Products Slider */}
+			{/* Recently Visited Products Slider - wrapper is inside ProductSlider so nothing is rendered when there are no products to show */}
 			{hasRecentlyVisited && recentlyVisitedProductIds.length > 0 && (
-				<div className="pt-20 w-full overflow-x-hidden">
-					<ProductSlider
-						mode="recentlyVisited"
-						title="Вы недавно смотрели"
-						recentlyVisitedProductIds={recentlyVisitedProductIds}
-					/>
-				</div>
+				<ProductSlider
+					mode="recentlyVisited"
+					title="Вы недавно смотрели"
+					recentlyVisitedProductIds={recentlyVisitedProductIds}
+				/>
 			)}
 
 			{/* Fixed Price and Add to Cart Bar - Mobile only (< 768px), positioned above bottom nav */}
