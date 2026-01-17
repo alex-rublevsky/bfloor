@@ -4,6 +4,7 @@ import { memo, useCallback, useMemo, useState } from "react";
 import { Skeleton } from "~/components/ui/dashboard/skeleton";
 import { Button } from "~/components/ui/shared/Button";
 import { ASSETS_BASE_URL } from "~/constants/urls";
+import { useIsMobile } from "~/hooks/useDevice";
 import { usePrefetch } from "~/hooks/usePrefetch";
 import {
 	getAttributeDisplayName,
@@ -145,12 +146,15 @@ function ProductCard({
 	const queryClient = useQueryClient();
 	const { data: attributes } = useProductAttributes();
 
+	// Get device type - hover is only available on desktop (!isMobile)
+	const isMobile = useIsMobile();
+
 	// Use the variation selection hook
 	const { selectedVariation, selectedAttributes, selectVariation } =
 		useVariationSelection({
-		product,
+			product,
 			attributes: attributes || [], // Pass attributes for proper display
-	});
+		});
 
 	// Calculate default variation and search params for the Link
 	const defaultVariation = useMemo(
@@ -182,12 +186,13 @@ function ProductCard({
 
 	const linkSearchParams = useMemo(() => {
 		const params = getVariationSearchParams(defaultVariation, attributes || []);
-		// Add imageIndex when hovering and there are multiple images
-		if (isHovering && imageArray.length > 1) {
+		// Only add imageIndex on desktop (!isMobile) when hovering and there are multiple images
+		// On mobile, always use the first image (no hover capability)
+		if (!isMobile && isHovering && imageArray.length > 1) {
 			params.imageIndex = "1"; // Second image (0-indexed)
 		}
 		return params;
-	}, [defaultVariation, isHovering, imageArray.length, attributes]);
+	}, [defaultVariation, isHovering, imageArray.length, attributes, isMobile]);
 
 	// Get unique attribute values for a specific attribute ID - memoized
 	const getUniqueAttributeValues = useCallback(
@@ -280,8 +285,16 @@ function ProductCard({
 					{/* biome-ignore lint/a11y/noStaticElementInteractions: Hover detection for view transitions only */}
 					<div
 						className="relative aspect-square overflow-hidden"
-						onMouseEnter={() => setIsHovering(true)}
-						onMouseLeave={() => setIsHovering(false)}
+						onMouseEnter={() => {
+							if (!isMobile) {
+								setIsHovering(true);
+							}
+						}}
+						onMouseLeave={() => {
+							if (!isMobile) {
+								setIsHovering(false);
+							}
+						}}
 					>
 						<div>
 							{/* Primary Image */}
@@ -305,8 +318,9 @@ function ProductCard({
 											style={
 												disableViewTransition
 													? undefined
-													: // Apply view transition to primary image only when NOT hovering or when there's no secondary image
-														!isHovering || imageArray.length === 1
+													: // On mobile (no hover), always use primary image for transition
+														// On desktop (!isMobile), use primary image when NOT hovering or when there's no secondary image
+														isMobile || !isHovering || imageArray.length === 1
 														? {
 																viewTransitionName: `product-image-${product.slug}`,
 															}
@@ -345,8 +359,8 @@ function ProductCard({
 												style={
 													disableViewTransition
 														? undefined
-														: // Apply view transition to secondary image only when hovering
-															isHovering
+														: // Apply view transition to secondary image only on desktop (!isMobile) when hovering
+															!isMobile && isHovering
 															? {
 																	viewTransitionName: `product-image-${product.slug}`,
 																}
