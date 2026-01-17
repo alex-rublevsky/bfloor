@@ -699,10 +699,20 @@ export const categoriesQueryOptions = () =>
 export const categoryQueryOptions = (categorySlug: string) =>
 	queryOptions({
 		queryKey: ["category", categorySlug],
-		queryFn: async () => getCategoryBySlug({ data: categorySlug }),
+		queryFn: async () => {
+			try {
+				return await getCategoryBySlug({ data: categorySlug });
+			} catch (error) {
+				// Convert "Category not found" error to notFound() for proper 404 handling
+				if (error instanceof Error && error.message === "Category not found") {
+					throw notFound();
+				}
+				throw error;
+			}
+		},
+		retry: false, // Don't retry on error - fail fast for 404s
 		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - categories rarely change
 		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
-		retry: 3,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
 	});

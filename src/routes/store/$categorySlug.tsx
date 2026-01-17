@@ -44,11 +44,6 @@ export const Route = createFileRoute("/store/$categorySlug")({
 				throw notFound();
 			}
 
-			// If it's an error from getCategoryBySlug (404), throw notFound
-			if (error instanceof Error && error.message === "Category not found") {
-				throw notFound();
-			}
-
 			// Log unexpected errors for debugging
 			console.error("Unexpected error loading category:", error);
 
