@@ -327,11 +327,7 @@ export default function ProductSlider({
 	);
 
 	if (mode === "recentlyVisited") {
-		return (
-			<div className="pt-20 w-full overflow-x-hidden">
-				{section}
-			</div>
-		);
+		return <div className="pt-20 w-full overflow-x-hidden">{section}</div>;
 	}
 	return section;
 }
