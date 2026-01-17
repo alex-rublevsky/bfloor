@@ -57,7 +57,7 @@ export function CatalogDrawerContent() {
 										// Prefetch store data for this category on hover
 										prefetchStoreWithCategory(category.slug);
 									}}
-									className="whitespace-normal! flex items-center justify-between w-full px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground! transition-standard"
+									className="whitespace-normal! flex items-center justify-between w-full px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground! active:bg-primary active:text-primary-foreground! focus-visible:bg-primary focus-visible:text-primary-foreground! transition-standard"
 								>
 									<span className="flex-1 min-w-0 pr-3 wrap-break-word">
 										{category.name}
