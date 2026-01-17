@@ -746,14 +746,14 @@ function ProductPage() {
 												{/* Quantity Selector */}
 												<div className="flex flex-col min-w-[20ch] flex-1 self-stretch w-full @[38ch]:w-auto">
 													<div className="flex gap-0.5 items-stretch w-full flex-1">
-														<button
+														<Button
 															type="button"
 															onClick={decrementQuantity}
 															disabled={quantity <= 1}
-															className="flex-1 min-w-10 flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+															className="flex-1 min-w-10 h-full self-stretch flex items-center justify-center text-primary bg-muted hover:bg-secondary hover:[&_svg]:text-[var(--muted)] active:bg-muted-hover rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
 														>
 															<Icon name="minus" size={20} />
-														</button>
+														</Button>
 														<div className="text-center bg-muted rounded-lg py-1 px-0.5 flex items-center justify-center flex-1">
 															<div className="flex flex-col items-center gap-1 w-full justify-center">
 																{productWithDetails?.squareMetersPerPack && (
@@ -786,13 +786,13 @@ function ProductPage() {
 																</div>
 															</div>
 														</div>
-														<button
+														<Button
 															type="button"
 															onClick={incrementQuantity}
-															className="flex-1 min-w-10 flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] cursor-pointer"
+															className="flex-1 min-w-10 h-full self-stretch flex items-center justify-center text-primary bg-muted hover:bg-secondary hover:[&_svg]:text-[var(--muted)] active:bg-muted-hover rounded-[15px] cursor-pointer"
 														>
 															<Icon name="plus" size={20} />
-														</button>
+														</Button>
 													</div>
 												</div>
 											</div>
@@ -1272,14 +1272,14 @@ function ProductPage() {
 											{/* Quantity Selector */}
 											<div className="flex flex-col min-w-[20ch] flex-1 self-stretch w-full @[38ch]:w-auto">
 												<div className="flex gap-0.5 items-stretch w-full flex-1">
-													<button
+													<Button
 														type="button"
 														onClick={decrementQuantity}
 														disabled={quantity <= 1}
-														className="flex-1 min-w-10 flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+														className="flex-1 min-w-10 h-full self-stretch flex items-center justify-center text-primary bg-muted hover:bg-secondary hover:[&_svg]:text-[var(--muted)] active:bg-muted-hover rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
 													>
 														<Icon name="minus" size={20} />
-													</button>
+													</Button>
 													<div className="text-center bg-muted rounded-lg py-1 px-0.5 flex items-center justify-center flex-1">
 														<div className="flex flex-col items-center gap-1 w-full justify-center">
 															{productWithDetails?.squareMetersPerPack && (
@@ -1312,13 +1312,13 @@ function ProductPage() {
 															</div>
 														</div>
 													</div>
-													<button
+													<Button
 														type="button"
 														onClick={incrementQuantity}
-														className="flex-1 min-w-10 flex items-center justify-center text-primary bg-muted hover:bg-secondary active:bg-muted-hover rounded-[15px] cursor-pointer"
+														className="flex-1 min-w-10 h-full self-stretch flex items-center justify-center text-primary bg-muted hover:bg-secondary hover:[&_svg]:text-[var(--muted)] active:bg-muted-hover rounded-[15px] cursor-pointer"
 													>
 														<Icon name="plus" size={20} />
-													</button>
+													</Button>
 												</div>
 											</div>
 										</div>
