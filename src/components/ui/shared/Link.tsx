@@ -1,9 +1,27 @@
 import { Link as RouterLink } from "@tanstack/react-router";
+import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
 import { cn } from "~/utils/utils";
 
+const linkVariants = cva(
+	"cursor-pointer link text-foreground transition-standard whitespace-nowrap",
+	{
+		variants: {
+			variant: {
+				default: "",
+				category:
+					"whitespace-normal! flex items-center justify-between w-full px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground! active:bg-primary active:text-primary-foreground! focus-visible:bg-primary focus-visible:text-primary-foreground! transition-standard [&_.link-text]:hover:text-primary-foreground! [&_.link-text]:active:text-primary-foreground! [&_.link-text]:focus-visible:text-primary-foreground! [&_span]:hover:text-primary-foreground! [&_span]:active:text-primary-foreground! [&_span]:focus-visible:text-primary-foreground!",
+			},
+		},
+		defaultVariants: {
+			variant: "default",
+		},
+	},
+);
+
 export interface LinkProps
-	extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+	extends React.AnchorHTMLAttributes<HTMLAnchorElement>,
+		VariantProps<typeof linkVariants> {
 	href: string; // Make href required to ensure proper link behavior
 	disableAnimation?: boolean; // Disable animated underline effect
 }
@@ -17,6 +35,7 @@ const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
 			children,
 			href,
 			disableAnimation = false,
+			variant,
 			...props
 		},
 		ref,
@@ -75,7 +94,7 @@ const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
 
 		// Determine className
 		const linkClassName = cn(
-			"cursor-pointer link text-foreground transition-standard whitespace-nowrap",
+			linkVariants({ variant }),
 			!disableAnimation && "link-animated",
 			className,
 		);
@@ -112,4 +131,4 @@ const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
 );
 Link.displayName = "Link";
 
-export { Link };
+export { Link, linkVariants };
