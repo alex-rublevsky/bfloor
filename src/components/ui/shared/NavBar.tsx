@@ -1138,7 +1138,7 @@ export function NavBar({ className }: Omit<NavBarProps, "items">) {
 					</div>
 
 					{/* Mobile layout - Small screens */}
-					<div className="md:hidden flex items-center gap-3">
+					<div className="md:hidden flex items-center gap-1.5">
 						{/* Search - takes full available space */}
 						<div className="flex-1 min-w-0">
 							<SearchInput
