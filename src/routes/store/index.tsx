@@ -62,14 +62,24 @@ function StoreCatalogPage() {
 		productCategoryCountsQueryOptions(),
 	);
 
+	// Filter active categories and sort by order
+	// Exclude categories with count 0 or errors (missing from counts when counts is loaded)
 	const activeCategories = useMemo(() => {
 		return categories
 			.filter((cat) => cat.isActive)
-			.sort((a, b) => a.order - b.order)
 			.map((category) => ({
 				...category,
-				productCount: counts?.[category.slug] ?? null,
-			}));
+				productCount: counts?.[category.slug] ?? null, // null = still loading or missing
+			}))
+			.filter((category) => {
+				// If counts haven't loaded yet, show all categories
+				if (counts === undefined) return true;
+				// If counts have loaded, only show categories with count > 0
+				// Missing from counts object means 0 products or error
+				const count = counts[category.slug];
+				return count !== undefined && count > 0;
+			})
+			.sort((a, b) => a.order - b.order);
 	}, [categories, counts]);
 
 	return (
