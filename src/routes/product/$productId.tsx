@@ -42,6 +42,26 @@ import { formatContentForDisplay } from "~/utils/contentUtils";
 import { seo } from "~/utils/seo";
 import { getStoreProductsFromInfiniteCache } from "~/utils/storeCache";
 
+/** Plain-text first chunk of description for meta tags (~155 chars, trimmed at word) */
+const getDescriptionChunk = (raw: string, maxLen = 155): string => {
+	if (!raw || typeof raw !== "string") return "";
+	const oneLine = raw
+		.replace(/\\n/g, "\n")
+		.replace(/\n+/g, " ")
+		// Strip markdown: [text](url) -> text, **bold** -> bold, *italic* -> italic, # header -> header, `code` -> code
+		.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+		.replace(/\*\*([^*]+)\*\*/g, "$1")
+		.replace(/\*([^*]+)\*/g, "$1")
+		.replace(/#+\s*/g, "")
+		.replace(/`([^`]*)`/g, "$1")
+		.replace(/\s+/g, " ")
+		.trim();
+	if (oneLine.length <= maxLen) return oneLine;
+	const cut = oneLine.slice(0, maxLen);
+	const lastSpace = cut.lastIndexOf(" ");
+	return lastSpace > maxLen * 0.6 ? cut.slice(0, lastSpace) : cut;
+};
+
 // Helper function to find attribute by ID, slug, or name (reduces redundant lookups)
 const findAttributeByIdOrSlugOrName = (
 	attributeId: string,
@@ -220,19 +240,29 @@ export const Route = createFileRoute("/product/$productId")({
 			queryClient,
 			params.productId,
 		);
-		await queryClient.ensureQueryData(
+		const product = await queryClient.ensureQueryData(
 			productQueryOptions(params.productId, cachedProduct),
 		);
+		return { product };
 	},
 
-	head: () => ({
-		meta: [
-			...seo({
-				title: "Product - Rublevsky Studio",
-				description: "Discover premium products at Rublevsky Studio store.",
-			}),
-		],
-	}),
+	head: ({ loaderData }) => {
+		const product = loaderData?.product;
+		const title = product?.name
+			? `${product.name} - ${product.category?.name} - BeautyFloor`
+			: "BeautyFloor";
+		const description = product?.description
+			? getDescriptionChunk(product.description)
+			: "";
+		return {
+			meta: [
+				...seo({
+					title,
+					description,
+				}),
+			],
+		};
+	},
 
 	validateSearch,
 	// Strip undefined values from URL to keep it clean

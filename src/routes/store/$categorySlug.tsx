@@ -57,11 +57,11 @@ export const Route = createFileRoute("/store/$categorySlug")({
 			meta: [
 				...seo({
 					title: category
-						? `${category.name} - Rublevsky Studio`
-						: "Category - Rublevsky Studio",
+						? `${category.name} - BeautyFloor`
+						: "Category - BeautyFloor",
 					description: category
-						? `Browse ${category.name} products. Premium quality products for tea enthusiasts and design lovers.`
-						: "Browse products by category. Premium quality products for tea enthusiasts and design lovers.",
+						? `${category.name} - Напольные покрытия во Владивостоке`
+						: "Каталог напольных покрытий во Владивостоке",
 				}),
 			],
 		};

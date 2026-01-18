@@ -7,8 +7,7 @@ export const Route = createFileRoute("/contact")({
 		meta: [
 			...seo({
 				title: "Контакты - BeautyFloor",
-				description:
-					"Свяжитесь с нами для получения информации о напольных покрытиях",
+				description: "Поможем подобрать напольные покрытия для вашего проекта",
 			}),
 		],
 	}),
