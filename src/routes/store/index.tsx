@@ -9,6 +9,7 @@ import {
 	categoriesQueryOptions,
 	productCategoryCountsQueryOptions,
 } from "~/lib/queryOptions";
+import styles from "~/components/ui/store/productCard.module.css";
 import { seo } from "~/utils/seo";
 
 export const Route = createFileRoute("/store/")({
@@ -73,15 +74,16 @@ function StoreCatalogPage() {
 
 	return (
 		<div className="min-h-[calc(100vh-4rem)] flex flex-col">
-			{/* Catalog grid - window scrolls so navbar hide/show on scroll works */}
+			{/* Catalog grid - same format as StoreProductGrid (px-4, no max-w); window scrolls so navbar hide/show on scroll works */}
 			<div className="flex-1 min-h-0">
-				<div className="max-w-6xl mx-auto px-4 py-6 md:py-10">
-					<h1 className="text-2xl md:text-3xl font-semibold mb-6 md:mb-8">
+				{/* Same format as $categorySlug: title has px-4, grid is edge-to-edge (no horizontal padding) */}
+				<div className="py-6 md:py-10">
+					<h1 className="text-2xl md:text-3xl font-semibold mb-6 md:mb-8 px-4">
 						Каталог
 					</h1>
 
 					{activeCategories.length === 0 ? (
-						<div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+						<div className="flex flex-col items-center justify-center py-20 text-muted-foreground px-4">
 							<p>Нет категорий</p>
 						</div>
 					) : (
@@ -95,39 +97,51 @@ function StoreCatalogPage() {
 										to="/store/$categorySlug"
 										params={{ categorySlug: category.slug }}
 										viewTransition={true}
+										preload="intent"
 										onMouseEnter={() =>
 											prefetchStoreWithCategory(category.slug)
 										}
-										className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 overflow-hidden border border-border hover:border-accent hover:shadow-md transition-standard"
+										className="block h-full relative focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 									>
-										{/* Image: square, not rounded – same as ProductCard on category page */}
-										<div className="aspect-square bg-muted/50 overflow-hidden">
-											{imagePath ? (
-												<img
-													src={`${ASSETS_BASE_URL}/${imagePath}`}
-													alt={category.name}
-													className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-													style={{
-														// Match ProductCard's product-image-{slug} so catalog → category morphs into that product's card
-														viewTransitionName: entry?.productSlug
-															? `product-image-${entry.productSlug}`
-															: undefined,
-													}}
-												/>
-											) : (
-												<CategoryImagePlaceholder className="w-full h-full" />
-											)}
-										</div>
-										{/* Label */}
-										<div className="p-3 md:p-4">
-											<span className="font-medium text-foreground group-hover:text-accent transition-colors">
-												{category.name}
-											</span>
-											{category.productCount !== null && (
-												<span className="block text-sm text-muted-foreground mt-0.5">
-													{category.productCount} товаров
-												</span>
-											)}
+										{/* Card structure matching ProductCard (product-card, overflow-hidden, group, transition-standard) */}
+										<div
+											className={`w-full product-card overflow-hidden group transition-standard ${styles.categoryCard}`}
+										>
+											<div className="bg-background flex flex-col">
+												{/* Image: same as ProductCard – relative aspect-square overflow-hidden */}
+												<div className="relative aspect-square overflow-hidden">
+													<div className="relative aspect-square flex items-center justify-center overflow-hidden">
+														{imagePath ? (
+															<img
+																src={`${ASSETS_BASE_URL}/${imagePath}`}
+																alt={category.name}
+																className="absolute inset-0 w-full h-full object-cover object-center transition-standard"
+																style={{
+																	viewTransitionName: entry?.productSlug
+																		? `product-image-${entry.productSlug}`
+																		: undefined,
+																}}
+															/>
+														) : (
+															<CategoryImagePlaceholder className="absolute inset-0 w-full h-full" />
+														)}
+													</div>
+												</div>
+
+												{/* Content: same structure as ProductCard – flex flex-col, padding, name + count */}
+												<div className="flex flex-col h-auto md:h-full md:p-4 pb-4">
+													<div className="px-4 pt-4 md:px-0 md:pt-0 flex flex-col h-auto md:h-full">
+														<div className="flex flex-col mb-2">
+															<p className="text-foreground">{category.name}</p>
+															{category.productCount !== null && (
+																<span className="text-sm text-muted-foreground mt-0.5">
+																	{category.productCount} товаров
+																</span>
+															)}
+														</div>
+													</div>
+												</div>
+											</div>
 										</div>
 									</Link>
 								);

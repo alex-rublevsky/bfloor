@@ -66,8 +66,7 @@ export function SearchSuggestions({
 				});
 			} else if (suggestion.type === "brand" && suggestion.metadata?.slug) {
 				onClearSearch?.();
-				// Catalog doesn't support filters - user picks category then filters there
-				navigate({ to: "/store" });
+				navigate({ to: `/store/${suggestion.metadata.slug}` });
 			} else if (
 				suggestion.type === "collection" &&
 				suggestion.metadata?.slug

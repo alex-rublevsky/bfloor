@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { X } from "~/components/ui/shared/Icon";
-import type { Brand, Collection } from "~/types";
+import type { Collection } from "~/types";
 
 interface AttributeFilter {
 	attributeId: number;
@@ -9,8 +9,9 @@ interface AttributeFilter {
 }
 
 interface ActiveFiltersDisplayProps {
-	categoryName: string | null; // Category name from route params or null for main store page
-	brands: Brand[];
+	categoryName: string | null; // Category name from route params or null for main store/brand page
+	brandName?: string | null; // Brand name when this is a brand page (for title)
+	brands: Array<{ slug: string; name: string }>; // Brand or minimal { slug, name } for brand page
 	selectedBrand: string | null;
 	collections: Collection[];
 	selectedCollection: string | null;
@@ -30,6 +31,7 @@ interface ActiveFiltersDisplayProps {
  */
 export function ActiveFiltersDisplay({
 	categoryName,
+	brandName = null,
 	brands,
 	selectedBrand,
 	collections,
@@ -44,11 +46,11 @@ export function ActiveFiltersDisplay({
 	onRemoveAttributeValue,
 }: ActiveFiltersDisplayProps) {
 
-	// Get brand name
-	const brandName = useMemo(() => {
+	// Resolve brand name from brands (for filter pill); title uses brandName prop when on brand page
+	const resolvedBrandName = useMemo(() => {
 		if (!selectedBrand) return null;
-		const brand = brands.find((b) => b.slug === selectedBrand);
-		return brand?.name ?? null;
+		const b = brands.find((x) => x.slug === selectedBrand);
+		return b?.name ?? null;
 	}, [brands, selectedBrand]);
 
 	// Get collection name
@@ -115,30 +117,30 @@ export function ActiveFiltersDisplay({
 				<div className="h-10 md:h-12 bg-muted animate-pulse rounded w-48 mb-3" />
 			) : (
 				<h1
-					key={categoryName ?? "all"}
+					key={categoryName ?? brandName ?? "all"}
 					className="text-2xl md:text-3xl font-semibold mb-3"
 					style={{
 						animation: "fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
 					}}
 				>
-					{categoryName ?? "Все товары"}
+					{brandName ?? categoryName ?? "Все товары"}
 				</h1>
 			)}
 
 			{/* Filter Pills */}
-			{(brandName ||
+			{(resolvedBrandName ||
 				collectionName ||
 				storeLocationAddress ||
 				attributePills.length > 0) && (
 				<div className="flex flex-wrap gap-2">
-					{brandName && (
+					{resolvedBrandName && (
 						<span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground transition-all duration-200 hover:bg-muted/80">
-							<span>{brandName}</span>
+							<span>{resolvedBrandName}</span>
 							<button
 								type="button"
 								onClick={onRemoveBrand}
 								className="h-4 w-4 p-0 rounded-full hover:bg-background/50 transition-standard"
-								aria-label={`Remove ${brandName} filter`}
+								aria-label={`Remove ${resolvedBrandName} filter`}
 							>
 								<X
 									size={14}

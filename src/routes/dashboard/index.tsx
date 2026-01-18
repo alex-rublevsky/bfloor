@@ -478,7 +478,7 @@ function RouteComponent() {
 				/>
 				{/* Products List - Show skeleton during loading, otherwise show products */}
 				{showSkeleton ? (
-					<ProductGridSkeleton itemCount={18} />
+					<ProductGridSkeleton itemCount={18} gridClassName="px-4" />
 				) : displayProducts.length === 0 ? (
 					<EmptyState
 						entityType="products"

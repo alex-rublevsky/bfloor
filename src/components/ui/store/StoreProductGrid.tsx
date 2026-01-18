@@ -34,13 +34,21 @@ const measurementCache = new Map<string, number>();
 
 interface StoreProductGridProps {
 	/**
-	 * Category slug from route params (undefined for main store page, string for category pages)
+	 * Category slug from route params (undefined for main store page or brand page)
 	 */
 	categorySlug?: string;
 	/**
-	 * Category name for display (null for main store page, string for category pages)
+	 * Category name for display (null for main store page or brand page)
 	 */
 	categoryName?: string | null;
+	/**
+	 * Brand slug from route when this is a brand page (undefined for category or main store)
+	 */
+	brandSlug?: string;
+	/**
+	 * Brand for display when it's a brand page (used in ActiveFiltersDisplay; { slug, name })
+	 */
+	brand?: { slug: string; name: string };
 	/**
 	 * Search params from route
 	 */
@@ -58,10 +66,11 @@ interface StoreProductGridProps {
 			| "oldest";
 	};
 	/**
-	 * Navigate function from route
+	 * Navigate function from route (supports search updates and to for navigation)
 	 */
 	navigate: (options: {
-		search: (prev: Record<string, unknown>) => Record<string, unknown>;
+		search?: (prev: Record<string, unknown>) => Record<string, unknown>;
+		to?: string;
 		replace?: boolean;
 	}) => void;
 }
@@ -69,6 +78,8 @@ interface StoreProductGridProps {
 export function StoreProductGrid({
 	categorySlug,
 	categoryName = null,
+	brandSlug,
+	brand,
 	searchParams,
 	navigate,
 }: StoreProductGridProps) {
@@ -86,9 +97,9 @@ export function StoreProductGrid({
 		return trimmed.length >= 2 ? trimmed : undefined;
 	}, [clientSearch.searchTerm]);
 
-	// Initialize filter state from URL search params
+	// Initialize filter state: route brand (brand page) takes precedence over search param
 	const [selectedBrand, setSelectedBrand] = useState<string | null>(
-		searchParams.brand ?? null,
+		brandSlug ?? searchParams.brand ?? null,
 	);
 	const [selectedCollection, setSelectedCollection] = useState<string | null>(
 		searchParams.collection ?? null,
@@ -108,9 +119,9 @@ export function StoreProductGrid({
 	// Track if filter drawer has been opened (for lazy loading attribute filters)
 	const [filtersOpened, setFiltersOpened] = useState(false);
 
-	// Sync state with URL when search params change (e.g., from browser back/forward)
+	// Sync state with URL when search params change (e.g., from browser back/forward); brand page keeps route brand
 	useEffect(() => {
-		setSelectedBrand(searchParams.brand ?? null);
+		setSelectedBrand(brandSlug ?? searchParams.brand ?? null);
 		setSelectedCollection(searchParams.collection ?? null);
 		setSelectedStoreLocation(searchParams.storeLocation ?? null);
 		setSelectedAttributeFilters(
@@ -118,6 +129,7 @@ export function StoreProductGrid({
 		);
 		setSortBy(searchParams.sort ?? defaultStoreSearchValues.sort);
 	}, [
+		brandSlug,
 		searchParams.brand,
 		searchParams.collection,
 		searchParams.storeLocation,
@@ -203,7 +215,7 @@ export function StoreProductGrid({
 	} = useInfiniteQuery({
 		...storeDataInfiniteQueryOptions(normalizedSearch, {
 			categorySlug: categorySlug ?? undefined,
-			brandSlug: selectedBrand ?? undefined,
+			brandSlug: brandSlug ?? selectedBrand ?? undefined,
 			collectionSlug: selectedCollection ?? undefined,
 			storeLocationId: selectedStoreLocation ?? undefined,
 			attributeFilters: selectedAttributeFilters,
@@ -227,14 +239,14 @@ export function StoreProductGrid({
 		enabled: filtersOpened, // Only fetch after user opens filters
 	});
 
-	// Fetch filtered brands and collections based on current filters
+	// Fetch filtered brands and collections based on current filters (skip brands when on brand page)
 	const { data: brands = [] } = useQuery({
 		...filteredBrandsQueryOptions(
 			categorySlug ?? undefined,
 			selectedCollection ?? undefined,
 			selectedStoreLocation ?? undefined,
 		),
-		enabled: filtersOpened,
+		enabled: filtersOpened && !brandSlug,
 	});
 
 	const { data: collections = [] } = useQuery({
@@ -250,8 +262,11 @@ export function StoreProductGrid({
 	const storeLocations = getAllStoreLocations();
 
 	const brandsForFilters = useMemo(
-		() => brands.map((b: Brand) => ({ slug: b.slug, name: b.name })),
-		[brands],
+		() =>
+			brandSlug
+				? [] // Hide brand filter on brand page (we're already viewing that brand)
+				: brands.map((b: Brand) => ({ slug: b.slug, name: b.name })),
+		[brandSlug, brands],
 	);
 
 	const collectionsForFilters = useMemo(
@@ -412,7 +427,8 @@ export function StoreProductGrid({
 				{/* Active Filters Display - Always show, even during loading */}
 				<ActiveFiltersDisplay
 					categoryName={categoryName}
-					brands={brands}
+					brandName={brand?.name ?? null}
+					brands={brand ? [brand] : brands}
 					selectedBrand={selectedBrand}
 					collections={collections}
 					selectedCollection={selectedCollection}
@@ -420,7 +436,11 @@ export function StoreProductGrid({
 					selectedStoreLocation={selectedStoreLocation}
 					attributeFilters={attributeFilters}
 					selectedAttributeFilters={selectedAttributeFilters}
-					onRemoveBrand={() => updateBrand(null)}
+					onRemoveBrand={
+						brandSlug
+							? () => navigate({ to: "/store" })
+							: () => updateBrand(null)
+					}
 					onRemoveCollection={() => updateCollection(null)}
 					onRemoveStoreLocation={() => updateStoreLocation(null)}
 					onRemoveAttributeValue={(attributeId, valueId) => {
@@ -440,8 +460,8 @@ export function StoreProductGrid({
 				) : (
 					<>
 						<div
-							key={categorySlug ?? "all"}
-							className="relative px-4 py-4"
+							key={categorySlug ?? brandSlug ?? "all"}
+							className="relative py-4"
 							style={{
 								height: `${virtualizer.getTotalSize()}px`,
 								width: "100%",

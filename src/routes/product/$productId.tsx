@@ -667,7 +667,7 @@ function ProductPage() {
 												{/* Brand Logo/Name */}
 												{productWithDetails?.brand && (
 													<Link
-														href={`/store?brand=${productWithDetails.brand.slug}`}
+														href={`/store/${productWithDetails.brand.slug}`}
 														className="flex items-center gap-2"
 													>
 														{productWithDetails.brand.image ? (
@@ -1196,7 +1196,7 @@ function ProductPage() {
 										{/* Brand Logo/Name */}
 										{productWithDetails?.brand && (
 											<Link
-												href={`/store?brand=${productWithDetails.brand.slug}`}
+												href={`/store/${productWithDetails.brand.slug}`}
 												className="flex items-center gap-2"
 											>
 												{productWithDetails.brand.image ? (

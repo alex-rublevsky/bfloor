@@ -1,3 +1,13 @@
+/* ProductCard and category cards (StoreCatalogPage) share the same card look. Lower specificity first. */
+.categoryCard {
+	transition: var(--transition-standard);
+	position: relative;
+}
+
+.categoryCard img {
+	transition: var(--transition-standard);
+}
+
 #productCard {
 	transition: var(--transition-standard);
 	position: relative;
@@ -9,6 +19,15 @@
 
 /* Only enable hover effects on desktop */
 @media (min-width: 768px) and (hover: hover) {
+	.categoryCard:hover {
+		transform: scale(1.02) translateZ(1rem);
+		box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+	}
+
+	.categoryCard:hover img {
+		transform: scale(1.05);
+	}
+
 	#productCard:hover {
 		transform: scale(1.02) translateZ(1rem);
 		box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);

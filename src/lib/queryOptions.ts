@@ -29,6 +29,7 @@ import { getFilteredCollectionsDashboard } from "~/server_functions/dashboard/st
 import { getProductBySlug as getDashboardProductBySlug } from "~/server_functions/dashboard/store/getProductBySlug";
 import { getStoreData } from "~/server_functions/store/getAllProducts";
 import { getAttributeValuesForFiltering } from "~/server_functions/store/getAttributeValuesForFiltering";
+import { getBrandBySlug } from "~/server_functions/store/getBrandBySlug";
 import { getCategoryBySlug } from "~/server_functions/store/getCategoryBySlug";
 import { getFilteredBrands } from "~/server_functions/store/getFilteredBrands";
 import { getFilteredCollections } from "~/server_functions/store/getFilteredCollections";
@@ -712,6 +713,35 @@ export const categoryQueryOptions = (categorySlug: string) =>
 		},
 		retry: false, // Don't retry on error - fail fast for 404s
 		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - categories rarely change
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+/**
+ * Brand by slug query options
+ * Used for: /store/$categorySlug route when slug resolves to a brand (category takes precedence)
+ *
+ * Cache Strategy: Maximum caching for static data
+ * - Brand cached for 7 days (very static)
+ * - Kept in memory for 14 days
+ * - No automatic refetching
+ */
+export const brandQueryOptions = (brandSlug: string) =>
+	queryOptions({
+		queryKey: ["brand", brandSlug],
+		queryFn: async () => {
+			try {
+				return await getBrandBySlug({ data: brandSlug });
+			} catch (error) {
+				if (error instanceof Error && error.message === "Brand not found") {
+					throw notFound();
+				}
+				throw error;
+			}
+		},
+		retry: false, // Don't retry on error - fail fast for 404s
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - brands rarely change
 		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,

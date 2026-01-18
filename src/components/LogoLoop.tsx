@@ -253,7 +253,7 @@ export const LogoLoop = React.memo<LogoLoopProps>(
 						src: `${ASSETS_BASE_URL}/${brand.image}`,
 						alt: brand.name,
 						title: brand.name,
-						href: `/store?brand=${brand.slug}`,
+						href: `/store/${brand.slug}`,
 					}));
 			}
 			return [];
