@@ -3,11 +3,7 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq, inArray, type SQL, sql } from "drizzle-orm";
 import { DB } from "~/db";
 import { products, productStoreLocations, productVariations } from "~/schema";
-import type {
-	Product,
-	ProductVariationWithAttributes,
-	VariationAttribute,
-} from "~/types";
+import type { Product, ProductVariationWithAttributes } from "~/types";
 import { parseVariationAttributes } from "~/utils/productParsing";
 import { buildFts5Query } from "~/utils/search/queryExpander";
 
@@ -234,9 +230,7 @@ export const getStoreData = createServerFn({ method: "GET" })
 					const existing = variationsByProduct.get(variation.productId) ?? [];
 					existing.push({
 						...variation,
-						attributes: parseVariationAttributes(
-							variation.variationAttributes,
-						),
+						attributes: parseVariationAttributes(variation.variationAttributes),
 					});
 					variationsByProduct.set(variation.productId, existing);
 				}

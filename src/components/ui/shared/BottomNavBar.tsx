@@ -182,6 +182,7 @@ export function BottomNavBar({
 		<>
 			{/* Bottom Navigation Bar - Mobile only */}
 			<nav
+				style={{ viewTransitionName: "--persist-bottom-nav" }}
 				className={cn(
 					"fixed bottom-0 left-0 right-0 z-10000 bg-background/95 backdrop-blur-sm border-t border-border md:hidden",
 					className,

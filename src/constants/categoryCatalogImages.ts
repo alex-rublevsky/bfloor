@@ -25,4 +25,12 @@ export const CATEGORY_CATALOG_IMAGES: Record<
 		productSlug: "iskusstvennaya-trava-landshaft-30-mm",
 	},
 	laminate: { image: "2024/01/813.png", productSlug: "buk-zbirog" },
+	gruntovka: {
+		image: "2026/01/gruntovka-forbo-050-europrimer-mix.webp",
+		productSlug: "gruntovka-forbo-050-europrimer-mix",
+	},
+	glue: {
+		image: "2024/01/eurocol-140.png",
+		productSlug: "klej-forbo-140-euromix-pu-extra",
+	},
 };

@@ -1,6 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
+import styles from "~/components/ui/store/productCard.module.css";
 import { StoreCatalogSkeleton } from "~/components/ui/store/skeletons/StoreCatalogSkeleton";
 import { CATEGORY_CATALOG_IMAGES } from "~/constants/categoryCatalogImages";
 import { ASSETS_BASE_URL } from "~/constants/urls";
@@ -9,7 +10,6 @@ import {
 	categoriesQueryOptions,
 	productCategoryCountsQueryOptions,
 } from "~/lib/queryOptions";
-import styles from "~/components/ui/store/productCard.module.css";
 import { seo } from "~/utils/seo";
 
 export const Route = createFileRoute("/store/")({

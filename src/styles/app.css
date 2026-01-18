@@ -827,6 +827,12 @@ span {
 	z-index: 100;
 }
 
+/* Persisted navbars should always stay above view transition layer */
+::view-transition-group(--persist-nav),
+::view-transition-group(--persist-bottom-nav) {
+	z-index: 10001;
+}
+
 /* Enable text selection in drawer content */
 [data-vaul-drawer] {
 	user-select: text;
