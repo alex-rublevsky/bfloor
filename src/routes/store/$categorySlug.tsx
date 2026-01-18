@@ -5,10 +5,7 @@ import {
 } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { StoreProductGrid } from "~/components/ui/store/StoreProductGrid";
-import {
-	brandQueryOptions,
-	categoryQueryOptions,
-} from "~/lib/queryOptions";
+import { brandQueryOptions, categoryQueryOptions } from "~/lib/queryOptions";
 import { seo } from "~/utils/seo";
 import {
 	defaultStoreSearchValues,
@@ -86,7 +83,11 @@ function StoreSlugPage() {
 			categorySlug={isCategory ? slug : undefined}
 			categoryName={isCategory ? loaderData.category.name : null}
 			brandSlug={isBrand ? slug : undefined}
-			brand={isBrand ? { slug: loaderData.brand.slug, name: loaderData.brand.name } : undefined}
+			brand={
+				isBrand
+					? { slug: loaderData.brand.slug, name: loaderData.brand.name }
+					: undefined
+			}
 			searchParams={searchParams}
 			navigate={navigate}
 		/>
