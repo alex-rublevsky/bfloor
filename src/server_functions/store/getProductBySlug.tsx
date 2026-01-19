@@ -32,6 +32,7 @@ import {
 	parseProductAttributes,
 	parseVariationAttributes,
 } from "~/utils/productParsing";
+import { incrementProductView } from "./incrementProductView";
 
 export const getProductBySlug = createServerFn({ method: "GET" })
 	.inputValidator((productId: string) => productId)
@@ -152,6 +153,15 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 			})),
 			variations: variationsArray,
 		};
+
+		// Track product view (fire-and-forget, non-blocking)
+		// Only increment for active products
+		if (baseProduct.isActive && baseProduct.id) {
+			incrementProductView({ data: baseProduct.id }).catch((error) => {
+				// Silently fail - view tracking shouldn't break product page
+				console.error("Failed to increment product view:", error);
+			});
+		}
 
 		return productWithDetails;
 	});

@@ -46,6 +46,7 @@ export const products = sqliteTable(
 			.default(false),
 		productAttributes: text("product_attributes"), // JSON stored as text
 		dimensions: text("dimensions"), // Характеристики товара (габариты) - text field for non-filterable product details
+		viewCount: integer("view_count"), // Track product popularity via page views (nullable initially, will be backfilled)
 		createdAt: integer("created_at", { mode: "timestamp" }),
 	},
 	(table) => [
@@ -67,6 +68,7 @@ export const products = sqliteTable(
 			table.isActive,
 		),
 		index("idx_products_has_variations").on(table.hasVariations),
+		index("idx_products_active_view_count").on(table.isActive, table.viewCount), // For sorting by popularity
 	],
 );
 

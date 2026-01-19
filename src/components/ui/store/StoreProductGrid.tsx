@@ -111,7 +111,13 @@ export function StoreProductGrid({
 		Record<number, string[]>
 	>(parseAttributeFilters(searchParams.attributeFilters));
 	const [sortBy, setSortBy] = useState<
-		"relevant" | "name" | "price-asc" | "price-desc" | "newest" | "oldest"
+		| "relevant"
+		| "name"
+		| "price-asc"
+		| "price-desc"
+		| "newest"
+		| "oldest"
+		| "best-selling"
 	>(searchParams.sort ?? defaultStoreSearchValues.sort);
 	const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([
 		0, 1000000,

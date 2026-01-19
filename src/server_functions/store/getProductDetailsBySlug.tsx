@@ -33,6 +33,7 @@ import {
 	products,
 } from "~/schema";
 import { parseImages, parseProductAttributes } from "~/utils/productParsing";
+import { incrementProductView } from "./incrementProductView";
 
 export const getProductDetailsBySlug = createServerFn({ method: "GET" })
 	.inputValidator((productId: string) => productId)
@@ -87,6 +88,15 @@ export const getProductDetailsBySlug = createServerFn({ method: "GET" })
 		const productAttributesArray = parseProductAttributes(
 			baseProduct.productAttributes,
 		);
+
+		// Track product view (fire-and-forget, non-blocking)
+		// Only increment for active products
+		if (baseProduct.isActive && baseProduct.id) {
+			incrementProductView({ data: baseProduct.id }).catch((error) => {
+				// Silently fail - view tracking shouldn't break product page
+				console.error("Failed to increment product view:", error);
+			});
+		}
 
 		// Return product WITHOUT variations - variations should come from cache
 		// The merge logic in productQueryOptions will preserve cached variations

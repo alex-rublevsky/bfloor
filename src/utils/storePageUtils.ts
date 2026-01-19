@@ -13,13 +13,21 @@ export const storeSearchParamsSchema = z.object({
 	storeLocation: z.number().optional(),
 	attributeFilters: z.string().optional(), // JSON string of Record<number, string[]>
 	sort: z
-		.enum(["relevant", "name", "price-asc", "price-desc", "newest", "oldest"])
+		.enum([
+			"relevant",
+			"name",
+			"price-asc",
+			"price-desc",
+			"newest",
+			"oldest",
+			"best-selling",
+		])
 		.optional(),
 });
 
 // Default values for search params (used for stripping defaults from URL)
 export const defaultStoreSearchValues = {
-	sort: "relevant" as const,
+	sort: "best-selling" as const,
 };
 
 // Parse attribute filters from URL - moved outside component for stability
@@ -49,14 +57,22 @@ export function parseAttributeFilters(
 // Validate sort value
 export function isValidSort(
 	v: string,
-): v is "relevant" | "name" | "price-asc" | "price-desc" | "newest" | "oldest" {
+): v is
+	| "relevant"
+	| "name"
+	| "price-asc"
+	| "price-desc"
+	| "newest"
+	| "oldest"
+	| "best-selling" {
 	return (
 		v === "relevant" ||
 		v === "name" ||
 		v === "price-asc" ||
 		v === "price-desc" ||
 		v === "newest" ||
-		v === "oldest"
+		v === "oldest" ||
+		v === "best-selling"
 	);
 }
 

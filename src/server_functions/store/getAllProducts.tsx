@@ -28,7 +28,8 @@ export const getStoreData = createServerFn({ method: "GET" })
 					| "price-asc"
 					| "price-desc"
 					| "newest"
-					| "oldest";
+					| "oldest"
+					| "best-selling";
 			} = {},
 		) => data,
 	)
@@ -169,6 +170,9 @@ export const getStoreData = createServerFn({ method: "GET" })
 				orderSql = sql`${products.createdAt} asc`;
 			} else if (sort === "name") {
 				orderSql = sql`${products.name} asc`;
+			} else if (sort === "best-selling") {
+				// Treat NULL as 0 for sorting (products without views go to bottom)
+				orderSql = sql`COALESCE(${products.viewCount}, 0) desc`;
 			} else if (effectiveSearch && ftsProductIds && ftsProductIds.length > 0) {
 				// Use pre-fetched FTS5 ranking (no duplicate query!)
 				// Build CASE statement to maintain FTS rank order from the single query we already executed

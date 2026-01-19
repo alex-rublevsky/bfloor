@@ -174,6 +174,9 @@ const ProductFilters = memo(function ProductFilters({
 						<SelectItem className="text-xs font-normal" value="relevant">
 							По релевантности
 						</SelectItem>
+						<SelectItem className="text-xs font-normal" value="best-selling">
+							Популярные
+						</SelectItem>
 						<SelectItem className="text-xs font-normal" value="price-asc">
 							Сначала дешёвые
 						</SelectItem>

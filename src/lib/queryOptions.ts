@@ -78,7 +78,8 @@ export const storeDataInfiniteQueryOptions = (
 			| "price-asc"
 			| "price-desc"
 			| "newest"
-			| "oldest";
+			| "oldest"
+			| "best-selling";
 	},
 ) =>
 	infiniteQueryOptions({
@@ -112,7 +113,7 @@ export const storeDataInfiniteQueryOptions = (
 					sort: filters?.sort ?? undefined,
 				},
 			}),
-		staleTime: 1000 * 60 * 60 * 24 * 3, // 3 days - products cached aggressively
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - products cached aggressively
 		gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in memory
 		initialPageParam: 1,
 		getNextPageParam: (lastPage: PaginatedResponse) => {
@@ -522,7 +523,8 @@ export const productsInfiniteQueryOptions = (
 			| "price-asc"
 			| "price-desc"
 			| "newest"
-			| "oldest";
+			| "oldest"
+			| "best-selling";
 	},
 ) =>
 	infiniteQueryOptions({
