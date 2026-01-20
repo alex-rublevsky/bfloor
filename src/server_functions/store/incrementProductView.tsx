@@ -11,7 +11,7 @@
  */
 
 import { createServerFn } from "@tanstack/react-start";
-import { sql, eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { DB } from "~/db";
 import { products } from "~/schema";
 
@@ -30,9 +30,7 @@ export const incrementProductView = createServerFn({ method: "POST" })
 				.set({
 					viewCount: sql`COALESCE(${products.viewCount}, 0) + 1`,
 				})
-				.where(
-					sql`${products.id} = ${productId} AND ${products.isActive} = 1`,
-				);
+				.where(sql`${products.id} = ${productId} AND ${products.isActive} = 1`);
 
 			// Return success (fire-and-forget pattern)
 			return { success: true };
