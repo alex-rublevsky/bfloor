@@ -1,5 +1,4 @@
 import { Badge } from "~/components/ui/shared/Badge";
-import { Image } from "~/components/ui/shared/Image";
 import { Link } from "~/components/ui/shared/Link";
 import { QuantitySelector } from "~/components/ui/shared/QuantitySelector";
 import { ASSETS_BASE_URL } from "~/constants/urls";
@@ -9,7 +8,9 @@ import {
 	useProductAttributes,
 } from "~/hooks/useProductAttributes";
 import { useCart } from "~/lib/cartContext";
-import { X } from "../shared/Icon";
+import { parseImages } from "~/utils/productParsing";
+import { Skeleton } from "../dashboard/skeleton";
+import { Icon, X } from "../shared/Icon";
 
 interface CartItemProps {
 	item: EnrichedCartItem;
@@ -30,22 +31,59 @@ export function CartItem({ item }: CartItemProps) {
 		}
 	};
 
+	// Parse images the same way ProductCard does
+	const imageArray = parseImages(item.images);
+
 	return (
 		<div className="flex items-start gap-4 py-4">
 			{/* Product image with overlapping remove button */}
 			<div className="shrink-0 relative w-20">
-				<div className="w-full bg-muted rounded-md overflow-hidden">
-					{item.image ? (
-						<Image
-							src={`${ASSETS_BASE_URL}/${item.image}`}
-							alt={item.productName}
-							width={80}
-							height={80}
-							className="w-full h-auto object-contain"
-						/>
+				<div className="relative aspect-square w-full bg-muted rounded-md overflow-hidden">
+					{imageArray.length > 0 ? (
+						<div className="relative w-full h-full">
+							{/* Loading skeleton, initially visible */}
+							<div className="absolute inset-0 w-full h-full bfloor-img-skeleton">
+								<Skeleton className="absolute inset-0 w-full h-full rounded-none" />
+							</div>
+
+							{/* Broken overlay, initially hidden */}
+							<div className="absolute inset-0 hidden items-center justify-center flex-col text-muted-foreground select-none bfloor-img-fallback">
+								<Icon name="image" className="w-8 h-8" />
+								<span className="mt-1 text-xs">Картинка сломана</span>
+							</div>
+
+							{/* Primary Image - using same URL format as ProductCard for browser caching */}
+							<img
+								src={`${ASSETS_BASE_URL}/${imageArray[0]}`}
+								alt={item.productName}
+								loading="eager"
+								className="absolute inset-0 w-full h-full object-cover object-center"
+								onLoad={(e) => {
+									const parent = e.currentTarget.parentElement;
+									const sk = parent?.querySelector<HTMLDivElement>(
+										".bfloor-img-skeleton",
+									);
+									if (sk) sk.style.display = "none";
+								}}
+								onError={(e) => {
+									const img = e.currentTarget;
+									const parent = img.parentElement;
+									img.style.display = "none";
+									const sk = parent?.querySelector<HTMLDivElement>(
+										".bfloor-img-skeleton",
+									);
+									if (sk) sk.style.display = "none";
+									const fb = parent?.querySelector<HTMLDivElement>(
+										".bfloor-img-fallback",
+									);
+									if (fb) fb.style.display = "flex";
+								}}
+							/>
+						</div>
 					) : (
-						<div className="aspect-square w-full h-full flex items-center justify-center text-muted-foreground text-xs px-1">
-							нет картинки
+						<div className="absolute inset-0 bg-muted flex flex-col items-center justify-center text-muted-foreground select-none">
+							<Icon name="image" className="w-8 h-8" />
+							<span className="mt-1 text-xs">Нет картинки</span>
 						</div>
 					)}
 				</div>

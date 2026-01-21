@@ -19,7 +19,7 @@ export interface EnrichedCartItem extends CartItem {
 	productName: string;
 	productSlug: string;
 	price: number;
-	image?: string;
+	images?: string | string[] | null; // Full images data for parsing (same format as product.images)
 	attributes?: Record<string, string>;
 	discount?: number | null;
 }
@@ -72,11 +72,8 @@ export function useEnrichedCart(cartItems: CartItem[]): EnrichedCartItem[] {
 				// Calculate price: use variation price if available, otherwise product price
 				const price = variation?.price ?? product.price;
 
-				// Get image
-				const image =
-					product.images && typeof product.images === "string"
-						? product.images.split(",")[0]?.trim() || undefined
-						: undefined;
+				// Get images (pass through full images data for parsing in component)
+				const images = product.images;
 
 				// Get attributes (for display) - build object only if variation has attributes
 				const attributes = variation?.attributes?.length
@@ -97,7 +94,7 @@ export function useEnrichedCart(cartItems: CartItem[]): EnrichedCartItem[] {
 					productName: product.name,
 					productSlug: product.slug,
 					price,
-					image,
+					images,
 					attributes,
 					discount: variation?.discount ?? product.discount,
 				} as EnrichedCartItem;

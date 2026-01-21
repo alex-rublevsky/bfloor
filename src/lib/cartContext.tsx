@@ -11,10 +11,11 @@
  */
 
 import type React from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getCookie, setCookie } from "~/lib/cookies";
 import type { Product, ProductVariation, ProductWithVariations } from "~/types";
+import { useEnrichedCart } from "~/hooks/useEnrichedCart";
 
 // Types
 /**
@@ -74,6 +75,9 @@ export function CartProvider({ children }: CartProviderProps) {
 	const [cartOpen, setCartOpen] = useState(false);
 	const [initialized, setInitialized] = useState(false);
 
+	// Get enriched cart items to calculate accurate count and validate items
+	const enrichedItems = useEnrichedCart(cart.items);
+
 	// Load cart from cookie on initial render (client-side only)
 	useEffect(() => {
 		const savedCart = getCookie(CART_COOKIE_NAME);
@@ -112,20 +116,68 @@ export function CartProvider({ children }: CartProviderProps) {
 		}
 	}, [cart, initialized]);
 
-	const itemCount = cart.items.reduce(
-		(count, item) => count + item.quantity,
-		0,
+	// Clean up invalid/inactive items from cart
+	// This ensures cart.items only contains valid, active products
+	// Use a memoized set of valid item keys to avoid recreating it on every render
+	const validItemKeysSet = useMemo(() => {
+		return new Set(
+			enrichedItems.map(
+				(item) => `${item.productId}-${item.variationId ?? "none"}`,
+			),
+		);
+	}, [enrichedItems]);
+
+	useEffect(() => {
+		if (!initialized) return;
+
+		// Check if any cart items are invalid
+		setCart((prevCart) => {
+			const validItems = prevCart.items.filter((item) =>
+				validItemKeysSet.has(`${item.productId}-${item.variationId ?? "none"}`),
+			);
+
+			// Only update if items were actually removed
+			if (validItems.length !== prevCart.items.length) {
+				return {
+					items: validItems,
+					lastUpdated: Date.now(),
+				};
+			}
+
+			return prevCart;
+		});
+		// validItemKeysSet is memoized from enrichedItems, so depending on enrichedItems is sufficient
+		// biome-ignore lint/correctness/useExhaustiveDependencies: validItemKeysSet is derived from enrichedItems
+	}, [initialized, enrichedItems]);
+
+	// Calculate itemCount from enriched items (only valid, active products)
+	// This ensures the count matches what's actually displayed in the cart drawer
+	const itemCount = useMemo(
+		() => enrichedItems.reduce((count, item) => count + item.quantity, 0),
+		[enrichedItems],
 	);
+
+	// Helper function to normalize variationId for consistent comparison
+	// Ensures undefined and null are treated the same way
+	const normalizeVariationId = (variationId?: number | null): number | undefined => {
+		return variationId ?? undefined;
+	};
 
 	// Add item to cart (or update quantity if exists)
 	// Validation happens BEFORE calling this function
 	const addToCart = (item: CartItem) => {
 		setCart((prevCart) => {
-			const existingIndex = prevCart.items.findIndex(
-				(cartItem) =>
+			const normalizedItemVariationId = normalizeVariationId(item.variationId);
+
+			const existingIndex = prevCart.items.findIndex((cartItem) => {
+				const normalizedCartVariationId = normalizeVariationId(
+					cartItem.variationId,
+				);
+				return (
 					cartItem.productId === item.productId &&
-					cartItem.variationId === item.variationId,
-			);
+					normalizedCartVariationId === normalizedItemVariationId
+				);
+			});
 
 			let newItems: CartItem[];
 
@@ -137,8 +189,14 @@ export function CartProvider({ children }: CartProviderProps) {
 					quantity: newItems[existingIndex].quantity + item.quantity,
 				};
 			} else {
-				// Add new item
-				newItems = [...prevCart.items, item];
+				// Add new item (ensure variationId is normalized)
+				newItems = [
+					...prevCart.items,
+					{
+						...item,
+						variationId: normalizedItemVariationId,
+					},
+				];
 			}
 
 			return {
@@ -179,6 +237,20 @@ export function CartProvider({ children }: CartProviderProps) {
 			if (!product.hasVariations && selectedVariation) {
 				toast.error("Этот товар не поддерживает варианты");
 				return false;
+			}
+
+			// Validate variation exists if product has variations
+			if (product.hasVariations && selectedVariation) {
+				const currentProductWithVariations =
+					products?.find((p) => p.id === product.id) ||
+					(product as ProductWithVariations);
+				const variationExists = currentProductWithVariations.variations?.some(
+					(v) => v.id === selectedVariation.id,
+				);
+				if (!variationExists) {
+					toast.error("Выбранный вариант не найден");
+					return false;
+				}
 			}
 
 			// Try to find the product in products array for validation (if provided)
@@ -239,10 +311,16 @@ export function CartProvider({ children }: CartProviderProps) {
 	// Remove item from cart
 	const removeFromCart = (productId: number, variationId?: number) => {
 		setCart((prevCart) => {
-			const newItems = prevCart.items.filter(
-				(item) =>
-					!(item.productId === productId && item.variationId === variationId),
-			);
+			const normalizedVariationId = normalizeVariationId(variationId);
+			const newItems = prevCart.items.filter((item) => {
+				const normalizedItemVariationId = normalizeVariationId(
+					item.variationId,
+				);
+				return !(
+					item.productId === productId &&
+					normalizedItemVariationId === normalizedVariationId
+				);
+			});
 
 			return {
 				items: newItems,
@@ -265,12 +343,17 @@ export function CartProvider({ children }: CartProviderProps) {
 		}
 
 		// Update quantity (enforce minimum of 1)
+		const normalizedVariationId = normalizeVariationId(variationId);
 		setCart((prevCart) => ({
-			items: prevCart.items.map((item) =>
-				item.productId === productId && item.variationId === variationId
+			items: prevCart.items.map((item) => {
+				const normalizedItemVariationId = normalizeVariationId(
+					item.variationId,
+				);
+				return item.productId === productId &&
+					normalizedItemVariationId === normalizedVariationId
 					? { ...item, quantity: Math.max(1, quantity) }
-					: item,
-			),
+					: item;
+			}),
 			lastUpdated: Date.now(),
 		}));
 	};
