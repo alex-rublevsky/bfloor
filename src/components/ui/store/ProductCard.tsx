@@ -21,7 +21,6 @@ import type {
 	VariationAttribute,
 } from "~/types";
 import { parseImages, parseProductAttributes } from "~/utils/productParsing";
-import { getStoreProductsFromInfiniteCache } from "~/utils/storeCache";
 import { sortVariationsForDisplay } from "~/utils/variationSort";
 import { FilterGroup } from "../shared/FilterGroup";
 import { Icon } from "../shared/Icon";
@@ -227,26 +226,17 @@ function ProductCard({
 	);
 
 	const handleAddToCart = useCallback(
-		async (e: React.MouseEvent) => {
+		(e: React.MouseEvent) => {
 			e.preventDefault();
 			if (!isAvailable) return;
 
 			setIsAddingToCart(true);
 
 			try {
-				// Try to get products from TanStack Query cache for validation (optional)
-				// If cache is empty, the function will use the product directly
-				const products = getStoreProductsFromInfiniteCache(queryClient);
-
-				// Use the context function directly
-				// Products array is optional - if empty, validation uses product directly
-				await addProductToCart(
+				addProductToCart(
 					product as Product,
 					1, // Default quantity of 1 when adding from product card
 					selectedVariation,
-					products.length > 0
-						? (products as unknown as ProductWithVariations[])
-						: undefined,
 				);
 			} catch (error) {
 				console.error("Error adding to cart:", error);
@@ -254,7 +244,7 @@ function ProductCard({
 				setIsAddingToCart(false);
 			}
 		},
-		[isAvailable, addProductToCart, product, selectedVariation, queryClient],
+		[isAvailable, addProductToCart, product, selectedVariation],
 	);
 
 	// Check if product is coming soon (not in the type, so we'll use a placeholder)
@@ -273,7 +263,7 @@ function ProductCard({
 				prefetchProduct(product.slug);
 				queryClient.setQueryData(
 					["bfloorProduct", product.slug],
-					(existing) => existing ?? seededProduct,
+					(existing: unknown) => existing ?? seededProduct,
 				);
 			}}
 		>

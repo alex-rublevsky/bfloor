@@ -794,6 +794,51 @@ export function Columns({ className = "", size = 24 }: IconProps) {
 	);
 }
 
+export function Download({ className = "", size = 24 }: IconProps) {
+	return (
+		<svg
+			className={cn("text-muted-foreground", className)}
+			xmlns="http://www.w3.org/2000/svg"
+			width={size}
+			height={size}
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth={2}
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-hidden="true"
+		>
+			<title>Download</title>
+			<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+			<polyline points="7 10 12 15 17 10" />
+			<line x1="12" x2="12" y1="15" y2="3" />
+		</svg>
+	);
+}
+
+export function Email({ className = "", size = 24 }: IconProps) {
+	return (
+		<svg
+			className={cn("text-muted-foreground", className)}
+			xmlns="http://www.w3.org/2000/svg"
+			width={size}
+			height={size}
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth={2}
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-hidden="true"
+		>
+			<title>Email</title>
+			<rect width="20" height="16" x="2" y="4" rx="2" />
+			<path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+		</svg>
+	);
+}
+
 export function ArrowLeftFromLine({ className = "", size = 24 }: IconProps) {
 	return (
 		<svg

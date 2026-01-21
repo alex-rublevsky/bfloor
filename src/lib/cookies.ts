@@ -1,4 +1,7 @@
-// Client-side cookie handling for TanStack application
+// Isomorphic cookie handling for TanStack Start (SSR + Client)
+
+import { createIsomorphicFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 
 // TypeScript declarations for Cookie Store API
 declare global {
@@ -21,29 +24,50 @@ declare global {
 }
 
 /**
- * Get a cookie value by name
+ * Parse cookie string into key-value pairs
+ */
+function parseCookieString(cookieString: string): Record<string, string> {
+	const cookies: Record<string, string> = {};
+	if (!cookieString) return cookies;
+
+	cookieString.split(";").forEach((cookie) => {
+		const [name, ...valueParts] = cookie.trim().split("=");
+		if (name) {
+			cookies[name] = decodeURIComponent(valueParts.join("="));
+		}
+	});
+	return cookies;
+}
+
+/**
+ * Get a cookie value by name (isomorphic - works on server and client)
  * @param name The name of the cookie to get
  * @returns The cookie value or undefined if not found
  */
-export function getCookie(name: string): string | undefined {
-	if (typeof document === "undefined") return undefined;
+export const getCookie = createIsomorphicFn()
+	.client((name: string): string | undefined => {
+		if (typeof document === "undefined") return undefined;
 
-	// Use Cookie Store API if available (modern browsers)
-	if (typeof document.cookieStore !== "undefined") {
-		// Cookie Store API is async, but we need sync behavior for compatibility
-		// We'll use the legacy method for now, but this could be updated to async if needed
-	}
-
-	// Legacy method for compatibility
-	const cookies = document.cookie.split(";");
-	for (let i = 0; i < cookies.length; i++) {
-		const cookie = cookies[i].trim();
-		if (cookie.startsWith(`${name}=`)) {
-			return decodeURIComponent(cookie.substring(name.length + 1));
+		// Legacy method for compatibility
+		const cookies = document.cookie.split(";");
+		for (let i = 0; i < cookies.length; i++) {
+			const cookie = cookies[i].trim();
+			if (cookie.startsWith(`${name}=`)) {
+				return decodeURIComponent(cookie.substring(name.length + 1));
+			}
 		}
-	}
-	return undefined;
-}
+		return undefined;
+	})
+	.server((name: string): string | undefined => {
+		const request = getRequest();
+		if (!request) return undefined;
+
+		const cookieHeader = request.headers.get("cookie");
+		if (!cookieHeader) return undefined;
+
+		const cookies = parseCookieString(cookieHeader);
+		return cookies[name];
+	});
 
 /**
  * Set a cookie with the given name, value and options

@@ -5,18 +5,13 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from "~/components/ui/shared/Drawer";
-import { useEnrichedCart } from "~/hooks/useEnrichedCart";
 import { useCart } from "~/lib/cartContext";
 import { ShoppingBag } from "../shared/Icon";
 import { CartItem } from "./CartItem";
 import { CartCheckoutButton, CartSummary } from "./CartSummary";
 
 export function CartDrawerContent() {
-	const { cart } = useCart();
-
-	// Enrich cart items with product data from TanStack Query cache
-	// This must be called unconditionally (hooks rule)
-	const enrichedItems = useEnrichedCart(cart.items);
+	const { enrichedItems } = useCart();
 
 	return (
 		<>
@@ -40,7 +35,6 @@ export function CartDrawerContent() {
 								<CartItem
 									key={`${item.productId}-${item.variationId || "default"}`}
 									item={item}
-									enrichedItems={enrichedItems}
 								/>
 							))}
 						</div>

@@ -1,39 +1,68 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import React, { useId, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/shared/Button";
-import { Image } from "~/components/ui/shared/Image";
-import { Link } from "~/components/ui/shared/Link";
-import { Textarea } from "~/components/ui/shared/TextArea";
-import type { EnrichedCartItem } from "~/hooks/useEnrichedCart";
-import { useEnrichedCart } from "~/hooks/useEnrichedCart";
 import {
-	getAttributeDisplayName,
-	useProductAttributes,
-} from "~/hooks/useProductAttributes";
+	Check,
+	ChevronLeft,
+	Download,
+	Phone,
+	Telegram,
+	Trash,
+	WhatsApp,
+	X,
+} from "~/components/ui/shared/Icon";
+import { Input } from "~/components/ui/shared/input";
+import { Link } from "~/components/ui/shared/Link";
+import { QuantitySelector } from "~/components/ui/shared/QuantitySelector";
+import { Textarea } from "~/components/ui/shared/TextArea";
+import { ASSETS_BASE_URL } from "~/constants/urls";
+import type { EnrichedCartItem } from "~/hooks/useEnrichedCart";
+import { useCartTotals } from "~/hooks/useCartTotals";
 import { useCart } from "~/lib/cartContext";
-import { getStoreProductsFromInfiniteCache } from "~/utils/storeCache";
 import { createOrder } from "~/server_functions/dashboard/orders/orderCreation";
 import { sendOrderEmails } from "~/server_functions/sendOrderEmails";
 import type { ProductWithVariations } from "~/types";
+import { parseImages } from "~/utils/productParsing";
+import { getStoreProductsFromInfiniteCache } from "~/utils/storeCache";
 
-interface Address {
-	firstName: string;
-	lastName: string;
-	email: string;
-	phone: string;
-	streetAddress: string;
-	city: string;
-	state: string;
-	country: string;
-	zipCode: string;
-}
+// Email icon component - defined as const to ensure it's accessible
+const EmailIcon = ({
+	className = "",
+	size = 24,
+}: {
+	className?: string;
+	size?: number;
+}) => {
+	return (
+		<svg
+			className={className}
+			xmlns="http://www.w3.org/2000/svg"
+			width={size}
+			height={size}
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth={2}
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-hidden="true"
+		>
+			<title>Email</title>
+			<rect width="20" height="16" x="2" y="4" rx="2" />
+			<path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+		</svg>
+	);
+};
 
 interface CustomerInfo {
+	fullName: string;
+	phone: string;
+	email: string;
 	notes?: string;
+	contactMethod?: "whatsapp" | "email" | "telegram" | "phone";
 	shippingMethod?: string;
-	shippingAddress?: Address;
 }
 
 export const Route = createFileRoute("/store/checkout")({
@@ -45,36 +74,41 @@ function CheckoutPage() {
 }
 
 function CheckoutScreen() {
-	const { cart, clearCart } = useCart();
-	const { data: attributes } = useProductAttributes();
-	const enrichedItems = useEnrichedCart(cart.items);
+	const navigate = useNavigate();
+	const { cart, clearCart, updateQuantity, removeFromCart, enrichedItems } = useCart();
+	const { subtotal, discountTotal: totalDiscount, total } = useCartTotals(enrichedItems);
 	const queryClient = useQueryClient();
 	const formRef = React.useRef<HTMLFormElement>(null);
 	const notesId = useId();
-	const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
-		notes: "",
-		shippingMethod: "standard",
-	})
+	const fullNameId = useId();
+	const phoneId = useId();
+	const emailId = useId();
 
-	// Order creation mutation with much better UX
+	const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
+		fullName: "Иван Иванович Иванов",
+		phone: "+7 908 541 43 81",
+		email: "ivanov@yandex.com",
+		notes: "",
+		contactMethod: "whatsapp",
+		shippingMethod: "standard",
+	});
+
+	// Order creation mutation
 	const orderMutation = useMutation({
 		mutationFn: async (orderData: {
 			customerInfo: CustomerInfo;
 			cartItems: EnrichedCartItem[];
 			products: ProductWithVariations[];
 		}) => {
-			// Step 1: Create order
 			const orderResult = await createOrder({ data: orderData });
 			if (!orderResult.success) {
 				throw new Error("Failed to create order");
 			}
 
-			// Validate orderId exists
 			if (!orderResult.orderId) {
 				throw new Error("Order was created but no order ID was returned");
 			}
 
-			// Step 2: Send emails
 			try {
 				const emailResult = await sendOrderEmails({
 					data: {
@@ -87,41 +121,37 @@ function CheckoutScreen() {
 						},
 						totalAmount: total,
 					},
-				})
+				});
 
 				return {
 					orderId: orderResult.orderId,
 					emailWarnings: emailResult.emailWarnings,
-				}
+				};
 			} catch (_emailError) {
-				// Order succeeded, but emails failed - still return success
 				return {
 					orderId: orderResult.orderId,
 					emailWarnings: ["Не удалось отправить письма с подтверждением"],
-				}
+				};
 			}
 		},
 		onSuccess: ({ orderId, emailWarnings }) => {
-			// Show appropriate success message
 			if (emailWarnings && emailWarnings.length > 0) {
 				toast.warning(
 					`Заказ успешно размещён! ${emailWarnings.join(", ")}. Наша команда свяжется с вами в ближайшее время.`,
 					{ duration: 5000 },
-				)
+				);
 			} else {
 				toast.success(
 					"Заказ размещён и письма с подтверждением отправлены! 🎉",
 					{
 						duration: 3000,
 					},
-				)
+				);
 			}
 
-			// Pass display-ready order data optimistically to success page
 			const orderData = {
 				orderId,
 				customerInfo,
-				// Transform cart items to match order page display structure
 				items: enrichedItems.map((item, index) => ({
 					id: index,
 					productName: item.productName,
@@ -132,24 +162,21 @@ function CheckoutScreen() {
 						: item.price * item.quantity,
 					discountPercentage: item.discount,
 					attributes: item.attributes || {},
-					image: item.image,
+					image: item.images,
 				})),
 				subtotalAmount: subtotal,
 				discountAmount: totalDiscount,
 				totalAmount: total,
-				shippingAmount: 0, // Always 0 for new orders
+				shippingAmount: 0,
 				timestamp: Date.now(),
-			}
+			};
 
-			// Store in sessionStorage for the success page
 			sessionStorage.setItem("orderSuccess", JSON.stringify(orderData));
 
-			// Small delay to ensure success message is seen, then redirect
 			setTimeout(() => {
-				// Clear the cart AFTER redirect to avoid showing "cart is empty"
-				clearCart()
+				clearCart();
 				window.location.href = `/order/${orderId}?new=true`;
-			}, 1000)
+			}, 1000);
 		},
 		onError: (error: Error) => {
 			toast.error(
@@ -158,55 +185,22 @@ function CheckoutScreen() {
 				{
 					duration: 5000,
 				},
-			)
+			);
 		},
-	})
+	});
 
 	const isLoading = orderMutation.isPending;
 
-	// Handle button click
 	const handleButtonClick = () => {
 		if (cart.items.length === 0) {
 			toast.error("Ваша корзина пуста");
 		} else {
-			// Submit the form
 			const formElement = formRef.current;
 			if (formElement) {
 				formElement.requestSubmit();
 			}
 		}
-	}
-
-	// Get dynamic button text with fun loading messages
-	const getButtonText = () => {
-		if (isLoading) {
-			// Fun, descriptive loading messages
-			const loadingMessages = [
-				"✨ Добавляем немного волшебства в ваш заказ...",
-				"🎨 Подготавливаем ваши прекрасные товары...",
-				"📦 Создаём ваш заказ с любовью...",
-				"💫 Творим нашу магию...",
-			]
-			const randomMessage =
-				loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
-			return randomMessage;
-		}
-		if (cart.items.length === 0) return "Корзина пуста";
-		return "Оформить заказ";
-	}
-
-	// Get dynamic button variant based on state
-	const getButtonVariant = () => {
-		if (cart.items.length === 0) return "destructive";
-		return "default";
-	}
-
-	// Only redirect if cart is empty AND cart has been loaded AND order is not complete
-	//   useEffect(() => {
-	//     if (isCartLoaded && cart.items.length === 0 && !isOrderComplete) {
-	//       router.push("/store");
-	//     }
-	//   }, [cart.items.length, router, isCartLoaded, isOrderComplete]);
+	};
 
 	const handleInputChange = (
 		e: React.ChangeEvent<
@@ -217,235 +211,327 @@ function CheckoutScreen() {
 		setCustomerInfo((prev) => ({
 			...prev,
 			[name]: value,
-		}))
-	}
+		}));
+	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		// If cart is empty
 		if (cart.items.length === 0) {
 			toast.error("Ваша корзина пуста");
-			return
+			return;
 		}
 
-		// Get products from TanStack Query cache for server validation
 		const products = getStoreProductsFromInfiniteCache(queryClient);
 
-		// Use the mutation instead of manual fetch
 		orderMutation.mutate({
 			customerInfo,
 			cartItems: enrichedItems,
-			products: products as unknown as ProductWithVariations[], // Type assertion to resolve type mismatch
-		})
-	}
+			products: products as unknown as ProductWithVariations[],
+		});
+	};
 
-	// Calculate cart totals
-	const subtotal = enrichedItems.reduce(
-		(total, item) => total + item.price * item.quantity,
-		0,
-	)
+	const handleSaveToPDF = () => {
+		toast.info("Функция сохранения в PDF будет добавлена в ближайшее время");
+	};
 
-	// Calculate total discounts
-	const totalDiscount = enrichedItems.reduce((total, item) => {
-		if (item.discount) {
-			const itemDiscount = item.price * item.quantity * (item.discount / 100);
-			return total + itemDiscount;
+	const handleClearCart = () => {
+		if (confirm("Вы уверены, что хотите очистить корзину?")) {
+			clearCart();
 		}
-		return total;
-	}, 0);
-
-	const total = subtotal - totalDiscount;
+	};
 
 	return (
-		<div className="w-full px-4 pt-10 pb-20">
-			<div className="max-w-[2000px] mx-auto">
-				<h2 className="mb-4">Оформление заказа</h2>
-				<div className="flex flex-col lg:flex-row gap-8">
-					{/* Customer Information Form - Left Side */}
-					<div className="flex-1">
-						<form ref={formRef} onSubmit={handleSubmit}>
-							<p className="mb-8">
-								С вами свяжутся по поводу вариантов оплаты после размещения
-								вашего заказа.
-							</p>
+		<div className="w-full min-h-screen">
+			<div className="max-w-[1400px] mx-auto px-4 py-8">
+				{/* Cart Title Section */}
+				<div className="mb-6 flex items-center gap-3">
+					<button
+						type="button"
+						onClick={() => navigate({ to: "/store" })}
+						className="flex items-center justify-center w-8 h-8 hover:bg-muted rounded transition-colors"
+						aria-label="Назад"
+					>
+						<ChevronLeft size={20} />
+					</button>
+					<h1 className="text-3xl font-bold">
+						Корзина {cart.items.length > 0 && `(${cart.items.length})`}
+					</h1>
+				</div>
 
-							<div className="mb-8">
-								<div className="mt-12">
-									<h3 className=" mb-4">Дополнительная информация</h3>
-									<div className="mb-6">
-										<h4 className="block text-sm font-medium mb-2">
-											Способ доставки
-										</h4>
-										<div className="flex gap-4">
-											<Button
-												type="button"
-												onClick={() =>
-													setCustomerInfo((prev) => ({
-														...prev,
-														shippingMethod: "standard",
-													}))
-												}
-												variant={
-													customerInfo.shippingMethod === "standard"
-														? "default"
-														: "outline"
-												}
-												className="flex-1"
+				<div className="border-t border-border mb-6"></div>
+
+				<div className="flex flex-col lg:flex-row gap-8">
+					{/* Left Side - Cart Items */}
+					<div className="flex-1">
+						{cart.items.length === 0 ? (
+							<div className="text-center py-12">
+								<p className="text-muted-foreground text-lg">
+									Ваша корзина пуста
+								</p>
+								<Button to="/store" variant="default" className="mt-4">
+									Перейти в каталог
+								</Button>
+							</div>
+						) : enrichedItems.length === 0 && cart.items.length > 0 ? (
+							<div className="text-center py-12">
+								<p className="text-muted-foreground text-lg">
+									Загрузка товаров...
+								</p>
+							</div>
+						) : (
+							<>
+								{/* Cart Items */}
+								<div className="space-y-6 mb-6">
+									{enrichedItems.map((item) => {
+										const imageArray = parseImages(item.images);
+										const itemTotal = item.discount
+											? item.price * (1 - item.discount / 100) * item.quantity
+											: item.price * item.quantity;
+										const itemArea = item.quantity * 2.159; // Placeholder - adjust based on your data
+
+										return (
+											<div
+												key={`${item.productId}-${item.variationId || "default"}`}
+												className="flex items-start gap-4 bg-background p-4 rounded-lg border border-border"
 											>
-												Стандартная доставка
-											</Button>
-											<Button
-												type="button"
-												onClick={() =>
-													setCustomerInfo((prev) => ({
-														...prev,
-														shippingMethod: "pickup",
-													}))
-												}
-												variant={
-													customerInfo.shippingMethod === "pickup"
-														? "default"
-														: "outline"
-												}
-												className="flex-1"
-											>
-												Самовывоз
-											</Button>
-										</div>
-									</div>
-									<div className="mb-6">
-										<label
-											className="block text-sm font-medium mb-2"
-											htmlFor={notesId}
-										>
-											Примечания к заказу
-										</label>
-										<Textarea
-											id={notesId}
-											name="notes"
-											value={customerInfo.notes}
-											onChange={handleInputChange}
-											rows={4}
-											className="w-full p-2 border rounded-md"
-											placeholder="Есть ли особые инструкции для вашего заказа?"
-										/>
-									</div>
+												{/* Product Image */}
+												<div className="shrink-0 w-24 h-24 bg-muted rounded overflow-hidden">
+													{imageArray.length > 0 ? (
+														<img
+															src={`${ASSETS_BASE_URL}/${imageArray[0]}`}
+															alt={item.productName}
+															className="w-full h-full object-cover"
+														/>
+													) : (
+														<div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+															Нет изображения
+														</div>
+													)}
+												</div>
+
+												{/* Product Details */}
+												<div className="flex-1 flex flex-col gap-2">
+													<div>
+														<p className="text-sm text-muted-foreground">
+															{item.price.toFixed(0)} | м²
+														</p>
+														<Link
+															href={`/product/${item.productSlug}`}
+															className="text-base font-medium hover:underline"
+														>
+															{item.productName}
+														</Link>
+													</div>
+
+													{/* Quantity Selector */}
+													<div className="flex items-center gap-2">
+														<QuantitySelector
+															quantity={item.quantity}
+															onIncrement={() =>
+																updateQuantity(
+																	item.productId,
+																	item.quantity + 1,
+																	item.variationId,
+																)
+															}
+															onDecrement={() =>
+																item.quantity > 1
+																	? updateQuantity(
+																			item.productId,
+																			item.quantity - 1,
+																			item.variationId,
+																		)
+																	: removeFromCart(
+																			item.productId,
+																			item.variationId,
+																		)
+															}
+															size="compact"
+														/>
+														<span className="text-sm text-muted-foreground">
+															уп
+														</span>
+													</div>
+												</div>
+
+												{/* Price and Area */}
+												<div className="text-right">
+													<p className="text-xl font-bold">
+														{itemTotal.toFixed(0)} р
+													</p>
+													<p className="text-sm text-muted-foreground">
+														{itemArea.toFixed(3)} м²
+													</p>
+												</div>
+
+												{/* Remove Button */}
+												<button
+													type="button"
+													onClick={() =>
+														removeFromCart(item.productId, item.variationId)
+													}
+													className="shrink-0 w-8 h-8 flex items-center justify-center hover:bg-muted rounded transition-colors"
+													aria-label="Удалить из корзины"
+												>
+													<X size={18} />
+												</button>
+											</div>
+										);
+									})}
 								</div>
+
+								{/* Cart Actions */}
+								<div className="flex justify-end gap-4 mb-8">
+									<button
+										type="button"
+										onClick={handleSaveToPDF}
+										className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+									>
+										<Download size={18} />
+										<span>Сохранить в PDF</span>
+									</button>
+									<button
+										type="button"
+										onClick={handleClearCart}
+										className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+									>
+										<Trash size={18} />
+										<span>Очистить корзину</span>
+									</button>
+								</div>
+							</>
+						)}
+					</div>
+
+					{/* Right Side - Order Summary and Form */}
+					<div className="lg:w-[400px] lg:sticky lg:top-4 lg:self-start">
+						{/* Order Summary Box */}
+						<div className="border-2 border-primary rounded-lg p-6 mb-6 bg-background">
+							<p className="text-sm mb-2">Итого</p>
+							<p className="text-3xl font-bold text-primary mb-4">
+								{total.toFixed(0)} р
+							</p>
+							<div className="flex justify-between text-sm">
+								<span className="text-muted-foreground">Позиций</span>
+								<span className="font-medium">{enrichedItems.length}</span>
+							</div>
+						</div>
+
+						{/* Contact Form */}
+						<form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+							<Input
+								id={fullNameId}
+								name="fullName"
+								label="Фамилия Имя Отчество"
+								required
+								value={customerInfo.fullName}
+								onChange={handleInputChange}
+							/>
+
+							<Input
+								id={phoneId}
+								name="phone"
+								type="tel"
+								label="Телефон"
+								required
+								value={customerInfo.phone}
+								onChange={handleInputChange}
+							/>
+
+							<Input
+								id={emailId}
+								name="email"
+								type="email"
+								label="Электронная почта"
+								required
+								value={customerInfo.email}
+								onChange={handleInputChange}
+							/>
+
+							<div>
+								<Textarea
+									id={notesId}
+									name="notes"
+									label="Комментарий"
+									value={customerInfo.notes}
+									onChange={handleInputChange}
+									placeholder="Не обязательно"
+									rows={4}
+								/>
+							</div>
+
+							{/* Contact Method Selection */}
+							<div>
+								<p className="block text-sm text-muted-foreground mb-3">
+									Связаться со мной через
+								</p>
+								<div className="flex gap-3">
+									{[
+										{ value: "whatsapp", icon: WhatsApp, label: "WhatsApp" },
+										{ value: "email", icon: EmailIcon, label: "Email" },
+										{ value: "telegram", icon: Telegram, label: "Telegram" },
+										{ value: "phone", icon: Phone, label: "Телефон" },
+									].map(({ value, icon: Icon, label }) => (
+										<button
+											key={value}
+											type="button"
+											onClick={() =>
+												setCustomerInfo((prev) => ({
+													...prev,
+													contactMethod: value as CustomerInfo["contactMethod"],
+												}))
+											}
+											className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-colors ${
+												customerInfo.contactMethod === value
+													? "border-primary bg-primary/10"
+													: "border-border hover:border-primary/50"
+											}`}
+											aria-label={label}
+										>
+											<Icon
+												size={20}
+												className={
+													customerInfo.contactMethod === value
+														? "text-primary"
+														: "text-muted-foreground"
+												}
+											/>
+										</button>
+									))}
+								</div>
+							</div>
+
+							{/* Submit Button */}
+							<Button
+								type="submit"
+								onClick={handleButtonClick}
+								disabled={isLoading || cart.items.length === 0}
+								variant="default"
+								className="w-full h-12 text-base font-medium"
+							>
+								{isLoading ? (
+									<span className="flex items-center gap-2">
+										<div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+										Оформление заказа...
+									</span>
+								) : (
+									"Оформить заявку"
+								)}
+							</Button>
+
+							{/* Security Message */}
+							<div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
+								<Check size={16} className="text-green-600" />
+								<span>
+									Данные в безопасности, надёжно защищены и не передаются
+									третьим лицам
+								</span>
 							</div>
 						</form>
-					</div>
-					{/* Order Summary - Right Side */}
-					<div className="lg:w-[27rem] lg:sticky lg:top-4 lg:self-start">
-						<h5>Итого</h5>
-						<div className="flex justify-between items-baseline my-2">
-							<span>Промежуточная сумма</span>
-							<span>CA${subtotal.toFixed(2)}</span>
-						</div>
-						{totalDiscount > 0 && (
-							<div className="flex justify-between items-baseline my-2 text-red-600">
-								<span>Скидка</span>
-								<span>-CA${totalDiscount.toFixed(2)}</span>
-							</div>
-						)}
-						<div className="flex justify-between items-baseline mb-4">
-							<p>Доставка</p>
-							<p className="text-right text-muted-foreground">
-								Обсуждается после заказа
-							</p>
-						</div>
-						<div className="flex justify-between items-baseline text-xl mb-2 border-t pt-4">
-							<span>Всего</span>
-							<h3 className="">CA${total.toFixed(2)}</h3>
-						</div>
-						<Button
-							onClick={handleButtonClick}
-							disabled={isLoading || cart.items.length === 0}
-							variant={getButtonVariant()}
-							className="w-full transition-all duration-300 ease-in-out disabled:cursor-not-allowed"
-						>
-							{isLoading && (
-								<div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-							)}
-							{getButtonText()}
-						</Button>
-						<div className="mt-6 pt-4 border-t">
-							<h6>Товары в заказе</h6>
-							{enrichedItems.map((item) => (
-								<div
-									key={`${item.productId}-${item.variationId || "default"}`}
-									className="flex items-start gap-3 py-2"
-								>
-									{/* Product image */}
-									<div className="shrink-0 relative w-16 h-16 bg-muted rounded overflow-hidden">
-										{item.image ? (
-											<Image
-												src={`https://assets.rublevsky.studio/${item.image}`}
-												alt={item.productName}
-												className="object-cover"
-											/>
-										) : (
-											<div className="w-full h-full flex items-center justify-center text-muted-foreground">
-												Нет изображения
-											</div>
-										)}
-									</div>
-									{/* Product info */}
-									<div className="grow">
-										<Link
-											href={`/product/${item.productSlug}`}
-											id={"product-${item.productId}"}
-										>
-											{item.productName}
-										</Link>
-										{item.attributes &&
-											Object.keys(item.attributes).length > 0 && (
-												<p className="text-sm text-muted-foreground">
-													{Object.entries(item.attributes)
-														.map(
-															([key, value]) =>
-																`${getAttributeDisplayName(key, attributes || [])}: ${value}`,
-														)
-														.join(", ")}
-												</p>
-											)}
-										<p className="text-sm text-muted-foreground">
-											Количество: {item.quantity}
-										</p>
-									</div>
-									{/* Price */}
-									<div className="text-right">
-										{item.discount ? (
-											<>
-												<p className="text-sm font-medium line-through text-muted-foreground">
-													CA${(item.price * item.quantity).toFixed(2)}
-												</p>
-												<div className="flex items-center justify-end gap-2">
-													<p className="text-sm font-medium">
-														CA$
-														{(
-															item.price *
-															(1 - item.discount / 100) *
-															item.quantity
-														).toFixed(2)}
-													</p>
-													<span className="text-xs text-red-600">
-														{item.discount}% СКИДКА
-													</span>
-												</div>
-											</>
-										) : (
-											<p className="text-sm font-medium">
-												CA${(item.price * item.quantity).toFixed(2)}
-											</p>
-										)}
-									</div>
-								</div>
-							))}
-						</div>
 					</div>
 				</div>
 			</div>
 		</div>
-	)
+	);
 }

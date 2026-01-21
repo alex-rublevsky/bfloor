@@ -14,7 +14,6 @@ import { Icon, X } from "../shared/Icon";
 
 interface CartItemProps {
 	item: EnrichedCartItem;
-	enrichedItems: EnrichedCartItem[];
 }
 
 export function CartItem({ item }: CartItemProps) {

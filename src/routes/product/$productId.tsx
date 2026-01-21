@@ -501,20 +501,13 @@ function ProductPage() {
 		[search, navigate, attributes],
 	);
 
-	const handleAddToCart = useCallback(async () => {
+	const handleAddToCart = useCallback(() => {
 		if (!productWithDetails || !canAddToCart) return;
 
-		// Try to get products from TanStack Query cache for validation (optional)
-		// If cache is empty, the function will use the product directly
-		const products = getStoreProductsFromInfiniteCache(queryClient);
-
-		const success = await addProductToCart(
+		const success = addProductToCart(
 			productWithDetails as unknown as Product,
 			quantity,
 			selectedVariation,
-			products.length > 0
-				? (products as unknown as ProductWithVariations[])
-				: undefined,
 		);
 
 		if (success) {
@@ -526,7 +519,6 @@ function ProductPage() {
 		selectedVariation,
 		canAddToCart,
 		addProductToCart,
-		queryClient,
 	]);
 
 	// Calculate total price for display
