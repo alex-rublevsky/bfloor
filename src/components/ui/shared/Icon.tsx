@@ -314,7 +314,8 @@ interface LegacyIconProps {
 		| "whatsapp"
 		| "search"
 		| "trash"
-		| "shopping-bag";
+		| "shopping-bag"
+		| "phone";
 	className?: string;
 	size?: number;
 }
@@ -343,6 +344,7 @@ export function Icon({ name, className = "", size = 24 }: LegacyIconProps) {
 		search: Search,
 		trash: Trash,
 		"shopping-bag": ShoppingBag,
+		phone: Phone,
 	};
 
 	const IconComponent = iconMap[name];
@@ -920,6 +922,27 @@ export function TrendingUp({ className = "", size = 24 }: IconProps) {
 			<title>Trending Up</title>
 			<path d="M16 7h6v6" />
 			<path d="m22 7-8.5 8.5-5-5L2 17" />
+		</svg>
+	);
+}
+
+export function Phone({ className = "", size = 24 }: IconProps) {
+	return (
+		<svg
+			className={cn("text-muted-foreground", className)}
+			xmlns="http://www.w3.org/2000/svg"
+			width={size}
+			height={size}
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth={2}
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-hidden="true"
+		>
+			<title>Phone</title>
+			<path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" />
 		</svg>
 	);
 }

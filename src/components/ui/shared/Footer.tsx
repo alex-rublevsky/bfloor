@@ -10,7 +10,7 @@ export function Footer() {
 					© Все права защищены ООО "BeautyFloor" 2025
 				</p>
 				{/* TODO: add link www.rublevsky.studio */}
-				<p className="">
+				<p className="text-center">
 					Понравился сайт?{" "}
 					<Link
 						href="https://www.rublevsky.studio"

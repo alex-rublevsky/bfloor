@@ -36,6 +36,7 @@ import {
 	Tags as IconTags,
 	LogOut as LogOutIcon,
 	MoreVertical,
+	Phone,
 } from "./Icon";
 import { Logo } from "./Logo";
 import { ActionButton, ActionButtons } from "./nav/NavBarActionButtons";
@@ -1136,6 +1137,21 @@ export function NavBar({ className }: Omit<NavBarProps, "items">) {
 								showSuggestions={true}
 								className="w-full"
 							/>
+						</div>
+
+						{/* Phone button - fixed width, matches search bar height */}
+						<div className="flex-shrink-0">
+							<Button
+								to="/contacts"
+								variant="secondary"
+								className="size-9 p-1 rounded-sm group border-0 [&_svg]:size-5"
+								aria-label="Контакты и адреса"
+							>
+								<Phone
+									size={20}
+									className="text-accent group-hover:text-primary-foreground transition-standard"
+								/>
+							</Button>
 						</div>
 
 						{/* Dashboard button - fixed width (only for admins) */}
