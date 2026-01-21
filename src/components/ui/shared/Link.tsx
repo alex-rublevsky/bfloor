@@ -13,7 +13,7 @@ const linkVariants = cva(
 					"whitespace-normal! flex items-center justify-between w-full px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground! active:bg-primary active:text-primary-foreground! focus-visible:bg-primary focus-visible:text-primary-foreground! transition-standard [&_.link-text]:hover:text-primary-foreground! [&_.link-text]:active:text-primary-foreground! [&_.link-text]:focus-visible:text-primary-foreground! [&_span]:hover:text-primary-foreground! [&_span]:active:text-primary-foreground! [&_span]:focus-visible:text-primary-foreground!",
 				"menu-item":
 					"whitespace-normal! flex items-center justify-between w-full px-4 py-3 text-base text-foreground hover:bg-primary hover:text-primary-foreground! active:bg-primary active:text-primary-foreground! focus-visible:bg-primary focus-visible:text-primary-foreground! transition-standard [&_.link-text]:hover:text-primary-foreground! [&_.link-text]:active:text-primary-foreground! [&_.link-text]:focus-visible:text-primary-foreground! [&_span]:hover:text-primary-foreground! [&_span]:active:text-primary-foreground! [&_span]:focus-visible:text-primary-foreground!",
-				large: "text-xl",
+				large: "text-lg md:text-xl",
 			},
 		},
 		defaultVariants: {

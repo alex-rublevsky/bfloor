@@ -277,12 +277,18 @@ input.field-sizing-content[type="number"] {
 	/* Section horizontal padding - standardized across the project */
 	/* Mobile default */
 	--section-padding-x: 1rem;
+
+	/* Section top padding for first H1 - standardized across the project */
+	/* Mobile default */
+	--section-padding-top: 0.4rem;
 }
 
 @media (width >= 640px) {
 	:root {
 		/* Desktop padding */
 		--section-padding-x: 1.5rem;
+		/* Desktop top padding */
+		--section-padding-top: 0.7rem;
 	}
 }
 
@@ -316,6 +322,20 @@ input.field-sizing-content[type="number"] {
 	section.no-padding > h2 {
 		padding-left: var(--section-padding-x);
 		padding-right: var(--section-padding-x);
+	}
+
+	/* Add top padding to first H1 in first section of a page */
+	/* This uses CSS :has() to handle both direct and nested h1 cases efficiently */
+
+	/* Direct child case: section > h1 */
+	section:first-of-type > h1:first-child {
+		padding-top: var(--section-padding-top);
+	}
+
+	/* Nested case: when section doesn't have direct h1 child, target first nested h1 */
+	/* Uses :has() to check for direct h1, and only applies to nested h1s if none exists */
+	section:first-of-type:not(:has(> h1)) h1:first-of-type {
+		padding-top: var(--section-padding-top);
 	}
 
 	/* GENERAL */
