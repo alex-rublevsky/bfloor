@@ -352,7 +352,7 @@ const MobileMenuButton = () => {
 
 	const menuItems = [
 		{ name: "О компании", url: "/about" },
-		{ name: "Контакты и адреса", url: "/contacts" },
+		{ name: "Контакты и адреса", url: "/contact" },
 		{ name: "Доставка и оплата", url: "/delivery" },
 	];
 
@@ -510,7 +510,7 @@ const AddressDropdown = () => {
 			menuClassName="catalog-dropdown-menu-single-column"
 			trigger={(isOpen) => (
 				<Link
-					href="/contacts"
+					href="/contact"
 					className="flex items-center gap-1.5 text-foreground hover:text-primary transition-standard whitespace-nowrap cursor-pointer"
 				>
 					<Icon
@@ -568,7 +568,7 @@ const AddressDropdown = () => {
 						</div>
 					</div>
 					<div className="pt-3 border-t border-border">
-						<Button to="/contacts" variant="default" className="w-full">
+						<Button to="/contact" variant="default" className="w-full">
 							Адреса
 						</Button>
 					</div>
@@ -1038,7 +1038,7 @@ export function NavBar({ className }: Omit<NavBarProps, "items">) {
 							<PhoneDropdown />
 							<div className="flex items-center gap-3">
 								<Link href="/delivery">Доставка и оплата</Link>
-								<Link href="/contacts">Контакты и адреса</Link>
+								<Link href="/contact">Контакты и адреса</Link>
 								<Link href="/about">О компании</Link>
 							</div>
 						</div>
@@ -1105,7 +1105,7 @@ export function NavBar({ className }: Omit<NavBarProps, "items">) {
 							<PhoneDropdown />
 							<div className="flex items-center gap-3">
 								<Link href="/delivery">Доставка и оплата</Link>
-								<Link href="/contacts">Контакты и адреса</Link>
+								<Link href="/contact">Контакты и адреса</Link>
 								<Link href="/about">О компании</Link>
 							</div>
 						</div>
@@ -1189,7 +1189,7 @@ export function NavBar({ className }: Omit<NavBarProps, "items">) {
 						{/* Phone button - fixed width, matches search bar height */}
 						<div className="flex-shrink-0">
 							<Button
-								to="/contacts"
+								to="/contact"
 								variant="secondary"
 								className="size-9 p-1 rounded-sm group border-0 [&_svg]:size-5"
 								aria-label="Контакты и адреса"

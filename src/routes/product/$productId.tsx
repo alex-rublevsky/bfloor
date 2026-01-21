@@ -913,7 +913,7 @@ function ProductPage() {
 																(location, index) => (
 																	<span key={location.id}>
 																		<Link
-																			href="/contacts"
+																			href="/contact"
 																			className="text-accent"
 																		>
 																			{location.address}
@@ -1441,7 +1441,7 @@ function ProductPage() {
 													{productWithDetails.storeLocations?.map(
 														(location, index) => (
 															<span key={location.id}>
-																<Link href="/contacts" className="text-accent">
+																<Link href="/contact" className="text-accent">
 																	{location.address}
 																</Link>
 																{index <

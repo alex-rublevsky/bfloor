@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RedirectRouteImport } from './routes/redirect'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DeliveryRouteImport } from './routes/delivery'
-import { Route as ContactsRouteImport } from './routes/contacts'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as StoreRouteRouteImport } from './routes/store/route'
@@ -48,11 +47,6 @@ const LoginRoute = LoginRouteImport.update({
 const DeliveryRoute = DeliveryRouteImport.update({
   id: '/delivery',
   path: '/delivery',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactsRoute = ContactsRouteImport.update({
-  id: '/contacts',
-  path: '/contacts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -169,7 +163,6 @@ export interface FileRoutesByFullPath {
   '/store': typeof StoreRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
-  '/contacts': typeof ContactsRoute
   '/delivery': typeof DeliveryRoute
   '/login': typeof LoginRoute
   '/redirect': typeof RedirectRoute
@@ -194,7 +187,6 @@ export interface FileRoutesByTo {
   '/product': typeof ProductRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
-  '/contacts': typeof ContactsRoute
   '/delivery': typeof DeliveryRoute
   '/login': typeof LoginRoute
   '/redirect': typeof RedirectRoute
@@ -222,7 +214,6 @@ export interface FileRoutesById {
   '/store': typeof StoreRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
-  '/contacts': typeof ContactsRoute
   '/delivery': typeof DeliveryRoute
   '/login': typeof LoginRoute
   '/redirect': typeof RedirectRoute
@@ -251,7 +242,6 @@ export interface FileRouteTypes {
     | '/store'
     | '/about'
     | '/contact'
-    | '/contacts'
     | '/delivery'
     | '/login'
     | '/redirect'
@@ -276,7 +266,6 @@ export interface FileRouteTypes {
     | '/product'
     | '/about'
     | '/contact'
-    | '/contacts'
     | '/delivery'
     | '/login'
     | '/redirect'
@@ -303,7 +292,6 @@ export interface FileRouteTypes {
     | '/store'
     | '/about'
     | '/contact'
-    | '/contacts'
     | '/delivery'
     | '/login'
     | '/redirect'
@@ -331,7 +319,6 @@ export interface RootRouteChildren {
   StoreRouteRoute: typeof StoreRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   ContactRoute: typeof ContactRoute
-  ContactsRoute: typeof ContactsRoute
   DeliveryRoute: typeof DeliveryRoute
   LoginRoute: typeof LoginRoute
   RedirectRoute: typeof RedirectRoute
@@ -360,13 +347,6 @@ declare module '@tanstack/react-router' {
       path: '/delivery'
       fullPath: '/delivery'
       preLoaderRoute: typeof DeliveryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contacts': {
-      id: '/contacts'
-      path: '/contacts'
-      fullPath: '/contacts'
-      preLoaderRoute: typeof ContactsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -582,7 +562,6 @@ const rootRouteChildren: RootRouteChildren = {
   StoreRouteRoute: StoreRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   ContactRoute: ContactRoute,
-  ContactsRoute: ContactsRoute,
   DeliveryRoute: DeliveryRoute,
   LoginRoute: LoginRoute,
   RedirectRoute: RedirectRoute,

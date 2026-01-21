@@ -22,7 +22,7 @@ export function StoreLocationsSelector({
 		id: location.id,
 		label: location.address,
 		description: location.description || undefined,
-		isActive: location.isActive,
+		isActive: true, // All store locations are active by default
 	}));
 
 	return (

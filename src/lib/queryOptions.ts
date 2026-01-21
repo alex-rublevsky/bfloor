@@ -38,6 +38,8 @@ import { getProductDetailsBySlug } from "~/server_functions/store/getProductDeta
 import { getRecommendedProducts } from "~/server_functions/store/getRecommendedProducts";
 import type { ProductWithDetails } from "~/types";
 import { getUserData } from "~/utils/auth-server-func";
+import { getAllStoreLocations } from "~/data/storeLocations";
+import type { StoreLocation } from "~/data/storeLocations";
 
 // Type for paginated response from getStoreData and getAllProducts
 type PaginatedResponse = {
@@ -1121,4 +1123,25 @@ export const userDataQueryOptions = () =>
 		retry: false, // Don't retry auth failures
 		refetchOnWindowFocus: false, // Refetch when returning to app
 		refetchOnMount: false, // Don't refetch on every mount if data is fresh
+	});
+
+/**
+ * Store locations query options
+ * Used for: Contact page and other pages that need store location data
+ *
+ * Cache Strategy: Long-term caching for static data
+ * - Store locations cached for 7 days (rarely change)
+ * - Kept in memory for 14 days
+ * - Perfect for contact pages and location selectors
+ */
+export const storeLocationsQueryOptions = () =>
+	queryOptions<StoreLocation[]>({
+		queryKey: ["storeLocations"],
+		queryFn: async () => {
+			return getAllStoreLocations();
+		},
+		staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days - store locations rarely change
+		gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep in memory
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
 	});
