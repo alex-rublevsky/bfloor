@@ -315,7 +315,8 @@ interface LegacyIconProps {
 		| "search"
 		| "trash"
 		| "shopping-bag"
-		| "phone";
+		| "phone"
+		| "menu";
 	className?: string;
 	size?: number;
 }
@@ -345,6 +346,7 @@ export function Icon({ name, className = "", size = 24 }: LegacyIconProps) {
 		trash: Trash,
 		"shopping-bag": ShoppingBag,
 		phone: Phone,
+		menu: Menu,
 	};
 
 	const IconComponent = iconMap[name];
@@ -943,6 +945,29 @@ export function Phone({ className = "", size = 24 }: IconProps) {
 		>
 			<title>Phone</title>
 			<path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" />
+		</svg>
+	);
+}
+
+export function Menu({ className = "", size = 24 }: IconProps) {
+	// Calculate scale to maintain aspect ratio
+	const aspectRatio = 16 / 7;
+	const height = size;
+	const width = height * aspectRatio;
+	
+	return (
+		<svg
+			className={cn("text-muted-foreground", className)}
+			xmlns="http://www.w3.org/2000/svg"
+			width={width}
+			height={height}
+			viewBox="0 0 16 7"
+			fill="none"
+			aria-hidden="true"
+		>
+			<title>Menu</title>
+			<path d="M0 0H16V2H0V0Z" fill="currentColor" />
+			<path d="M0 5H10V7H0V5Z" fill="currentColor" />
 		</svg>
 	);
 }

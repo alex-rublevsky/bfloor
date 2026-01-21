@@ -37,6 +37,7 @@ import {
 	LogOut as LogOutIcon,
 	MoreVertical,
 	Phone,
+	Menu,
 } from "./Icon";
 import { Logo } from "./Logo";
 import { ActionButton, ActionButtons } from "./nav/NavBarActionButtons";
@@ -340,6 +341,52 @@ const CartButton = () => {
 			</DrawerTrigger>
 			<DrawerContent>
 				<CartDrawerContent />
+			</DrawerContent>
+		</Drawer>
+	);
+};
+
+// Mobile Menu Button Component
+const MobileMenuButton = () => {
+	const [isOpen, setIsOpen] = useState(false);
+
+	const menuItems = [
+		{ name: "О компании", url: "/about" },
+		{ name: "Контакты и адреса", url: "/contacts" },
+		{ name: "Доставка и оплата", url: "/delivery" },
+	];
+
+	return (
+		<Drawer open={isOpen} onOpenChange={setIsOpen}>
+			<DrawerTrigger asChild>
+				<Button
+					type="button"
+					variant="secondary"
+					className="size-9 p-1 rounded-sm group border-0 [&_svg]:size-5"
+					aria-label="Меню"
+				>
+					<Menu
+						size={20}
+						className="text-accent group-hover:text-primary-foreground transition-standard"
+					/>
+				</Button>
+			</DrawerTrigger>
+			<DrawerContent>
+				<div className="px-4 py-6">
+					<div className="flex flex-col gap-2">
+						{menuItems.map((item) => (
+							<Link
+								key={item.url}
+								href={item.url}
+								variant="menu-item"
+								disableAnimation={true}
+								onClick={() => setIsOpen(false)}
+							>
+								{item.name}
+							</Link>
+						))}
+					</div>
+				</div>
 			</DrawerContent>
 		</Drawer>
 	);
@@ -1152,6 +1199,11 @@ export function NavBar({ className }: Omit<NavBarProps, "items">) {
 									className="text-accent group-hover:text-primary-foreground transition-standard"
 								/>
 							</Button>
+						</div>
+
+						{/* Mobile menu button - fixed width, matches search bar height */}
+						<div className="flex-shrink-0">
+							<MobileMenuButton />
 						</div>
 
 						{/* Dashboard button - fixed width (only for admins) */}
