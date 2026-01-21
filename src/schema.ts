@@ -46,7 +46,7 @@ export const products = sqliteTable(
 			.default(false),
 		productAttributes: text("product_attributes"), // JSON stored as text
 		dimensions: text("dimensions"), // Характеристики товара (габариты) - text field for non-filterable product details
-		viewCount: integer("view_count"), // Track product popularity via page views (nullable initially, will be backfilled)
+		viewCount: integer("view_count").notNull().default(0),
 		createdAt: integer("created_at", { mode: "timestamp" }),
 	},
 	(table) => [

@@ -23,12 +23,11 @@ export const incrementProductView = createServerFn({ method: "POST" })
 
 			// Atomic increment - safe for concurrent requests
 			// Only increment for active products
-			// COALESCE handles null values (treats null as 0)
-			// Using Drizzle update with raw SQL for COALESCE
+			// viewCount defaults to 0, so no COALESCE needed (better index usage)
 			await db
 				.update(products)
 				.set({
-					viewCount: sql`COALESCE(${products.viewCount}, 0) + 1`,
+					viewCount: sql`${products.viewCount} + 1`,
 				})
 				.where(sql`${products.id} = ${productId} AND ${products.isActive} = 1`);
 

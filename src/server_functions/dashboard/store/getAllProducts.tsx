@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { eq, inArray, type SQL, sql } from "drizzle-orm";
 import { DB } from "~/db";
-import { products, productStoreLocations, productVariations } from "~/schema";
+import { productStoreLocations, products, productVariations } from "~/schema";
 import {
 	parseProductAttributes,
 	parseVariationAttributes,
@@ -202,8 +202,8 @@ export const getAllProducts = createServerFn({ method: "GET" })
 			} else if (sort === "name") {
 				orderSql = sql`${products.name} asc`;
 			} else if (sort === "best-selling") {
-				// Treat NULL as 0 for sorting (products without views go to bottom)
-				orderSql = sql`COALESCE(${products.viewCount}, 0) desc`;
+				// Sort by viewCount DESC - index optimized (viewCount defaults to 0)
+				orderSql = sql`${products.viewCount} desc`;
 			} else if (effectiveSearch && ftsProductIds && ftsProductIds.length > 0) {
 				// Use pre-fetched FTS5 ranking (no duplicate query!)
 				// Build CASE statement to maintain FTS rank order from the single query we already executed
