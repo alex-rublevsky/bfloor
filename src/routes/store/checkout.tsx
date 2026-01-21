@@ -18,8 +18,8 @@ import { Link } from "~/components/ui/shared/Link";
 import { QuantitySelector } from "~/components/ui/shared/QuantitySelector";
 import { Textarea } from "~/components/ui/shared/TextArea";
 import { ASSETS_BASE_URL } from "~/constants/urls";
-import type { EnrichedCartItem } from "~/hooks/useEnrichedCart";
 import { useCartTotals } from "~/hooks/useCartTotals";
+import type { EnrichedCartItem } from "~/hooks/useEnrichedCart";
 import { useCart } from "~/lib/cartContext";
 import { createOrder } from "~/server_functions/dashboard/orders/orderCreation";
 import { sendOrderEmails } from "~/server_functions/sendOrderEmails";
@@ -75,8 +75,13 @@ function CheckoutPage() {
 
 function CheckoutScreen() {
 	const navigate = useNavigate();
-	const { cart, clearCart, updateQuantity, removeFromCart, enrichedItems } = useCart();
-	const { subtotal, discountTotal: totalDiscount, total } = useCartTotals(enrichedItems);
+	const { cart, clearCart, updateQuantity, removeFromCart, enrichedItems } =
+		useCart();
+	const {
+		subtotal,
+		discountTotal: totalDiscount,
+		total,
+	} = useCartTotals(enrichedItems);
 	const queryClient = useQueryClient();
 	const formRef = React.useRef<HTMLFormElement>(null);
 	const notesId = useId();
