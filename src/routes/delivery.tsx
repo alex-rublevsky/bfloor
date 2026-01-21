@@ -13,12 +13,12 @@ function RouteComponent() {
 			<div className="flex flex-wrap gap-4 mb-6">
 				<Image
 					src={`${ASSETS_BASE_URL}/banners/delivery.jpg`}
-					className="rounded-lg max-h-120 h-full w-full sm:w-auto sm:shrink-0"
+					className="rounded-lg max-h-120 h-full w-full sm:w-auto sm:max-w-sm md:max-w-md sm:shrink-0"
 					alt="Доставка и оплата"
 				/>
-				<div className="flex flex-col gap-4 min-w-[45ch] max-w-[65ch] flex-1">
+				<div className="flex flex-col gap-4 min-w-0 sm:min-w-[45ch] max-w-[65ch] flex-1">
 					<h1>Доставка и оплата</h1>
-					<h2>По Приморскому краю</h2>
+					<h3>По Приморскому краю</h3>
 					<p>
 						Доставка товаров осуществляется ежедневно, кроме выходных и
 						праздничных дней. Водитель свяжется с Вами за 1-2 часа до приезда.
@@ -40,8 +40,8 @@ function RouteComponent() {
 			</div>
 
 			<div className="flex flex-wrap gap-4 mb-6">
-				<div className="flex flex-col gap-4 min-w-[45ch] max-w-[65ch] flex-1">
-					<h2>Доставка в регионы РФ</h2>
+				<div className="flex flex-col gap-4 min-w-0 sm:min-w-[45ch] max-w-[65ch] w-full sm:flex-1">
+					<h3>Доставка в регионы РФ</h3>
 					<p>
 						Наша компания доставляет товары по всей территории РФ. Для Вашего
 						удобства, мы готовы оперативно осуществить доставку до указанной
@@ -53,7 +53,7 @@ function RouteComponent() {
 						составит 400р.
 					</p>
 				</div>
-				<div className="flex flex-col gap-4 min-w-[45ch] max-w-[65ch] flex-1">
+				<div className="flex flex-col gap-4 min-w-0 sm:min-w-[45ch] max-w-[65ch] w-full sm:flex-1 items-start">
 					<h2>Самовывоз с магазина</h2>
 					<p>
 						Вы можете забрать материал самостоятельно с нашего склада. Для этого
@@ -61,14 +61,16 @@ function RouteComponent() {
 						приехать. Наши сотрудники подготовят груз и все документы к Вашему
 						приезду.
 					</p>
-					<Button variant="outline">Как доехать</Button>
+					<Button to="/contact" variant="outline">
+						Как доехать
+					</Button>
 				</div>
 			</div>
 
 			<div className="flex flex-wrap gap-4 mb-6">
-				<div className="flex flex-col gap-4 min-w-[45ch] max-w-[65ch] flex-1">
+				<div className="flex flex-col gap-4 min-w-0 sm:min-w-[45ch] max-w-[65ch] w-full sm:flex-1">
 					<h2>Оплата</h2>
-					<h3>Методы оплаты</h3>
+
 					<p>
 						Наша компания доставляет товары по всей территории РФ. Для Вашего
 						удобства, мы готовы оперативно осуществить доставку до указанной
@@ -76,14 +78,16 @@ function RouteComponent() {
 						менеджеры оперативно рассчитают вес и объем Вашего груза.
 					</p>
 				</div>
-				<div className="flex flex-col gap-4 min-w-[45ch] max-w-[65ch] flex-1">
+				<div className="flex flex-col gap-4 min-w-0 sm:min-w-[45ch] max-w-[65ch] w-full sm:flex-1 items-start">
 					<h2>Ассортимент и цена</h2>
 					<p>
 						Все товары указанные на сайте доступны к заказу, большая часть
 						доступна в магазинах и на складе. О наличии и актуальных ценах
 						уточняйте у менеджера.
 					</p>
-					<Button variant="outline">Связаться с менеджером</Button>
+					<Button to="/contact" variant="outline">
+						Связаться с менеджером
+					</Button>
 				</div>
 			</div>
 		</section>

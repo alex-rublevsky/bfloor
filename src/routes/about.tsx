@@ -12,11 +12,11 @@ function RouteComponent() {
 			<div className="flex flex-wrap gap-4 mb-6">
 				<Image
 					src={`${ASSETS_BASE_URL}/banners/bubisha.webp`}
-					className="rounded-lg max-h-120 h-full w-full sm:w-auto sm:shrink-0"
+					className="rounded-lg max-h-120 h-full w-full sm:w-auto sm:max-w-xs md:max-w-sm lg:max-w-md sm:shrink-0"
 					alt="О компании"
 				/>
 
-				<div className="flex flex-col gap-4 min-w-[45ch] flex-1">
+				<div className="flex flex-col gap-4 min-w-0 sm:min-w-[45ch] max-w-[65ch] flex-1">
 					<h1>О компании</h1>
 					<p>
 						У нас большой выбор напольных покрытий, для домов, офисов,
