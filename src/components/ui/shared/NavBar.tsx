@@ -35,9 +35,9 @@ import {
 	Package as IconPackage,
 	Tags as IconTags,
 	LogOut as LogOutIcon,
+	Menu,
 	MoreVertical,
 	Phone,
-	Menu,
 } from "./Icon";
 import { Logo } from "./Logo";
 import { ActionButton, ActionButtons } from "./nav/NavBarActionButtons";

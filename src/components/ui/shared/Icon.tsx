@@ -954,7 +954,7 @@ export function Menu({ className = "", size = 24 }: IconProps) {
 	const aspectRatio = 16 / 7;
 	const height = size;
 	const width = height * aspectRatio;
-	
+
 	return (
 		<svg
 			className={cn("text-muted-foreground", className)}
