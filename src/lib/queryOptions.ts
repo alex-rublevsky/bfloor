@@ -13,6 +13,8 @@
 
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { notFound } from "@tanstack/react-router";
+import type { StoreLocation } from "~/data/storeLocations";
+import { getAllStoreLocations } from "~/data/storeLocations";
 import { getAllAttributeValuesByAttribute } from "~/server_functions/dashboard/attributes/getAllAttributeValuesByAttribute";
 import { getAllProductAttributes } from "~/server_functions/dashboard/attributes/getAllProductAttributes";
 import { getAttributeValues } from "~/server_functions/dashboard/attributes/getAttributeValues";
@@ -38,8 +40,6 @@ import { getProductDetailsBySlug } from "~/server_functions/store/getProductDeta
 import { getRecommendedProducts } from "~/server_functions/store/getRecommendedProducts";
 import type { ProductWithDetails } from "~/types";
 import { getUserData } from "~/utils/auth-server-func";
-import { getAllStoreLocations } from "~/data/storeLocations";
-import type { StoreLocation } from "~/data/storeLocations";
 
 // Type for paginated response from getStoreData and getAllProducts
 type PaginatedResponse = {
