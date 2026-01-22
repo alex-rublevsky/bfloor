@@ -5,13 +5,21 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from "~/components/ui/shared/Drawer";
+import { useEnrichedCart } from "~/hooks/useEnrichedCart";
 import { useCart } from "~/lib/cartContext";
 import { ShoppingBag } from "../shared/Icon";
 import { CartItem } from "./CartItem";
 import { CartCheckoutButton, CartSummary } from "./CartSummary";
 
 export function CartDrawerContent() {
-	const { enrichedItems } = useCart();
+	const { cart } = useCart();
+
+	// Enrich cart items with product data from TanStack Query cache
+	// This must be called unconditionally (hooks rule)
+	const enrichedItems = useEnrichedCart(cart.items);
+
+	// Show loading state if cart has items but enriched items are still loading
+	const isLoading = cart.items.length > 0 && enrichedItems.length === 0;
 
 	return (
 		<>
@@ -23,7 +31,11 @@ export function CartDrawerContent() {
 			</DrawerHeader>
 
 			<DrawerBody>
-				{enrichedItems.length === 0 ? (
+				{isLoading ? (
+					<div className="flex flex-col items-center justify-center h-full">
+						<p className="text-muted-foreground">Загрузка товаров...</p>
+					</div>
+				) : enrichedItems.length === 0 ? (
 					<div className="flex flex-col items-center justify-center h-full">
 						<ShoppingBag size={48} className="text-muted mb-4" />
 						<p className="text-muted-foreground">Ваша корзина пуста</p>
@@ -35,6 +47,7 @@ export function CartDrawerContent() {
 								<CartItem
 									key={`${item.productId}-${item.variationId || "default"}`}
 									item={item}
+									enrichedItems={enrichedItems}
 								/>
 							))}
 						</div>

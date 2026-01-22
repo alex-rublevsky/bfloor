@@ -3,6 +3,7 @@ import type { ErrorComponentProps } from "@tanstack/react-router";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -277,7 +278,7 @@ function ProductPage() {
 	const navigate = Route.useNavigate();
 	const [quantity, setQuantity] = useState(1);
 
-	const { addProductToCart } = useCart();
+	const { addToCart } = useCart();
 	const { data: attributes } = useProductAttributes();
 	const queryClient = useQueryClient();
 	const cachedProduct = useMemo(
@@ -501,25 +502,44 @@ function ProductPage() {
 		[search, navigate, attributes],
 	);
 
-	const handleAddToCart = useCallback(() => {
+	const handleAddToCart = useCallback(async () => {
 		if (!productWithDetails || !canAddToCart) return;
 
-		const success = addProductToCart(
-			productWithDetails as unknown as Product,
-			quantity,
-			selectedVariation,
-		);
-
-		if (success) {
-			setQuantity(1); // Reset quantity after successful add
+		// Validate variation requirement
+		if (productWithDetails.hasVariations && !selectedVariation) {
+			toast.error("Пожалуйста, выберите вариант");
+			return;
 		}
-	}, [
-		productWithDetails,
-		quantity,
-		selectedVariation,
-		canAddToCart,
-		addProductToCart,
-	]);
+
+		try {
+			// Get variation attributes for cart display
+			const variationAttributes = selectedVariation?.attributes?.length
+				? Object.fromEntries(
+						selectedVariation.attributes.map((attr) => [
+							attr.attributeId,
+							attr.value,
+						]),
+					)
+				: undefined;
+
+			// Add to cart with enriched data for instant display
+			addToCart({
+				productId: productWithDetails.id,
+				quantity,
+				variationId: selectedVariation?.id,
+				productName: productWithDetails.name,
+				productSlug: productWithDetails.slug,
+				price: selectedVariation?.price ?? productWithDetails.price,
+				images: productWithDetails.images,
+				discount: selectedVariation?.discount ?? productWithDetails.discount,
+				attributes: variationAttributes,
+			});
+			setQuantity(1); // Reset quantity after successful add
+		} catch (error) {
+			console.error("Error adding to cart:", error);
+			toast.error("Не удалось добавить товар в корзину");
+		}
+	}, [productWithDetails, quantity, selectedVariation, canAddToCart, addToCart]);
 
 	// Calculate total price for display
 	// For flooring products: price per m² × square meters per pack × quantity

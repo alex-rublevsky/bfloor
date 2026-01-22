@@ -18,8 +18,8 @@ import { Link } from "~/components/ui/shared/Link";
 import { QuantitySelector } from "~/components/ui/shared/QuantitySelector";
 import { Textarea } from "~/components/ui/shared/TextArea";
 import { ASSETS_BASE_URL } from "~/constants/urls";
-import { useCartTotals } from "~/hooks/useCartTotals";
 import type { EnrichedCartItem } from "~/hooks/useEnrichedCart";
+import { useEnrichedCart } from "~/hooks/useEnrichedCart";
 import { useCart } from "~/lib/cartContext";
 import { createOrder } from "~/server_functions/dashboard/orders/orderCreation";
 import { sendOrderEmails } from "~/server_functions/sendOrderEmails";
@@ -75,13 +75,8 @@ function CheckoutPage() {
 
 function CheckoutScreen() {
 	const navigate = useNavigate();
-	const { cart, clearCart, updateQuantity, removeFromCart, enrichedItems } =
-		useCart();
-	const {
-		subtotal,
-		discountTotal: totalDiscount,
-		total,
-	} = useCartTotals(enrichedItems);
+	const { cart, clearCart, updateQuantity, removeFromCart } = useCart();
+	const enrichedItems = useEnrichedCart(cart.items);
 	const queryClient = useQueryClient();
 	const formRef = React.useRef<HTMLFormElement>(null);
 	const notesId = useId();
@@ -235,6 +230,22 @@ function CheckoutScreen() {
 			products: products as unknown as ProductWithVariations[],
 		});
 	};
+
+	// Calculate cart totals
+	const subtotal = enrichedItems.reduce(
+		(total, item) => total + item.price * item.quantity,
+		0,
+	);
+
+	const totalDiscount = enrichedItems.reduce((total, item) => {
+		if (item.discount) {
+			const itemDiscount = item.price * item.quantity * (item.discount / 100);
+			return total + itemDiscount;
+		}
+		return total;
+	}, 0);
+
+	const total = subtotal - totalDiscount;
 
 	const handleSaveToPDF = () => {
 		toast.info("Функция сохранения в PDF будет добавлена в ближайшее время");

@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { memo, useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Skeleton } from "~/components/ui/dashboard/skeleton";
 import { Button } from "~/components/ui/shared/Button";
 import { ASSETS_BASE_URL } from "~/constants/urls";
@@ -140,7 +141,7 @@ function ProductCard({
 }) {
 	const [isAddingToCart, setIsAddingToCart] = useState(false);
 	const [isHovering, setIsHovering] = useState(false);
-	const { addProductToCart } = useCart();
+	const { addToCart } = useCart();
 	const { prefetchProduct } = usePrefetch();
 	const queryClient = useQueryClient();
 	const { data: attributes } = useProductAttributes();
@@ -226,25 +227,49 @@ function ProductCard({
 	);
 
 	const handleAddToCart = useCallback(
-		(e: React.MouseEvent) => {
+		async (e: React.MouseEvent) => {
 			e.preventDefault();
 			if (!isAvailable) return;
+
+			// Validate variation requirement
+			if (product.hasVariations && !selectedVariation) {
+				toast.error("Пожалуйста, выберите вариант");
+				return;
+			}
 
 			setIsAddingToCart(true);
 
 			try {
-				addProductToCart(
-					product as Product,
-					1, // Default quantity of 1 when adding from product card
-					selectedVariation,
-				);
+				// Get variation attributes for cart display
+				const variationAttributes = selectedVariation?.attributes?.length
+					? Object.fromEntries(
+							selectedVariation.attributes.map((attr) => [
+								attr.attributeId,
+								attr.value,
+							]),
+						)
+					: undefined;
+
+				// Add to cart with enriched data for instant display
+				addToCart({
+					productId: product.id,
+					quantity: 1,
+					variationId: selectedVariation?.id,
+					productName: product.name,
+					productSlug: product.slug,
+					price: selectedVariation?.price ?? product.price,
+					images: product.images,
+					discount: selectedVariation?.discount ?? product.discount,
+					attributes: variationAttributes,
+				});
 			} catch (error) {
 				console.error("Error adding to cart:", error);
+				toast.error("Не удалось добавить товар в корзину");
 			} finally {
 				setIsAddingToCart(false);
 			}
 		},
-		[isAvailable, addProductToCart, product, selectedVariation],
+		[isAvailable, addToCart, product, selectedVariation],
 	);
 
 	// Check if product is coming soon (not in the type, so we'll use a placeholder)
@@ -263,7 +288,7 @@ function ProductCard({
 				prefetchProduct(product.slug);
 				queryClient.setQueryData(
 					["bfloorProduct", product.slug],
-					(existing: unknown) => existing ?? seededProduct,
+					(existing) => existing ?? seededProduct,
 				);
 			}}
 		>

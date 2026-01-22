@@ -5,15 +5,9 @@ import {
 } from "~/components/ui/shared/Drawer";
 import { useCart } from "~/lib/cartContext";
 import { CartDrawerContent } from "./CartDrawerContent";
-import { CartNavSkeleton } from "./skeletons/CartNavSkeleton";
 
 export function CartNav() {
-	const { cartOpen, setCartOpen, itemCount, isLoading } = useCart();
-
-	// Show skeleton while loading
-	if (isLoading) {
-		return <CartNavSkeleton />;
-	}
+	const { cartOpen, setCartOpen, itemCount } = useCart();
 
 	return (
 		<div className="fixed bottom-3 right-3 z-50">
