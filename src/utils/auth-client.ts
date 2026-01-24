@@ -5,7 +5,7 @@ import { createAuthClient } from "better-auth/react";
 const baseURL =
 	typeof window !== "undefined"
 		? window.location.origin
-		: process.env.BETTER_AUTH_URL || "https://bfloor.vercel.app/";
+		: process.env.BETTER_AUTH_URL || "https://bfloor.ru/";
 
 export const { useSession, signIn, signOut, getSession } = createAuthClient({
 	baseURL: baseURL,
