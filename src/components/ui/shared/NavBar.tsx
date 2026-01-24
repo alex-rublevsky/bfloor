@@ -228,7 +228,7 @@ const DropdownNavMenu = ({
 			>
 				{showUserInfo && (
 					<>
-						<div className="flex items-center gap-2 px-3 py-2 border-b border-border">
+						<div className="flex items-center gap-2 px-4 py-2 border-b border-border">
 							<Avatar className="h-8 w-8 rounded-lg flex-shrink-0">
 								<AvatarImage src={userAvatar} alt={userName || userID} />
 								<AvatarFallback className="rounded-lg">
@@ -263,7 +263,7 @@ const DropdownNavMenu = ({
 									navigate({ to: "/" });
 								}
 							}}
-							className="flex w-full items-center gap-2 py-2 px-3 text-sm hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-standard border-b border-border cursor-pointer"
+							className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-standard border-b border-border cursor-pointer [&_svg]:hover:text-primary-foreground [&_svg]:active:text-primary-foreground"
 						>
 							<LogOutIcon className="h-4 w-4" />
 							Выйти
@@ -272,21 +272,25 @@ const DropdownNavMenu = ({
 				)}
 				{items.map((item) =>
 					item.url.startsWith("http") ? (
-						<a
+						<Link
 							key={item.url}
 							href={item.url}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="relative flex w-full cursor-pointer select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-standard"
+							variant="category"
+							disableAnimation={true}
 						>
+							{item.icon && <item.icon />}
 							{item.name}
-						</a>
+						</Link>
 					) : (
 						<Link
 							key={item.url}
 							href={item.url}
-							className="relative flex w-full cursor-pointer select-none items-center py-2 px-3 text-sm outline-none focus:bg-primary focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground transition-standard"
+							variant="category"
+							disableAnimation={true}
 						>
+							{item.icon && <item.icon />}
 							{item.name}
 						</Link>
 					),
