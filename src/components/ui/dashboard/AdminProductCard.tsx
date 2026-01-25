@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Skeleton } from "~/components/ui/dashboard/skeleton";
 import { Badge } from "~/components/ui/shared/Badge";
-import { Icon } from "~/components/ui/shared/Icon";
+import { Eye, Icon } from "~/components/ui/shared/Icon";
 import { ASSETS_BASE_URL } from "~/constants/urls";
 import { usePrefetch } from "~/hooks/usePrefetch";
 import type { ProductWithVariations } from "~/types";
@@ -134,20 +134,34 @@ export function AdminProductCard({
 							</div>
 						</div>
 
-						{/* Featured Badge */}
-						{product.isFeatured && (
+						{/* Views Badge - Top Right */}
+						{product.viewCount > 0 && (
 							<div className="absolute top-2 right-2 z-10">
+								<Badge variant="secondary" className="flex items-center gap-1">
+									<Eye className="size-3" />
+									<span>{product.viewCount}</span>
+								</Badge>
+							</div>
+						)}
+
+						{/* Featured Badge - Below Views Badge */}
+						{product.isFeatured && (
+							<div
+								className={`absolute ${product.viewCount > 0 ? "top-10" : "top-2"} right-2 z-10`}
+							>
 								<Badge variant="default">Featured</Badge>
 							</div>
 						)}
 
-					{/* Desktop Edit Indicator - Centered on image */}
-					<div className="absolute inset-0 hidden md:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
-						<div className="flex items-center justify-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-[2px] rounded-md border border-border/30 text-primary">
-							<Edit className="w-4 h-4" />
-							<span className="text-sm font-medium text-primary">Изменить</span>
+						{/* Desktop Edit Indicator - Centered on image */}
+						<div className="absolute inset-0 hidden md:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
+							<div className="flex items-center justify-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-[2px] rounded-md border border-border/30 text-primary">
+								<Edit className="w-4 h-4" />
+								<span className="text-sm font-medium text-primary">
+									Изменить
+								</span>
+							</div>
 						</div>
-					</div>
 					</div>
 
 					{/* Content Section */}
