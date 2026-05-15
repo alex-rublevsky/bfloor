@@ -27,6 +27,13 @@ const { images } = product;
             />
         ) : null
     }
-    <p>{product.price}</p>
-    <p>{product.name}</p>
+    <div class="flex gap-(--fluid-2xs)">
+        <p>{product.price}</p>
+        {
+            product.discountedPrice ? (
+                <p class="line-through">{product.discountedPrice}</p>
+            ) : null
+        }
+    </div>
+    <p class="text-sm">{product.name}</p>
 </div>

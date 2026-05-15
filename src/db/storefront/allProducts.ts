@@ -1,11 +1,16 @@
 import { db } from "@/db/index";
-import { eq } from "drizzle-orm";
-import type { InferSelectModel } from "drizzle-orm";
 import { products } from "@/db/schema";
+import { eq, isNotNull, type InferSelectModel } from "drizzle-orm";
 
 type ProductRow = Pick<
   InferSelectModel<typeof products>,
-  "id" | "slug" | "name" | "categorySlug" | "images" | "price"
+  | "id"
+  | "slug"
+  | "name"
+  | "categorySlug"
+  | "images"
+  | "price"
+  | "discountedPrice"
 >;
 
 export type Product = Omit<ProductRow, "images"> & {
@@ -28,9 +33,30 @@ export async function getProductsByCategory(
       categorySlug: products.categorySlug,
       images: products.images,
       price: products.price,
+      discountedPrice: products.discountedPrice,
     })
     .from(products)
     .where(eq(products.categorySlug, category));
+
+  return rows.map((row) => ({
+    ...row,
+    images: normalizeImages(row.images),
+  }));
+}
+
+export async function getDiscountedProducts(): Promise<Product[]> {
+  const rows = await db
+    .select({
+      id: products.id,
+      slug: products.slug,
+      name: products.name,
+      categorySlug: products.categorySlug,
+      images: products.images,
+      price: products.price,
+      discountedPrice: products.discountedPrice,
+    })
+    .from(products)
+    .where(isNotNull(products.discountedPrice));
 
   return rows.map((row) => ({
     ...row,

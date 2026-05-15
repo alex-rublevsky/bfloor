@@ -1,7 +1,25 @@
 ---
 import ProductCard from "@/components/shared/ProductCard.astro";
+import { getDiscountedProducts } from "@/db/storefront/allProducts";
+
+const discountedProducts = await getDiscountedProducts();
 ---
 
-<div>
-    <ProductCard />
+<div class="overflowSlider">
+    {discountedProducts.map((product) => <ProductCard {product} />)}
 </div>
+
+<style>
+    .overflowSlider {
+        display: grid;
+        gap: var(--fluid-2xs);
+        grid-auto-flow: column;
+        overflow-x: scroll;
+        scroll-snap-type: x mandatory;
+
+        /* select the children */
+        & > :global(*) {
+            scroll-snap-align: start;
+        }
+    }
+</style>
