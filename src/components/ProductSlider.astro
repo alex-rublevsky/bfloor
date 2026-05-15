@@ -11,12 +11,17 @@ const discountedProducts = await getDiscountedProducts();
 
 <style>
     .overflowSlider {
+        --fluid-slider-card-col: clamp(
+            8rem,
+            calc(7rem + 2rem * (100vw - 320px) / 160px),
+            10rem
+        );
         display: grid;
         gap: var(--fluid-2xs);
         grid-auto-flow: column;
         overflow-x: scroll;
         scroll-snap-type: x mandatory;
-
+        grid-auto-columns: var(--fluid-slider-card-col);
         /* select the children */
         & > :global(*) {
             scroll-snap-align: start;
