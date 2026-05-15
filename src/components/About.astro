@@ -1,0 +1,16 @@
+---
+import { Image } from "astro:assets";
+import { BASE_IMAGE_URL } from "@/constants";
+---
+
+<section>
+    <Image
+        src={BASE_IMAGE_URL + "banners/bubisha.webp"}
+        width={500}
+        height={500}
+        alt="Заяц Маскот"
+        loading="lazy"
+        class="object-cover rounded"
+    />
+    <h1>О нас</h1>
+</section>

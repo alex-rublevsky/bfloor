@@ -1,0 +1,47 @@
+---
+import { Image } from "astro:assets";
+import { BASE_IMAGE_URL } from "../constants";
+
+const bannerImages = [
+    //"cork-mobile.webp",
+
+    { image: "banners/cork.webp", alt: "" },
+
+    // "elochka-mobile.webp",
+
+    { image: "banners/elochka.webp", alt: "" },
+
+    // "sale-mobile.webp",
+
+    { image: "banners/sale.webp", alt: "" },
+];
+---
+
+<section>
+    <div class="relative w-full">
+        <div class="absolute bottom-4 left-4 flex gap-(--fluid-2xs)">
+            {
+                bannerImages.map((image) => (
+                    <Image
+                        src={BASE_IMAGE_URL + image.image}
+                        width={200}
+                        height={200}
+                        alt={image.alt}
+                        loading="eager"
+                        priority
+                        class="size-20 object-contain rounded"
+                    />
+                ))
+            }
+        </div>
+        <Image
+            src={BASE_IMAGE_URL + bannerImages[0].image}
+            width={1920}
+            height={600}
+            alt={bannerImages[0].alt}
+            loading="eager"
+            priority
+            class="w-full h-auto object-contain"
+        />
+    </div>
+</section>

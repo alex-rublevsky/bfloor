@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1778871901517,
+      "tag": "0000_optimal_frog_thor",
+      "breakpoints": true
+    }
+  ]
+}

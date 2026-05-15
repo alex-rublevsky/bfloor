@@ -1,0 +1,32 @@
+---
+import { Image } from "astro:assets";
+import { BASE_IMAGE_URL } from "@/constants";
+import type { Product } from "@/db/storefront/allProducts";
+
+type Props = { product?: Product };
+
+const { product } = Astro.props as Props;
+
+if (!product) {
+    return null;
+}
+
+const { images } = product;
+---
+
+<div class="w-40">
+    {
+        images.length > 0 ? (
+            <Image
+                src={BASE_IMAGE_URL + images[0]}
+                width={500}
+                height={500}
+                alt={product.name}
+                loading="lazy"
+                class="object-cover rounded"
+            />
+        ) : null
+    }
+    <p>{product.price}</p>
+    <p>{product.name}</p>
+</div>
