@@ -1,0 +1,81 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { Image } from "astro:assets";
+import { getAllProductsForSlug } from "@/db/storefront/allProductsForSlug";
+import type { GetStaticPaths } from "astro";
+import type { Product } from "@/db/storefront/allProductsForSlug";
+import { BASE_IMAGE_URL } from "@/constants";
+
+export const prerender = true;
+
+export const getStaticPaths: GetStaticPaths = async () => {
+    const products = await getAllProductsForSlug();
+    return products.map((product) => ({
+        params: { slug: product.slug },
+        props: {
+            product: product,
+        },
+    }));
+};
+
+type Props = {
+    product: Product;
+};
+
+const { product } = Astro.props as Props;
+---
+
+<Layout title={product.name}>
+    <div class="grid grid-cols-2 gap-(--fluid-sm)">
+        <div class="gallery">
+            <div class="grid gap-(--fluid-2xs)">
+                {
+                    product.images.map((image, index) => (
+                        <Image
+                            src={BASE_IMAGE_URL + image}
+                            alt={product.name}
+                            width={200}
+                            height={200}
+                        />
+                    ))
+                }
+            </div>
+            <Image
+                src={BASE_IMAGE_URL + product.images[0]}
+                alt={product.name}
+                width={500}
+                height={500}
+                class="w-full"
+            />
+        </div>
+
+        <div>
+            <h1>
+                {product.name}
+            </h1>
+            <a href={`/brand/${product.brandSlug}`}>{product.brandSlug}</a>
+            <a href={`/collection/${product.collectionSlug}`}
+                >{product.collectionSlug}</a
+            >
+
+            {
+                product.discountedPrice ? (
+                    <>
+                        <p class="line-through">{product.price}</p>{" "}
+                        <p>{product.discountedPrice}</p>
+                    </>
+                ) : (
+                    <p>{product.price}</p>
+                )
+            }
+        </div>
+    </div>
+</Layout>
+
+<style>
+    .gallery {
+        display: grid;
+        grid-template-columns: 25% 75%;
+        gap: var(--fluid-2xs);
+    }
+</style>

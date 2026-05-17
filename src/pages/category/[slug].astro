@@ -3,7 +3,7 @@ import ProductCard from "@/components/shared/ProductCard.astro";
 import Layout from "@/layouts/Layout.astro";
 
 import { getAllCategories } from "@/db/storefront/allCategories";
-import { getProductsByCategory } from "@/db/storefront/allProducts";
+import { getProductsByCategory } from "@/db/storefront/allProductsByCategory";
 import type { GetStaticPaths } from "astro";
 // import type { Product } from "@/db/storefront/allProducts";
 import type { Category } from "@/db/storefront/allCategories";
@@ -46,6 +46,9 @@ const products = await getProductsByCategory(category.slug);
         );
         display: grid;
         gap: var(--fluid-2xs);
-        grid-template-columns: repeat(auto-fit, minmax(min(var(--min-col-size), 100%), 1fr));
+        grid-template-columns: repeat(
+            auto-fit,
+            minmax(min(var(--min-col-size), 100%), 1fr)
+        );
     }
 </style>

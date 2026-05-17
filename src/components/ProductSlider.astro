@@ -1,6 +1,6 @@
 ---
 import ProductCard from "@/components/shared/ProductCard.astro";
-import { getDiscountedProducts } from "@/db/storefront/allProducts";
+import { getDiscountedProducts } from "@/db/storefront/allProductsDiscounted";
 
 const discountedProducts = await getDiscountedProducts();
 ---
