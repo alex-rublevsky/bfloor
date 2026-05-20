@@ -1,0 +1,40 @@
+---
+import { Image } from "astro:assets";
+import { BASE_IMAGE_URL } from "@/constants";
+//import type { Product } from "@/db/storefront/allProductsForFeed";
+
+//type Props = { product?: Product };
+
+const { product } = Astro.props;
+//as Props;
+
+if (!product) {
+    return null;
+}
+
+const { images } = product;
+---
+
+<a href={`/dashboard/product/${product.slug}`}>
+    {
+        images.length > 0 ? (
+            <Image
+                src={BASE_IMAGE_URL + images[0]}
+                width={500}
+                height={500}
+                alt={product.name}
+                loading="lazy"
+                class="object-cover rounded"
+            />
+        ) : null
+    }
+    <div class="flex gap-(--fluid-2xs)">
+        <p>{product.price}</p>
+        {
+            product.discountedPrice ? (
+                <p class="line-through">{product.discountedPrice}</p>
+            ) : null
+        }
+    </div>
+    <p class="text-sm">{product.name}</p>
+</a>
