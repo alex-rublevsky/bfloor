@@ -1,16 +1,27 @@
 ---
 import { Image } from "astro:assets";
 import { BASE_IMAGE_URL } from "@/constants";
+import Button from "@/components/shared/Button.astro";
 ---
 
-<section>
+<section class="grid md:grid-cols-2 gap-(--fluid-sm)">
     <Image
         src={BASE_IMAGE_URL + "banners/bubisha.webp"}
         width={500}
         height={500}
         alt="Заяц Маскот"
         loading="lazy"
-        class="object-cover rounded"
+        class="object-cover rounded w-full"
     />
-    <h1>О нас</h1>
+    <div>
+        <h2 class="text-xl">О компании</h2>
+        <p>
+            У нас большой выбор напольных покрытий, для домов, офисов,
+            спортивных площадок и других мест отдыха. Мы предоставляем не только
+            высококачественную продукцию, но и необходимые инструменты для
+            укладки и ухода. Наши специалисты квалифицированно установят
+            напольное покрытие и дадут рекомендации.
+        </p>
+        <Button variant="secondary">Подробнее</Button>
+    </div>
 </section>
