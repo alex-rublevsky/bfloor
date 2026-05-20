@@ -2,10 +2,19 @@
 import Button from "./shared/Button.astro";
 ---
 
-<nav class="py-(--fluid-sm) px-(--fluid-2xs)">
-    <Button variant="secondary" href="/dashboard/">Товары</Button>
-    <Button variant="secondary" href="/dashboard/categories">Категории</Button>
-    <Button variant="secondary" href="/dashboard/collections">Коллекции</Button>
-    <Button variant="secondary" href="/dashboard/brands">Бренды</Button>
-    <Button variant="secondary" href="/dashboard/misc">Прочее</Button>
+<nav class="py-(--fluid-xs) px-(--fluid-xs)">
+    <Button size="sm" variant="secondary" href="/dashboard/">Товары</Button>
+    <Button size="sm" variant="secondary" href="/dashboard/categories"
+        >Категории</Button
+    >
+    <Button size="sm" variant="secondary" href="/dashboard/collections"
+        >Коллекции</Button
+    >
+    <Button size="sm" variant="secondary" href="/dashboard/brands"
+        >Бренды</Button
+    >
+    <Button size="sm" variant="secondary" href="/dashboard/misc">Прочее</Button>
+    <Button size="sm" variant="primary" href="/dashboard/product/new"
+        >Добавить товар</Button
+    >
 </nav>
