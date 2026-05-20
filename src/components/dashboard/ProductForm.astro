@@ -1,0 +1,92 @@
+---
+import Input from "@/components/shared/Input.astro";
+import Button from "@/components/shared/Button.astro";
+import type { Product } from "@/db/dashboard/createProduct";
+import Select from "@/components/shared/Select.astro";
+import { getAllCategories } from "@/db/storefront/allCategories";
+
+const { product = {} as Product } = Astro.props;
+
+const categories = await getAllCategories();
+
+const creating = product.slug ? false : true;
+---
+
+<form id="product-form" method="POST">
+    <div class="productForm">
+        <Input name="name" label="Название" value={product.name} />
+        <Input
+            name="slug"
+            label="Ярлык"
+            value={product.slug ? product.slug : ""}
+            disabled={true}
+        />
+        <Input name="price" label="Цена" value={product.price} />
+        <Input
+            name="discountedPrice"
+            label="Цена со скидкой"
+            value={product.discountedPrice}
+        />
+        <Select
+            name="category"
+            label="Категория"
+            options={categories}
+            selectedOption={product.categorySlug}
+        />
+        <div class="grid">
+            <label for="description">Описание</label>
+            <textarea name="description" id="description"
+                >{product.description}</textarea
+            >
+        </div>
+        <div class="grid">
+            <label for="importantNote">Важная заметка</label>
+            <textarea name="importantNote" id="importantNote"
+                >{product.importantNote}</textarea
+            >
+        </div>
+    </div>
+    <Button type="submit">{creating ? "Добавить" : "Сохранить"}</Button>
+    <Button variant="destructive">Удалить</Button>
+</form>
+
+<script>
+    import { actions } from "astro:actions";
+    import { generateSlug } from "@/lib/slugGeneration";
+
+    const form = document.querySelector<HTMLFormElement>("#product-form");
+
+    if (form) {
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget as HTMLFormElement);
+            const { data, error } =
+                await actions.product.createProduct(formData);
+
+            if (error) {
+                alert(error);
+            } else {
+                alert(data);
+            }
+        });
+
+        const nameInput = form.querySelector<HTMLInputElement>('[name="name"]');
+        const slugInput = form.querySelector<HTMLInputElement>('[name="slug"]');
+
+        if (nameInput && slugInput) {
+            nameInput.addEventListener("input", () => {
+                slugInput.value = generateSlug(nameInput.value);
+            });
+        }
+    }
+</script>
+
+<style>
+    .productForm {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--fluid-2xs);
+        max-width: 80ch;
+        margin: auto;
+    }
+</style>
