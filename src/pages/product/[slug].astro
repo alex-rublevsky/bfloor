@@ -23,6 +23,7 @@ type Props = {
 };
 
 const { product } = Astro.props as Props;
+const { images } = product;
 ---
 
 <Layout title={product.name}>
@@ -30,8 +31,8 @@ const { product } = Astro.props as Props;
         <div class="gallery">
             <div class="grid gap-(--fluid-2xs)">
                 {
-                    product.images.map((image, index) => (
-                        <Image
+                    images.map((image) => (
+                        <img
                             src={BASE_IMAGE_URL + image}
                             alt={product.name}
                             width={200}
@@ -40,23 +41,37 @@ const { product } = Astro.props as Props;
                     ))
                 }
             </div>
-            <Image
-                src={BASE_IMAGE_URL + product.images[0]}
-                alt={product.name}
-                width={500}
-                height={500}
-                class="w-full"
-            />
+            {
+                images[0] ? (
+                    <img
+                        src={BASE_IMAGE_URL + images[0]}
+                        alt={product.name}
+                        width={500}
+                        height={500}
+                        class="w-full"
+                    />
+                ) : null
+            }
         </div>
 
         <div>
             <h1>
                 {product.name}
             </h1>
-            <a href={`/brand/${product.brandSlug}`}>{product.brandSlug}</a>
-            <a href={`/collection/${product.collectionSlug}`}
-                >{product.collectionSlug}</a
-            >
+            {
+                product.brandSlug ? (
+                    <a href={`/brand/${product.brandSlug}`}>
+                        {product.brandSlug}
+                    </a>
+                ) : null
+            }
+            {
+                product.collectionSlug ? (
+                    <a href={`/collection/${product.collectionSlug}`}>
+                        {product.collectionSlug}
+                    </a>
+                ) : null
+            }
 
             {
                 product.discountedPrice ? (
