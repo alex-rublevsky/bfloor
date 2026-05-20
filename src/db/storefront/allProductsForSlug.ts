@@ -1,5 +1,5 @@
 import { db } from "@/db/index";
-import { products, productStoreLocations } from "@/db/schema";
+import { products } from "@/db/schema";
 import { type InferSelectModel } from "drizzle-orm";
 
 type ProductRow = Pick<
@@ -35,8 +35,9 @@ export async function getAllProductsForSlug(): Promise<Product[]> {
       price: products.price,
       discountedPrice: products.discountedPrice,
       description: products.description,
-      brandSLug: products.brandSlug,
+      brandSlug: products.brandSlug,
       collectionSlug: products.collectionSlug,
+      storeLocationId: products.storeLocationId,
     })
     .from(products);
 
