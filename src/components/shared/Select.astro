@@ -1,0 +1,36 @@
+---
+interface Props {
+    name: string;
+    selectedOption?: string;
+    options: { slug: string; name: string }[];
+    label: string;
+    required?: boolean;
+    disabled?: boolean;
+}
+const {
+    name,
+    selectedOption,
+    options,
+    label,
+    required = false,
+    disabled = false,
+} = Astro.props;
+---
+
+<div>
+    <label for={name}>{label}:</label>
+
+    <select name={name} id={name} value={selectedOption} required={required}>
+        <option value="">— Выбрать —</option>
+        {
+            options.map((option: { slug: string; name: string }) => (
+                <option
+                    selected={option.slug === selectedOption}
+                    value={option.slug}
+                >
+                    {option.name}
+                </option>
+            ))
+        }
+    </select>
+</div>
