@@ -1,6 +1,7 @@
 ---
 interface Props {
-    value?: string;
+    as?: "input" | "textarea";
+    value?: string | number | null;
     name: string;
     id?: string;
     type?: "text" | "email" | "number" | "tel" | "password";
@@ -9,10 +10,12 @@ interface Props {
     required?: boolean;
     error?: string;
     step?: number | string;
+    rows?: number;
     disabled?: boolean;
 }
 
 const {
+    as = "input",
     value = "",
     name,
     id,
@@ -22,6 +25,7 @@ const {
     required,
     error,
     step,
+    rows,
     disabled = false,
     ...rest
 } = Astro.props;
@@ -29,6 +33,8 @@ const {
 const inputId = id ?? `input-${name}`;
 const hasLabel = !!label;
 const hasError = !!error;
+const isTextarea = as === "textarea";
+const fieldValue = value ?? "";
 ---
 
 <div
@@ -37,19 +43,39 @@ const hasError = !!error;
         { "has-label": hasLabel, "has-error": hasError },
     ]}
 >
-    <input
-        id={inputId}
-        value={value}
-        name={name}
-        type={type}
-        placeholder={hasLabel ? " " : placeholder}
-        class:list={["input-field", { disabled: disabled }]}
-        required={required || undefined}
-        aria-invalid={hasError ? "true" : undefined}
-        step={step?.toString()}
-        disabled={disabled}
-        {...rest}
-    />
+    {
+        isTextarea ? (
+            <textarea
+                id={inputId}
+                name={name}
+                placeholder={hasLabel ? " " : placeholder}
+                class:list={[
+                    "input-field",
+                    "textarea-field",
+                    { disabled: disabled },
+                ]}
+                required={required || undefined}
+                aria-invalid={hasError ? "true" : undefined}
+                rows={rows}
+                disabled={disabled}
+                {...rest}
+            >{fieldValue}</textarea>
+        ) : (
+            <input
+                id={inputId}
+                value={fieldValue}
+                name={name}
+                type={type}
+                placeholder={hasLabel ? " " : placeholder}
+                class:list={["input-field", { disabled: disabled }]}
+                required={required || undefined}
+                aria-invalid={hasError ? "true" : undefined}
+                step={step?.toString()}
+                disabled={disabled}
+                {...rest}
+            />
+        )
+    }
     {
         hasLabel && (
             <label for={inputId} class="input-label">
@@ -100,6 +126,13 @@ const hasError = !!error;
         padding-bottom: 0.25rem;
     }
 
+    .textarea-field {
+        height: auto;
+        min-height: 6rem;
+        padding-block: 1.125rem 0.625rem;
+        resize: vertical;
+    }
+
     .has-error .input-field,
     .has-error .input-field:focus {
         border-color: var(--destructive);
@@ -129,6 +162,10 @@ const hasError = !!error;
             color 0.25s ease-out,
             padding-inline 0.25s ease-out,
             background-color 0.25s ease-out;
+    }
+
+    .textarea-field + .input-label {
+        top: 1.375rem;
     }
 
     .input-field:focus + .input-label,

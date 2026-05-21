@@ -33,18 +33,20 @@ const creating = product.slug ? false : true;
             options={categories}
             selectedOption={product.categorySlug}
         />
-        <div class="grid">
-            <label for="description">Описание</label>
-            <textarea name="description" id="description"
-                >{product.description}</textarea
-            >
-        </div>
-        <div class="grid">
-            <label for="importantNote">Важная заметка</label>
-            <textarea name="importantNote" id="importantNote"
-                >{product.importantNote}</textarea
-            >
-        </div>
+        <Input
+            as="textarea"
+            name="description"
+            label="Описание"
+            value={product.description}
+            rows={4}
+        />
+        <Input
+            as="textarea"
+            name="importantNote"
+            label="Важная заметка"
+            value={product.importantNote}
+            rows={4}
+        />
     </div>
     <Button type="submit">{creating ? "Добавить" : "Сохранить"}</Button>
     <Button variant="destructive">Удалить</Button>
