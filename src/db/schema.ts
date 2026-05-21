@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -27,7 +28,10 @@ export const products = sqliteTable(
     name: text("name").notNull(),
     slug: text("slug").notNull().unique(),
     sku: text("sku"), // Product SKU/Article number - optional
-    images: text("images", { mode: "json" }).$type<string[]>(), // JSON array of path strings (TEXT + json mode per Drizzle SQLite guidance)
+    images: text("images", { mode: "json" })
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'`), // JSON array of path strings (TEXT + json mode per Drizzle SQLite guidance)
     description: text("description"),
     importantNote: text("important_note"), // Важная заметка с поддержкой Markdown - опционально
     tags: text("tags"), // Теги для категоризации товаров (JSON массив) - опционально

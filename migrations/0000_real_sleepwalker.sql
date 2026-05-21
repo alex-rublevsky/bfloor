@@ -199,7 +199,7 @@ CREATE TABLE `products` (
 	`name` text NOT NULL,
 	`slug` text NOT NULL,
 	`sku` text,
-	`images` text,
+	`images` text DEFAULT '[]' NOT NULL,
 	`description` text,
 	`important_note` text,
 	`tags` text,
