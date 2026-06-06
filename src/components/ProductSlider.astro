@@ -22,8 +22,10 @@ const totalDiscountedCount = discountedProducts[0]?.totalDiscountedCount ?? 0;
         <Button
             href="store/discounted"
             variant="secondary"
-            class="aspect-square group"
-            >Все скидки <sup class="text-accent! group-hover:text-background!">
+            class="aspect-square group font-medium"
+            >Все скидки <sup
+                class="text-accent! group-hover:text-background! transition-colors duration-170"
+            >
                 {totalDiscountedCount}</sup
             >
         </Button>
@@ -47,6 +49,8 @@ const totalDiscountedCount = discountedProducts[0]?.totalDiscountedCount ?? 0;
         & > :global(*) {
             scroll-snap-align: start;
         }
-        margin-right: var(--section-padding-x);
+    }
+    .overflowSlider:last-child {
+        padding-right: var(--section-padding-x);
     }
 </style>
