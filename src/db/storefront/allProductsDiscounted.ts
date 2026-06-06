@@ -1,6 +1,6 @@
 import { db } from "@/db/index";
 import { categories, products } from "@/db/schema";
-import { eq, isNotNull, or, sql } from "drizzle-orm";
+import { eq, isNotNull, or, sql, count } from "drizzle-orm";
 
 export type Product = {
   slug: string;
@@ -9,6 +9,7 @@ export type Product = {
   images: string[];
   price: number | null;
   discountedPrice: number | null;
+  totalDiscountedCount: number;
 };
 
 export async function getDiscountedProducts(): Promise<Product[]> {
@@ -20,7 +21,7 @@ export async function getDiscountedProducts(): Promise<Product[]> {
       images: products.images,
       price: products.price,
       discountedPrice: products.discountedPrice,
-      //   sql<number | null>`COALESCE(
+      totalDiscountedCount: sql<number>`count(*) over ()`, //   sql<number | null>`COALESCE(
       //   ${products.discountedPrice},
       //   (SELECT MIN(${productVariations.discountedPrice})
       //    FROM ${productVariations}
@@ -43,5 +44,5 @@ export async function getDiscountedProducts(): Promise<Product[]> {
         // )`,
       ),
     )
-    .limit(50);
+    .limit(30);
 }

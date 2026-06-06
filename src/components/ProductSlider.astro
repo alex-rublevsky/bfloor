@@ -1,13 +1,34 @@
 ---
 import ProductCard from "@/components/shared/ProductCard.astro";
 import { getDiscountedProducts } from "@/db/storefront/allProductsDiscounted";
+import Button from "./shared/Button.astro";
 
 const discountedProducts = await getDiscountedProducts();
+const totalDiscountedCount = discountedProducts[0]?.totalDiscountedCount ?? 0;
 ---
 
-<div class="overflowSlider">
-    {discountedProducts.map((product) => <ProductCard {product} />)}
-</div>
+<section class="no-padding">
+    <a href="store/discounted">
+        <h4 class="px-(--section-padding-x) hover:text-accent">
+            Скидки! <sup
+                class="text-sm text-accent inline-block -translate-y-2 -translate-x-1"
+                >{totalDiscountedCount}</sup
+            >
+        </h4>
+    </a>
+    <div class="overflowSlider">
+        {discountedProducts.map((product) => <ProductCard {product} />)}
+
+        <Button
+            href="store/discounted"
+            variant="secondary"
+            class="aspect-square group"
+            >Все скидки <sup class="text-accent! group-hover:text-background!">
+                {totalDiscountedCount}</sup
+            >
+        </Button>
+    </div>
+</section>
 
 <style>
     .overflowSlider {
@@ -26,5 +47,6 @@ const discountedProducts = await getDiscountedProducts();
         & > :global(*) {
             scroll-snap-align: start;
         }
+        margin-right: var(--section-padding-x);
     }
 </style>
