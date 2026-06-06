@@ -1,0 +1,104 @@
+---
+import { Icon } from "astro-icon/components";
+import type { HTMLAttributes } from "astro/types";
+
+type Variant = "primary" | "secondary" | "pill" | "destructive" | "editorTool";
+
+type Size = "default" | "xs" | "sm" | "lg";
+
+type Props = Omit<
+    HTMLAttributes<"button">,
+    keyof {
+        variant?: Variant;
+        size?: Size;
+        href?: string;
+        withIcon?: boolean;
+    }
+> & {
+    variant?: Variant;
+    size?: Size;
+    href?: string;
+    name?: string;
+    title?: string;
+    /** Set when the slot is icon + text so they align with gap; Astro cannot infer this from the slot. */
+    withIcon?: boolean;
+};
+
+const {
+    variant,
+    size,
+    href,
+    type,
+    name,
+    title,
+    withIcon = false,
+    class: className,
+    ...rest
+} = Astro.props;
+
+const resolvedVariant = variant ?? "primary";
+
+/** Icon + label row (opt-in via `leadingIcon`). */
+const layoutClasses =
+    withIcon && resolvedVariant !== "editorTool"
+        ? "gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0"
+        : "";
+
+const baseClasses =
+    "button text-center inline-flex items-center justify-center rounded disabled:cursor-not-allowed disabled:opacity-50 [&_*]:text-inherit whitespace-nowrap";
+const variantClasses: Record<Variant, string> = {
+    primary:
+        "bg-primary text-background border border-primary hover:bg-primary/10 hover:border hover:text-primary",
+    secondary:
+        "bg-transparent text-foreground border border-primary hover:bg-primary hover:text-background",
+    pill: "border border-muted-foreground bg-background rounded-full hover:bg-muted active:bg-muted-foreground data-[active]:bg-foreground data-[active]:text-background data-[active]:border-foreground",
+    destructive:
+        "bg-destructive text-destructive-foreground hover:bg-destructive/10 hover:text-destructive border border-destructive",
+    editorTool:
+        "flex items-center justify-center box-border size-[1.875rem] shrink-0 border-0 p-0 rounded-lg bg-transparent text-xs font-bold leading-none text-foreground transition-[background-color,color] ease-out hover:bg-foreground/10 active:bg-foreground/30 disabled:opacity-30 disabled:cursor-default [&.is-active]:bg-foreground [&.is-active]:text-background [&_svg]:pointer-events-none [&_svg]:block [&_svg]:size-4 [&_svg]:stroke-current [&_svg]:fill-none [&_svg]:[stroke-width:2] [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]",
+};
+
+const sizeClasses: Record<Size, string> = {
+    default: "px-4 py-2 leading-[0.97]",
+    sm: "px-1.5 text-sm",
+    xs: "px-1 py-[0.5] text-sm",
+    lg: "h-12 px-6 text-base! font-normal [&_svg]:size-6",
+};
+
+const variantClass = variantClasses[resolvedVariant];
+const sizeClass =
+    resolvedVariant === "editorTool" ? "" : sizeClasses[size ?? "default"];
+const composedClass = `${baseClasses}${layoutClasses ? ` ${layoutClasses}` : ""}${variantClass ? ` ${variantClass}` : ""}${sizeClass ? ` ${sizeClass}` : ""}${className ? ` ${className}` : ""}`;
+---
+
+{
+    href ? (
+        <a href={href} class={composedClass} {...rest}>
+            <slot />
+        </a>
+    ) : variant === "editorTool" ? (
+        <button type="button" class={composedClass} {...rest}>
+            {Astro.slots.has("default") ? (
+                <slot />
+            ) : name ? (
+                <Icon name={name} title={title} />
+            ) : null}
+        </button>
+    ) : (
+        <button type={type ?? "button"} class={composedClass} {...rest}>
+            <slot />
+        </button>
+    )
+}
+
+<style>
+    .button {
+        transition-duration: background-color, transform;
+        user-select: none;
+        transition-duration: 170ms;
+        cursor: pointer;
+    }
+    .button:active {
+        transform: scale(0.97);
+    }
+</style>
