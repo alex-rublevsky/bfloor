@@ -1,0 +1,18 @@
+---
+import { Icon } from "astro-icon/components";
+import Button from "@/components/shared/Button.astro";
+---
+
+<div class="bottomBar">
+    <Button class="aspect-square" size="sm">
+        <Icon name="cart" title="Корзина" />
+    </Button>
+</div>
+
+<style>
+    .bottomBar {
+        position: fixed;
+        right: var(--fluid-2xs);
+        bottom: var(--fluid-2xs);
+    }
+</style>
