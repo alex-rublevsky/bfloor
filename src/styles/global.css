@@ -21,3 +21,18 @@ select,
 textarea {
     field-sizing: content;
 }
+
+@media screen and (max-width: 600px) {
+    .hideOnMobile {
+        visibility: hidden;
+        display: none;
+    }
+}
+
+.productCard {
+    transition-duration: 70ms;
+    transition-timing-function: ease-out;
+}
+.productCard:active {
+    transform: scale(0.97);
+}

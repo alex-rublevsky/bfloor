@@ -15,7 +15,7 @@ if (!product) {
 const { images } = product;
 ---
 
-<a href={`/product/${product.slug}`}>
+<a class="productCard" href={`/product/${product.slug}`}>
     {
         images.length > 0 ? (
             <Image
