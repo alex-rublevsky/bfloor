@@ -10,7 +10,7 @@ type Variant =
     | "destructive"
     | "editorTool";
 
-type Size = "default" | "xs" | "sm" | "lg";
+type Size = "default" | "xs" | "sm" | "md" | "lg";
 
 type Props = Omit<
     HTMLAttributes<"button">,
@@ -69,6 +69,7 @@ const variantClasses: Record<Variant, string> = {
 
 const sizeClasses: Record<Size, string> = {
     default: "px-4 py-2 leading-[0.97]",
+    md: "px-2 text-base",
     sm: "px-1.5 text-sm",
     xs: "px-1 py-[0.5] text-sm",
     lg: "h-12 px-6 text-base! font-normal [&_svg]:size-6",
