@@ -2,19 +2,58 @@
 import Button from "./shared/Button.astro";
 ---
 
-<nav class="py-(--fluid-xs) px-(--fluid-xs)">
-    <Button size="sm" variant="secondary" href="/dashboard/">Товары</Button>
-    <Button size="sm" variant="secondary" href="/dashboard/categories"
-        >Категории</Button
-    >
-    <Button size="sm" variant="secondary" href="/dashboard/collections"
-        >Коллекции</Button
-    >
-    <Button size="sm" variant="secondary" href="/dashboard/brands"
-        >Бренды</Button
-    >
-    <Button size="sm" variant="secondary" href="/dashboard/misc">Прочее</Button>
-    <Button size="sm" variant="primary" href="/dashboard/product/new"
-        >Добавить товар</Button
-    >
+<nav class="navWrapper">
+    <div class="navBar">
+        <Button size="sm" variant="tertiary" href="/dashboard/">Товары</Button>
+        <Button size="sm" variant="tertiary" href="/dashboard/categories"
+            >Категории</Button
+        >
+        <Button size="sm" variant="tertiary" href="/dashboard/collections"
+            >Коллекции</Button
+        >
+        <Button size="sm" variant="tertiary" href="/dashboard/brands"
+            >Бренды</Button
+        >
+        <Button size="sm" variant="tertiary" href="/dashboard/misc"
+            >Прочее</Button
+        >
+        <Button
+            size="sm"
+            variant="primary"
+            href="/dashboard/product/new"
+            class="hideOnMobile">Добавить товар</Button
+        >
+    </div>
+    <div>
+        <Button size="md" variant="primary" href="/">Клиентский сайт</Button>
+    </div>
 </nav>
+
+<style>
+    .navWrapper {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: space-between;
+        padding: 0.3rem;
+        position: fixed;
+        top: 0;
+        z-index: 2;
+    }
+    .navBar {
+        padding: 0.3rem 0.3rem;
+
+        background-color: color-mix(
+            in oklch,
+            var(--background) 70%,
+            transparent
+        );
+        backdrop-filter: blur(0.3rem);
+        display: flex;
+        flex-shrink: 0;
+        gap: 0.15rem;
+        border-radius: var(--radius);
+        border: 0.1rem solid color-mix(in oklch, var(--muted) 70%, transparent);
+    }
+</style>
