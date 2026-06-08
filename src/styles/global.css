@@ -32,7 +32,14 @@ textarea {
 .productCard {
     transition-duration: 70ms;
     transition-timing-function: ease-out;
+    z-index: 1;
 }
 .productCard:active {
     transform: scale(0.97);
+}
+.productCard img {
+    transition-duration: 300ms;
+}
+.productCard:hover img {
+    transform: scale(1.06);
 }

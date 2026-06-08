@@ -16,18 +16,20 @@ const { images } = product;
 ---
 
 <a class="productCard" href={`/dashboard/product/${product.slug}`}>
-    {
-        images.length > 0 ? (
-            <Image
-                src={BASE_IMAGE_URL + images[0]}
-                width={500}
-                height={500}
-                alt={product.name}
-                loading="lazy"
-                class="object-cover rounded"
-            />
-        ) : null
-    }
+    <div class="rounded aspect-square overflow-hidden">
+        {
+            images.length > 0 ? (
+                <Image
+                    src={BASE_IMAGE_URL + images[0]}
+                    width={500}
+                    height={500}
+                    alt={product.name}
+                    loading="lazy"
+                    class="object-cover "
+                />
+            ) : null
+        }
+    </div>
     <div class="flex gap-(--fluid-2xs)">
         <p>{product.price}</p>
         {
