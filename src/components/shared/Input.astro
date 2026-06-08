@@ -12,6 +12,7 @@ interface Props {
     step?: number | string;
     rows?: number;
     disabled?: boolean;
+    readonly?: boolean;
 }
 
 const {
@@ -27,6 +28,7 @@ const {
     step,
     rows,
     disabled = false,
+    readonly = false,
     ...rest
 } = Astro.props;
 
@@ -59,7 +61,9 @@ const fieldValue = value ?? "";
                 rows={rows}
                 disabled={disabled}
                 {...rest}
-            >{fieldValue}</textarea>
+            >
+                {fieldValue}
+            </textarea>
         ) : (
             <input
                 id={inputId}
@@ -72,6 +76,7 @@ const fieldValue = value ?? "";
                 aria-invalid={hasError ? "true" : undefined}
                 step={step?.toString()}
                 disabled={disabled}
+                readonly={readonly}
                 {...rest}
             />
         )

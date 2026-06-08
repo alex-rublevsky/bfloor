@@ -1,0 +1,18 @@
+---
+import DashboardLayout from "@/layouts/DashboardLayout.astro";
+import { getProductBySlug } from "@/db/dashboard/productBySlug";
+import type { Product } from "@/db/dashboard/productBySlug";
+import ProductForm from "@/components/dashboard/ProductForm.astro";
+
+const { slug } = Astro.params;
+
+const product: Product = await getProductBySlug(slug);
+
+if (!product) {
+    return Astro.redirect("/dashboard/product/404");
+}
+---
+
+<DashboardLayout title={product.name}>
+    <ProductForm product={product} />
+</DashboardLayout>

@@ -12,7 +12,7 @@ export const categories = sqliteTable("categories", {
   id: integer().primaryKey(),
   name: text().unique().notNull(),
   slug: text().unique().notNull(),
-  sort: integer(),
+  // sort: integer(),
 });
 export const categoryRelations = relations(categories, ({ many }) => ({
   brand: many(brands),
@@ -52,6 +52,10 @@ export const collectionRelations = relations(collections, ({ one, many }) => ({
 
 export const products = sqliteTable("products", {
   id: integer().primaryKey(),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  isFeatured: integer("is_featured", { mode: "boolean" })
+    .notNull()
+    .default(false),
   name: text("name").unique().notNull(),
   slug: text("slug").unique().notNull(),
   images: text("images", { mode: "json" })
@@ -64,7 +68,8 @@ export const products = sqliteTable("products", {
   brandId: integer("brand_id"),
   collectionId: integer("collection_id"),
   viewCount: integer("view_count").default(0),
-  description: text(),
+  description: text("description"),
+  importantNote: text("important_note"),
 });
 
 export const productRelations = relations(products, ({ one }) => ({

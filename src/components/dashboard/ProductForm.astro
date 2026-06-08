@@ -1,37 +1,81 @@
 ---
 import Input from "@/components/shared/Input.astro";
 import Button from "@/components/shared/Button.astro";
-import type { Product } from "@/db/dashboard/createProduct";
 import Select from "@/components/shared/Select.astro";
 import { getAllCategories } from "@/db/storefront/allCategories";
+import ImageDropzone from "@/components/dashboard/ImageDropzone.astro";
+import Checkbox from "@/components/shared/Checkbox.astro";
+type ProductFormProduct = {
+    id?: number;
+    slug?: string;
+    name?: string;
+    images?: string[];
+    price?: number | null;
+    discountedPrice?: number | null;
+    categoryId?: number;
+    description?: string | null;
+    importantNote?: string | null;
+    isActive?: boolean;
+    isFeatured?: boolean;
+};
 
-const { product = {} as Product } = Astro.props;
+interface Props {
+    product?: ProductFormProduct;
+}
+
+const { product = {} } = Astro.props as Props;
+const images: string[] = product.images ?? [];
 
 const categories = await getAllCategories();
 
 const creating = product.slug ? false : true;
 ---
 
-<form id="product-form" method="POST">
+<form
+    id="product-form"
+    method="POST"
+    class="max-w-[80ch] mx-auto py-14"
+    data-mode={creating ? "create" : "edit"}
+>
+    <h1 class="text-md pb-2">
+        {creating ? "Добавление товара" : "Редактирование товара"}
+    </h1>
+    {!creating && <input type="hidden" name="id" value={product.id} />}
+
     <div class="productForm">
-        <Input name="name" label="Название" value={product.name} />
-        <Input
-            name="slug"
-            label="Ярлык"
-            value={product.slug ? product.slug : ""}
-            disabled={true}
-        />
-        <Input name="price" label="Цена" value={product.price} />
-        <Input
-            name="discountedPrice"
-            label="Цена со скидкой"
-            value={product.discountedPrice}
-        />
+        <div>
+            <ImageDropzone images={images} />
+            <!-- <Button
+                ><input
+                    type="file"
+                    id="photos"
+                    name="photos"
+                    accept="image/png, image/jpeg, image/webp"
+                /></Button
+            > -->
+        </div>
+        <div class="grid grid-cols-2 gap-x-2">
+            <Input name="name" label="Название" value={product.name} required />
+            <Input
+                name="slug"
+                label="Ярлык"
+                value={product.slug ? product.slug : ""}
+                readonly={true}
+                required
+            />
+            <Input name="price" label="Цена" value={product.price} required />
+            <Input
+                name="discountedPrice"
+                label="Цена со скидкой"
+                value={product.discountedPrice}
+            />
+        </div>
         <Select
-            name="category"
+            name="categoryId"
             label="Категория"
             options={categories}
-            selectedOption={product.categorySlug}
+            selectedOption={product.categoryId}
+            required
         />
         <Input
             as="textarea"
@@ -47,6 +91,22 @@ const creating = product.slug ? false : true;
             value={product.importantNote}
             rows={4}
         />
+        <div class="flex flex-wrap gap-4">
+            <Checkbox
+                name="isActive"
+                label="Активен"
+                checked={creating
+                    ? true
+                    : product.isActive
+                      ? product.isActive
+                      : false}
+            />
+            <Checkbox
+                name="isFeatured"
+                label="Рекомендуемый"
+                checked={product.isFeatured ? product.isFeatured : false}
+            />
+        </div>
     </div>
     <Button type="submit">{creating ? "Добавить" : "Сохранить"}</Button>
     <Button variant="destructive">Удалить</Button>
@@ -57,13 +117,17 @@ const creating = product.slug ? false : true;
     import { generateSlug } from "@/lib/slugGeneration";
 
     const form = document.querySelector<HTMLFormElement>("#product-form");
+    if (!form) throw Error("Форма не найдена");
+    const mode = form.dataset.mode;
 
     if (form) {
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
             const formData = new FormData(e.currentTarget as HTMLFormElement);
             const { data, error } =
-                await actions.product.createProduct(formData);
+                mode === "edit"
+                    ? await actions.product.updateProduct(formData)
+                    : await actions.product.createProduct(formData);
 
             if (error) {
                 alert(error);
@@ -87,8 +151,8 @@ const creating = product.slug ? false : true;
     .productForm {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: var(--fluid-2xs);
-        max-width: 80ch;
+        gap: 1rem;
+
         margin: auto;
     }
 </style>
