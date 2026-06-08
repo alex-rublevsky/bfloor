@@ -21,6 +21,13 @@
 
     --color-background: var(--background);
     --color-foreground: var(--foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-hover: var(--secondary-hover);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
     --color-muted: var(--muted);
     --color-muted-foreground: var(--muted-foreground);
     --color-destructive: var(--destructive);
@@ -41,18 +48,32 @@
     --gap-3xs: var(--fluid-3xs);
     --gap-2xs: var(--fluid-2xs);
     --gap-xs: var(--fluid-xs);
+
+    --radius: var(--fluid-xs);
+    --radius-lg: var(--fluid-base);
 }
 
 :root {
     --font-sans: var(--font-overused-grotesk) sans-serif;
 
-    --hue: 263.26;
+    --hue: 29.52;
+    --beige-hue: 84.88;
 
-    --background: oklch(0.98 0.005 var(--hue));
-    --foreground: oklch(0.12 0.03 var(--hue));
+    --background: oklch(0.9794 0.021 var(--beige-hue));
+    --foreground: oklch(0.1532 0.0344 var(--hue));
 
-    --muted: oklch(0.91 0.02 var(--hue));
-    --muted-foreground: oklch(0.7 0.02 var(--hue));
+    --primary: oklch(0.3721 0.1297 var(--hue));
+    --primary-foreground: oklch(0.9672 0.0043 var(--hue));
+
+    --muted: oklch(0.9088 0.0881 var(--beige-hue));
+    --muted-foreground: oklch(0.5 0.0374 var(--hue));
+
+    /* make sure border is the same as secondary but with 50% opacity */
+    --secondary: oklch(0.5072 0.2029 var(--hue));
+    --secondary-hover: oklch(0.5072 0.2029 var(--hue) calc(l_ * _0 0.9));
+
+    --accent: oklch(0.54 0.2203 var(--hue));
+    --accent-foreground: var(--background);
 
     --destructive: oklch(0.55 0.22 25);
     --destructive-foreground: oklch(0.98 0.01 25);
@@ -68,6 +89,17 @@
     --fluid-3xl: clamp(2.7994rem, 1.9432rem + 4.281vw, 5.2609rem);
     --fluid-4xl: clamp(3.3593rem, 2.0879rem + 6.357vw, 7.0145rem);
     --fluid-5xl: clamp(4.0311rem, 2.1802rem + 9.2549vw, 9.3527rem);
+
+    --section-padding-x: 0.5rem;
+    --section-padding-y: 1rem;
+}
+
+@media (width >= 640px) {
+    :root {
+        /* Desktop padding */
+        --section-padding-x: 1rem;
+        --section-padding-y: 1.5rem;
+    }
 }
 
 html {
@@ -85,8 +117,12 @@ html {
     }
 
     section {
-        padding-left: 1rem;
-        padding-right: 1rem;
+        padding: 0rem var(--section-padding-x) var(--section-padding-y)
+            var(--section-padding-x);
+    }
+    section.no-padding {
+        padding-left: 0;
+        padding-right: 0;
     }
 
     h1 {
@@ -127,6 +163,7 @@ html {
         color: var(--foreground);
         word-wrap: break-word;
         overflow-wrap: break-word;
+        padding-bottom: 0.4rem;
     }
 
     h5 {
@@ -159,5 +196,9 @@ html {
 
     span {
         color: var(--foreground);
+        font-size: var(--fluid-base);
+    }
+    a {
+        font-size: var(--fluid-base);
     }
 }
