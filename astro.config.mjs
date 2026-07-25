@@ -27,20 +27,20 @@ export default defineConfig({
         ],
       },
     },
-    {
-      provider: fontProviders.local(),
-      name: "Annabelle",
-      cssVariable: "--font-annabelle",
-      options: {
-        variants: [
-          {
-            weight: "300",
-            style: "normal",
-            src: ["./src/assets/fonts/Annabelle.woff2"],
-          },
-        ],
-      },
-    },
+    // {
+    //   provider: fontProviders.local(),
+    //   name: "Annabelle",
+    //   cssVariable: "--font-annabelle",
+    //   options: {
+    //     variants: [
+    //       {
+    //         weight: "300",
+    //         style: "normal",
+    //         src: ["./src/assets/fonts/Annabelle.woff2"],
+    //       },
+    //     ],
+    //   },
+    // },
   ],
   env: {
     schema: {
