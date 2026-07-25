@@ -27,29 +27,43 @@ export default defineConfig({
         ],
       },
     },
+    {
+      provider: fontProviders.local(),
+      name: "Annabelle",
+      cssVariable: "--font-annabelle",
+      options: {
+        variants: [
+          {
+            weight: "300",
+            style: "normal",
+            src: ["./src/assets/fonts/Annabelle.woff2"],
+          },
+        ],
+      },
+    },
   ],
   env: {
     schema: {
-      // SECRET_BETTER_AUTH: envField.string({
-      //   context: "server",
-      //   access: "secret",
-      // }),
-      // PUBLIC_BETTER_AUTH_URL: envField.string({
-      //   context: "server",
-      //   access: "public",
-      // }),
-      // SECRET_ADMIN_EMAILS: envField.string({
-      //   context: "server",
-      //   access: "secret",
-      // }),
-      // PUBLIC_GOOGLE_CLIENT_ID: envField.string({
-      //   context: "server",
-      //   access: "public",
-      // }),
-      // SECRET_GOOGLE_CLIENT: envField.string({
-      //   context: "server",
-      //   access: "secret",
-      // }),
+      SECRET_BETTER_AUTH: envField.string({
+        context: "server",
+        access: "secret",
+      }),
+      PUBLIC_BETTER_AUTH_URL: envField.string({
+        context: "server",
+        access: "public",
+      }),
+      SECRET_ADMIN_EMAILS: envField.string({
+        context: "server",
+        access: "secret",
+      }),
+      PUBLIC_GOOGLE_CLIENT_ID: envField.string({
+        context: "server",
+        access: "public",
+      }),
+      SECRET_GOOGLE_CLIENT: envField.string({
+        context: "server",
+        access: "secret",
+      }),
       PUBLIC_TURSO_DATABASE_URL: envField.string({
         context: "server",
         access: "public",
