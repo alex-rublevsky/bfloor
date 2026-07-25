@@ -1,0 +1,80 @@
+---
+import "@/styles/global.css";
+import { Font } from "astro:assets";
+import type { ImageMetadata } from "astro";
+import { SITE_TITLE, BASE_IMAGE_URL } from "@/constants";
+
+interface Props {
+    title: string;
+    description: string;
+    image?: string;
+}
+
+const DEFAULT_OG_IMAGE = `${BASE_IMAGE_URL}images/sesh-full.jpg`;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+
+const {
+    title = SITE_TITLE,
+    description,
+    image = DEFAULT_OG_IMAGE,
+} = Astro.props;
+
+const documentTitle = `${title} — Напольные покрытия во Владивостоке`;
+---
+
+<!-- Global Metadata -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" type="image/png" href="/light.png" />
+<link rel="icon" href="/favicon.ico" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta name="apple-mobile-web-app-title" content={SITE_TITLE} />
+<link rel="sitemap" href="/sitemap-index.xml" />
+<link
+    rel="alternate"
+    type="application/rss+xml"
+    title={SITE_TITLE}
+    href={new URL("rss.xml", Astro.site)}
+/>
+<meta name="generator" content={Astro.generator} />
+
+<Font cssVariable="--font-overused-grotesk" preload />
+
+<!-- Canonical URL -->
+<link rel="canonical" href={canonicalURL} />
+
+<!-- Primary Meta Tags -->
+<title>{documentTitle}</title>
+<script
+    type="application/ld+json"
+    set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: SITE_TITLE,
+        url: Astro.site,
+    })}
+/>
+<meta name="title" content={documentTitle} />
+<meta name="description" content={description} />
+
+<!-- TODO: Web analytics -->
+<!-- Open Graph -->
+<meta property="og:title" content={documentTitle} />
+<meta property="og:type" content="website" />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={image} />
+<meta property="og:image:alt" content={documentTitle} />
+<meta property="og:site_name" content={SITE_TITLE} />
+<meta property="og:locale" content="ru_RU" />
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:url" content={canonicalURL} />
+<meta property="twitter:title" content={documentTitle} />
+<meta property="twitter:description" content={description} />
+<meta property="twitter:image" content={image} />
