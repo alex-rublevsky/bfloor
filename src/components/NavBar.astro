@@ -4,16 +4,17 @@ import Link from "@/components/shared/Link.astro";
 import { Icon } from "astro-icon/components";
 ---
 
-<nav
-    class="flex justify-between items-center gap-(--fluid-sm) px-(--fluid-sm) py-(--fluid-xs)"
->
-    <Link href="/">
-        <Icon name="logo" title="Лого BeautyFloor" class="text-blue-200" />
-    </Link>
-    <div class="flex gap-(--fluid-sm)">
+<nav class="flex justify-between items-center gap-sm px-2xs py-2xs">
+    <div class="flex gap-sm items-center">
+        <Link href="/">
+            <Icon name="logo" title="Лого BeautyFloor" />
+        </Link>
+        <Button size="sm" href="/store">Каталог</Button>
+    </div>
+    <div class="flex gap-xs items-baseline">
         <Link href="/about">О компании</Link>
         <Link href="/contact">Контакты и Адреса</Link>
 
-        <Button size="sm" href="/dashboard">Админка</Button>
+        <Button size="md" href="/dashboard">Админка</Button>
     </div>
 </nav>

@@ -9,7 +9,7 @@
         10rem
     );
     display: grid;
-    gap: var(--fluid-2xs);
+    gap: var(--spacing-2xs);
     grid-template-columns: repeat(
         auto-fit,
         minmax(min(var(--min-col-size), 100%), 1fr)
