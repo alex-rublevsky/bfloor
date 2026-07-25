@@ -103,9 +103,10 @@ const composedClass = `${baseClasses}${layoutClasses ? ` ${layoutClasses}` : ""}
 
 <style>
     .button {
-        transition-duration: background-color, transform;
         user-select: none;
-        transition-duration: 170ms;
+        transition:
+            transform 170ms,
+            background-color 170ms;
         cursor: pointer;
     }
     .button:active {
