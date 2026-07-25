@@ -2,6 +2,25 @@ import { defineAction } from "astro:actions";
 import { z } from "astro/zod";
 import { createProduct } from "@/db/dashboard/createProduct";
 import { updateProduct } from "@/db/dashboard/updateProduct";
+import { isAdmin } from "@/lib/auth";
+
+function requireAdmin(locals: App.Locals) {
+  if (!locals.user) {
+    throw new ActionError({
+      code: "UNAUTHORIZED",
+      message: "You must be signed in.",
+    });
+  }
+
+  if (!isAdmin(locals.user.email)) {
+    throw new ActionError({
+      code: "FORBIDDEN",
+      message: "You do not have access.",
+    });
+  }
+
+  return locals.user;
+}
 
 export const product = {
   updateProduct: defineAction({
