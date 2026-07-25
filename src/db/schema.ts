@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm/sqlite-core";
 
 export const categories = sqliteTable("categories", {
-  id: integer().primaryKey(),
+  id: integer().primaryKey({ autoIncrement: true }),
   name: text().unique().notNull(),
   slug: text().unique().notNull(),
   // sort: integer(),
@@ -67,9 +67,11 @@ export const products = sqliteTable("products", {
   categoryId: integer("category_id").notNull(),
   brandId: integer("brand_id"),
   collectionId: integer("collection_id"),
-  viewCount: integer("view_count").default(0),
+  viewCount: integer("view_count").notNull().default(0),
   description: text("description"),
   importantNote: text("important_note"),
+  createdAt: integer("created_at", { mode: "timestamp" }),
+  updatedAt: integer("updated_at", { mode: "timestamp" }),
 });
 
 export const productRelations = relations(products, ({ one }) => ({
