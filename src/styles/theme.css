@@ -52,9 +52,9 @@
     --spacing-3xs: var(--space-3xs);
     --spacing-2xs: var(--space-2xs);
     --spacing-xs: var(--space-xs);
-    --spacing-s: var(--space-s);
-    --spacing-m: var(--space-m);
-    --spacing-l: var(--space-l);
+    --spacing-sm: var(--space-sm);
+    --spacing-md: var(--space-md);
+    --spacing-lg: var(--space-lg);
     --spacing-xl: var(--space-xl);
     --spacing-2xl: var(--space-2xl);
     --spacing-3xl: var(--space-3xl);
@@ -115,9 +115,9 @@
       --space-3xs: clamp(0.25rem, 0.2336rem + 0.0822vw, 0.3125rem);
       --space-2xs: clamp(0.5625rem, 0.5461rem + 0.0822vw, 0.625rem);
       --space-xs: clamp(0.8125rem, 0.7796rem + 0.1645vw, 0.9375rem);
-      --space-s: clamp(1.0625rem, 1.0132rem + 0.2467vw, 1.25rem);
-      --space-m: clamp(1.625rem, 1.5592rem + 0.3289vw, 1.875rem);
-      --space-l: clamp(2.125rem, 2.0263rem + 0.4934vw, 2.5rem);
+      --space-sm: clamp(1.0625rem, 1.0132rem + 0.2467vw, 1.25rem);
+      --space-md: clamp(1.625rem, 1.5592rem + 0.3289vw, 1.875rem);
+      --space-lg: clamp(2.125rem, 2.0263rem + 0.4934vw, 2.5rem);
       --space-xl: clamp(3.1875rem, 3.0395rem + 0.7401vw, 3.75rem);
       --space-2xl: clamp(4.25rem, 4.0526rem + 0.9868vw, 5rem);
       --space-3xl: clamp(6.375rem, 6.0789rem + 1.4803vw, 7.5rem);
