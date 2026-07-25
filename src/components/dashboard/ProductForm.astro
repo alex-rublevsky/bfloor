@@ -130,7 +130,8 @@ const creating = product.slug ? false : true;
                     : await actions.product.createProduct(formData);
 
             if (error) {
-                alert(error);
+                console.error("Product form submission failed", error);
+                alert(error.message ?? "Не удалось сохранить товар");
             } else {
                 alert(data);
             }
