@@ -1,0 +1,289 @@
+---
+import { Image } from "astro:assets";
+import { Icon } from "astro-icon/components";
+import Button from "@/components/shared/Button.astro";
+import ProgressDot from "@/components/shared/ProgressDot.astro";
+import { BASE_IMAGE_URL } from "@/constants";
+import "./testimonial.css";
+
+const AUTOPLAY_DELAY = 5000;
+
+type TestimonialSource = "Google" | "Yandex" | "2GIS";
+
+interface Testimonial {
+    id: number;
+    name: string;
+    content: string;
+    avatar: string;
+    rating: number;
+    date: string;
+    source: TestimonialSource;
+    link: string;
+}
+
+const sourceIcon: Record<TestimonialSource, string> = {
+    Google: "googleMaps",
+    Yandex: "yandexMaps",
+    "2GIS": "2GIS",
+};
+
+const testimonials: Testimonial[] = [
+    {
+        id: 1,
+        name: "Степанова Алёна",
+        content:
+            "В поисках качественного напольного покрытия обратилась в магазин Beauty Floor — требовался красивый, крепкий, нешумный и теплый пол для квартиры в новостройке. Приходила в салон несколько раз — смотрела, выбирала, советовалась. Выбрала пробковый пол Egger с подходящим соотношением цены и качества. Спасибо сотрудникам салона — дали поцарапать ногтем, походить, попрыгать и вообще всячески повоздействовать на образцы)) Идеальное знание своего продукта, очень вежливое и приветливое отношение к клиентам — это редко и очень приятно) Доставка покрытия со склада в другом городе в течение трех недель, а дальнейшее хранение на складе во Владивостоке бесплатно, не нужно думать над тем, куда все эти коробки сложить, чтобы не испортить пол. В салоне огромное количество различных настенных и напольных покрытий и аксессуаров к ним — порогов, плинтусов, подложек. Я очень благодарна ребятам из Beauty Floor за помощь в подборе паркета, за дружеское отношение и отличный сервис!)",
+        avatar: "testimonial-avatars/stepanova-alena.webp",
+        rating: 5,
+        date: "2019-08-18",
+        source: "Google",
+        link: "https://www.google.ru/maps/place/Beauty+Floor/@43.1688399,131.9257411,17z/data=!4m18!1m9!3m8!1s0x5fb39183a2c24f9f:0x50ad4f6d76b05a03!2sBeauty+Floor!8m2!3d43.168836!4d131.928316!9m1!1b1!16s%2Fg%2F11rqx6015!3m7!1s0x5fb39183a2c24f9f:0x50ad4f6d76b05a03!8m2!3d43.168836!4d131.928316!9m1!1b1!16s%2Fg%2F11rqx6015?entry=ttu",
+    },
+    {
+        id: 2,
+        name: "Гера К",
+        content:
+            "Покупали пробковый пол, впервые решили попробовать такое покрытие. В магазине нам рассказали все преимущества такого пола, окончательно убедив нас в правильности выбора — говорят, что со временем мы ощутим преимущества этого пола над обычным ламинатом, особенно полезно для людей в возрасте и детей. Заказ пришёл в срок, как нам и обещали👍 Ещё и оказалось, что укладка пола бесплатно осуществляется представителями магазина! В общем советуем этот магазин однозначно👍",
+        avatar: "testimonial-avatars/gera-k.webp",
+        link: "https://yandex.ru/maps/org/beauty_floor/109013944306/reviews/?ll=131.925211%2C43.169177&source=serp_navig&z=18.11",
+        rating: 5,
+        date: "2019-08-18",
+        source: "Yandex",
+    },
+    {
+        id: 3,
+        name: "Maria Rayer",
+        content:
+            "В августе 2020 года покупали здесь ламинат, подложку, плинтусы. Все очень понравилось: от ассортимента и ценовой составляющей до работы сотрудников. Из всех упаковок ламината не было ни одной бракованной планки. Делали самовывоз, так сотрудник (замечательный специалист, очень хорошо, со знанием дела, терпеливо консультировал таких дотошных зануд, как мы с мужем) помог все погрузить в машину. В самом зале есть небольшой, но спасительный детский уголок, где наш непоседа провел достаточно времени, пока мы выбирали покрытие. В итоге, сумма затрат соответствует качеству, пол сделан и радует меня каждый день) всем советую)",
+        avatar: "testimonial-avatars/maria-ryayer.webp",
+        link: "https://2gis.ru/vladivostok/firm/70000001043762992/tab/reviews",
+        rating: 5,
+        date: "2022-05-13",
+        source: "2GIS",
+    },
+    {
+        id: 4,
+        name: "Павел Авхуцкий",
+        content:
+            "Уютно, много чего представлено, девушка-консультант вообще молодец, знает о чем говорит.",
+        avatar: "testimonial-avatars/pavel-avhutskiy.webp",
+        link: "https://2gis.ru/vladivostok/firm/70000001043762992/tab/reviews",
+        rating: 5,
+        date: "2023-12-27",
+        source: "2GIS",
+    },
+    {
+        id: 5,
+        name: "Olga Kuznetsova",
+        content:
+            "Мне очень понравился магазин, ВСЁ компактно, до этого посетила многие магазины по продаже напольных покрытий, постм везде не чувствуется заинтересованности продавцов в продаже, а тут в магазине на Русской, 78, продавец Елена подошла сразу, я скащала ,что мне нудна спокойная расцветка ламината, она предложила германский ламинат дуб кофейный со скидкой , мне он понравился, покупкой очень довольна и особенно приятно, что доставка была в течение 3 часов.Огромное спасибо Елене, что помогла с выбором, приятный, вежливый продавец, желаю хороших продаж и здоровья",
+        avatar: "testimonial-avatars/olga-kuznetsova.webp",
+        link: "https://www.google.ru/maps/place/Beauty+Floor/@43.1688399,131.9257411,17z/data=!4m18!1m9!3m8!1s0x5fb39183a2c24f9f:0x50ad4f6d76b05a03!2sBeauty+Floor!8m2!3d43.168836!4d131.928316!9m1!1b1!16s%2Fg%2F11rqx6015!3m7!1s0x5fb39183a2c24f9f:0x50ad4f6d76b05a03!8m2!3d43.168836!4d131.928316!9m1!1b1!16s%2Fg%2F11rqx6015?entry=ttu",
+        rating: 5,
+        date: "2021-05-15",
+        source: "Google",
+    },
+];
+
+function formatDate(dateString: string): string {
+    return new Intl.DateTimeFormat("ru-RU", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    })
+        .format(new Date(dateString))
+        .replace(/\s*г\.?\s*$/u, "");
+}
+---
+
+<section
+    class="embla no-padding"
+    data-testimonials
+    data-autoplay-delay={AUTOPLAY_DELAY}
+>
+    <div class="testimonial-slider__header">
+        <div class="testimonial-slider__header-content">
+            <h2>Отзывы</h2>
+        </div>
+        <div class="testimonial-slider__controls">
+            <div class="embla__buttons">
+                <Button
+                    variant="tertiary"
+                    data-embla-prev
+                    aria-label="Предыдущий отзыв"
+                >
+                    <Icon
+                        name="arrow"
+                        title="Предыдущий отзыв"
+                        class="size-5 -rotate-90"
+                    />
+                </Button>
+                <Button
+                    variant="tertiary"
+                    data-embla-next
+                    aria-label="Следующий отзыв"
+                >
+                    <Icon
+                        name="arrow"
+                        title="Следующий отзыв"
+                        class="size-5 rotate-90"
+                    />
+                </Button>
+            </div>
+        </div>
+    </div>
+
+    <div class="embla__viewport">
+        <div class="embla__container">
+            {
+                testimonials.map((testimonial, index) => (
+                    <div class="embla__slide">
+                        <a
+                            href={testimonial.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="testimonial-card"
+                        >
+                            <Icon
+                                name="externalLink"
+                                title="Открыть отзыв"
+                                class="size-5 testimonial-card__external-link"
+                            />
+
+                            <p class="mb-6 line-clamp-10">
+                                {testimonial.content}
+                            </p>
+                            <div class="flex items-center">
+                                <!-- TODO: why is the picture not fully rounded? -->
+                                <div class="relative mr-4 h-12 w-12 overflow-hidden rounded-full">
+                                    <Image
+                                        src={
+                                            BASE_IMAGE_URL + testimonial.avatar
+                                        }
+                                        alt={testimonial.name}
+                                        width={48}
+                                        height={48}
+                                        class="size-full object-cover"
+                                        loading={index === 0 ? "eager" : "lazy"}
+                                    />
+                                </div>
+                                <div class="flex flex-col">
+                                    <div class="flex items-center gap-3">
+                                        <p class="font-medium">
+                                            {testimonial.name}
+                                        </p>
+                                        <Icon
+                                            name={
+                                                sourceIcon[testimonial.source]
+                                            }
+                                            title={testimonial.source}
+                                            class="size-6 shrink-0"
+                                        />
+                                    </div>
+                                    {testimonial.date && (
+                                        <p class="mt-1 text-muted-foreground text-sm">
+                                            {formatDate(testimonial.date)}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                ))
+            }
+        </div>
+    </div>
+
+    {
+        testimonials.length > 1 && (
+            <div class="progress-dots">
+                {testimonials.map((_, index) => (
+                    <ProgressDot
+                        index={index}
+                        active={index === 0}
+                        autoplayDelay={AUTOPLAY_DELAY}
+                    />
+                ))}
+            </div>
+        )
+    }
+</section>
+
+<script>
+    import EmblaCarousel from "embla-carousel";
+    import Autoplay from "embla-carousel-autoplay";
+
+    function setFillActive(fill: SVGCircleElement, active: boolean) {
+        fill.classList.toggle("progress-dot__fill--active", active);
+        fill.classList.toggle("progress-dot__fill", !active);
+    }
+
+    function restartRing(dot: HTMLElement) {
+        const ring = dot.querySelector<SVGCircleElement>(
+            "[data-progress-ring]",
+        );
+        if (!ring) return;
+        ring.style.animation = "none";
+        void ring.getBoundingClientRect();
+        ring.style.animation = "";
+    }
+
+    function initTestimonials(root: HTMLElement) {
+        const viewport = root.querySelector<HTMLElement>(".embla__viewport");
+        if (!viewport) return;
+
+        const delay = Number(root.dataset.autoplayDelay) || 5000;
+        const emblaApi = EmblaCarousel(viewport, { loop: true }, [
+            Autoplay({ delay, stopOnInteraction: false }),
+        ]);
+
+        const dots = [
+            ...root.querySelectorAll<HTMLElement>("[data-progress-dot]"),
+        ];
+        const prevBtn =
+            root.querySelector<HTMLButtonElement>("[data-embla-prev]");
+        const nextBtn =
+            root.querySelector<HTMLButtonElement>("[data-embla-next]");
+
+        const syncDots = ({ restart = true } = {}) => {
+            const selected = emblaApi.selectedScrollSnap();
+            dots.forEach((dot, index) => {
+                const isActive = index === selected;
+                const wasActive = dot.getAttribute("aria-current") === "true";
+                const fill = dot.querySelector<SVGCircleElement>(
+                    "[data-progress-fill]",
+                );
+
+                if (fill) setFillActive(fill, isActive);
+
+                if (isActive) {
+                    dot.setAttribute("aria-current", "true");
+                    if (restart || !wasActive) restartRing(dot);
+                } else {
+                    dot.removeAttribute("aria-current");
+                }
+            });
+        };
+
+        prevBtn?.addEventListener("click", () => emblaApi.scrollPrev());
+        nextBtn?.addEventListener("click", () => emblaApi.scrollNext());
+
+        dots.forEach((dot, index) => {
+            dot.addEventListener("click", () => {
+                const alreadySelected = emblaApi.selectedScrollSnap() === index;
+                emblaApi.scrollTo(index);
+                emblaApi.plugins()?.autoplay?.reset();
+                if (alreadySelected) restartRing(dot);
+            });
+        });
+
+        emblaApi.on("select", () => syncDots());
+        emblaApi.on("reInit", () => syncDots());
+        // Preserve SSR ring animation on first paint
+        syncDots({ restart: false });
+    }
+
+    document
+        .querySelectorAll<HTMLElement>("[data-testimonials]")
+        .forEach(initTestimonials);
+</script>

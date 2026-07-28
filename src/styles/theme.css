@@ -36,6 +36,7 @@
     --color-muted-foreground: var(--muted-foreground);
     --color-destructive: var(--destructive);
     --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
 
     /* Tailwind text-* utilities resolve from fluid vars. */
     --text-2xs: var(--step--2);
@@ -62,16 +63,16 @@
     /* One-up pairs (fluid between two steps) */
     --spacing-3xs-2xs: var(--space-3xs-2xs);
     --spacing-2xs-xs: var(--space-2xs-xs);
-    --spacing-xs-s: var(--space-xs-s);
-    --spacing-s-m: var(--space-s-m);
-    --spacing-m-l: var(--space-m-l);
-    --spacing-l-xl: var(--space-l-xl);
+    --spacing-xs-sm: var(--space-xs-s);
+    --spacing-sm-md: var(--space-s-m);
+    --spacing-md-lg: var(--space-m-l);
+    --spacing-lg-xl: var(--space-l-xl);
     --spacing-xl-2xl: var(--space-xl-2xl);
     --spacing-2xl-3xl: var(--space-2xl-3xl);
 
     --radius-sm: var(--spacing-xs);
-    --radius-md: var(--spacing-m);
-    --radius-lg: var(--spacing-l);
+    --radius-md: var(--spacing-md);
+    --radius-lg: var(--spacing-lg);
 }
 
 :root {
@@ -101,6 +102,10 @@
 
     --destructive: oklch(0.55 0.22 25);
     --destructive-foreground: oklch(0.98 0.01 25);
+
+    --border: oklch(0.8895 0.1033 var(--beige-hue) / 0.5);
+
+    --section-padding-x: var(--spacing-2xs);
 
     /* @link https://utopia.fyi/type/calculator?c=320,17,1.2,1536,20,1.25,5,2,&s=0.75|0.5|0.25,1.5|2|3|4|6,s-l&g=s,l,xl,12 */
       --step--2: clamp(0.7378rem, 0.7215rem + 0.0818vw, 0.8rem);
@@ -135,6 +140,12 @@
       --border-width: clamp(0.09rem, 0.05rem + 0.03vw, 0.095rem);
 }
 
+@media (width >= 640px) {
+    :root {
+        --section-padding-x:  var(--spacing-xs);
+    }
+}
+
 /* Safari Autofill styles */
 input:-webkit-autofill, input:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0 1000px var(--background) inset;
@@ -158,8 +169,8 @@ html {
     }
 
     section {
-      padding-left: var(--space-2xs);
-      padding-right: var(--space-2xs);
+      padding-left: var(--section-padding-x);
+      padding-right: var(--section-padding-x);
     }
 
     section.no-padding {
@@ -283,5 +294,16 @@ textarea, select {
   }
   100% {
     background-color: color-mix(in oklch, var(--border) 85%, transparent);
+  }
+}
+
+@layer base {
+  a {
+    display: inline-block;
+    transition: transform 70ms ease-out;
+  }
+
+  a:active:not(:has(button:active)) {
+    transform: scale(0.97);
   }
 }
