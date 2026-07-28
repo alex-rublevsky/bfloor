@@ -1,0 +1,51 @@
+---
+import "./progress-dots.css";
+
+interface Props {
+	active?: boolean;
+	autoplayDelay?: number;
+	index: number;
+}
+
+const { active = false, autoplayDelay = 5000, index } = Astro.props;
+
+const SVG = 42;
+const CENTER = SVG / 2;
+const DOT_R = 9;
+const RING_R = 17;
+const CIRC = 2 * Math.PI * RING_R;
+---
+
+<button
+	type="button"
+	class="progress-dot"
+	data-progress-dot
+	aria-label={`Перейти к слайду ${index + 1}`}
+	aria-current={active ? "true" : undefined}
+	style={`--progress-dot-circ: ${CIRC}; --progress-dot-duration: ${autoplayDelay}ms;`}
+>
+	<svg
+		width={SVG}
+		height={SVG}
+		viewBox={`0 0 ${SVG} ${SVG}`}
+		aria-hidden="true"
+	>
+		<circle
+			cx={CENTER}
+			cy={CENTER}
+			r={DOT_R}
+			class={active ? "progress-dot__fill--active" : "progress-dot__fill"}
+			data-progress-fill
+		></circle>
+		<circle
+			cx={CENTER}
+			cy={CENTER}
+			r={RING_R}
+			fill="none"
+			stroke-width="2.5"
+			stroke-linecap="round"
+			class="progress-dot__ring"
+			data-progress-ring
+		></circle>
+	</svg>
+</button>

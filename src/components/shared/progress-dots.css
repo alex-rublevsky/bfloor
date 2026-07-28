@@ -1,0 +1,60 @@
+@keyframes progress-dot-draw {
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+
+.progress-dots {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.25rem;
+	padding-bottom: 0.5rem;
+}
+
+.progress-dot {
+	appearance: none;
+	border: none;
+	background: none;
+	padding: 0;
+	margin: 0;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+	touch-action: manipulation;
+	border-radius: 50%;
+	transition: background-color 0.2s ease;
+}
+
+.progress-dot:hover {
+	background-color: color-mix(in oklch, var(--muted) 50%, transparent);
+}
+
+.progress-dot__fill {
+	fill: var(--muted);
+	transition: fill 0.3s ease;
+}
+
+.progress-dot__fill--active {
+	fill: var(--primary);
+	transition: fill 0.3s ease;
+}
+
+.progress-dot__ring {
+	stroke: var(--primary);
+	transform-box: fill-box;
+	transform-origin: center;
+	/* rotate(-90deg) → start at 12 o'clock; scaleX(-1) → draw counterclockwise */
+	transform: rotate(-90deg) scaleX(-1);
+	stroke-dasharray: var(--progress-dot-circ);
+	stroke-dashoffset: var(--progress-dot-circ);
+	opacity: 0;
+	animation: none;
+}
+
+.progress-dot[aria-current="true"] .progress-dot__ring {
+	opacity: 1;
+	animation-name: progress-dot-draw;
+	animation-duration: var(--progress-dot-duration, 5000ms);
+	animation-timing-function: linear;
+	animation-fill-mode: forwards;
+}
