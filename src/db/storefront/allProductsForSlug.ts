@@ -1,52 +1,21 @@
-import { db } from "@/db/index";
-import { brands, categories, collections, products } from "@/db/schema";
-import { eq, sql, type InferSelectModel } from "drizzle-orm";
+import { db } from "@/db";
 
-// export type Product = {
-//   slug: string;
-//   name: string;
-//   categorySlug: string;
-//   images: string[];
-//   price: number | null;
-//   discountedPrice: number | null;
-//   description: string | null;
-//   brandSlug: string | null;
-//   collectionSlug: string | null;
-// };
-
-export type Product = {
-  name: string;
+export type StorefrontProduct = {
+  id: number;
   slug: string;
+  name: string;
+  description: string;
   images: string[];
-  categorySlug: string;
-  categoryName: string;
-  price: number | null;
-  discountedPrice: number | null;
-  description: string | null;
-  brandSlug: string | null;
-  brandName: string | null;
-  collectionSlug: string | null;
-  collectionName: string | null;
+  category: { name: string; slug: string };
 };
 
-export async function getAllProductsForSlug(): Promise<Product[]> {
-  return db
-    .select({
-      slug: products.slug,
-      name: products.name,
-      categorySlug: categories.slug,
-      categoryName: categories.name,
-      images: products.images,
-      price: products.price,
-      discountedPrice: products.discountedPrice,
-      description: products.description,
-      brandSlug: brands.slug,
-      brandName: brands.name,
-      collectionSlug: collections.slug,
-      collectionName: collections.name,
-    })
-    .from(products)
-    .innerJoin(categories, eq(products.categoryId, categories.id))
-    .leftJoin(brands, eq(products.brandId, brands.id))
-    .leftJoin(collections, eq(products.collectionId, collections.id));
+export async function getProductsForSlugPages() {
+  return await db.query.products.findMany({
+    // columns: {},
+    where: { isActive: true },
+    with: {
+      category: { columns: { name: true, slug: true } },
+      // variations: { orderBy: { weight: "desc" } },
+    },
+  });
 }

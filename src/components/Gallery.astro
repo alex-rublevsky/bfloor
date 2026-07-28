@@ -1,0 +1,781 @@
+---
+import { Icon } from "astro-icon/components";
+import { getImage, Image } from "astro:assets";
+import { BASE_IMAGE_URL } from "@/constants";
+
+interface Props {
+    images: string[];
+    slug: string;
+    alt?: string;
+    class?: string;
+    "class:list"?:
+        string | Record<string, boolean> | (string | Record<string, boolean>)[];
+}
+
+const {
+    images,
+    slug,
+    alt = "",
+    class: className,
+    "class:list": classList,
+    ...rest
+} = Astro.props;
+
+const assetUrl = (path: string) => BASE_IMAGE_URL + path;
+
+const rawImages = Array.isArray(images) ? images : [];
+const hasImages = rawImages.length > 0;
+
+let fullImageUrls: string[] = [];
+let imageMeta: { url: string; lowSrc: string; highSrc: string }[] = [];
+
+if (hasImages) {
+    fullImageUrls = rawImages.map(assetUrl);
+    imageMeta = await Promise.all(
+        fullImageUrls.map(async (url) => {
+            const [low, high] = await Promise.all([
+                getImage({ src: url, width: 600, height: 600 }),
+                getImage({ src: url, width: 2000, height: 2000 }),
+            ]);
+            return { url, lowSrc: low.src, highSrc: high.src };
+        }),
+    );
+}
+
+const mainSharedClass =
+    "block max-w-full w-full object-contain max-h-[min(55vh,30rem)] lg:max-h-[calc(100vh-5rem)]";
+---
+
+<div
+    {...rest}
+    class:list={[
+        "gallery-container min-h-0 min-w-0 w-full ",
+        className,
+        classList,
+    ]}
+    data-gallery
+    data-slug={slug}
+>
+    {
+        !hasImages ? (
+            <div class="relative flex aspect-square w-full items-center justify-center self-start">
+                {/* data-gallery-panel — product-image VT morph target */}
+                <Icon
+                    name="image"
+                    title="Сломанная Картинка"
+                    class="size-30 text-muted-foreground"
+                />
+            </div>
+        ) : fullImageUrls.length === 1 ? (
+            <div
+                class="gallery-main-panel bg-background relative flex w-full grow items-center justify-center"
+                data-zoom-container
+            >
+                {/* data-gallery-panel — product-image VT morph target */}
+                <div class="gallery-main-frame relative w-full bg-background skeleton">
+                    <Image
+                        src={fullImageUrls[0]}
+                        width={600}
+                        height={600}
+                        alt={alt}
+                        loading="eager"
+                        fetchpriority="high"
+                        class={`${mainSharedClass}`}
+                        data-main-image
+                        data-initial-high-src={imageMeta[0].highSrc}
+                        onload="this.parentElement?.classList.remove('skeleton')"
+                    />
+                </div>
+                <div
+                    data-zoom-lens
+                    class="absolute inset-0 z-10 cursor-zoom-in"
+                >
+                    <div
+                        class="pointer-events-none absolute inset-0 bg-background"
+                        aria-hidden="true"
+                        data-zoom-lens-ground
+                    />
+                    <div
+                        class="pointer-events-none absolute inset-0 bg-no-repeat"
+                        data-zoom-lens-surface
+                    />
+                </div>
+            </div>
+        ) : (
+            <div class="gallery-shell">
+                <div class="gallery-thumbs-scroll order-2 w-full shrink-0 overflow-x-auto">
+                    <div
+                        class="gallery-thumbnails flex gap-2 overflow-y-auto px-4"
+                        data-thumbnails
+                    >
+                        {fullImageUrls.map((imageUrl, index) => (
+                            <button
+                                type="button"
+                                aria-label={`Просмотр изображения ${index + 1}`}
+                                class:list={[
+                                    "relative h-24 w-24 shrink-0 cursor-pointer border-0 bg-transparent p-0",
+                                    index === 0 && "thumbnail-active",
+                                ]}
+                                data-thumbnail-index={index}
+                                data-full-src={imageUrl}
+                                data-main-high-src={imageMeta[index].highSrc}
+                                data-main-low-src={imageMeta[index].lowSrc}
+                            >
+                                <div class="absolute inset-0 overflow-hidden bg-background skeleton">
+                                    <div
+                                        class:list={[
+                                            "pointer-events-none absolute inset-0 z-10 transition-colors duration-200",
+                                            index === 0
+                                                ? "border-2 border-black"
+                                                : "border border-transparent",
+                                        ]}
+                                        data-thumbnail-border
+                                    />
+                                    <Image
+                                        width={100}
+                                        height={100}
+                                        src={imageUrl}
+                                        alt={`${alt} миниатюра ${index + 1}`}
+                                        class="h-full w-full object-cover"
+                                        onload="this.parentElement?.classList.remove('skeleton')"
+                                    />
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div
+                    class="gallery-main-panel bg-background relative order-1 flex w-full grow items-center justify-center"
+                    data-zoom-container
+                >
+                    {/* data-gallery-panel — product-image VT morph target */}
+                    <div class="gallery-main-frame gallery-desktop-image relative w-full bg-background skeleton">
+                        <Image
+                            src={fullImageUrls[0]}
+                            width={600}
+                            height={600}
+                            alt={alt}
+                            loading="eager"
+                            fetchpriority="high"
+                            class={mainSharedClass}
+                            data-main-image
+                            data-initial-high-src={imageMeta[0].highSrc}
+                            onload="this.parentElement?.classList.remove('skeleton')"
+                        />
+                    </div>
+
+                    <div
+                        class="gallery-mobile-carousel relative aspect-square w-full snap-x snap-mandatory overflow-x-auto overflow-y-hidden scroll-smooth bg-background"
+                        data-mobile-gallery
+                    >
+                        <div class="flex h-full">
+                            {fullImageUrls.map((imageUrl, index) => (
+                                <div class="flex w-full shrink-0 snap-center items-center justify-center bg-background skeleton">
+                                    <Image
+                                        width={600}
+                                        height={600}
+                                        src={imageUrl}
+                                        alt={`${alt} ${index + 1}`}
+                                        loading={index === 0 ? "eager" : "lazy"}
+                                        class="h-full w-full object-contain"
+                                        data-mobile-slide-image
+                                        data-high-src={imageMeta[index].highSrc}
+                                        onload="this.parentElement?.classList.remove('skeleton')"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div
+                        data-zoom-lens
+                        class="absolute inset-0 z-10 cursor-zoom-in"
+                    >
+                        <div
+                            class="pointer-events-none absolute inset-0 bg-background"
+                            aria-hidden="true"
+                            data-zoom-lens-ground
+                        />
+                        <div
+                            class="pointer-events-none absolute inset-0 bg-no-repeat"
+                            data-zoom-lens-surface
+                        />
+                    </div>
+                </div>
+            </div>
+        )
+    }
+</div>
+
+<script>
+    // import {
+    //   PRODUCT_IMAGE_TRANSITION_NAME,
+    //   isFeedUrl,
+    //   setTransitionProduct,
+    //   storeImageIndex,
+    //   takeImageIndex,
+    // } from "@/lib/archive.product-image-transition";
+
+    const HOVER_ENABLE_DELAY_MS = 100;
+    const MOBILE_SCROLL_SYNC_DEBOUNCE_MS = 50;
+    const PROGRAMMATIC_SCROLL_LOCK_MS = 200;
+    const DESKTOP_MAGNIFIER_MEDIA_QUERY = "(hover: hover) and (pointer: fine)";
+
+    let magnifierMod: Promise<
+        typeof import("../lib/galleryDesktopMagnifier")
+    > | null = null;
+
+    function loadMagnifier() {
+        magnifierMod ??= import("../lib/galleryDesktopMagnifier");
+        return magnifierMod;
+    }
+
+    async function waitDecode(img: HTMLImageElement) {
+        if (!(img.complete && img.naturalWidth > 0)) {
+            await new Promise<void>((resolve) => {
+                const done = () => {
+                    img.removeEventListener("load", done);
+                    img.removeEventListener("error", done);
+                    resolve();
+                };
+                img.addEventListener("load", done, { once: true });
+                img.addEventListener("error", done, { once: true });
+            });
+        }
+        try {
+            await img.decode();
+        } catch {
+            /* ignore */
+        }
+    }
+
+    function bindMainHigh(img: HTMLImageElement | null, highSrc: string) {
+        if (!img) return;
+        const token = String(
+            (Number.parseInt(img.dataset.highLoadToken || "0", 10) || 0) + 1,
+        );
+        img.dataset.highLoadToken = token;
+        void (async () => {
+            const preload = new Image();
+            preload.src = highSrc;
+            await waitDecode(preload);
+            if (img.dataset.highLoadToken !== token) return;
+            img.src = highSrc;
+            img.classList.add("gallery-main-high-loaded");
+            img.dispatchEvent(new CustomEvent("gallery:high-ready"));
+        })();
+    }
+
+    function initGallery() {
+        const rootAc = new AbortController();
+        const { signal } = rootAc;
+        const teardown: Array<() => void> = [];
+
+        window.addEventListener(
+            "pagehide",
+            () => {
+                rootAc.abort();
+                teardown.forEach((fn) => fn());
+                teardown.length = 0;
+            },
+            { once: true },
+        );
+
+        document.querySelectorAll(".gallery-container").forEach((el) => {
+            const container = el as HTMLElement;
+            const mainImage = container.querySelector(
+                "[data-main-image]",
+            ) as HTMLImageElement | null;
+            const thumbnails = container.querySelectorAll(
+                "[data-thumbnail-index]",
+            );
+            const mobileGallery = container.querySelector(
+                "[data-mobile-gallery]",
+            ) as HTMLElement | null;
+            const thumbnailsContainer = container.querySelector(
+                "[data-thumbnails]",
+            ) as HTMLElement | null;
+            // const slug = container.dataset.slug;
+            const isSwipeGallery = () =>
+                mobileGallery
+                    ? getComputedStyle(mobileGallery).display !== "none"
+                    : false;
+            const isThumbnailRow = () =>
+                thumbnailsContainer
+                    ? getComputedStyle(thumbnailsContainer).flexDirection !==
+                      "column"
+                    : false;
+
+            const zoomContainer = container.querySelector(
+                "[data-zoom-container]",
+            ) as HTMLElement | null;
+            const zoomLens = container.querySelector(
+                "[data-zoom-lens]",
+            ) as HTMLElement | null;
+
+            let deactivateZoom = () => {};
+            let destroyMagnifier = () => {};
+            let magnifierReady = false;
+            const desktopZoomMq = window.matchMedia(
+                DESKTOP_MAGNIFIER_MEDIA_QUERY,
+            );
+
+            const syncMagnifier = async () => {
+                if (!zoomContainer || !zoomLens || !mainImage) return;
+                if (!desktopZoomMq.matches || isSwipeGallery()) {
+                    if (magnifierReady) {
+                        destroyMagnifier();
+                        magnifierReady = false;
+                        destroyMagnifier = () => {};
+                        deactivateZoom = () => {};
+                    }
+                    return;
+                }
+                if (magnifierReady) return;
+                try {
+                    const { setupDesktopMagnifier } = await loadMagnifier();
+                    const m = setupDesktopMagnifier({
+                        zoomContainer,
+                        zoomLens,
+                        mainImage,
+                        isEnabled: () =>
+                            desktopZoomMq.matches && !isSwipeGallery(),
+                    });
+                    deactivateZoom = m.deactivateZoom;
+                    destroyMagnifier = m.destroy;
+                    magnifierReady = true;
+                } catch {
+                    magnifierReady = false;
+                }
+            };
+
+            void syncMagnifier();
+            const onDesktopMq = () => void syncMagnifier();
+            desktopZoomMq.addEventListener("change", onDesktopMq, { signal });
+            const resizeObserver =
+                typeof ResizeObserver !== "undefined"
+                    ? new ResizeObserver(() => {
+                          void syncMagnifier();
+                      })
+                    : null;
+            resizeObserver?.observe(container);
+            teardown.push(() => {
+                desktopZoomMq.removeEventListener("change", onDesktopMq);
+                resizeObserver?.disconnect();
+                destroyMagnifier();
+                magnifierReady = false;
+                destroyMagnifier = () => {};
+                deactivateZoom = () => {};
+            });
+
+            const bootHighRes = () => {
+                const hi = mainImage?.dataset.initialHighSrc;
+                if (hi) bindMainHigh(mainImage, hi);
+            };
+
+            if (thumbnails.length === 0) {
+                bootHighRes();
+                return;
+            }
+
+            let hoverEnabled = false;
+            let hoverTimer: ReturnType<typeof setTimeout> | null = null;
+            let scrollSyncTimer: ReturnType<typeof setTimeout> | null = null;
+            let progUnlockTimer: ReturnType<typeof setTimeout> | null = null;
+            let scrollRaf: number | null = null;
+            let progScroll = false;
+
+            const thumbIndex = (el: Element) =>
+                Number.parseInt(
+                    el.getAttribute("data-thumbnail-index") || "0",
+                    10,
+                );
+
+            const setActiveThumb = (activeIndex: number) => {
+                // Read back at pageswap time for the cross-document handoff.
+                // container.dataset.activeImageIndex = String(activeIndex);
+                thumbnails.forEach((thumb, i) => {
+                    const border = thumb.querySelector(
+                        "[data-thumbnail-border]",
+                    );
+                    const on = i === activeIndex;
+                    if (on) {
+                        border?.classList.add("border-2", "border-black");
+                        border?.classList.remove(
+                            "border",
+                            "border-transparent",
+                        );
+                        thumb.classList.add("thumbnail-active");
+                    } else {
+                        border?.classList.remove("border-2", "border-black");
+                        border?.classList.add("border", "border-transparent");
+                        thumb.classList.remove("thumbnail-active");
+                    }
+                });
+
+                if (isThumbnailRow() && thumbnailsContainer) {
+                    const w =
+                        (
+                            thumbnails[0] as HTMLElement | undefined
+                        )?.getBoundingClientRect().width || 96;
+                    const cw = thumbnailsContainer.clientWidth;
+                    thumbnailsContainer.scrollTo({
+                        left: Math.max(0, activeIndex * w - (cw - w) / 2),
+                        behavior: "smooth",
+                    });
+                }
+            };
+
+            const scrollMobileTo = (index: number) => {
+                if (!mobileGallery) return;
+                progScroll = true;
+                const cw = mobileGallery.clientWidth;
+                if (scrollRaf !== null) cancelAnimationFrame(scrollRaf);
+                scrollRaf = requestAnimationFrame(() => {
+                    mobileGallery.scrollTo({
+                        left: index * cw,
+                        behavior: "smooth",
+                    });
+                    scrollRaf = null;
+                });
+                if (progUnlockTimer) clearTimeout(progUnlockTimer);
+                progUnlockTimer = setTimeout(() => {
+                    progScroll = false;
+                    progUnlockTimer = null;
+                }, PROGRAMMATIC_SCROLL_LOCK_MS);
+            };
+
+            const selectImage = (index: number) => {
+                const thumb = thumbnails[index] as HTMLElement | undefined;
+                const highSrc =
+                    thumb?.getAttribute("data-main-high-src") ||
+                    thumb?.getAttribute("data-full-src");
+                const lowSrc = thumb?.getAttribute("data-main-low-src");
+                if (mainImage && lowSrc) {
+                    mainImage.classList.remove("gallery-main-high-loaded");
+                    mainImage.src = lowSrc;
+                }
+                if (mainImage && highSrc) bindMainHigh(mainImage, highSrc);
+                deactivateZoom();
+                setActiveThumb(index);
+            };
+
+            // A card hover on the feed may have handed over an image index; apply
+            // it before first render so the incoming view-transition snapshot
+            // already shows that image as selected.
+            // const restoreStoredIndex = () => {
+            //   if (!slug) return false;
+            //   const index = takeImageIndex(slug);
+            //   if (index === null || index >= thumbnails.length) return false;
+            //   selectImage(index);
+            //   if (mobileGallery && isSwipeGallery()) {
+            //     mobileGallery.scrollLeft = index * mobileGallery.clientWidth;
+            //   }
+            //   return true;
+            // };
+
+            // if (!restoreStoredIndex()) bootHighRes();
+            bootHighRes();
+
+            mainImage?.addEventListener(
+                "gallery:high-ready",
+                () => {
+                    thumbnails.forEach((thumb) => {
+                        const hs = thumb.getAttribute("data-main-high-src");
+                        if (hs) new Image().src = hs;
+                    });
+                },
+                { once: true, signal },
+            );
+
+            hoverTimer = setTimeout(() => {
+                hoverEnabled = true;
+                hoverTimer = null;
+            }, HOVER_ENABLE_DELAY_MS);
+
+            const mobileSlideImages = Array.from(
+                container.querySelectorAll<HTMLImageElement>(
+                    "[data-mobile-slide-image]",
+                ),
+            );
+
+            const upgradeSlide = (img: HTMLImageElement) => {
+                if (img.dataset.highLoaded === "true") return;
+                const hs = img.dataset.highSrc;
+                if (!hs) return;
+                img.dataset.highLoaded = "true";
+                const pre = new Image();
+                pre.src = hs;
+                void waitDecode(pre).then(() => {
+                    img.src = hs;
+                });
+            };
+
+            if (mobileSlideImages.length > 0) {
+                upgradeSlide(mobileSlideImages[0]);
+                if (
+                    mobileSlideImages.length > 1 &&
+                    typeof IntersectionObserver !== "undefined"
+                ) {
+                    const obs = new IntersectionObserver(
+                        (entries) => {
+                            entries.forEach((e) => {
+                                if (!e.isIntersecting) return;
+                                upgradeSlide(e.target as HTMLImageElement);
+                                obs.unobserve(e.target);
+                            });
+                        },
+                        { root: mobileGallery ?? null, threshold: 0.1 },
+                    );
+                    mobileSlideImages
+                        .slice(1)
+                        .forEach((img) => obs.observe(img));
+                    signal.addEventListener("abort", () => obs.disconnect(), {
+                        once: true,
+                    });
+                } else {
+                    mobileSlideImages.slice(1).forEach(upgradeSlide);
+                }
+            }
+
+            if (mobileGallery) {
+                mobileGallery.addEventListener(
+                    "scroll",
+                    () => {
+                        if (progScroll) return;
+                        if (scrollSyncTimer) clearTimeout(scrollSyncTimer);
+                        scrollSyncTimer = setTimeout(() => {
+                            const cw = mobileGallery.clientWidth;
+                            const idx = Math.round(
+                                mobileGallery.scrollLeft / cw,
+                            );
+                            if (idx >= 0 && idx < thumbnails.length)
+                                setActiveThumb(idx);
+                            scrollSyncTimer = null;
+                        }, MOBILE_SCROLL_SYNC_DEBOUNCE_MS);
+                    },
+                    { passive: true, signal },
+                );
+            }
+
+            thumbnails.forEach((thumb) => {
+                thumb.addEventListener(
+                    "click",
+                    () => {
+                        const i = thumbIndex(thumb);
+                        selectImage(i);
+                        if (isSwipeGallery()) scrollMobileTo(i);
+                    },
+                    { signal },
+                );
+                thumb.addEventListener(
+                    "mouseenter",
+                    () => {
+                        if (hoverEnabled && !isSwipeGallery())
+                            selectImage(thumbIndex(thumb));
+                    },
+                    { signal },
+                );
+            });
+
+            signal.addEventListener(
+                "abort",
+                () => {
+                    if (hoverTimer) clearTimeout(hoverTimer);
+                    if (scrollSyncTimer) clearTimeout(scrollSyncTimer);
+                    if (progUnlockTimer) clearTimeout(progUnlockTimer);
+                    if (scrollRaf !== null) cancelAnimationFrame(scrollRaf);
+                    hoverEnabled = false;
+                    progScroll = false;
+                },
+                { once: true },
+            );
+        });
+    }
+
+    /*
+     * Cross-document view transition wiring (registered at module scope, not
+     * inside initGallery, so it survives bfcache round-trips — initGallery's
+     * listeners are torn down on pagehide).
+     */
+    // function galleryVtContext() {
+    //   const container = document.querySelector<HTMLElement>("[data-gallery]");
+    //   const panel = container?.querySelector<HTMLElement>(
+    //     "[data-gallery-panel]",
+    //   );
+    //   const slug = container?.dataset.slug;
+    //   if (!container || !panel || !slug) return null;
+    //   return { container, panel, slug };
+    // }
+
+    // Leaving the product page: persist the viewed image index (so re-entry
+    // restores it) and, when heading to the feed, name the gallery panel so it
+    // morphs back into the product card. The receiving side (pagereveal) is an
+    // inline script in MainLayout.astro.
+    // window.addEventListener("pageswap", (event) => {
+    //   const ctx = galleryVtContext();
+    //   if (!ctx) return;
+    //   const { container, panel, slug } = ctx;
+
+    //   let activeIndex = Number.parseInt(
+    //     container.dataset.activeImageIndex || "0",
+    //     10,
+    //   );
+    //   const mobileGallery = container.querySelector<HTMLElement>(
+    //     "[data-mobile-gallery]",
+    //   );
+    //   if (
+    //     mobileGallery &&
+    //     mobileGallery.clientWidth > 0 &&
+    //     getComputedStyle(mobileGallery).display !== "none"
+    //   ) {
+    //     activeIndex = Math.round(
+    //       mobileGallery.scrollLeft / mobileGallery.clientWidth,
+    //     );
+    //   }
+    //   storeImageIndex(slug, Number.isFinite(activeIndex) ? activeIndex : 0);
+
+    //   if (!event.viewTransition) return;
+    //   if (!isFeedUrl(event.activation?.entry.url)) return;
+    //   panel.style.viewTransitionName = PRODUCT_IMAGE_TRANSITION_NAME;
+    //   setTransitionProduct(slug);
+    // });
+
+    // pagehide tears the gallery's listeners down; re-init on bfcache restore.
+    window.addEventListener("pageshow", (event) => {
+        if (event.persisted) initGallery();
+    });
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => initGallery(), {
+            once: true,
+        });
+    } else {
+        initGallery();
+    }
+</script>
+
+<style>
+    /* `<Image />` renders `<img>` without scoped attrs — use :global for descendants. */
+    .gallery-container :global(img) {
+        mix-blend-mode: darken;
+        user-select: none;
+    }
+
+    .gallery-container {
+        container-type: inline-size;
+    }
+
+    .gallery-shell {
+        display: flex;
+        min-width: 0;
+        width: 100%;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .gallery-desktop-image {
+        display: block;
+    }
+
+    /* Definite width (not %/max-width alone) so the flex panel can't
+     shrink-wrap the frame to 0 before the image has intrinsic size. */
+    .gallery-main-frame.skeleton {
+        aspect-ratio: 1;
+        width: min(55vh, 30rem);
+        max-width: 100%;
+    }
+
+    @media (min-width: 1024px) {
+        .gallery-main-frame.skeleton {
+            width: min(calc(100vh - 5rem), 40rem);
+            max-width: 100%;
+        }
+    }
+
+    .gallery-mobile-carousel {
+        display: none;
+    }
+
+    .gallery-thumbs-scroll,
+    .gallery-thumbnails {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .gallery-thumbs-scroll::-webkit-scrollbar,
+    .gallery-thumbnails::-webkit-scrollbar {
+        display: none;
+    }
+
+    [data-zoom-lens] {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    [data-zoom-lens].zoom-active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    [data-zoom-lens-surface] {
+        mix-blend-mode: darken;
+    }
+
+    @container (min-width: 680px) {
+        .gallery-shell {
+            flex-direction: row;
+            align-items: flex-start;
+        }
+
+        .gallery-thumbs-scroll {
+            order: 1;
+            width: 6rem;
+            overflow-x: hidden;
+        }
+
+        .gallery-thumbnails {
+            flex-direction: column;
+            padding-inline: 0;
+        }
+
+        .gallery-main-panel {
+            max-height: calc(100vh - 5rem);
+            align-items: flex-start;
+            justify-content: flex-start;
+            overflow: hidden;
+        }
+
+        /*
+     * Between the row-layout threshold above and the `lg` breakpoint (where
+     * the page switches to a two-column layout), the gallery is still full
+     * width while the main image itself is height-capped, so it doesn't need
+     * that whole width. Left unchecked, the main panel stretches to fill the
+     * remaining space and the image gets centered *inside* it, pulling it
+     * away from the thumbnail column. Shrink the panel to the image's own
+     * size and center the thumbnails+image group as a whole instead. This
+     * only targets the static desktop image (mouse/trackpad), since the
+     * touch carousel is meant to fill the available width.
+     */
+        @media (max-width: 1023px) {
+            .gallery-shell {
+                justify-content: center;
+            }
+
+            .gallery-main-panel {
+                width: auto;
+                flex: 0 1 auto;
+            }
+        }
+    }
+
+    @media (hover: none), (pointer: coarse) {
+        .gallery-desktop-image {
+            display: none;
+        }
+
+        .gallery-mobile-carousel {
+            display: block;
+        }
+    }
+</style>

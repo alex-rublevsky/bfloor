@@ -1,96 +1,94 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import { Image } from "astro:assets";
-import { getAllProductsForSlug } from "@/db/storefront/allProductsForSlug";
+import { getProductsForSlugPages } from "@/db/storefront/allProductsForSlug";
 import type { GetStaticPaths } from "astro";
-import type { Product } from "@/db/storefront/allProductsForSlug";
 import { BASE_IMAGE_URL } from "@/constants";
+import Gallery from "@/components/Gallery.astro";
+import type { StorefrontProduct } from "@/db/storefront/allProductsForSlug";
 
 export const prerender = true;
 
 export const getStaticPaths: GetStaticPaths = async () => {
-    const products = await getAllProductsForSlug();
-    return products.map((product) => ({
-        params: { slug: product.slug },
+    const products = await getProductsForSlugPages();
+    return products.map((p) => ({
+        params: { slug: p.slug },
         props: {
-            product: product,
+            id: p.id,
+            name: p.name,
+            images: p.images,
+            description: p.description,
+            // variations: p.variations,
+            // category: p.category,
         },
     }));
 };
 
-type Props = {
-    product: Product;
+type Props = Pick<
+    StorefrontProduct,
+    "id" | "name" | "images" | "description" | "category"
+> & {
+    variations: {
+        id: number;
+        // weight: number;
+        price: number;
+        discountPrice?: number | null;
+    }[];
 };
 
-const { product } = Astro.props as Props;
-const { images } = product;
+const { id, name, images, description, variations, category } =
+    Astro.props as Props;
+const slug = Astro.params.slug as string;
+const productImage = images[0] ? BASE_IMAGE_URL + images[0] : null;
+const serializedProduct = JSON.stringify({
+    id,
+    name,
+    slug,
+    image: productImage,
+});
 ---
 
-<Layout title={product.name}>
-    <div class="grid grid-cols-2 gap-(--fluid-sm)">
-        <div class="gallery">
-            <div class="grid gap-(--fluid-2xs)">
-                {
-                    images.map((image) => (
-                        <img
-                            src={BASE_IMAGE_URL + image}
-                            alt={product.name}
-                            width={200}
-                            height={200}
-                        />
-                    ))
-                }
-            </div>
-            {
-                images[0] ? (
-                    <img
-                        src={BASE_IMAGE_URL + images[0]}
-                        alt={product.name}
-                        width={500}
-                        height={500}
-                        class="w-full"
-                    />
-                ) : null
-            }
-        </div>
+<Layout title={name}>
+    <div class="grid grid-cols-2 gap-sm">
+        <Gallery
+            class:list="w-full self-start lg:sticky lg:top-0 lg:w-3/5 xl:w-2/3"
+            images={images}
+            slug={slug}
+            alt={name}
+        />
 
         <div>
             <h1>
-                {product.name}
+                {name}
             </h1>
-            {
-                product.brandSlug ? (
-                    <a href={`/brand/${product.brandSlug}`}>
-                        {product.brandSlug}
+            <!-- <a href={`/store/${categorySlug}`}>
+                {categoryName}
+            </a> -->
+            <!-- {
+                brandSlug ? (
+                    <a href={`/brand/${brandSlug}`}>
+                        {brandName}
                     </a>
                 ) : null
-            }
-            {
-                product.collectionSlug ? (
-                    <a href={`/collection/${product.collectionSlug}`}>
-                        {product.collectionSlug}
-                    </a>
-                ) : null
-            }
+            } -->
 
-            {
-                product.discountedPrice ? (
+            <!-- {
+                collectionSlug ? (
+                    <a href={`/collection/${collectionSlug}`}>
+                        {collectionName}
+                    </a>
+                ) : null
+            } -->
+
+            <!-- {
+                discountedPrice ? (
                     <>
-                        <p class="line-through">{product.price}</p>{" "}
-                        <p>{product.discountedPrice}</p>
+                        <p class="line-through">{price}</p>{" "}
+                        <p>{discountedPrice}</p>
                     </>
                 ) : (
-                    <p>{product.price}</p>
+                    <p>{price}</p>
                 )
-            }
+            } -->
         </div>
     </div>
 </Layout>
-
-<style>
-    .gallery {
-        display: grid;
-        grid-template-columns: 25% 75%;
-        gap: var(--fluid-2xs);
-    }
-</style>

@@ -1,11 +1,9 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
-  index,
   integer,
   real,
   sqliteTable,
-  text,
-  unique,
+  text
 } from "drizzle-orm/sqlite-core";
 
 export const categories = sqliteTable("categories", {
@@ -14,10 +12,7 @@ export const categories = sqliteTable("categories", {
   slug: text().unique().notNull(),
   // sort: integer(),
 });
-export const categoryRelations = relations(categories, ({ many }) => ({
-  brand: many(brands),
-  product: many(products),
-}));
+
 
 export const brands = sqliteTable("brands", {
   id: integer().primaryKey(),
@@ -26,14 +21,7 @@ export const brands = sqliteTable("brands", {
   categoryId: integer().notNull(),
 });
 
-export const brandRelations = relations(brands, ({ one, many }) => ({
-  category: one(categories, {
-    fields: [brands.categoryId],
-    references: [categories.id],
-  }),
-  collection: many(collections),
-  product: many(products),
-}));
+
 
 export const collections = sqliteTable("collections", {
   id: integer().primaryKey(),
@@ -41,14 +29,6 @@ export const collections = sqliteTable("collections", {
   slug: text().unique().notNull(),
   brandId: integer().notNull(),
 });
-
-export const collectionRelations = relations(collections, ({ one, many }) => ({
-  brand: one(brands, {
-    fields: [collections.brandId],
-    references: [brands.id],
-  }),
-  product: many(products),
-}));
 
 export const products = sqliteTable("products", {
   id: integer().primaryKey(),
@@ -73,21 +53,6 @@ export const products = sqliteTable("products", {
   createdAt: integer("created_at", { mode: "timestamp" }),
   updatedAt: integer("updated_at", { mode: "timestamp" }),
 });
-
-export const productRelations = relations(products, ({ one }) => ({
-  category: one(categories, {
-    fields: [products.categoryId],
-    references: [categories.id],
-  }),
-  brand: one(brands, {
-    fields: [products.brandId],
-    references: [brands.id],
-  }),
-  collection: one(collections, {
-    fields: [products.collectionId],
-    references: [collections.id],
-  }),
-}));
 
 // Auth tables
 export const user = sqliteTable("user", {
@@ -143,22 +108,3 @@ export const verification = sqliteTable("verification", {
   createdAt: integer("created_at", { mode: "timestamp" }),
   updatedAt: integer("updated_at", { mode: "timestamp" }),
 });
-
-export const schema = {
-  user,
-  session,
-  account,
-  verification,
-  products,
-  // productVariations,
-  // productAttributes,
-  // attributeValues,
-  // productAttributeValues,
-  // variationAttributeValues,
-  categories,
-  brands,
-  collections,
-  // storeLocations,
-  // productStoreLocations,
-  // news,
-};
