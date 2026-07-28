@@ -20,11 +20,13 @@
     "astro-icon": "^1.1.5",
     "better-auth": "^1.6.14",
     "dotenv": "^17.4.2",
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "1.0.0-rc.4",
+    "embla-carousel": "^8.6.0",
+    "embla-carousel-autoplay": "^8.6.0",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.31.10"
+    "drizzle-kit": "1.0.0-rc.4"
   }
 }
