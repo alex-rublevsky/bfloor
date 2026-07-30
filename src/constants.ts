@@ -5,3 +5,4 @@ export const SITE_META_DESCRIPTION = "";
 export const BASE_IMAGE_URL =
   "https://storage.yandexcloud.net/bfloor-static/images/";
 export const STAGING_PREFIX = "images/staging/";
+export const ADMIN_STOREFRONT_FLAG_KEY = "beautyfloor:admin";
