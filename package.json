@@ -12,10 +12,14 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@alpinejs/persist": "^3.15.12",
+    "@astrojs/alpinejs": "^1.0.0",
     "@astrojs/node": "^11.0.2",
     "@astrojs/sitemap": "^3.7.3",
     "@libsql/client": "^0.17.3",
     "@tailwindcss/vite": "^4.3.0",
+    "@types/alpinejs": "^3.13.11",
+    "alpinejs": "^3.15.12",
     "astro": "^7.1.3",
     "astro-icon": "^1.1.5",
     "better-auth": "^1.6.14",
@@ -23,10 +27,12 @@
     "drizzle-orm": "1.0.0-rc.4",
     "embla-carousel": "^8.6.0",
     "embla-carousel-autoplay": "^8.6.0",
+    "number-flow": "^0.6.2",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
+    "@types/alpinejs__persist": "^3.13.4",
     "drizzle-kit": "1.0.0-rc.4"
   }
 }

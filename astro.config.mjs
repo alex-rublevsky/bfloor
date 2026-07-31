@@ -6,6 +6,8 @@ import { defineConfig, envField, fontProviders } from "astro/config";
 
 import icon from "astro-icon";
 
+import alpinejs from "@astrojs/alpinejs";
+
 // import sitemap from "@astrojs/sitemap";
 
 // https://astro.build/config
@@ -94,7 +96,7 @@ export default defineConfig({
     mode: "standalone",
   }),
 
-  integrations: [sitemap(), icon()],
+  integrations: [sitemap(), icon(), alpinejs()],
 
   vite: {
     plugins: [tailwindcss()],
