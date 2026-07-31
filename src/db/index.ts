@@ -5,11 +5,9 @@ import {
 import { drizzle } from "drizzle-orm/libsql";
 
 import { relations } from "./relations";
-import * as schema from "./schema";
 
 
 export const db = drizzle({
-  schema,
   connection: {
     url: PUBLIC_TURSO_DATABASE_URL,
     authToken: SECRET_TURSO_AUTH_TOKEN,
