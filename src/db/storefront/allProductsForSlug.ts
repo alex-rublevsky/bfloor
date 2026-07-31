@@ -4,9 +4,10 @@ export type StorefrontProduct = {
   id: number;
   slug: string;
   name: string;
-  description: string;
+  description: string | null;
   images: string[];
   category: { name: string; slug: string };
+  price: number | null;
 };
 
 export async function getProductsForSlugPages() {
