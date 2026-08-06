@@ -29,6 +29,25 @@ export default defineConfig({
         ],
       },
     },
+    {
+      provider: fontProviders.local(),
+      name: "Kazuki Reiwa",
+      cssVariable: "--font-kazuki-reiwa",
+      options: {
+        variants: [
+          {
+            weight: "200",
+            style: "normal",
+            src: ["./src/assets/fonts/KazukiReiwa-Light-subset.woff2"],
+          },
+          {
+            weight: "400",
+            style: "normal",
+            src: ["./src/assets/fonts/KazukiReiwa-Regular-subset.woff2"],
+          },
+        ],
+      },
+    },
     // {
     //   provider: fontProviders.local(),
     //   name: "Annabelle",
