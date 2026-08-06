@@ -1,5 +1,6 @@
 # build output
 dist/
+yandex-api-gateway.yaml
 
 # generated types
 .astro/
