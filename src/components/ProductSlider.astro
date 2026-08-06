@@ -9,12 +9,12 @@ const totalDiscountedCount = discountedProducts[0]?.totalDiscountedCount ?? 0;
 
 <section class="no-padding">
     <a href="store/discounted">
-        <h4 class="px-(--section-padding-x) hover:text-accent">
+        <h2 class="px-(--section-padding-x) hover:text-accent">
             Скидки! <sup
                 class="text-sm text-accent inline-block -translate-y-2 -translate-x-1"
                 >{totalDiscountedCount}</sup
             >
-        </h4>
+        </h2>
     </a>
     <div class="overflowSlider">
         {discountedProducts.map((product) => <ProductCard {product} />)}
