@@ -17,23 +17,8 @@ const bannerImages = [
 ];
 ---
 
-<section>
+<section class="no-padding">
     <div class="relative w-full">
-        <div class="absolute bottom-4 left-4 flex gap-2xs">
-            {
-                bannerImages.map((image) => (
-                    <Image
-                        src={BASE_IMAGE_URL + image.image}
-                        width={200}
-                        height={200}
-                        alt={image.alt}
-                        loading="eager"
-                        priority
-                        class="size-20 object-contain rounded"
-                    />
-                ))
-            }
-        </div>
         <Image
             src={BASE_IMAGE_URL + bannerImages[0].image}
             width={1920}
@@ -43,5 +28,20 @@ const bannerImages = [
             priority
             class="w-full h-auto object-contain"
         />
+    </div>
+    <div class="flex gap-2xs p-2xs">
+        {
+            bannerImages.map((image) => (
+                <Image
+                    src={BASE_IMAGE_URL + image.image}
+                    width={900}
+                    height={550}
+                    alt={image.alt}
+                    loading="eager"
+                    priority
+                    class="h-20 w-auto object-contain rounded-sm"
+                />
+            ))
+        }
     </div>
 </section>
