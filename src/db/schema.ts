@@ -10,6 +10,7 @@ export const categories = sqliteTable("categories", {
   id: integer().primaryKey({ autoIncrement: true }),
   name: text().unique().notNull(),
   slug: text().unique().notNull(),
+  image: text()
   // sort: integer(),
 });
 
