@@ -7,31 +7,31 @@ import {
 } from "drizzle-orm/sqlite-core";
 
 export const categories = sqliteTable("categories", {
-  id: integer().primaryKey({ autoIncrement: true }),
-  name: text().unique().notNull(),
-  slug: text().unique().notNull(),
-  image: text()
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").unique().notNull(),
+  slug: text("slug").unique().notNull(),
+  image: text("image")
 });
 
 export const brands = sqliteTable("brands", {
-  id: integer().primaryKey(),
-  name: text().notNull(),
-  slug: text().unique().notNull(),
+  id: integer("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").unique().notNull(),
+  countryId: integer("country_id"),
+  image: text("image"),
 });
 
 export const collections = sqliteTable("collections", {
-  id: integer().primaryKey(),
-  name: text().notNull(),
-  slug: text().unique().notNull(),
-  brandId: integer().notNull(),
+  id: integer("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").unique().notNull(),
+  brandId: integer("brand_id").notNull(),
 });
 
 export const products = sqliteTable("products", {
-  id: integer().primaryKey(),
+  id: integer("id").primaryKey(),
+  sku: text("sku"),
   isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
-  isFeatured: integer("is_featured", { mode: "boolean" })
-    .notNull()
-    .default(false),
   name: text("name").unique().notNull(),
   slug: text("slug").unique().notNull(),
   images: text("images", { mode: "json" })
@@ -43,9 +43,11 @@ export const products = sqliteTable("products", {
   categoryId: integer("category_id").notNull(),
   brandId: integer("brand_id"),
   collectionId: integer("collection_id"),
+  unitOfMeasurement: text("unit_of_measurement").notNull().default("м2"),
   viewCount: integer("view_count").notNull().default(0),
   description: text("description"),
   importantNote: text("important_note"),
+  storeLocationId: integer("store_location_id"),
   createdAt: integer("created_at", { mode: "timestamp" }),
   updatedAt: integer("updated_at", { mode: "timestamp" }),
 });
