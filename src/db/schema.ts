@@ -11,18 +11,13 @@ export const categories = sqliteTable("categories", {
   name: text().unique().notNull(),
   slug: text().unique().notNull(),
   image: text()
-  // sort: integer(),
 });
-
 
 export const brands = sqliteTable("brands", {
   id: integer().primaryKey(),
   name: text().notNull(),
   slug: text().unique().notNull(),
-  categoryId: integer().notNull(),
 });
-
-
 
 export const collections = sqliteTable("collections", {
   id: integer().primaryKey(),
