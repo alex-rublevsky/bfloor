@@ -6,7 +6,6 @@ export type Product = Pick<
   InferSelectModel<typeof products>,
   | "id"
   | "isActive"
-  | "isFeatured"
   | "slug"
   | "name"
   | "categoryId"
