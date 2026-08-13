@@ -25,3 +25,6 @@ pnpm-debug.log*
 .idea/
 TODO
 src/db/archive.schema.ts
+
+# migration script files
+.migration-state
