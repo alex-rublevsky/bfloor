@@ -1,0 +1,105 @@
+---
+import Input from "@/components/shared/Input.astro";
+// import ImagesDropzone from "@/components/dashboard/ImageDropzone.astro";
+import { Icon } from "astro-icon/components";
+import Button from "@/components/shared/Button.astro";
+
+type FormCategory = {
+    id?: number;
+    slug?: string;
+    name?: string;
+    image?: string | null;
+};
+interface Props {
+    category?: FormCategory;
+}
+const { category = {} } = Astro.props as Props;
+const creating = !category.slug;
+// const image = category.image ?? "";
+---
+
+<section>
+    <form
+        novalidate
+        id="category-form"
+        method="POST"
+        data-mode={creating ? "create" : "edit"}
+    >
+        {!creating && <input type="hidden" name="id" value={category.id} />}
+        <h1 class="text-lg pb-2">
+            {creating ? "Создание категории" : "Редактирование категории"}  {
+                !creating && category.slug && (
+                    <Button
+                    size="sm"
+                    withIcon
+                    class="inline-block align-baseline ml-xs"
+                        href={`/store/${category.slug}`}
+                    >
+                            <Icon
+                                name="eye"
+                                title="Открыть в новой вкладке"
+                                class="size-5"
+                            />
+                            В магазине
+                    </Button>
+                )
+            }
+        </h1>
+
+        <!-- <ImagesDropzone images={images} /> -->
+
+
+      <div class="textInputFields">
+          <div class="nameSlug">
+              <Input name="name" label="Название" value={category.name} required />
+          <Input
+              name="slug"
+              label="Ярлык"
+              value={category.slug ? category.slug : ""}
+              readonly={true}
+              required
+          /></div>
+      </div>
+      <Button id="submit-btn" size="sm" type="submit">
+          <span class="submit-text"
+              >{creating ? "Добавить" : "Сохранить"}</span
+          >
+          <Icon
+              name="spinner"
+              class="submit-spinner size-5 animate-spin"
+          />
+      </Button>
+      {
+          !creating && (
+              <Button
+                  id="delete-btn"
+                  size="sm"
+                  variant="destructive"
+                  type="button"
+              >
+                  Удалить
+              </Button>
+          )
+      }
+    </form>
+</section>
+
+<style>
+form {
+    margin: auto;
+    padding-bottom: 4rem;
+    container-type: inline-size;
+    max-width: 80ch;
+}
+.textInputFields {
+    display: grid;
+    gap: 0.7rem;
+    container-type: inline-size;
+}
+.nameSlug {
+    display: grid;
+    gap: 0.7rem;
+    grid-template-columns: 1fr;
+    @container (min-width: 60ch) {
+        grid-template-columns: 1fr 1fr;
+    }</style>

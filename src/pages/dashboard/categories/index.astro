@@ -1,0 +1,36 @@
+---
+import DashboardLayout from "@/layouts/DashboardLayout.astro";
+import { getAllCategories } from "@/db/dashboard/allCategories";
+import { Image } from "astro:assets";
+import { BASE_IMAGE_URL } from "@/constants";
+import ImagePlaceholder from "@/components/shared/ImagePlaceholder.astro";
+
+const categories = await getAllCategories();
+---
+
+<DashboardLayout>
+    <main>
+        <section class="pt-12">
+            <h1 class="sr-only">Категории</h1>
+            <div class="autoGrid">
+                {
+                    categories.map((cat) => (
+                        <a href={`/dashboard/categories/${cat.slug}`}>
+                            {cat.image ? (
+                                <Image
+                                    src={BASE_IMAGE_URL + cat.image}
+                                    width={300}
+                                    height={300}
+                                    alt={"Фото категории " + cat.name}
+                                />
+                            ) : (
+                                <ImagePlaceholder />
+                            )}
+                            <p>{cat.name}</p>
+                        </a>
+                    ))
+                }
+            </div>
+        </section>
+    </main>
+</DashboardLayout>

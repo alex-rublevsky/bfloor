@@ -1,0 +1,18 @@
+---
+import DashboardLayout from "@/layouts/DashboardLayout.astro";
+import { getCategoryBySlug } from "@/db/dashboard/categoryBySlug";
+import type { Category } from "@/db/dashboard/categoryBySlug";
+import CategoryForm from "@/components/dashboard/CategoryForm.astro";
+
+const { slug } = Astro.params;
+
+const category: Category | null = await getCategoryBySlug(slug);
+
+if (!category) {
+    return Astro.redirect("/dashboard/product/404");
+}
+---
+
+<DashboardLayout title={category.name}>
+    <main><CategoryForm category={category} /></main>
+</DashboardLayout>
