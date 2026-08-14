@@ -77,7 +77,9 @@ const hasCreateButton = (href: string) => pathname === href;
     }
   </div>
 
-  <Button size="sm" variant="primary" href="/">Магазин</Button>
+  <Button size="sm" class="store-button" variant="primary" href="/"
+    >Магазин</Button
+  >
 </nav>
 
 <style>
@@ -92,12 +94,14 @@ const hasCreateButton = (href: string) => pathname === href;
     align-items: stretch;
     justify-content: space-between;
     z-index: 2;
+    pointer-events: none;
   }
   .leftBlock {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     gap: var(--spacing-3xs);
+    pointer-events: auto;
   }
   .navItemsWrapper {
     display: flex;
@@ -107,5 +111,8 @@ const hasCreateButton = (href: string) => pathname === href;
     padding: var(--spacing-3xs);
     backdrop-filter: blur(0.3rem);
     border-radius: var(--radius-sm);
+  }
+  .store-button {
+    pointer-events: auto;
   }
 </style>
