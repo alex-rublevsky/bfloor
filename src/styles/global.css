@@ -2,44 +2,44 @@
 @import "./theme.css";
 
 .autoGrid {
-    /* Fluid min column: ~5rem on narrow viewports → ~10rem from ~360px up (replaces 5rem / 10rem @ 360px). */
-    --min-col-size: clamp(
-        5rem,
-        calc(5rem + 5rem * (100vw - 280px) / 80px),
-        10rem
-    );
-    display: grid;
-    gap: var(--spacing-2xs);
-    grid-template-columns: repeat(
-        auto-fit,
-        minmax(min(var(--min-col-size), 100%), 1fr)
-    );
+  /* Fluid min column: ~5rem on narrow viewports → ~10rem from ~360px up (replaces 5rem / 10rem @ 360px). */
+  --min-col-size: clamp(
+    5rem,
+    calc(5rem + 5rem * (100vw - 280px) / 80px),
+    10rem
+  );
+  display: grid;
+  gap: var(--spacing-2xs);
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(var(--min-col-size), 100%), 1fr)
+  );
 }
 
 input,
 select,
 textarea {
-    field-sizing: content;
+  field-sizing: content;
 }
 
 @media screen and (max-width: 600px) {
-    .hideOnMobile {
-        visibility: hidden;
-        display: none;
-    }
+  .hideOnMobile {
+    visibility: hidden;
+    display: none;
+  }
 }
 
 .productCard {
-    transition-duration: 70ms;
-    transition-timing-function: ease-out;
-    z-index: 1;
+  transition-duration: 70ms;
+  transition-timing-function: ease-out;
+  z-index: 1;
 }
 .productCard:active {
-    transform: scale(0.97);
+  transform: scale(0.97);
 }
 .productCard img {
-    transition-duration: 300ms;
+  transition-duration: 300ms;
 }
 .productCard:hover img {
-    transform: scale(1.06);
+  transform: scale(1.06);
 }
