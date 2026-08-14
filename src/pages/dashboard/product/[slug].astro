@@ -9,10 +9,10 @@ const { slug } = Astro.params;
 const product: Product = await getProductBySlug(slug);
 
 if (!product) {
-    return Astro.redirect("/dashboard/product/404");
+  return Astro.redirect("/dashboard/product/404");
 }
 ---
 
 <DashboardLayout title={product.name}>
-    <main><ProductForm product={product} /></main>
+  <main><ProductForm product={product} /></main>
 </DashboardLayout>

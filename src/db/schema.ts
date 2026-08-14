@@ -1,16 +1,11 @@
 import { sql } from "drizzle-orm";
-import {
-  integer,
-  real,
-  sqliteTable,
-  text
-} from "drizzle-orm/sqlite-core";
+import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const categories = sqliteTable("categories", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").unique().notNull(),
   slug: text("slug").unique().notNull(),
-  image: text("image")
+  image: text("image"),
 });
 
 export const brands = sqliteTable("brands", {

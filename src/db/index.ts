@@ -6,7 +6,6 @@ import { drizzle } from "drizzle-orm/libsql";
 
 import { relations } from "./relations";
 
-
 export const db = drizzle({
   connection: {
     url: PUBLIC_TURSO_DATABASE_URL,

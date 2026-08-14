@@ -1,26 +1,8 @@
-import { defineAction } from "astro:actions";
-import { z } from "astro/zod";
 import { createProduct } from "@/db/dashboard/createProduct";
 import { updateProduct } from "@/db/dashboard/updateProduct";
-import { isAdmin } from "@/lib/auth";
-
-function requireAdmin(locals: App.Locals) {
-  if (!locals.user) {
-    throw new ActionError({
-      code: "UNAUTHORIZED",
-      message: "You must be signed in.",
-    });
-  }
-
-  if (!isAdmin(locals.user.email)) {
-    throw new ActionError({
-      code: "FORBIDDEN",
-      message: "You do not have access.",
-    });
-  }
-
-  return locals.user;
-}
+import { requireAdmin } from "@/lib/api/requireAdmin";
+import { z } from "astro/zod";
+import { defineAction } from "astro:actions";
 
 export const product = {
   updateProduct: defineAction({
@@ -37,7 +19,9 @@ export const product = {
       categoryId: z.coerce.number(),
       description: z.string().nullable(),
     }),
-    handler: async (input) => {
+    handler: async (input, { locals }) => {
+      requireAdmin(locals);
+
       return await updateProduct({
         id: input.id,
         isActive: input.isActive,
@@ -61,10 +45,11 @@ export const product = {
       price: z.coerce.number(),
       discountedPrice: z.coerce.number(),
     }),
-    handler: async (input) => {
+    handler: async (input, { locals }) => {
+      requireAdmin(locals);
+
       return await createProduct({
         isActive: true,
-        isFeatured: false,
         name: input.name,
         slug: input.slug,
         categoryId: input.categoryId,

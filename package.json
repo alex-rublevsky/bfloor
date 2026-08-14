@@ -11,7 +11,9 @@
     "build": "astro build",
     "deploy": "./scripts/deploy-local.sh",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
   },
   "dependencies": {
     "@alpinejs/persist": "^3.15.12",
@@ -39,6 +41,8 @@
   },
   "devDependencies": {
     "@types/alpinejs__persist": "^3.13.4",
-    "drizzle-kit": "1.0.0-rc.4"
+    "drizzle-kit": "1.0.0-rc.4",
+    "prettier": "3.9.6",
+    "prettier-plugin-astro": "0.14.1"
   }
 }

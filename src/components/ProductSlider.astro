@@ -8,49 +8,48 @@ const totalDiscountedCount = discountedProducts[0]?.totalDiscountedCount ?? 0;
 ---
 
 <section class="no-padding">
-    <a href="store/discounted">
-        <h2 class="px-(--section-padding-x) hover:text-accent">
-            Скидки! <sup
-                class="text-sm text-accent inline-block -translate-y-2 -translate-x-1"
-                >{totalDiscountedCount}</sup
-            >
-        </h2>
-    </a>
-    <div class="overflowSlider">
-        {discountedProducts.map((product) => <ProductCard {product} />)}
+  <a href="store/discounted">
+    <h2 class="px-(--section-padding-x) hover:text-accent">
+      Скидки! <sup
+        class="text-sm text-accent inline-block -translate-y-2 -translate-x-1"
+        >{totalDiscountedCount}</sup
+      >
+    </h2>
+  </a>
+  <div class="overflowSlider">
+    {discountedProducts.map((product) => <ProductCard {product} />)}
 
-        <Button
-            href="store/discounted"
-            variant="secondary"
-            class="aspect-square group font-medium"
-            >Все скидки <sup
-                class="text-accent! group-hover:text-background! transition-colors duration-170"
-            >
-                {totalDiscountedCount}</sup
-            >
-        </Button>
-    </div>
+    <Button
+      href="store/discounted"
+      variant="secondary"
+      class="aspect-square group font-medium"
+      >Все скидки <sup
+        class="text-accent! group-hover:text-background! transition-colors duration-170">
+        {totalDiscountedCount}</sup
+      >
+    </Button>
+  </div>
 </section>
 
 <style>
-    .overflowSlider {
-        --fluid-slider-card-col: clamp(
-            8rem,
-            calc(7rem + 2rem * (100vw - 320px) / 160px),
-            10rem
-        );
-        display: grid;
-        gap: var(--spacing-2xs);
-        grid-auto-flow: column;
-        overflow-x: scroll;
-        scroll-snap-type: x mandatory;
-        grid-auto-columns: var(--fluid-slider-card-col);
-        /* select the children */
-        & > :global(*) {
-            scroll-snap-align: start;
-        }
+  .overflowSlider {
+    --fluid-slider-card-col: clamp(
+      8rem,
+      calc(7rem + 2rem * (100vw - 320px) / 160px),
+      10rem
+    );
+    display: grid;
+    gap: var(--spacing-2xs);
+    grid-auto-flow: column;
+    overflow-x: scroll;
+    scroll-snap-type: x mandatory;
+    grid-auto-columns: var(--fluid-slider-card-col);
+    /* select the children */
+    & > :global(*) {
+      scroll-snap-align: start;
     }
-    .overflowSlider:last-child {
-        padding-right: var(--section-padding-x);
-    }
+  }
+  .overflowSlider:last-child {
+    padding-right: var(--section-padding-x);
+  }
 </style>

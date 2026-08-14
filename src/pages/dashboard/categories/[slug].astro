@@ -9,10 +9,10 @@ const { slug } = Astro.params;
 const category: Category | null = await getCategoryBySlug(slug);
 
 if (!category) {
-    return Astro.redirect("/dashboard/product/404");
+  return Astro.redirect("/dashboard/product/404");
 }
 ---
 
 <DashboardLayout title={category.name}>
-    <main><CategoryForm category={category} /></main>
+  <main><CategoryForm category={category} /></main>
 </DashboardLayout>

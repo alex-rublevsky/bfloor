@@ -1,7 +1,7 @@
 ---
 interface Props {
-    href: string;
-    class?: string;
+  href: string;
+  class?: string;
 }
 
 const { href, class: className } = Astro.props as Props;
@@ -10,9 +10,9 @@ const { href, class: className } = Astro.props as Props;
 <a href={href} class={className}><slot /></a>
 
 <style>
-    a:hover {
-        text-decoration: underline;
-        text-decoration-thickness: 0.1rem;
-        text-underline-offset: 0.2rem;
-    }
+  a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 0.1rem;
+    text-underline-offset: 0.2rem;
+  }
 </style>

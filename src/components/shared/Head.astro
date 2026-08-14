@@ -5,9 +5,9 @@ import type { ImageMetadata } from "astro";
 import { SITE_TITLE, BASE_IMAGE_URL } from "@/constants";
 
 interface Props {
-    title: string;
-    description: string;
-    image?: string;
+  title: string;
+  description: string;
+  image?: string;
 }
 
 const DEFAULT_OG_IMAGE = `${BASE_IMAGE_URL}images/sesh-full.jpg`;
@@ -15,9 +15,9 @@ const DEFAULT_OG_IMAGE = `${BASE_IMAGE_URL}images/sesh-full.jpg`;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
 const {
-    title = SITE_TITLE,
-    description,
-    image = DEFAULT_OG_IMAGE,
+  title = SITE_TITLE,
+  description,
+  image = DEFAULT_OG_IMAGE,
 } = Astro.props;
 
 const documentTitle = `${title} — Напольные покрытия во Владивостоке`;
@@ -35,10 +35,10 @@ const documentTitle = `${title} — Напольные покрытия во В�
 <meta name="apple-mobile-web-app-title" content={SITE_TITLE} />
 <link rel="sitemap" href="/sitemap-index.xml" />
 <link
-    rel="alternate"
-    type="application/rss+xml"
-    title={SITE_TITLE}
-    href={new URL("rss.xml", Astro.site)}
+  rel="alternate"
+  type="application/rss+xml"
+  title={SITE_TITLE}
+  href={new URL("rss.xml", Astro.site)}
 />
 <meta name="generator" content={Astro.generator} />
 
@@ -50,13 +50,13 @@ const documentTitle = `${title} — Напольные покрытия во В�
 <!-- Primary Meta Tags -->
 <title>{documentTitle}</title>
 <script
-    type="application/ld+json"
-    set:html={JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        name: SITE_TITLE,
-        url: Astro.site,
-    })}
+  type="application/ld+json"
+  set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE_TITLE,
+    url: Astro.site,
+  })}
 />
 <meta name="title" content={documentTitle} />
 <meta name="description" content={description} />

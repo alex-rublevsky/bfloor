@@ -13,7 +13,7 @@ export async function getAllCategories(): Promise<Category[]> {
       id: categories.id,
       name: categories.name,
       slug: categories.slug,
-      image: categories.image
+      image: categories.image,
       // sort: categories.sort,
     })
     .from(categories)

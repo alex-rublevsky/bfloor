@@ -9,34 +9,34 @@ const { product } = Astro.props;
 //as Props;
 
 if (!product) {
-    return null;
+  return null;
 }
 
 const { images } = product;
 ---
 
 <a class="productCard" href={`/product/${product.slug}`}>
-    <div class="rounded overflow-hidden">
-        {
-            images.length > 0 ? (
-                <Image
-                    src={BASE_IMAGE_URL + images[0]}
-                    width={500}
-                    height={500}
-                    alt={product.name}
-                    loading="lazy"
-                    class="object-cover "
-                />
-            ) : null
-        }
-    </div>
-    <div class="flex gap-2xs">
-        <p>{product.price}</p>
-        {
-            product.discountedPrice ? (
-                <p class="line-through">{product.discountedPrice}</p>
-            ) : null
-        }
-    </div>
-    <p class="text-sm">{product.name}</p>
+  <div class="rounded overflow-hidden">
+    {
+      images ? (
+        <Image
+          src={BASE_IMAGE_URL + images[0]}
+          width={500}
+          height={500}
+          alt={product.name}
+          loading="lazy"
+          class="object-cover "
+        />
+      ) : null
+    }
+  </div>
+  <div class="flex gap-2xs">
+    <p>{product.price}</p>
+    {
+      product.discountedPrice ? (
+        <p class="line-through">{product.discountedPrice}</p>
+      ) : null
+    }
+  </div>
+  <p class="text-sm">{product.name}</p>
 </a>
