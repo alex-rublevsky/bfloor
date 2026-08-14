@@ -3,45 +3,45 @@ import { Image } from "astro:assets";
 import { BASE_IMAGE_URL } from "../constants";
 
 const bannerImages = [
-    //"cork-mobile.webp",
+  //"cork-mobile.webp",
 
-    { image: "banners/cork.webp", alt: "" },
+  { image: "banners/cork.webp", alt: "" },
 
-    // "elochka-mobile.webp",
+  // "elochka-mobile.webp",
 
-    { image: "banners/elochka.webp", alt: "" },
+  { image: "banners/elochka.webp", alt: "" },
 
-    // "sale-mobile.webp",
+  // "sale-mobile.webp",
 
-    { image: "banners/sale.webp", alt: "" },
+  { image: "banners/sale.webp", alt: "" },
 ];
 ---
 
 <section class="no-padding">
-    <div class="relative w-full">
+  <div class="relative w-full">
+    <Image
+      src={BASE_IMAGE_URL + bannerImages[0].image}
+      width={1920}
+      height={600}
+      alt={bannerImages[0].alt}
+      loading="eager"
+      priority
+      class="w-full h-auto object-contain"
+    />
+  </div>
+  <div class="flex gap-2xs p-2xs">
+    {
+      bannerImages.map((image) => (
         <Image
-            src={BASE_IMAGE_URL + bannerImages[0].image}
-            width={1920}
-            height={600}
-            alt={bannerImages[0].alt}
-            loading="eager"
-            priority
-            class="w-full h-auto object-contain"
+          src={BASE_IMAGE_URL + image.image}
+          width={900}
+          height={550}
+          alt={image.alt}
+          loading="eager"
+          priority
+          class="h-20 w-auto object-contain rounded-sm"
         />
-    </div>
-    <div class="flex gap-2xs p-2xs">
-        {
-            bannerImages.map((image) => (
-                <Image
-                    src={BASE_IMAGE_URL + image.image}
-                    width={900}
-                    height={550}
-                    alt={image.alt}
-                    loading="eager"
-                    priority
-                    class="h-20 w-auto object-contain rounded-sm"
-                />
-            ))
-        }
-    </div>
+      ))
+    }
+  </div>
 </section>
