@@ -48,8 +48,7 @@ export function setupDesktopMagnifier({
 
   const activateZoom = () => {
     if (!canUseZoom()) return false;
-    if (!mainImage.classList.contains("gallery-main-high-loaded"))
-      return false;
+    if (!mainImage.classList.contains("gallery-main-high-loaded")) return false;
     zoomSurface.style.backgroundImage = `url('${mainImage.src}')`;
     zoomSurface.style.backgroundSize = `${DESKTOP_ZOOM_FACTOR * 100}%`;
     mainImage.style.visibility = "hidden";
