@@ -1,59 +1,111 @@
 ---
+import { visible } from "node_modules/number-flow/dist/util/dom";
 import Button from "./shared/Button.astro";
+const pathname = Astro.url.pathname;
+
+const navItems = [
+  { label: "Товары", href: "/dashboard", match: "exact" as const },
+  {
+    label: "Категории",
+    href: "/dashboard/categories",
+    match: "exact" as const,
+  },
+  {
+    label: "Коллекции",
+    href: "/dashboard/collections",
+    match: "exact" as const,
+  },
+  { label: "Бренды", href: "/dashboard/brands", match: "exact" as const },
+  { label: "Заказы", href: "/dashboard/orders", match: "prefix" as const },
+  { label: "Прочее", href: "/dashboard/misc", match: "exact" as const },
+  // {
+  //     label: "Аналитика",
+  //     href: "/dashboard/analytics",
+  //     match: "prefix" as const,
+  // },
+];
+
+const createItems = [
+  {
+    label: "Создать товар",
+    href: "/dashboard",
+    hrefTo: "/new",
+    match: "exact" as const,
+  },
+  {
+    label: "Создать категорию",
+    href: "/dashboard/categories",
+    hrefTo: "/new",
+    match: "exact" as const,
+  },
+];
+
+const isActive = (href: string, match: "exact" | "prefix") =>
+  match === "exact"
+    ? pathname === href
+    : pathname === href || pathname.startsWith(`${href}/`);
+
+const hasCreateButton = (href: string) => pathname === href;
 ---
 
-<nav class="navWrapper">
-    <div class="navBar">
-        <Button size="sm" variant="tertiary" href="/dashboard/">Товары</Button>
-        <Button size="sm" variant="tertiary" href="/dashboard/categories"
-            >Категории</Button
-        >
-        <Button size="sm" variant="tertiary" href="/dashboard/collections"
-            >Коллекции</Button
-        >
-        <Button size="sm" variant="tertiary" href="/dashboard/brands"
-            >Бренды</Button
-        >
-        <Button size="sm" variant="tertiary" href="/dashboard/misc"
-            >Прочее</Button
-        >
-        <Button
+<nav>
+  <div class="leftBlock">
+    <div class="navItemsWrapper">
+      {
+        navItems.map((item) => (
+          <Button
             size="sm"
-            variant="primary"
-            href="/dashboard/product/new"
-            class="hideOnMobile">Добавить товар</Button
-        >
+            href={item.href}
+            variant="tertiary"
+            data-active={isActive(item.href, item.match) ? "" : undefined}>
+            {item.label}
+          </Button>
+        ))
+      }
     </div>
-    <div>
-        <Button size="md" variant="primary" href="/">Магазин</Button>
-    </div>
+
+    {
+      createItems.map((item) => (
+        <Button
+          size="sm"
+          variant="primary"
+          href={pathname + "/new"}
+          style={hasCreateButton(item.href) ? null : "display: none"}>
+          {item.label}
+        </Button>
+      ))
+    }
+  </div>
+
+  <Button size="sm" variant="primary" href="/">Магазин</Button>
 </nav>
 
 <style>
-    .navWrapper {
-        width: 100%;
-        display: flex;
-        flex-direction: row;
-        align-items: baseline;
-        justify-content: space-between;
-        padding: 0.3rem;
-        position: fixed;
-        top: 0;
-        z-index: 2;
-    }
-    .navBar {
-        padding: 0.3rem 0.3rem;
-
-        background-color: color-mix(
-            in oklch,
-            var(--background) 70%,
-            transparent
-        );
-        backdrop-filter: blur(0.3rem);
-        display: flex;
-        flex-shrink: 0;
-        gap: 0.15rem;
-        border-radius: var(--radius);
-        border: 0.1rem solid color-mix(in oklch, var(--muted) 70%, transparent);
-    }
+  nav {
+    position: fixed;
+    left: var(--spacing-3xs);
+    right: var(--spacing-3xs);
+    top: var(--spacing-3xs);
+    display: flex;
+    flex-direction: row;
+    gap: var(--spacing-sm);
+    align-items: stretch;
+    justify-content: space-between;
+    z-index: 2;
+  }
+  .leftBlock {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--spacing-3xs);
+  }
+  .navItemsWrapper {
+    display: flex;
+    gap: var(--spacing-3xs);
+    background-color: color-mix(in oklch, var(--background) 70%, transparent);
+    border: 0.1rem solid color-mix(in oklch, var(--muted) 70%, transparent);
+    padding: var(--spacing-3xs);
+    backdrop-filter: blur(0.3rem);
+    border-radius: var(--radius-sm);
+  }
 </style>
