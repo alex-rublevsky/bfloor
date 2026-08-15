@@ -104,11 +104,14 @@ const creating = !category.slug;
 
 <script>
   import { actions } from "astro:actions";
+  import { navigate } from "astro:transitions/client";
   import { generateSlug } from "@/lib/slugGeneration";
 
   const categoryForm = document.querySelector<HTMLFormElement>(
     "#category-form",
   ) as HTMLFormElement;
+
+  const mode = categoryForm.dataset.mode;
 
   // Auto-generate slug from name
   const nameInput =
@@ -131,12 +134,14 @@ const creating = !category.slug;
 
     try {
       categoryForm.setAttribute("disabled", "true");
-      const { data, error } = await actions.category.createCategory(formData);
+      const { data, error } =
+        mode === "edit"
+          ? await actions.category.updateCategory(formData)
+          : await actions.category.createCategory(formData);
       if (error) {
         throw new Error("Unable to submit the form");
       } else {
-        alert(data);
-        window.location.href = "/dashboard/categories";
+        navigate("/dashboard/categories");
       }
     } catch (error) {
       console.log(error);
@@ -161,7 +166,7 @@ const creating = !category.slug;
         if (error) {
           throw new Error("Произошла ошибка при удалении");
         } else {
-          window.location.href = "/dashboard/categories";
+          navigate("/dashboard/categories");
         }
       } catch (error) {
         console.log(error);
