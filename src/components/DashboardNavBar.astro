@@ -38,6 +38,12 @@ const createItems = [
     hrefTo: "/dashboard/categories/new",
     match: "exact" as const,
   },
+  {
+    label: "Создать бренд",
+    href: "/dashboard/brands",
+    hrefTo: "/dashboard/brands/new",
+    match: "exact" as const,
+  },
 ];
 
 const isActive = (href: string, match: "exact" | "prefix") =>

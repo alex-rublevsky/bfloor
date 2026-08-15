@@ -1,0 +1,20 @@
+---
+import DashboardLayout from "@/layouts/DashboardLayout.astro";
+import { getBrandBySlug } from "@/db/dashboard/brandBySlug";
+import type { Brand } from "@/db/dashboard/brandBySlug";
+import BrandForm from "@/components/dashboard/BrandForm.astro";
+
+const { slug } = Astro.params;
+
+const brand: Brand | null = await getBrandBySlug(slug);
+
+if (!brand) {
+  return Astro.redirect("/dashboard/brands/404");
+}
+---
+
+<DashboardLayout title={brand.name}>
+  <main>
+    <BrandForm brand={brand} />
+  </main>
+</DashboardLayout>
