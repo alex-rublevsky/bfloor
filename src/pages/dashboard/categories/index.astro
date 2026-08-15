@@ -10,27 +10,33 @@ const categories = await getAllCategories();
 
 <DashboardLayout>
   <main>
-    <section>
-      <h1 class="sr-only">Категории</h1>
-      <div class="autoGrid">
-        {
-          categories.map((cat) => (
-            <a href={`/dashboard/categories/${cat.slug}`}>
-              {cat.image ? (
-                <Image
-                  src={BASE_IMAGE_URL + cat.image}
-                  width={300}
-                  height={300}
-                  alt={"Фото категории " + cat.name}
-                />
-              ) : (
-                <ImagePlaceholder />
-              )}
-              <p>{cat.name}</p>
-            </a>
-          ))
-        }
-      </div>
-    </section>
+    {
+      categories.length > 0 ? (
+        <section class="pt-xl">
+          <h1 class="sr-only">Категории</h1>
+          <div class="autoGrid">
+            {categories.map((cat) => (
+              <a href={`/dashboard/categories/${cat.slug}`}>
+                {cat.image ? (
+                  <Image
+                    src={BASE_IMAGE_URL + cat.image}
+                    width={300}
+                    height={300}
+                    alt={"Фото категории " + cat.name}
+                  />
+                ) : (
+                  <ImagePlaceholder />
+                )}
+                <p>{cat.name}</p>
+              </a>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section class="h-screen grid place-items-center">
+          <h1 class="text-lg!">Категорий не найдено</h1>
+        </section>
+      )
+    }
   </main>
 </DashboardLayout>
