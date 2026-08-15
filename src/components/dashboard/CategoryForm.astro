@@ -18,7 +18,7 @@ const creating = !category.slug;
 // const image = category.image ?? "";
 ---
 
-<section>
+<section class="pt-xl">
   <form
     novalidate
     id="category-form"
@@ -121,12 +121,10 @@ const creating = !category.slug;
     });
   }
 
-  const formData = new FormData(categoryForm);
-  const name = formData.get("name") as string;
-
   //event listeners
   categoryForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const formData = new FormData(categoryForm) as FormData;
     if (categoryForm.hasAttribute("disabled")) {
       return;
     }
@@ -138,6 +136,7 @@ const creating = !category.slug;
         throw new Error("Unable to submit the form");
       } else {
         alert(data);
+        window.location.href = "/dashboard/categories";
       }
     } catch (error) {
       console.log(error);
@@ -150,6 +149,8 @@ const creating = !category.slug;
   ) as HTMLButtonElement;
   if (deleteButton) {
     deleteButton.addEventListener("click", async () => {
+      const formData = new FormData(categoryForm) as FormData;
+      const name = formData.get("name") as string;
       if (!confirm(`Удалить категорию  ${name}?`)) {
         return;
       }
@@ -160,7 +161,7 @@ const creating = !category.slug;
         if (error) {
           throw new Error("Произошла ошибка при удалении");
         } else {
-          alert(data);
+          window.location.href = "/dashboard/categories";
         }
       } catch (error) {
         console.log(error);

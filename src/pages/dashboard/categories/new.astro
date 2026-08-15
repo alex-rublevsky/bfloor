@@ -1,10 +1,10 @@
 ---
 import DashboardLayout from "@/layouts/DashboardLayout.astro";
-import { getCategoryBySlug } from "@/db/dashboard/categoryBySlug";
-import type { Category } from "@/db/dashboard/categoryBySlug";
 import CategoryForm from "@/components/dashboard/CategoryForm.astro";
 ---
 
 <DashboardLayout title="Создание категории">
-  <main><CategoryForm /></main>
+  <main>
+    <CategoryForm />
+  </main>
 </DashboardLayout>

@@ -9,6 +9,7 @@ const products = await getAllProducts(1);
   {
     products.length > 0 ? (
       <section class="autoGrid pt-xl">
+        <h1 class="sr-only">Товары</h1>
         {products.map((product) => (
           <DashboardProductCard product={product} />
         ))}

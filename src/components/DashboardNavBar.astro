@@ -29,13 +29,13 @@ const createItems = [
   {
     label: "Создать товар",
     href: "/dashboard",
-    hrefTo: "/new",
+    hrefTo: "/dashboard/product/new",
     match: "exact" as const,
   },
   {
     label: "Создать категорию",
     href: "/dashboard/categories",
-    hrefTo: "/new",
+    hrefTo: "/dashboard/categories/new",
     match: "exact" as const,
   },
 ];
@@ -69,7 +69,7 @@ const hasCreateButton = (href: string) => pathname === href;
         <Button
           size="sm"
           variant="primary"
-          href={pathname + "/new"}
+          href={item.hrefTo}
           style={hasCreateButton(item.href) ? null : "display: none"}>
           {item.label}
         </Button>
