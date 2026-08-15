@@ -1,0 +1,42 @@
+---
+import DashboardLayout from "@/layouts/DashboardLayout.astro";
+import { getAllBrands } from "@/db/dashboard/allBrands";
+import { Image } from "astro:assets";
+import { BASE_IMAGE_URL } from "@/constants";
+import ImagePlaceholder from "@/components/shared/ImagePlaceholder.astro";
+
+const brands = await getAllBrands();
+---
+
+<DashboardLayout>
+  <main>
+    {
+      brands.length > 0 ? (
+        <section class="pt-xl">
+          <h1 class="sr-only">Бренды</h1>
+          <div class="autoGrid">
+            {brands.map((brand) => (
+              <a href={`/dashboard/brands/${brand.slug}`}>
+                {brand.image ? (
+                  <Image
+                    src={BASE_IMAGE_URL + brand.image}
+                    width={300}
+                    height={300}
+                    alt={"Фото бренда " + brand.name}
+                  />
+                ) : (
+                  <ImagePlaceholder />
+                )}
+                <p>{brand.name}</p>
+              </a>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section class="h-screen grid place-items-center">
+          <h1 class="text-lg!">Брендов не найдено</h1>
+        </section>
+      )
+    }
+  </main>
+</DashboardLayout>
