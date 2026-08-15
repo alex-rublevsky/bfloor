@@ -6,7 +6,6 @@ export type Product = Pick<
   InferSelectModel<typeof products>,
   | "id"
   | "isActive"
-  | "isFeatured"
   | "slug"
   | "name"
   | "price"
@@ -21,7 +20,6 @@ export async function updateProduct(product: Product) {
     .update(products)
     .set({
       isActive: product.isActive,
-      isFeatured: product.isFeatured,
       slug: product.slug,
       name: product.name,
       categoryId: product.categoryId,
