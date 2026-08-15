@@ -5,8 +5,18 @@ import DashboardProductCard from "@/components/dashboard/DashboardProductCard.as
 const products = await getAllProducts(1);
 ---
 
-<section>
-  <div class="autoGrid">
-    {products.map((product) => <DashboardProductCard product={product} />)}
-  </div>
-</section>
+<>
+  {
+    products.length > 0 ? (
+      <section class="autoGrid pt-xl">
+        {products.map((product) => (
+          <DashboardProductCard product={product} />
+        ))}
+      </section>
+    ) : (
+      <section class="h-screen grid place-items-center">
+        <h1 class="text-lg!">Товаров не найдено</h1>
+      </section>
+    )
+  }
+</>
