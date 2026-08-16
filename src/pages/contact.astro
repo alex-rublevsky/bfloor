@@ -6,85 +6,83 @@ export const prerender = true;
 ---
 
 <Layout>
-    <h1 class="sr-only">Contacts and Addresses</h1>
-    <div class="sectionsLayout">
-        <section>
-            <h2 class="text-lg leading-none">Контакты</h2>
+  <h1 class="sr-only">Contacts and Addresses</h1>
+  <div class="sectionsLayout">
+    <section>
+      <h2 class="text-lg leading-none">Контакты</h2>
 
-            <div class="card">
-                <div class="contact">
-                    <Link href="tel:+89084466740">8 908 446 6740 </Link>
-                    <span class="name">Елена</span>
-                </div>
-                <div class="contact">
-                    <Link href="tel:+89025559405">8 902 555 9405 </Link><span
-                        class="name">Роман</span
-                    >
-                </div>
-                <Link href="tel:+89084486785">8 908 448 6785</Link>
-                <Link href="mailto:romavg@mail.ru">romavg@mail.ru</Link>
-            </div>
-        </section>
-        <section>
-            <h2 class="text-lg leading-none">Адреса</h2>
+      <div class="card">
+        <div class="contact">
+          <Link href="tel:+89084466740">8 908 446 6740 </Link>
+          <span class="name">Елена</span>
+        </div>
+        <div class="contact">
+          <Link href="tel:+89025559405">8 902 555 9405 </Link><span class="name"
+            >Роман</span
+          >
+        </div>
+        <Link href="tel:+89084486785">8 908 448 6785</Link>
+        <Link href="mailto:romavg@mail.ru">romavg@mail.ru</Link>
+      </div>
+    </section>
+    <section>
+      <h2 class="text-lg leading-none">Адреса</h2>
 
-            <div class="card">
-                <div>
-                    <p>Владивосток, ул. Русская, 78</p>
-                    <span class="text-sm leading-none"
-                        >Вход со стороны дороги</span
-                    >
-                </div>
+      <div class="card">
+        <div>
+          <p>Владивосток, ул. Русская, 78</p>
+          <span class="text-sm leading-none">Вход со стороны дороги</span>
+        </div>
 
-                <div>
-                    <p class="label">Часы работы:</p>
-                    <p>Пн — Пт: 10 — 18</p>
-                    <p>Сб: 11 — 17 Вс: Выходной</p>
-                </div>
-            </div>
-            <div class="card">
-                <p>Владивосток, ул. 100 летия, 30</p>
+        <div>
+          <p class="label">Часы работы:</p>
+          <p>Пн — Пт: 10 — 18</p>
+          <p>Сб: 11 — 17 Вс: Выходной</p>
+        </div>
+      </div>
+      <div class="card">
+        <p>Владивосток, ул. 100 летия, 30</p>
 
-                <div>
-                    <p class="label">Часы работы:</p>
-                    <p>Пн — Пт: 10 — 18</p>
-                    <p>Сб: 11 — 17 Вс: Выходной</p>
-                </div>
-            </div>
-        </section>
-    </div>
+        <div>
+          <p class="label">Часы работы:</p>
+          <p>Пн — Пт: 10 — 18</p>
+          <p>Сб: 11 — 17 Вс: Выходной</p>
+        </div>
+      </div>
+    </section>
+  </div>
 </Layout>
 
 <style>
-    .sectionsLayout {
-        display: grid;
-        grid-template-columns: min-content min-content;
-        justify-content: center;
-        align-items: start;
-    }
-    .name {
-        font-style: italic;
-        font-weight: medium;
-        color: var(--color-muted-foreground);
-    }
-    .card {
-        display: grid;
-        background-color: var(--muted);
-        padding: var(--spacing-xs);
-        white-space: nowrap;
-        gap: var(--spacing-2xs);
-    }
-    .contact {
-        display: flex;
-        align-items: baseline;
-        gap: var(--spacing-xs);
-    }
-    .label {
-        font-weight: bold;
-    }
+  .sectionsLayout {
+    display: grid;
+    grid-template-columns: min-content min-content;
+    justify-content: center;
+    align-items: start;
+  }
+  .name {
+    font-style: italic;
+    font-weight: medium;
+    color: var(--color-muted-foreground);
+  }
+  .card {
+    display: grid;
+    background-color: var(--muted);
+    padding: var(--spacing-xs);
+    white-space: nowrap;
+    gap: var(--spacing-2xs);
+  }
+  .contact {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-xs);
+  }
+  .label {
+    font-weight: bold;
+  }
 
-    section {
-        display: grid;
-        gap: var(--spacing-sm);
-    }
+  section {
+    display: grid;
+    gap: var(--spacing-sm);
+  }
 </style>
