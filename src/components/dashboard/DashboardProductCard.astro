@@ -1,33 +1,36 @@
 ---
 import { Image } from "astro:assets";
 import { BASE_IMAGE_URL } from "@/constants";
-//import type { Product } from "@/db/storefront/allProductsForFeed";
+import type { Product } from "@/db/dashboard/products";
+import ImagePlaceholder from "../shared/ImagePlaceholder.astro";
 
-//type Props = { product?: Product };
+type Props = { product?: Product };
 
-const { product } = Astro.props;
-//as Props;
+const { product } = Astro.props as Props;
 
 if (!product) {
   return null;
 }
 
-const { images } = product;
+// const { images } = product ;
+const images = null;
 ---
 
 <a class="productCard" href={`/dashboard/product/${product.slug}`}>
   <div class="rounded aspect-square overflow-hidden">
     {
-      images.length > 0 ? (
+      images ? (
         <Image
           src={BASE_IMAGE_URL + images[0]}
           width={500}
           height={500}
           alt={product.name}
           loading="lazy"
-          class="object-cover "
+          class="object-cover"
         />
-      ) : null
+      ) : (
+        <ImagePlaceholder />
+      )
     }
   </div>
   <div class="flex gap-2xs">

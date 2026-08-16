@@ -1,13 +1,9 @@
 import { db } from "@/db/index";
 import { brands } from "@/db/schema";
-import { eq, type InferSelectModel } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import type { UpdateBrandInput, Brand } from "@/db/dashboard/brands/types";
 
-export type Brand = Pick<
-  InferSelectModel<typeof brands>,
-  "id" | "slug" | "name"
->;
-
-export async function updateBrand(brand: Brand) {
+export async function updateBrand(brand: UpdateBrandInput): Promise<Brand> {
   const insertedBrand = await db
     .update(brands)
     .set({

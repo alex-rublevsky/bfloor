@@ -1,21 +1,14 @@
 import { db } from "@/db/index";
 import { products } from "@/db/schema";
-import { type InferSelectModel } from "drizzle-orm";
+import type {
+  CreateProductInput,
+  Product,
+} from "@/db/dashboard/products/types";
 
-export type Product = Pick<
-  InferSelectModel<typeof products>,
-  | "isActive"
-  | "slug"
-  | "name"
-  | "price"
-  | "discountedPrice"
-  | "description"
-  | "importantNote"
-  | "categoryId"
->;
-
-export async function createProduct(product: Product): Promise<Product> {
-  const insertProduct = await db
+export async function createProduct(
+  product: CreateProductInput,
+): Promise<Product> {
+  const insertedProduct = await db
     .insert(products)
     .values({
       isActive: product.isActive,
@@ -30,5 +23,5 @@ export async function createProduct(product: Product): Promise<Product> {
     .returning()
     .then((res) => res[0]);
 
-  return { ...insertProduct };
+  return { ...insertedProduct };
 }

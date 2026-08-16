@@ -1,10 +1,14 @@
 import { db } from "@/db/index";
 import { categories } from "@/db/schema";
-import { eq, type InferSelectModel } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import type {
+  DeleteCategoryInput,
+  Category,
+} from "@/db/dashboard/categories/types";
 
-export type Category = Pick<InferSelectModel<typeof categories>, "id">;
-
-export async function deleteCategory(category: Category): Promise<Category> {
+export async function deleteCategory(
+  category: DeleteCategoryInput,
+): Promise<Category | null> {
   const insertedCategory = await db
     .delete(categories)
     .where(eq(categories.id, category.id))

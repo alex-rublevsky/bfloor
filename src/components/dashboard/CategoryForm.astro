@@ -89,12 +89,12 @@ const creating = !category.slug;
   }
   .textInputFields {
     display: grid;
-    gap: 0.7rem;
+    gap: var(--spacing-2xs);
     container-type: inline-size;
   }
   .nameSlug {
     display: grid;
-    gap: 0.7rem;
+    gap: var(--spacing-2xs);
     grid-template-columns: 1fr;
     @container (min-width: 60ch) {
       grid-template-columns: 1fr 1fr;
@@ -156,7 +156,7 @@ const creating = !category.slug;
     deleteButton.addEventListener("click", async () => {
       const formData = new FormData(categoryForm) as FormData;
       const name = formData.get("name") as string;
-      if (!confirm(`Удалить категорию  ${name}?`)) {
+      if (!confirm(`Удалить категорию ${name}?`)) {
         return;
       }
 

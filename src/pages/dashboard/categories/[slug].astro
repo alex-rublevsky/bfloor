@@ -1,7 +1,7 @@
 ---
 import DashboardLayout from "@/layouts/DashboardLayout.astro";
-import { getCategoryBySlug } from "@/db/dashboard/categoryBySlug";
-import type { Category } from "@/db/dashboard/categoryBySlug";
+import { getCategoryBySlug } from "@/db/dashboard/categories/categoryBySlug";
+import type { Category } from "@/db/dashboard/categories/";
 import CategoryForm from "@/components/dashboard/CategoryForm.astro";
 
 const { slug } = Astro.params;

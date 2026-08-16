@@ -1,14 +1,13 @@
 import { db } from "@/db/index";
 import { categories } from "@/db/schema";
-import { type InferSelectModel } from "drizzle-orm";
+import type {
+  CreateCategoryInput,
+  Category,
+} from "@/db/dashboard/categories/types";
 
-export type Category = Pick<
-  InferSelectModel<typeof categories>,
-  "slug" | "name"
-  // | "image"
->;
-
-export async function createCategory(category: Category): Promise<Category> {
+export async function createCategory(
+  category: CreateCategoryInput,
+): Promise<Category> {
   const insertedCategory = await db
     .insert(categories)
     .values({

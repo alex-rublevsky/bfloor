@@ -1,10 +1,11 @@
 import { db } from "@/db/index";
 import { brands } from "@/db/schema";
-import { eq, type InferSelectModel } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import type { DeleteBrandInput, Brand } from "@/db/dashboard/brands/types";
 
-export type Brand = Pick<InferSelectModel<typeof brands>, "id">;
-
-export async function deleteBrand(brand: Brand): Promise<Brand> {
+export async function deleteBrand(
+  brand: DeleteBrandInput,
+): Promise<Brand | null> {
   const insertedBrand = await db
     .delete(brands)
     .where(eq(brands.id, brand.id))

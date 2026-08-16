@@ -1,7 +1,6 @@
 ---
 import DashboardLayout from "@/layouts/DashboardLayout.astro";
-import { getBrandBySlug } from "@/db/dashboard/brandBySlug";
-import type { Brand } from "@/db/dashboard/brandBySlug";
+import { type Brand, getBrandBySlug } from "@/db/dashboard/brands/";
 import BrandForm from "@/components/dashboard/BrandForm.astro";
 
 const { slug } = Astro.params;

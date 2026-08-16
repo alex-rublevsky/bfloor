@@ -1,9 +1,9 @@
 import { z } from "astro/zod";
 import { defineAction } from "astro:actions";
 import { requireAdmin } from "@/lib/api/requireAdmin";
-import { createCategory } from "@/db/dashboard/createCategory";
-import { deleteCategory } from "@/db/dashboard/deleteCategory";
-import { updateCategory } from "@/db/dashboard/updateCategory";
+import { createCategory } from "@/db/dashboard/categories/createCategory";
+import { deleteCategory } from "@/db/dashboard/categories/deleteCategory";
+import { updateCategory } from "@/db/dashboard/categories/updateCategory";
 
 export const category = {
   createCategory: defineAction({
@@ -11,14 +11,14 @@ export const category = {
     input: z.object({
       name: z.string(),
       slug: z.string(),
-      // image: z.string(),
+      // image: z.instanceof(File),
     }),
     handler: async (input, { locals }) => {
       requireAdmin(locals);
       return await createCategory({
         name: input.name,
         slug: input.slug,
-        // image: input.image
+        // image: input.image,
       });
     },
   }),

@@ -26,7 +26,7 @@ const creating = !brand.slug;
     data-mode={creating ? "create" : "edit"}>
     {!creating && <input type="hidden" name="id" value={brand.id} />}
     <h1 class="text-lg pb-2">
-      {creating ? "Создание категории" : "Редактирование категории"}
+      {creating ? "Создание бренда" : "Редактирование бренда"}
       {
         !creating && brand.slug && (
           <Button
@@ -89,12 +89,12 @@ const creating = !brand.slug;
   }
   .textInputFields {
     display: grid;
-    gap: 0.7rem;
+    gap: var(--spacing-2xs);
     container-type: inline-size;
   }
   .nameSlug {
     display: grid;
-    gap: 0.7rem;
+    gap: var(--spacing-2xs);
     grid-template-columns: 1fr;
     @container (min-width: 60ch) {
       grid-template-columns: 1fr 1fr;
@@ -154,7 +154,7 @@ const creating = !brand.slug;
     deleteButton.addEventListener("click", async () => {
       const formData = new FormData(brandForm) as FormData;
       const name = formData.get("name") as string;
-      if (!confirm(`Удалить категорию  ${name}?`)) {
+      if (!confirm(`Удалить бренд ${name}?`)) {
         return;
       }
 

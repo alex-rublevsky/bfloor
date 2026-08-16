@@ -1,159 +1,230 @@
 ---
 import Input from "@/components/shared/Input.astro";
+// import ImagesDropzone from "@/components/dashboard/ImageDropzone.astro";
+import { Icon } from "astro-icon/components";
 import Button from "@/components/shared/Button.astro";
-import Select from "@/components/shared/Select.astro";
-import { getAllCategories } from "@/db/storefront/allCategories";
-import ImageDropzone from "@/components/dashboard/ImageDropzone.astro";
 import Checkbox from "@/components/shared/Checkbox.astro";
-type ProductFormProduct = {
-    id?: number;
-    slug?: string;
-    name?: string;
-    images?: string[];
-    price?: number | null;
-    discountedPrice?: number | null;
-    categoryId?: number;
-    description?: string | null;
-    importantNote?: string | null;
-    isActive?: boolean;
-    isFeatured?: boolean;
+import Select from "@/components/shared/Select.astro";
+import { getAllCategories } from "@/db/dashboard/categories/";
+
+type FormProduct = {
+  id?: number;
+  slug?: string;
+  name?: string;
+  isActive?: boolean;
+  categoryId?: number;
+  price?: number;
+  discountedPrice?: number | null;
+  // image?: string | null;
 };
-
 interface Props {
-    product?: ProductFormProduct;
+  product?: FormProduct;
 }
-
 const { product = {} } = Astro.props as Props;
-const images: string[] = product.images ?? [];
-
+const creating = !product.slug;
 const categories = await getAllCategories();
-
-const creating = product.slug ? false : true;
+const selectedCategoryId = product.categoryId ? String(product.categoryId) : "";
+// const image = category.image ?? "";
 ---
 
-<form
+<section class="pt-xl">
+  <form
+    novalidate
     id="product-form"
     method="POST"
-    class="max-w-[80ch] mx-auto py-14"
-    data-mode={creating ? "create" : "edit"}
->
-    <h1 class="text-md pb-2">
-        {creating ? "Добавление товара" : "Редактирование товара"}
-    </h1>
+    data-mode={creating ? "create" : "edit"}>
     {!creating && <input type="hidden" name="id" value={product.id} />}
+    <h1 class="text-lg pb-2">
+      {creating ? "Создание товара" : "Редактирование товара"}
+      {
+        !creating && product.slug && (
+          <Button
+            size="sm"
+            withIcon
+            class="inline-block align-baseline ml-xs"
+            href={`/store/${product.slug}`}>
+            <Icon name="eye" title="Открыть в новой вкладке" class="size-5" />В
+            магазине
+          </Button>
+        )
+      }
+    </h1>
 
-    <div class="productForm">
-        <div>
-            <ImageDropzone images={images} />
-            <!-- <Button
-                ><input
-                    type="file"
-                    id="photos"
-                    name="photos"
-                    accept="image/png, image/jpeg, image/webp"
-                /></Button
-            > -->
-        </div>
-        <div class="grid grid-cols-2 gap-x-2">
-            <Input name="name" label="Название" value={product.name} required />
-            <Input
-                name="slug"
-                label="Ярлык"
-                value={product.slug ? product.slug : ""}
-                readonly={true}
-                required
-            />
-            <Input name="price" label="Цена" value={product.price} required />
-            <Input
-                name="discountedPrice"
-                label="Цена со скидкой"
-                value={product.discountedPrice}
-            />
-        </div>
+    <!-- <ImagesDropzone images={images} /> -->
+
+    <div class="textInputFields">
+      <div class="nameSlug">
+        <Input
+          name="name"
+          label="Название"
+          value={product.name}
+          required
+          autofocus
+          autocomplete="off"
+        />
+        <Input
+          name="slug"
+          label="Ярлык"
+          value={product.slug ? product.slug : ""}
+          readonly={true}
+          required
+        />
+      </div>
+
+      <div class="nameSlug">
+        <Input
+          name="price"
+          label="Цена"
+          value={product.price}
+          required
+          autocomplete="off"
+        />
+        <Input
+          name="discountedPrice"
+          label="Цена со скидкой"
+          value={product.discountedPrice ? product.discountedPrice : ""}
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="categoryActiveInputs">
         <Select
-            name="categoryId"
-            label="Категория"
-            options={categories}
-            selectedOption={product.categoryId}
-            required
+          name="categoryId"
+          label="Категория"
+          placeholder="Выбрать"
+          value={selectedCategoryId}
+          options={categories.map((category) => ({
+            value: String(category.id),
+            label: category.name,
+          }))}
+          required
         />
-        <Input
-            as="textarea"
-            name="description"
-            label="Описание"
-            value={product.description}
-            rows={4}
-        />
-        <Input
-            as="textarea"
-            name="importantNote"
-            label="Важная заметка"
-            value={product.importantNote}
-            rows={4}
-        />
-        <div class="flex flex-wrap gap-4">
-            <Checkbox
-                name="isActive"
-                label="Активен"
-                checked={creating
-                    ? true
-                    : product.isActive
-                      ? product.isActive
-                      : false}
-            />
-            <Checkbox
-                name="isFeatured"
-                label="Рекомендуемый"
-                checked={product.isFeatured ? product.isFeatured : false}
-            />
-        </div>
+        <Checkbox
+          name="isActive"
+          value="1"
+          checked={product.isActive ?? true}>
+          Товар активен
+        </Checkbox>
+      </div>
     </div>
-    <Button type="submit">{creating ? "Добавить" : "Сохранить"}</Button>
-    <Button variant="destructive">Удалить</Button>
-</form>
-
-<script>
-    import { actions } from "astro:actions";
-    import { generateSlug } from "@/lib/slugGeneration";
-
-    const form = document.querySelector<HTMLFormElement>("#product-form");
-    if (!form) throw Error("Форма не найдена");
-    const mode = form.dataset.mode;
-
-    if (form) {
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget as HTMLFormElement);
-            const { data, error } =
-                mode === "edit"
-                    ? await actions.product.updateProduct(formData)
-                    : await actions.product.createProduct(formData);
-
-            if (error) {
-                console.error("Product form submission failed", error);
-                alert(error.message ?? "Не удалось сохранить товар");
-            } else {
-                alert(data);
-            }
-        });
-
-        const nameInput = form.querySelector<HTMLInputElement>('[name="name"]');
-        const slugInput = form.querySelector<HTMLInputElement>('[name="slug"]');
-
-        if (nameInput && slugInput) {
-            nameInput.addEventListener("input", () => {
-                slugInput.value = generateSlug(nameInput.value);
-            });
-        }
+    <Button id="submit-btn" size="sm" type="submit">
+      <span class="submit-text">{creating ? "Добавить" : "Сохранить"}</span>
+      <Icon name="spinner" class="submit-spinner size-5 animate-spin" />
+    </Button>
+    {
+      !creating && (
+        <Button
+          id="delete-button"
+          size="sm"
+          variant="destructive"
+          type="button">
+          Удалить
+        </Button>
+      )
     }
-</script>
+  </form>
+</section>
 
 <style>
-    .productForm {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-
-        margin: auto;
+  form {
+    margin: auto;
+    padding-bottom: 4rem;
+    container-type: inline-size;
+    max-width: 80ch;
+  }
+  .textInputFields {
+    display: grid;
+    gap: var(--spacing-2xs);
+    container-type: inline-size;
+  }
+  .nameSlug {
+    display: grid;
+    gap: var(--spacing-2xs);
+    grid-template-columns: 1fr;
+    @container (min-width: 60ch) {
+      grid-template-columns: 1fr 1fr;
     }
-</style>
+  }
+
+  .categoryActiveInputs {
+    display: grid;
+    gap: var(--spacing-2xs);
+    grid-template-columns: 1fr;
+    @container (min-width: 37ch) {
+      grid-template-columns: 1fr 1fr;
+      justify-items: center;
+    }</style>
+
+<script>
+  import { actions } from "astro:actions";
+  import { navigate } from "astro:transitions/client";
+  import { generateSlug } from "@/lib/slugGeneration";
+
+  const productForm = document.querySelector<HTMLFormElement>(
+    "#product-form",
+  ) as HTMLFormElement;
+
+  const mode = productForm.dataset.mode;
+
+  // Auto-generate slug from name
+  const nameInput =
+    productForm.querySelector<HTMLInputElement>('[name="name"]');
+  const slugInput =
+    productForm.querySelector<HTMLInputElement>('[name="slug"]');
+  if (nameInput && slugInput) {
+    nameInput.addEventListener("input", () => {
+      slugInput.value = generateSlug(nameInput.value);
+    });
+  }
+
+  //event listeners
+  productForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(productForm) as FormData;
+    if (productForm.hasAttribute("disabled")) {
+      return;
+    }
+
+    try {
+      productForm.setAttribute("disabled", "true");
+      const { data, error } =
+        mode === "edit"
+          ? await actions.product.updateProduct(formData)
+          : await actions.product.createProduct(formData);
+      if (error) {
+        throw new Error("Unable to submit the form");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.log(error);
+      productForm.removeAttribute("disabled");
+    }
+  });
+
+  const deleteButton = document.querySelector<HTMLButtonElement>(
+    "#delete-button",
+  ) as HTMLButtonElement;
+  if (deleteButton) {
+    deleteButton.addEventListener("click", async () => {
+      const formData = new FormData(productForm) as FormData;
+      const name = formData.get("name") as string;
+      if (!confirm(`Удалить товар ${name}?`)) {
+        return;
+      }
+
+      try {
+        productForm.setAttribute("disabled", "true");
+        const { data, error } = await actions.product.deleteProduct(formData);
+        if (error) {
+          throw new Error("Произошла ошибка при удалении");
+        } else {
+          navigate("/dashboard");
+        }
+      } catch (error) {
+        console.log(error);
+        productForm.removeAttribute("disabled");
+      }
+    });
+  }
+</script>

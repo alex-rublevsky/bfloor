@@ -1,9 +1,9 @@
 import { z } from "astro/zod";
 import { defineAction } from "astro:actions";
 import { requireAdmin } from "@/lib/api/requireAdmin";
-import { createBrand } from "@/db/dashboard/createBrand";
-import { deleteBrand } from "@/db/dashboard/deleteBrand";
-import { updateBrand } from "@/db/dashboard/updateBrand";
+import { createBrand } from "@/db/dashboard/brands/createBrand";
+import { deleteBrand } from "@/db/dashboard/brands/deleteBrand";
+import { updateBrand } from "@/db/dashboard/brands/updateBrand";
 
 export const brand = {
   createBrand: defineAction({
