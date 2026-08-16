@@ -28,3 +28,8 @@ src/db/archive.schema.ts
 
 # migration script files
 .migration-state
+
+# TODO: remove this from here once they are finalized
+scripts
+migrations
+.dockerignore
