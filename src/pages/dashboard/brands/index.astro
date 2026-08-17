@@ -22,6 +22,8 @@ const brands = await getAllBrands();
                     src={BASE_IMAGE_URL + brand.image}
                     width={300}
                     height={300}
+                    fit="contain"
+                    class="size-full object-contain"
                     alt={"Фото бренда " + brand.name}
                   />
                 ) : (
