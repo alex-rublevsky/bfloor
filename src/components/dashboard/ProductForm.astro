@@ -1,6 +1,6 @@
 ---
 import Input from "@/components/shared/Input.astro";
-// import ImagesDropzone from "@/components/dashboard/ImageDropzone.astro";
+import ImagesDropzone from "@/components/dashboard/ImageDropzone.astro";
 import { Icon } from "astro-icon/components";
 import Button from "@/components/shared/Button.astro";
 import Checkbox from "@/components/shared/Checkbox.astro";
@@ -15,7 +15,7 @@ type FormProduct = {
   categoryId?: number;
   price?: number;
   discountedPrice?: number | null;
-  // image?: string | null;
+  images?: string | null;
 };
 interface Props {
   product?: FormProduct;
@@ -24,7 +24,7 @@ const { product = {} } = Astro.props as Props;
 const creating = !product.slug;
 const categories = await getAllCategories();
 const selectedCategoryId = product.categoryId ? String(product.categoryId) : "";
-// const image = category.image ?? "";
+const images = product.images ?? [];
 ---
 
 <section class="pt-xl">
@@ -50,7 +50,7 @@ const selectedCategoryId = product.categoryId ? String(product.categoryId) : "";
       }
     </h1>
 
-    <!-- <ImagesDropzone images={images} /> -->
+    <ImagesDropzone images={images} />
 
     <div class="textInputFields">
       <div class="nameSlug">

@@ -13,6 +13,7 @@ export type CreateProductInput = Pick<
   | "discountedPrice"
   | "description"
   | "importantNote"
+  | "images"
 >;
 
 export type UpdateProductInput = CreateProductInput & {

@@ -3,10 +3,10 @@ import {
   updateProduct,
   createProduct,
 } from "@/db/dashboard/products/index";
-
 import { requireAdmin } from "@/lib/api/requireAdmin";
 import { z } from "astro/zod";
 import { defineAction } from "astro:actions";
+import { updateMedia } from "@/lib/update-media";
 
 export const product = {
   createProduct: defineAction({
@@ -20,9 +20,24 @@ export const product = {
         (value) => (value === "" ? null : value),
         z.coerce.number().nonnegative().nullable(),
       ),
+      description: z.preprocess(
+        (value) => (value === "" ? null : value),
+        z.string().nullable(),
+      ),
+      importantNote: z.preprocess(
+        (value) => (value === "" ? null : value),
+        z.string().nullable(),
+      ),
+      images: z.array(z.string()).default([]),
     }),
     handler: async (input, { locals }) => {
       requireAdmin(locals);
+
+      const finalImages = await updateMedia({
+        slug: input.slug,
+        submittedImages: input.images,
+      });
+
       return await createProduct({
         isActive: true,
         name: input.name,
@@ -32,6 +47,7 @@ export const product = {
         discountedPrice: input.discountedPrice,
         description: null,
         importantNote: null,
+        images: finalImages,
       });
     },
   }),

@@ -1,53 +1,55 @@
 import { z } from "astro/zod";
 import { defineAction } from "astro:actions";
 import { requireAdmin } from "@/lib/api/requireAdmin";
-import { createCategory } from "@/db/dashboard/categories/createCategory";
-import { deleteCategory } from "@/db/dashboard/categories/deleteCategory";
-import { updateCategory } from "@/db/dashboard/categories/updateCategory";
+import { createCollection } from "@/db/dashboard/collections/createCollection";
+import { deleteCollection } from "@/db/dashboard/collections/deleteCollection";
+import { updateCollection } from "@/db/dashboard/collections/updateCollection";
 
-export const category = {
-  createCategory: defineAction({
+export const collection = {
+  createCollection: defineAction({
     accept: "form",
     input: z.object({
       name: z.string(),
       slug: z.string(),
-      // image: z.instanceof(File),
+      brandId: z.coerce.number().int().positive(),
     }),
     handler: async (input, { locals }) => {
       requireAdmin(locals);
-      return await createCategory({
+      return await createCollection({
         name: input.name,
         slug: input.slug,
-        // image: input.image,
+        brandId: input.brandId,
       });
     },
   }),
-  deleteCategory: defineAction({
+  deleteCollection: defineAction({
     accept: "form",
     input: z.object({
-      id: z.coerce.number().int().positive(),
+      id: z.number(),
       // image: z.string(),
     }),
     handler: async (input, { locals }) => {
       requireAdmin(locals);
-      return await deleteCategory({
+      return await deleteCollection({
         id: input.id,
       });
     },
   }),
-  updateCategory: defineAction({
+  updateCollection: defineAction({
     accept: "form",
     input: z.object({
+      id: z.coerce.number().int().positive(),
       name: z.string(),
       slug: z.string(),
-      id: z.coerce.number().int().positive(),
+      brandId: z.coerce.number().int().positive(),
     }),
     handler: async (input, { locals }) => {
       requireAdmin(locals);
-      return await updateCategory({
+      return await updateCollection({
+        id: input.id,
         name: input.name,
         slug: input.slug,
-        id: input.id,
+        brandId: input.brandId,
       });
     },
   }),

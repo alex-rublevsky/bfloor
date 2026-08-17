@@ -1,0 +1,70 @@
+---
+import DashboardLayout from "@/layouts/DashboardLayout.astro";
+import { getBrandsWithCollections } from "@/db/dashboard/collections/";
+import { Image } from "astro:assets";
+import { BASE_IMAGE_URL } from "@/constants";
+
+const brands = await getBrandsWithCollections();
+const brandsWithCollections = brands.filter(
+  (brand) => brand.collections.length > 0,
+);
+---
+
+<DashboardLayout>
+  <main>
+    {
+      brandsWithCollections.length > 0 ? (
+        <section class="pt-xl collectionGrid bg-muted/30">
+          <h1 class="sr-only">Коллекции</h1>
+          {brandsWithCollections.map((brand) => (
+            <div class="grid bg-background p-xs">
+              {brand.image ? (
+                <Image
+                  src={BASE_IMAGE_URL + brand.image}
+                  width={300}
+                  height={300}
+                  fit="contain"
+                  class="size-full object-contain"
+                  alt={"Логотип бренда " + brand.name}
+                />
+              ) : (
+                <h2 class="text-md">{brand.name}</h2>
+              )}
+
+              <div class="grid">
+                {brand.collections.map((collection) => (
+                  <a
+                    class="hover:bg-muted px-2xs"
+                    href={`/dashboard/collections/${collection.slug}`}>
+                    {collection.name}
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+      ) : (
+        <section class="h-screen grid place-items-center">
+          <h1 class="text-lg!">Коллекций не найдено</h1>
+        </section>
+      )
+    }
+  </main>
+</DashboardLayout>
+
+<style>
+  .collectionGrid {
+    --min-col-size: clamp(
+      10rem,
+      calc(10rem + 5rem * (100vw - 280px) / 400px),
+      15rem
+    );
+    display: grid;
+    gap: var(--spacing-2xs);
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(min(var(--min-col-size), 100%), 1fr)
+    );
+    align-items: start;
+  }
+</style>

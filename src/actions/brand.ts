@@ -25,7 +25,7 @@ export const brand = {
   deleteBrand: defineAction({
     accept: "form",
     input: z.object({
-      id: z.number(),
+      id: z.coerce.number().int().positive(),
       // image: z.string(),
     }),
     handler: async (input, { locals }) => {
@@ -40,7 +40,7 @@ export const brand = {
     input: z.object({
       name: z.string(),
       slug: z.string(),
-      id: z.number(),
+      id: z.coerce.number().int().positive(),
     }),
     handler: async (input, { locals }) => {
       requireAdmin(locals);

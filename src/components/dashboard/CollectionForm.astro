@@ -1,0 +1,189 @@
+---
+import Input from "@/components/shared/Input.astro";
+import Select from "@/components/shared/Select.astro";
+import { Icon } from "astro-icon/components";
+import Button from "@/components/shared/Button.astro";
+import { getAllBrands } from "@/db/dashboard/brands";
+
+type FormCollection = {
+  id?: number;
+  slug?: string;
+  name?: string;
+  brandId?: number;
+};
+interface Props {
+  collection?: FormCollection;
+}
+const { collection = {} } = Astro.props as Props;
+const brands = await getAllBrands();
+const selectedBrandId = collection.brandId ? String(collection.brandId) : "";
+const creating = !collection.slug;
+---
+
+<section class="pt-xl">
+  <form
+    novalidate
+    id="collection-form"
+    method="POST"
+    data-mode={creating ? "create" : "edit"}>
+    {!creating && <input type="hidden" name="id" value={collection.id} />}
+    <h1 class="text-lg pb-2">
+      {creating ? "Создание коллекции" : "Редактирование коллекции"}
+      {
+        !creating && collection.slug && (
+          <Button
+            size="sm"
+            withIcon
+            class="inline-block align-baseline ml-xs"
+            href={`/store/${collection.slug}`}>
+            <Icon name="eye" title="Открыть в новой вкладке" class="size-5" />В
+            магазине
+          </Button>
+        )
+      }
+    </h1>
+
+    <div class="textInputFields">
+      <div class="nameSlug">
+        <Input
+          name="name"
+          label="Название"
+          value={collection.name}
+          required
+          autofocus
+          autocomplete="off"
+        />
+        <Input
+          name="slug"
+          label="Ярлык"
+          value={collection.slug ? collection.slug : ""}
+          readonly={true}
+          required
+        />
+      </div>
+    </div>
+    <Select
+      name="categoryId"
+      label="Категория"
+      placeholder="Выбрать"
+      value={selectedBrandId}
+      options={brands.map((brand) => ({
+        value: String(brand.id),
+        label: brand.name,
+      }))}
+      required
+    />
+    <Button id="submit-btn" size="sm" type="submit">
+      <span class="submit-text">{creating ? "Добавить" : "Сохранить"}</span>
+      <Icon name="spinner" class="submit-spinner size-5 animate-spin" />
+    </Button>
+    {
+      !creating && (
+        <Button
+          id="delete-button"
+          size="sm"
+          variant="destructive"
+          type="button">
+          Удалить
+        </Button>
+      )
+    }
+  </form>
+</section>
+
+<style>
+  form {
+    margin: auto;
+    padding-bottom: 4rem;
+    container-type: inline-size;
+    max-width: 80ch;
+  }
+  .textInputFields {
+    display: grid;
+    gap: var(--spacing-2xs);
+    container-type: inline-size;
+  }
+  .nameSlug {
+    display: grid;
+    gap: var(--spacing-2xs);
+    grid-template-columns: 1fr;
+    @container (min-width: 60ch) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>
+
+<script>
+  import { actions } from "astro:actions";
+  import { navigate } from "astro:transitions/client";
+  import { generateSlug } from "@/lib/slugGeneration";
+
+  const collectionForm = document.querySelector<HTMLFormElement>(
+    "#collection-form",
+  ) as HTMLFormElement;
+
+  const mode = collectionForm.dataset.mode;
+
+  // Auto-generate slug from name
+  const nameInput =
+    collectionForm.querySelector<HTMLInputElement>('[name="name"]');
+  const slugInput =
+    collectionForm.querySelector<HTMLInputElement>('[name="slug"]');
+  if (nameInput && slugInput) {
+    nameInput.addEventListener("input", () => {
+      slugInput.value = generateSlug(nameInput.value);
+    });
+  }
+
+  //event listeners
+  collectionForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(collectionForm) as FormData;
+    if (collectionForm.hasAttribute("disabled")) {
+      return;
+    }
+
+    try {
+      collectionForm.setAttribute("disabled", "true");
+      const { data, error } =
+        mode === "edit"
+          ? await actions.collection.updateCollection(formData)
+          : await actions.collection.createCollection(formData);
+      if (error) {
+        throw new Error("Unable to submit the form");
+      } else {
+        navigate("/dashboard/collections");
+      }
+    } catch (error) {
+      console.log(error);
+      collectionForm.removeAttribute("disabled");
+    }
+  });
+
+  const deleteButton = document.querySelector<HTMLButtonElement>(
+    "#delete-button",
+  ) as HTMLButtonElement;
+  if (deleteButton) {
+    deleteButton.addEventListener("click", async () => {
+      const formData = new FormData(collectionForm) as FormData;
+      const name = formData.get("name") as string;
+      if (!confirm(`Удалить коллекцию ${name}?`)) {
+        return;
+      }
+
+      try {
+        collectionForm.setAttribute("disabled", "true");
+        const { data, error } =
+          await actions.collection.deleteCollection(formData);
+        if (error) {
+          throw new Error("Произошла ошибка при удалении");
+        } else {
+          navigate("/dashboard/collections");
+        }
+      } catch (error) {
+        console.log(error);
+        collectionForm.removeAttribute("disabled");
+      }
+    });
+  }
+</script>
