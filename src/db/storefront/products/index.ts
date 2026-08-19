@@ -1,0 +1,1 @@
+export { getAllProductsByCategory } from "./allProductsByCategory";
