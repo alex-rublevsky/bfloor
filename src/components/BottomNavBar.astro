@@ -4,15 +4,24 @@ import Button from "@/components/shared/Button.astro";
 ---
 
 <div class="bottomBar">
-  <Button class="aspect-square" size="sm">
-    <Icon name="cart" title="Корзина" />
-  </Button>
+  <div class="flex gap-2xs justify-center md:justify-end">
+    <div class="flex gap-2xs md:hidden">
+      <Button size="md" href="/" variant="tertiary">Главная</Button>
+
+      <Button size="md" href="/store">Каталог</Button>
+    </div>
+    <Button class="aspect-square" size="md" variant="tertiary">
+      <Icon name="cart" title="Корзина" />
+    </Button>
+  </div>
 </div>
 
 <style>
   .bottomBar {
     position: fixed;
+    left: var(--spacing-2xs);
     right: var(--spacing-2xs);
     bottom: var(--spacing-2xs);
+    z-index: 10;
   }
 </style>
