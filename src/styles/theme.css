@@ -267,7 +267,7 @@ select {
   animation: skeleton-loading 1s linear infinite alternate;
 }
 
-.skeleton-icon {
+/*.skeleton-icon {
   display: none;
 }
 
@@ -281,7 +281,7 @@ select {
   color: var(--muted);
   pointer-events: none;
   z-index: 0;
-}
+}*/
 
 /* Keep the image above the placeholder icon so a loaded
    bitmap covers it even before the skeleton class is cleared. */
