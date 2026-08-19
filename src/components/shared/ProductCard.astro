@@ -1,6 +1,7 @@
 ---
 import { Image } from "astro:assets";
 import { BASE_IMAGE_URL } from "@/constants";
+import ImagePlaceholder from "./ImagePlaceholder.astro";
 //import type { Product } from "@/db/storefront/allProductsForFeed";
 
 //type Props = { product?: Product };
@@ -16,7 +17,7 @@ const { images } = product;
 ---
 
 <a class="productCard" href={`/product/${product.slug}`}>
-  <div class="rounded overflow-hidden">
+  <div>
     {
       images ? (
         <Image
@@ -27,7 +28,9 @@ const { images } = product;
           loading="lazy"
           class="object-cover"
         />
-      ) : null
+      ) : (
+        <ImagePlaceholder />
+      )
     }
   </div>
   <div class="flex gap-2xs">
