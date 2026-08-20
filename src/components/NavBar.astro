@@ -2,20 +2,37 @@
 import Button from "./shared/Button.astro";
 import Link from "@/components/shared/Link.astro";
 import { Icon } from "astro-icon/components";
+import Input from "./shared/Input.astro";
 ---
 
-<nav class="flex justify-between items-center gap-sm px-2xs py-2xs">
-  <div class="hidden md:flex gap-sm items-center">
-    <Link href="/">
+<nav class="flex justify-between items-stretch gap-2xs px-2xs py-2xs">
+  <div class="hidden md:flex gap-sm items-stretch">
+    <Link href="/" class="self-center">
       <Icon name="logo" title="Лого BeautyFloor" />
     </Link>
     <Button size="md" href="/store">Каталог</Button>
   </div>
-  <div class="flex gap-xs items-baseline whitespace-nowrap">
+  <Input label="Поиск среди ... товаров" />
+  <Button>
+    <Icon name="phone" title="phone" />
+  </Button>
+  <div class="hidden xl:flex gap-xs items-baseline whitespace-nowrap">
     <Link href="/delivery">Доставка и Оплата</Link>
     <Link href="/contact">Контакты и Адреса</Link>
     <Link href="/about">О компании</Link>
 
     <Button size="md" href="/dashboard">Админка</Button>
+  </div>
+  <div
+    class="dropdown dropdown--down hidden md:flex gap-xs xl:hidden"
+    data-dropdown>
+    <Button size="md" data-dropdown-button>Ещё</Button>
+    <div
+      class="dropdown-menu flex flex-col items-start gap-xs whitespace-nowrap">
+      <Link href="/delivery">Доставка и Оплата</Link>
+      <Link href="/contact">Контакты и Адреса</Link>
+      <Link href="/about">О компании</Link>
+      <Button size="md" href="/dashboard">Админка</Button>
+    </div>
   </div>
 </nav>

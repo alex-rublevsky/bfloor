@@ -1,6 +1,7 @@
 ---
 import { Icon } from "astro-icon/components";
 import Button from "@/components/shared/Button.astro";
+import Link from "@/components/shared/Link.astro";
 ---
 
 <div class="bottomBar">
@@ -9,6 +10,17 @@ import Button from "@/components/shared/Button.astro";
       <Button size="md" href="/" variant="tertiary">Главная</Button>
 
       <Button size="md" href="/store">Каталог</Button>
+      <div class="dropdown flex" data-dropdown>
+        <Button size="md" data-dropdown-button>Ещё</Button>
+        <div
+          class="dropdown-menu flex flex-col items-start gap-xs whitespace-nowrap">
+          <Link href="/delivery">Доставка и Оплата</Link>
+          <Link href="/contact">Контакты и Адреса</Link>
+          <Link href="/about">О компании</Link>
+
+          <Button size="md" href="/dashboard">Админка</Button>
+        </div>
+      </div>
     </div>
     <Button class="aspect-square" size="md" variant="tertiary">
       <Icon name="cart" title="Корзина" />
