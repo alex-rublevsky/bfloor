@@ -5,7 +5,7 @@ export type Category = InferSelectModel<typeof categories>;
 
 export type CreateCategoryInput = Pick<
   InferInsertModel<typeof categories>,
-  "name" | "slug"
+  "name" | "slug" | "description"
 >;
 
 export type UpdateCategoryInput = CreateCategoryInput & {

@@ -1,9 +1,11 @@
 import { z } from "astro/zod";
 import { defineAction } from "astro:actions";
 import { requireAdmin } from "@/lib/api/requireAdmin";
-import { createCollection } from "@/db/dashboard/collections/createCollection";
-import { deleteCollection } from "@/db/dashboard/collections/deleteCollection";
-import { updateCollection } from "@/db/dashboard/collections/updateCollection";
+import {
+  deleteCollection,
+  updateCollection,
+  createCollection,
+} from "@/db/dashboard/collections/index";
 
 export const collection = {
   createCollection: defineAction({

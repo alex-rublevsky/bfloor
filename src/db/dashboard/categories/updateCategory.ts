@@ -14,6 +14,7 @@ export async function updateCategory(
     .set({
       slug: category.slug,
       name: category.name,
+      description: category.description,
     })
     .where(eq(categories.id, category.id))
     .returning()

@@ -16,6 +16,11 @@ const navItems = [
     match: "exact" as const,
   },
   { label: "Бренды", href: "/dashboard/brands", match: "exact" as const },
+  {
+    label: "Аттрибуты",
+    href: "/dashboard/attributes",
+    match: "exact" as const,
+  },
   { label: "Заказы", href: "/dashboard/orders", match: "prefix" as const },
   { label: "Прочее", href: "/dashboard/misc", match: "exact" as const },
   // {
@@ -42,6 +47,12 @@ const createItems = [
     label: "Создать бренд",
     href: "/dashboard/brands",
     hrefTo: "/dashboard/brands/new",
+    match: "exact" as const,
+  },
+  {
+    label: "Создать аттрибут",
+    href: "/dashboard/attributes",
+    hrefTo: "/dashboard/attributes/new",
     match: "exact" as const,
   },
 ];

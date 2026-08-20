@@ -1,40 +1,38 @@
 ---
 import Input from "@/components/shared/Input.astro";
-// import ImagesDropzone from "@/components/dashboard/ImageDropzone.astro";
 import { Icon } from "astro-icon/components";
 import Button from "@/components/shared/Button.astro";
+import Checkbox from "../shared/Checkbox.astro";
 
-type FormCategory = {
+type FormAttribute = {
   id?: number;
   slug?: string;
   name?: string;
-  description?: string;
-  // image?: string | null;
+  standardizedOptions?: boolean;
 };
 interface Props {
-  category?: FormCategory;
+  attribute?: FormAttribute;
 }
-const { category = {} } = Astro.props as Props;
-const creating = !category.slug;
-// const image = category.image ?? "";
+const { attribute = {} } = Astro.props as Props;
+const creating = !attribute.slug;
 ---
 
 <section class="pt-xl">
   <form
     novalidate
-    id="category-form"
+    id="attribute-form"
     method="POST"
     data-mode={creating ? "create" : "edit"}>
-    {!creating && <input type="hidden" name="id" value={category.id} />}
+    {!creating && <input type="hidden" name="id" value={attribute.id} />}
     <h1 class="text-lg pb-2">
-      {creating ? "Создание категории" : "Редактирование категории"}
+      {creating ? "Создание атрибута" : "Редактирование атрибута"}
       {
-        !creating && category.slug && (
+        !creating && attribute.slug && (
           <Button
             size="sm"
             withIcon
             class="inline-block align-baseline ml-xs"
-            href={`/store/${category.slug}`}>
+            href={`/store/${attribute.slug}`}>
             <Icon name="eye" title="Открыть в новой вкладке" class="size-5" />В
             магазине
           </Button>
@@ -42,14 +40,12 @@ const creating = !category.slug;
       }
     </h1>
 
-    <!-- <ImagesDropzone images={images} /> -->
-
     <div class="textInputFields">
       <div class="nameSlug">
         <Input
           name="name"
           label="Название"
-          value={category.name}
+          value={attribute.name}
           required
           autofocus
           autocomplete="off"
@@ -57,17 +53,13 @@ const creating = !category.slug;
         <Input
           name="slug"
           label="Ярлык"
-          value={category.slug ? category.slug : ""}
-          readonly={true}
+          value={attribute.slug ? attribute.slug : ""}
           required
         />
+        <Checkbox checked={attribute.standardizedOptions ?? true}>
+          Стандартизированные опции</Checkbox
+        >
       </div>
-      <Input
-        name="description"
-        label="Описание"
-        value={category.description ? category.description : ""}
-        as="textarea"
-      />
     </div>
     <Button id="submit-btn" size="sm" type="submit">
       <span class="submit-text">{creating ? "Добавить" : "Сохранить"}</span>
@@ -114,17 +106,17 @@ const creating = !category.slug;
   import { navigate } from "astro:transitions/client";
   import { generateSlug } from "@/lib/slugGeneration";
 
-  const categoryForm = document.querySelector<HTMLFormElement>(
-    "#category-form",
+  const attributeForm = document.querySelector<HTMLFormElement>(
+    "#attribute-form",
   ) as HTMLFormElement;
 
-  const mode = categoryForm.dataset.mode;
+  const mode = attributeForm.dataset.mode;
 
   // Auto-generate slug from name
   const nameInput =
-    categoryForm.querySelector<HTMLInputElement>('[name="name"]');
+    attributeForm.querySelector<HTMLInputElement>('[name="name"]');
   const slugInput =
-    categoryForm.querySelector<HTMLInputElement>('[name="slug"]');
+    attributeForm.querySelector<HTMLInputElement>('[name="slug"]');
   if (nameInput && slugInput) {
     nameInput.addEventListener("input", () => {
       slugInput.value = generateSlug(nameInput.value);
@@ -132,27 +124,27 @@ const creating = !category.slug;
   }
 
   //event listeners
-  categoryForm.addEventListener("submit", async (e) => {
+  attributeForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const formData = new FormData(categoryForm) as FormData;
-    if (categoryForm.hasAttribute("disabled")) {
+    const formData = new FormData(attributeForm) as FormData;
+    if (attributeForm.hasAttribute("disabled")) {
       return;
     }
 
     try {
-      categoryForm.setAttribute("disabled", "true");
+      attributeForm.setAttribute("disabled", "true");
       const { data, error } =
         mode === "edit"
-          ? await actions.category.updateCategory(formData)
-          : await actions.category.createCategory(formData);
+          ? await actions.attribute.updateAttribute(formData)
+          : await actions.attribute.createAttribute(formData);
       if (error) {
         throw new Error("Unable to submit the form");
       } else {
-        navigate("/dashboard/categories");
+        navigate("/dashboard/attributes");
       }
     } catch (error) {
       console.log(error);
-      categoryForm.removeAttribute("disabled");
+      attributeForm.removeAttribute("disabled");
     }
   });
 
@@ -161,23 +153,24 @@ const creating = !category.slug;
   ) as HTMLButtonElement;
   if (deleteButton) {
     deleteButton.addEventListener("click", async () => {
-      const formData = new FormData(categoryForm) as FormData;
+      const formData = new FormData(attributeForm) as FormData;
       const name = formData.get("name") as string;
       if (!confirm(`Удалить категорию ${name}?`)) {
         return;
       }
 
       try {
-        categoryForm.setAttribute("disabled", "true");
-        const { data, error } = await actions.category.deleteCategory(formData);
+        attributeForm.setAttribute("disabled", "true");
+        const { data, error } =
+          await actions.attribute.deleteAttribute(formData);
         if (error) {
           throw new Error("Произошла ошибка при удалении");
         } else {
-          navigate("/dashboard/categories");
+          navigate("/dashboard/attributes");
         }
       } catch (error) {
         console.log(error);
-        categoryForm.removeAttribute("disabled");
+        attributeForm.removeAttribute("disabled");
       }
     });
   }

@@ -6,6 +6,7 @@ export const categories = sqliteTable("categories", {
   name: text("name").unique().notNull(),
   slug: text("slug").unique().notNull(),
   image: text("image"),
+  description: text("description"),
 });
 
 export const brands = sqliteTable("brands", {
@@ -21,6 +22,15 @@ export const collections = sqliteTable("collections", {
   name: text("name").notNull(),
   slug: text("slug").unique().notNull(),
   brandId: integer("brand_id").notNull(),
+});
+
+export const attributes = sqliteTable("attributes", {
+  id: integer("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").unique().notNull(),
+  standardizedOptions: integer("standardized_options", { mode: "boolean" })
+    .notNull()
+    .default(true),
 });
 
 export const products = sqliteTable("products", {

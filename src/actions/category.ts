@@ -1,9 +1,11 @@
 import { z } from "astro/zod";
 import { defineAction } from "astro:actions";
 import { requireAdmin } from "@/lib/api/requireAdmin";
-import { createCategory } from "@/db/dashboard/categories/createCategory";
-import { deleteCategory } from "@/db/dashboard/categories/deleteCategory";
-import { updateCategory } from "@/db/dashboard/categories/updateCategory";
+import {
+  deleteCategory,
+  updateCategory,
+  createCategory,
+} from "@/db/dashboard/categories/index";
 
 export const category = {
   createCategory: defineAction({
@@ -11,6 +13,7 @@ export const category = {
     input: z.object({
       name: z.string(),
       slug: z.string(),
+      description: z.string(),
       // image: z.instanceof(File),
     }),
     handler: async (input, { locals }) => {
@@ -18,6 +21,7 @@ export const category = {
       return await createCategory({
         name: input.name,
         slug: input.slug,
+        description: input.description,
         // image: input.image,
       });
     },
@@ -40,6 +44,7 @@ export const category = {
     input: z.object({
       name: z.string(),
       slug: z.string(),
+      description: z.string(),
       id: z.coerce.number().int().positive(),
     }),
     handler: async (input, { locals }) => {
@@ -47,6 +52,7 @@ export const category = {
       return await updateCategory({
         name: input.name,
         slug: input.slug,
+        description: input.description,
         id: input.id,
       });
     },

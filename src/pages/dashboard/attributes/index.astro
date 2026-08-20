@@ -1,0 +1,29 @@
+---
+import DashboardLayout from "@/layouts/DashboardLayout.astro";
+import { getAllAttributes } from "@/db/dashboard/attributes/";
+
+const attributes = await getAllAttributes();
+---
+
+<DashboardLayout>
+  <main>
+    {
+      attributes.length > 0 ? (
+        <section class="pt-xl">
+          <h1 class="sr-only">Аттрибуты</h1>
+          <div class="autoGrid">
+            {attributes.map((att) => (
+              <a href={`/dashboard/attributes/${att.slug}`}>
+                <p>{att.name}</p>
+              </a>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section class="h-screen grid place-items-center">
+          <h1 class="text-lg!">Аттрибутов не найдено</h1>
+        </section>
+      )
+    }
+  </main>
+</DashboardLayout>

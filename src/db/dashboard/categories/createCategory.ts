@@ -13,6 +13,7 @@ export async function createCategory(
     .values({
       slug: category.slug,
       name: category.name,
+      description: category.description,
     })
     .returning()
     .then((res) => res[0]);
