@@ -6,6 +6,11 @@ import Button from "@/components/shared/Button.astro";
 import Checkbox from "@/components/shared/Checkbox.astro";
 import Select from "@/components/shared/Select.astro";
 import { getAllCategories } from "@/db/dashboard/categories/";
+import { STORE_LOCATIONS } from "@/lib/storeLocations";
+import { getBrandsWithCollections } from "@/db/dashboard/brands";
+import { getAllAttributes } from "@/db/dashboard/attributes";
+import { actions, isInputError } from "astro:actions";
+import MarkdownEditor from "./MarkdownEditor.astro";
 
 type FormProduct = {
   id?: number;
@@ -13,9 +18,14 @@ type FormProduct = {
   name?: string;
   isActive?: boolean;
   categoryId?: number;
+  brandId?: number;
+  collectionId?: number;
   price?: number;
   discountedPrice?: number | null;
+  description?: string | null;
+  importantNote?: string | null;
   images?: string | null;
+  storeLocationIds?: number[];
 };
 interface Props {
   product?: FormProduct;
@@ -23,26 +33,63 @@ interface Props {
 const { product = {} } = Astro.props as Props;
 const creating = !product.slug;
 const categories = await getAllCategories();
+const brandsWithCollections = await getBrandsWithCollections();
+
+const attributes = await getAllAttributes();
+
 const selectedCategoryId = product.categoryId ? String(product.categoryId) : "";
+const selectedBrandId = product.brandId ? String(product.brandId) : "";
+const selectedCollectionId = product.collectionId
+  ? String(product.collectionId)
+  : "";
+
 const images = product.images ?? [];
+
+const creationResult = Astro.getActionResult(actions.product.createProduct);
+const updateResult = Astro.getActionResult(actions.product.updateProduct);
+
+const inputErrors = isInputError(creationResult?.error)
+  ? creationResult.error.fields
+  : isInputError(updateResult?.error)
+    ? updateResult.error.fields
+    : {};
 ---
 
 <section class="pt-xl">
+  <!--TODO: this is for files
+    enctype="multipart/form-data" -->
+  <!-- TODO: can the default html input validation be styled? -->
   <form
-    novalidate
     id="product-form"
     method="POST"
-    data-mode={creating ? "create" : "edit"}>
+    data-mode={creating ? "create" : "edit"}
+    action={creating
+      ? actions.product.createProduct
+      : actions.product.updateProduct}>
     {!creating && <input type="hidden" name="id" value={product.id} />}
     <h1 class="text-lg pb-2">
       {creating ? "Создание товара" : "Редактирование товара"}
+
+      {
+        creationResult?.error && (
+          <p id="form-error" role="alert">
+            Ошибка создания товара
+          </p>
+        )
+      }
+      {
+        updateResult?.error && (
+          <p id="form-error" role="alert">
+            Ошибка обновления товара
+          </p>
+        )
+      }
       {
         !creating && product.slug && (
           <Button
             size="sm"
-            withIcon
             class="inline-block align-baseline ml-xs"
-            href={`/store/${product.slug}`}>
+            href={`/product/${product.slug}`}>
             <Icon name="eye" title="Открыть в новой вкладке" class="size-5" />В
             магазине
           </Button>
@@ -50,7 +97,7 @@ const images = product.images ?? [];
       }
     </h1>
 
-    <ImagesDropzone images={images} />
+    <!-- <ImagesDropzone images={images} /> -->
 
     <div class="textInputFields">
       <div class="nameSlug">
@@ -58,31 +105,43 @@ const images = product.images ?? [];
           name="name"
           label="Название"
           value={product.name}
+          aria-describedby="error-name"
           required
-          autofocus
           autocomplete="off"
+          minlength="1"
+          error={inputErrors.name}
+          autofocus
         />
+        <!-- TODO: fix slug field being able to become focused on click, though it is set to readonly -->
         <Input
           name="slug"
           label="Ярлык"
           value={product.slug ? product.slug : ""}
-          readonly={true}
+          aria-describedby="error-slug"
           required
+          minlength="1"
+          error={inputErrors.slug}
+          readonly={true}
         />
       </div>
 
       <div class="nameSlug">
+        <!-- TODO: add logic for the price to become not required if variations are present -->
         <Input
           name="price"
           label="Цена"
           value={product.price}
+          aria-describedby="error-price"
           required
+          error={inputErrors.price}
           autocomplete="off"
         />
         <Input
           name="discountedPrice"
           label="Цена со скидкой"
-          value={product.discountedPrice ? product.discountedPrice : ""}
+          value={product.discountedPrice ?? ""}
+          aria-describedby="error-discountedPrice"
+          error={inputErrors.discountedPrice}
           autocomplete="off"
         />
       </div>
@@ -98,30 +157,83 @@ const images = product.images ?? [];
             label: category.name,
           }))}
           required
+          aria-describedby="error-categoryId"
+          error={inputErrors.categoryId}
         />
-        <Checkbox
-          name="isActive"
-          value="1"
-          checked={product.isActive ?? true}>
+        <Select
+          name="brandId"
+          label="Бренд"
+          placeholder="Выбрать"
+          value={selectedBrandId}
+          options={brandsWithCollections.map((brand) => ({
+            value: String(brand.id),
+            label: brand.name,
+          }))}
+          aria-describedby="error-brandId"
+          error={inputErrors.brandId}
+        />
+        <!-- TODO: fix collection to only be pickable from the brand collections range -->
+        <!-- <Select
+          name="collectionId"
+          label="Коллекция"
+          placeholder="Выбрать"
+          value={selectedCollectionId}
+          options={}
+          aria-describedby="error-brandId"
+
+          error={inputErrors.brandId}
+        /> -->
+        <Checkbox name="isActive" value="1" checked={product.isActive ?? true}>
           Товар активен
         </Checkbox>
       </div>
+      <div>
+        <h4 class="text-md">В наличии в магазинах</h4>
+        {
+          STORE_LOCATIONS.map((location) => (
+            <Checkbox
+              name="storeLocationIds"
+              value={String(location.id)}
+              checked={
+                product.storeLocationIds?.includes(location.id) ?? false
+              }>
+              {location.address}
+            </Checkbox>
+          ))
+        }
+      </div>
+      <div class="nameSlug">
+        <MarkdownEditor
+          label="Важное примечание"
+          name="importantNote"
+          content={product.importantNote ?? ""}
+          lessButtons
+        />
+        <MarkdownEditor
+          label="Описание"
+          name="description"
+          content={product.description ?? ""}
+        />
+      </div>
+      <div>
+        <h4 class="text-md">Атрибуты</h4>
+        {attributes.map((attribute) => <div>{attribute.name}</div>)}
+      </div>
     </div>
-    <Button id="submit-btn" size="sm" type="submit">
-      <span class="submit-text">{creating ? "Добавить" : "Сохранить"}</span>
-      <Icon name="spinner" class="submit-spinner size-5 animate-spin" />
-    </Button>
-    {
-      !creating && (
-        <Button
-          id="delete-button"
-          size="sm"
-          variant="destructive"
-          type="button">
-          Удалить
-        </Button>
-      )
-    }
+    <div class="flex gap-2xs">
+      <Button id="submit-button" type="submit" disabled>
+        <span class="submit-text"
+          >{creating ? "Добавить" : "Нет изменений"}</span
+        >
+      </Button>
+      {
+        !creating && (
+          <Button id="delete-button" variant="destructive">
+            Удалить
+          </Button>
+        )
+      }
+    </div>
   </form>
 </section>
 
@@ -153,55 +265,222 @@ const images = product.images ?? [];
     @container (min-width: 37ch) {
       grid-template-columns: 1fr 1fr;
       justify-items: center;
-    }</style>
+    }
+  }
+</style>
 
 <script>
+  import { generateSlug } from "@/lib/slugGeneration";
   import { actions } from "astro:actions";
   import { navigate } from "astro:transitions/client";
-  import { generateSlug } from "@/lib/slugGeneration";
 
   const productForm = document.querySelector<HTMLFormElement>(
     "#product-form",
   ) as HTMLFormElement;
 
+  const submitButton =
+    productForm.querySelector<HTMLButtonElement>("#submit-button");
+
   const mode = productForm.dataset.mode;
+
+  function getFormState() {
+    //TODO: This has several edge cases:
+    // - checkbox order matters;
+    // - missing unchecked values differ from explicit false values;
+    // - empty select values may differ from null;
+    // - whitespace differences count as changes even if the server trims them;
+    // - generated slug changes are treated as changes;
+    // - future file fields are represented only by filename, not file contents;
+    // - field order changes can produce false differences.
+    // Recommended solution:
+    // - Normalize fields into a typed form-state object.
+    // - Normalize numeric empty values to null.
+    // - Represent checkboxes explicitly as booleans or sorted arrays.
+    // - Compare semantic values rather than raw FormData.
+    return JSON.stringify(
+      [...new FormData(productForm).entries()].map(([key, value]) => [
+        key,
+        value instanceof File ? value.name : value,
+      ]),
+    );
+  }
+
+  const initialFormState = getFormState();
+
+  function updateSubmitButton() {
+    if (!submitButton) return;
+
+    const unchanged = getFormState() === initialFormState;
+    submitButton.disabled = unchanged;
+    const submitText = submitButton.querySelector(".submit-text");
+    if (submitText) {
+      submitText.textContent =
+        mode === "edit"
+          ? unchanged
+            ? "Нет изменений"
+            : "Сохранить"
+          : "Добавить";
+    }
+  }
 
   // Auto-generate slug from name
   const nameInput =
     productForm.querySelector<HTMLInputElement>('[name="name"]');
   const slugInput =
     productForm.querySelector<HTMLInputElement>('[name="slug"]');
-  if (nameInput && slugInput) {
-    nameInput.addEventListener("input", () => {
-      slugInput.value = generateSlug(nameInput.value);
-    });
+
+  function updateSlug() {
+    if (!nameInput || !slugInput) return;
+    slugInput.value = generateSlug(nameInput.value);
   }
 
-  //event listeners
-  productForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const formData = new FormData(productForm) as FormData;
-    if (productForm.hasAttribute("disabled")) {
-      return;
+  nameInput?.addEventListener("input", updateSlug);
+
+  import { PRODUCT_FORM_DRAFT_PREFIX } from "@/lib/formDrafts";
+  const formStorageKey = `${PRODUCT_FORM_DRAFT_PREFIX}${location.pathname}`;
+  let draftPersistenceWarningShown = false;
+
+  function trySaveDraft(key: string, state: Record<string, string[]>) {
+    try {
+      window.sessionStorage.setItem(key, JSON.stringify(state));
+      return true;
+    } catch (error) {
+      if (!draftPersistenceWarningShown) {
+        console.warn("Product form draft persistence is unavailable", error);
+        draftPersistenceWarningShown = true;
+      }
     }
+  }
+  function saveDraft() {
+    const state: Record<string, string[]> = {};
+    for (const [name, value] of new FormData(productForm)) {
+      // Files cannot be restored from sessionStorage.
+      if (typeof value !== "string") continue;
+
+      state[name] ??= [];
+      state[name].push(value);
+    }
+    trySaveDraft(formStorageKey, state);
+  }
+
+  let saveTimer: number | undefined;
+  function scheduleDraftSave() {
+    window.clearTimeout(saveTimer);
+
+    saveTimer = window.setTimeout(() => {
+      saveDraft();
+    }, 400);
+  }
+  function flushDraftSave() {
+    window.clearTimeout(saveTimer);
+    saveTimer = undefined;
+    saveDraft();
+  }
+  function readDraft(key: string): Record<string, string[]> | null {
+    let rawState: string | null;
 
     try {
-      productForm.setAttribute("disabled", "true");
-      const { data, error } =
-        mode === "edit"
-          ? await actions.product.updateProduct(formData)
-          : await actions.product.createProduct(formData);
-      if (error) {
-        throw new Error("Unable to submit the form");
-      } else {
-        navigate("/dashboard");
-      }
+      rawState = window.sessionStorage.getItem(key);
     } catch (error) {
-      console.log(error);
-      productForm.removeAttribute("disabled");
+      console.warn("Unable to read product form draft", error);
+      return null;
     }
+
+    if (!rawState) return null;
+
+    try {
+      const parsed: unknown = JSON.parse(rawState);
+
+      if (
+        typeof parsed !== "object" ||
+        parsed === null ||
+        Array.isArray(parsed)
+      ) {
+        return null;
+      }
+
+      const state: Record<string, string[]> = {};
+
+      for (const [key, value] of Object.entries(parsed)) {
+        if (
+          !Array.isArray(value) ||
+          !value.every((item) => typeof item === "string")
+        ) {
+          return null;
+        }
+
+        state[key] = value;
+      }
+
+      return state;
+    } catch (error) {
+      console.warn("Unable to parse product form draft", error);
+      return null;
+    }
+  }
+  function restoreDraft() {
+    const state = readDraft(formStorageKey);
+
+    if (!state) return;
+
+    for (const element of Array.from(productForm.elements)) {
+      if (!(
+        element instanceof HTMLInputElement ||
+        element instanceof HTMLTextAreaElement ||
+        element instanceof HTMLSelectElement
+      )) {
+        continue;
+      }
+
+      if (!element.name) continue;
+
+      const values = state[element.name] ?? [];
+
+      if (
+        element instanceof HTMLInputElement &&
+        (element.type === "checkbox" || element.type === "radio")
+      ) {
+        element.checked = values.includes(element.value);
+      } else if (element instanceof HTMLSelectElement && element.multiple) {
+        for (const option of Array.from(element.options)) {
+          option.selected = values.includes(option.value);
+        }
+      } else if (
+        element instanceof HTMLInputElement &&
+        ["submit", "button", "reset", "file"].includes(element.type)
+      ) {
+        continue;
+      } else {
+        element.value = values[0] ?? "";
+      }
+    }
+
+    updateSlug();
+    updateSubmitButton();
+  }
+
+  productForm.addEventListener("input", () => {
+    updateSubmitButton();
+    scheduleDraftSave();
+  });
+  productForm.addEventListener("change", () => {
+    updateSubmitButton();
+    scheduleDraftSave();
+  });
+  window.addEventListener("pageshow", restoreDraft);
+
+  //event listeners
+  productForm.addEventListener("submit", async (event) => {
+    if (!submitButton || submitButton.disabled) {
+      event.preventDefault();
+      return;
+    }
+    flushDraftSave();
+    submitButton.setAttribute("disabled", "");
+    submitButton.setAttribute("aria-busy", "true");
   });
 
+  //TODO: like in submit button this should get spinner
   const deleteButton = document.querySelector<HTMLButtonElement>(
     "#delete-button",
   ) as HTMLButtonElement;
@@ -214,16 +493,19 @@ const images = product.images ?? [];
       }
 
       try {
-        productForm.setAttribute("disabled", "true");
-        const { data, error } = await actions.product.deleteProduct(formData);
+        deleteButton.disabled = true;
+        deleteButton.setAttribute("aria-busy", "true");
+        const { error } = await actions.product.deleteProduct(formData);
         if (error) {
+          confirm("Произошла ошибка при удалении");
           throw new Error("Произошла ошибка при удалении");
         } else {
           navigate("/dashboard");
         }
       } catch (error) {
         console.log(error);
-        productForm.removeAttribute("disabled");
+        deleteButton.disabled = false;
+        deleteButton.setAttribute("aria-busy", "false");
       }
     });
   }

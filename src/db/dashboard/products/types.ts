@@ -9,11 +9,14 @@ export type CreateProductInput = Pick<
   | "slug"
   | "name"
   | "categoryId"
+  | "brandId"
+  | "collectionId"
   | "price"
   | "discountedPrice"
   | "description"
   | "importantNote"
   | "images"
+  | "storeLocationIds"
 >;
 
 export type UpdateProductInput = CreateProductInput & {

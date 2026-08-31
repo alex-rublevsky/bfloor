@@ -8,3 +8,9 @@ import DashboardProductFeed from "@/components/dashboard/DashboardProductFeed.as
     <DashboardProductFeed />
   </main>
 </DashboardLayout>
+
+<script>
+  import { clearFormDrafts, PRODUCT_FORM_DRAFT_PREFIX } from "@/lib/formDrafts";
+
+  clearFormDrafts(PRODUCT_FORM_DRAFT_PREFIX);
+</script>

@@ -21,10 +21,10 @@ const displayPic = user?.image;
     <>
       {
         displayName ? (
-          <h1 class="text-md! font-thin! text-foreground-muted leading-[1.7]">
+          <h1 class="text-md! font-thin! text-foreground-muted leading-[1.7] mb-0">
             Вы уже авторизованы,
             <br />
-            <span class="inline-flex items-center justify-center font-serif! gap-2">
+            <span class="inline-flex items-center justify-center gap-2">
               {displayPic && (
                 <img
                   src={displayPic}
@@ -43,16 +43,22 @@ const displayPic = user?.image;
         )
       }
     </>
-    {
-      displayName ? (
-        <Button href="/dashboard">В админку</Button>
-      ) : (
-        <Button id="google-signin" class="w-full" withIcon>
-          <Icon name="google" title="Google" />
-          <span data-signin-label>Войти</span>
-        </Button>
-      )
-    }
+    <div class="grid grid-cols-2 gap-2xs">
+      {
+        displayName ? (
+          <Button size="lg" href="/dashboard">
+            В админку
+          </Button>
+        ) : (
+          //TODO: fix icon not being in a row
+          <Button id="google-signin" class="w-full">
+            <Icon name="google" title="Google" />
+            <span data-signin-label>Войти</span>
+          </Button>
+        )
+      }
+      <Button size="lg" variant="tertiary" href="/"> &larr; В магазин </Button>
+    </div>
     {
       error === "unauthorized" && (
         <div class="bg-destructive border-destructive-foreground/50! text-destructive-foreground rounded-md border px-4 py-3">
@@ -60,8 +66,6 @@ const displayPic = user?.image;
         </div>
       )
     }
-
-    <Link href="/"> &larr; В магазин </Link>
   </main>
 </AuthLayout>
 

@@ -3,6 +3,12 @@ import DashboardLayout from "@/layouts/DashboardLayout.astro";
 import { getProductBySlug } from "@/db/dashboard/products/productBySlug";
 import type { Product } from "@/db/dashboard/products";
 import ProductForm from "@/components/dashboard/ProductForm.astro";
+import { actions } from "astro:actions";
+
+const updateResult = Astro.getActionResult(actions.product.updateProduct);
+if (updateResult && !updateResult.error) {
+  return Astro.redirect(`/dashboard`);
+}
 
 const { slug } = Astro.params;
 

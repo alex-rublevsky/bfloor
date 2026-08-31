@@ -37,6 +37,7 @@ const CYRILLIC_TO_LATIN: Record<string, string> = {
 export function generateSlug(text: string): string {
   return text
     .toLowerCase()
+    .normalize("NFC")
     .split("")
     .map((char) => CYRILLIC_TO_LATIN[char] ?? char)
     .join("")

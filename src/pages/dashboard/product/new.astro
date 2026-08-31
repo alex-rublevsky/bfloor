@@ -1,6 +1,12 @@
 ---
 import Layout from "@/layouts/DashboardLayout.astro";
 import ProductForm from "@/components/dashboard/ProductForm.astro";
+import { actions } from "astro:actions";
+
+const creationResult = Astro.getActionResult(actions.product.createProduct);
+if (creationResult && !creationResult.error) {
+  return Astro.redirect(`/dashboard`);
+}
 ---
 
 <Layout>
