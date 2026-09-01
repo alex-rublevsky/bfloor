@@ -1,10 +1,7 @@
 import { db } from "@/db/index";
 import { collections } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import type {
-  DeleteCollectionInput,
-  Collection,
-} from "@/db/dashboard/collections/types";
+import type { DeleteCollectionInput, Collection } from "./types";
 
 export async function deleteCollection(
   collection: DeleteCollectionInput,

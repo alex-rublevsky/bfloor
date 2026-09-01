@@ -1,6 +1,6 @@
 ---
-import { visible } from "node_modules/number-flow/dist/util/dom";
 import Button from "./shared/Button.astro";
+import { Icon } from "astro-icon/components";
 const pathname = Astro.url.pathname;
 
 const navItems = [
@@ -11,13 +11,12 @@ const navItems = [
     match: "exact" as const,
   },
   {
-    label: "Коллекции",
-    href: "/dashboard/collections",
+    label: "Бренды",
+    href: "/dashboard/brands",
     match: "exact" as const,
   },
-  { label: "Бренды", href: "/dashboard/brands", match: "exact" as const },
   {
-    label: "Аттрибуты",
+    label: "Атрибуты",
     href: "/dashboard/attributes",
     match: "exact" as const,
   },
@@ -32,25 +31,26 @@ const navItems = [
 
 const createItems = [
   {
-    label: "Создать товар",
+    label: "Товар",
     href: "/dashboard",
     hrefTo: "/dashboard/product/new",
     match: "exact" as const,
   },
   {
-    label: "Создать категорию",
+    label: "Категория",
     href: "/dashboard/categories",
     hrefTo: "/dashboard/categories/new",
     match: "exact" as const,
   },
   {
-    label: "Создать бренд",
+    label: "Бренд",
     href: "/dashboard/brands",
-    hrefTo: "/dashboard/brands/new",
+    // hrefTo: "/dashboard/brands/new",
+    dataEntity: "brand",
     match: "exact" as const,
   },
   {
-    label: "Создать аттрибут",
+    label: "Атрибут",
     href: "/dashboard/attributes",
     hrefTo: "/dashboard/attributes/new",
     match: "exact" as const,
@@ -68,6 +68,7 @@ const hasCreateButton = (href: string) => pathname === href;
 <nav>
   <div class="leftBlock">
     <div class="navItemsWrapper">
+      <!-- TODO: all button variants except for ghost have bg-transition class. why does it not work in these links? -->
       {
         navItems.map((item) => (
           <Button
@@ -87,7 +88,11 @@ const hasCreateButton = (href: string) => pathname === href;
           size="sm"
           variant="primary"
           href={item.hrefTo}
+          data-open-modal={item.dataEntity ? "" : undefined}
+          data-entity={item.dataEntity ?? undefined}
+          data-mode={item.dataEntity ? "create" : undefined}
           style={hasCreateButton(item.href) ? null : "display: none"}>
+          <Icon name="plus" title={`Создать ${item.label}`} />
           {item.label}
         </Button>
       ))
@@ -113,6 +118,7 @@ const hasCreateButton = (href: string) => pathname === href;
     z-index: 2;
     pointer-events: none;
   }
+
   .leftBlock {
     display: flex;
     flex-direction: row;
@@ -131,5 +137,21 @@ const hasCreateButton = (href: string) => pathname === href;
   }
   .store-button {
     pointer-events: auto;
+  }
+
+  @media (max-width: 768px) {
+    nav {
+      top: auto;
+      bottom: var(--spacing-3xs);
+      /*flex-wrap: wrap;*/
+      /*flex-direction: row;*/
+      gap: var(--spacing-3xs);
+    }
+    .leftBlock {
+      flex-direction: column-reverse;
+    }
+    .navItemsWrapper {
+      flex-wrap: wrap;
+    }
   }
 </style>

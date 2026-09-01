@@ -1,38 +1,91 @@
 ---
 import DashboardLayout from "@/layouts/DashboardLayout.astro";
-import { getAllBrands } from "@/db/dashboard/brands/";
+import { getBrandsWithCollections } from "@/db/dashboard/brands/";
 import { Image } from "astro:assets";
 import { BASE_IMAGE_URL } from "@/constants";
-import ImagePlaceholder from "@/components/shared/ImagePlaceholder.astro";
+import Button from "@/components/shared/Button.astro";
+import { Icon } from "astro-icon/components";
+import Input from "@/components/shared/Input.astro";
+import Select from "@/components/shared/Select.astro";
 
-const brands = await getAllBrands();
+const brandsWithCollections = await getBrandsWithCollections();
 ---
 
+<!-- TODO: do not allow for a collection to change its brand if there are products associated with this collection -->
 <DashboardLayout>
   <main>
     {
-      brands.length > 0 ? (
-        <section class="pt-xl">
-          <h1 class="sr-only">Бренды</h1>
-          <div class="autoGrid">
-            {brands.map((brand) => (
-              <a href={`/dashboard/brands/${brand.slug}`}>
+      brandsWithCollections.length > 0 ? (
+        <section class="pt-xl bg-muted/30 gap-2xs grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <h1 class="sr-only">Бренды и коллекции</h1>
+          {brandsWithCollections.map((brand) => (
+            // TODO: somehow implement the name to be there for search, but not be visible for brand entries
+            <div class="bg-background rounded-md p-2xs">
+              <Button
+                data-open-modal
+                data-entity="brand"
+                data-mode="edit"
+                data-id={brand.id}
+                data-name={brand.name}
+                data-slug={brand.slug}
+                variant="ghost"
+                class="p-3xs rounded-sm hover:bg-muted aspect-square relative">
                 {brand.image ? (
                   <Image
                     src={BASE_IMAGE_URL + brand.image}
                     width={300}
                     height={300}
                     fit="contain"
-                    class="size-full object-contain"
+                    class="size-full object-contain mix-blend-darken"
                     alt={"Логотип бренда " + brand.name}
                   />
                 ) : (
-                  <ImagePlaceholder />
+                  <h3 class="size-full text-center place-content-center">
+                    {brand.name}
+                  </h3>
                 )}
-                <p>{brand.name}</p>
-              </a>
-            ))}
-          </div>
+                <span>Изменить</span>
+              </Button>
+
+              <div class="grid">
+                <div
+                  class:list={[
+                    "cutoffLines",
+                    { "no-cutoff": brand.collections.length <= 3 },
+                  ]}>
+                  {brand.collections.map((collection) => (
+                    <Button
+                      data-open-modal
+                      data-entity="collection"
+                      data-mode="edit"
+                      data-id={collection.id}
+                      data-name={collection.name}
+                      data-slug={collection.slug}
+                      data-brand-id={collection.brandId}
+                      variant="ghost">
+                      {collection.name}
+                    </Button>
+                  ))}
+                </div>
+                <input
+                  style={brand.collections.length > 3 ? "" : "display: none;"}
+                  type="checkbox"
+                  class="expand-btn"
+                />
+                <Button
+                  data-open-modal
+                  data-entity="collection"
+                  data-brand-id={brand.id}
+                  data-mode="create"
+                  class="w-full my-2xs"
+                  variant="tertiary"
+                  size="sm">
+                  <Icon name="plus" title="Добавить коллекцию" />
+                  Коллекция
+                </Button>
+              </div>
+            </div>
+          ))}
         </section>
       ) : (
         <section class="h-screen grid place-items-center">
@@ -41,4 +94,461 @@ const brands = await getAllBrands();
       )
     }
   </main>
+  <dialog aria-labelledby="modal-title">
+    <div class="wrapper">
+      <form>
+        <input type="hidden" name="id" />
+
+        <div class="flex gap-md">
+          <h2 class="text-md" id="modal-title"></h2>
+          <p id="form-error" role="alert" hidden></p>
+
+          <Button
+            data-close-modal
+            variant="tertiary"
+            class="aspect-square"
+            aria-label="Закрыть">
+            <!-- TODO: for all other icon buttons set aria hidden to true and aria label on the button itself -->
+            <Icon name="x" aria-hidden="true" />
+          </Button>
+        </div>
+        <Input
+          name="name"
+          aria-describedby="error-name"
+          label="Название"
+          value={""}
+          required
+          autofocus
+          autocomplete="off"
+        />
+        <Input
+          name="slug"
+          aria-describedby="error-slug"
+          label="Ярлык"
+          value={""}
+          readonly={true}
+          required
+        />
+        <div data-brand-field hidden>
+          <!-- Only needed when editing/creating collections -->
+          <!-- TODO: is this brand options from brandsWithCollections appropriate? -->
+          <Select
+            name="brandId"
+            label="Бренд"
+            placeholder="Выбрать"
+            options={brandsWithCollections.map((brand) => ({
+              value: String(brand.id),
+              label: brand.name,
+            }))}
+          />
+        </div>
+        <div class="flex gap-2xs">
+          <Button id="submit-button" type="submit">
+            <!-- disabled={!creating} -->
+            <!-- {creating ? "Добавить" : "Нет изменений"} -->
+            <span class="submit-button-text"></span>
+          </Button>
+
+          <!-- !creating &&  -->
+          <Button id="delete-button" variant="destructive"> Удалить </Button>
+        </div>
+      </form>
+    </div>
+  </dialog>
 </DashboardLayout>
+
+<style>
+  .cutoffLines {
+    --max-lines: 3;
+    --line-height: 2;
+    --entry-padding-block: var(--spacing-3xs);
+    --entry-height: calc(var(--line-height) * 1em + var(--entry-padding-block));
+    max-height: calc(var(--entry-height) * var(--max-lines));
+    line-height: var(--line-height);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cutoffLines:has(+ .expand-btn:not(:checked))::before {
+    content: "";
+    position: absolute;
+    height: calc(2em * var(--line-height));
+    width: 100%;
+    bottom: 0;
+    pointer-events: none;
+    background: linear-gradient(to bottom, transparent, var(--background));
+  }
+
+  .cutoffLines.no-cutoff {
+    max-height: none;
+  }
+
+  .cutoffLines.no-cutoff::before {
+    display: none;
+  }
+
+  /*TODO: style this like a tertiary button*/
+
+  .expand-btn {
+    appearance: none;
+    border: var(--border-width) solid var(--muted);
+    padding: var(--spacing-3xs);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    margin-top: var(--spacing-2xs);
+    text-align: center;
+  }
+
+  .expand-btn:hover {
+    background-color: var(--muted);
+  }
+
+  .expand-btn:before {
+    content: "Все";
+  }
+
+  .expand-btn:checked:before {
+    content: "Скрыть";
+  }
+  .cutoffLines:has(+ .expand-btn:checked) {
+    max-height: none;
+  }
+
+  button[data-entity="brand"][data-mode="edit"] {
+    overflow: hidden;
+    &:hover span {
+      display: flex;
+      align-items: end;
+      justify-content: center;
+    }
+  }
+
+  button[data-entity="brand"][data-mode="edit"] span {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: var(--spacing-xs);
+    background: linear-gradient(to bottom, transparent, var(--muted) 60%);
+    height: 50%;
+  }
+</style>
+
+<script>
+  import { actions, isInputError } from "astro:actions";
+  import { generateSlug } from "@/lib/slugGeneration";
+
+  const modal = document.querySelector("dialog") as HTMLDialogElement;
+  const form = document.querySelector<HTMLFormElement>("form");
+
+  if (!modal || !form) {
+    throw new Error("Entity modal markup is missing");
+  }
+
+  const formError = form.querySelector<HTMLElement>("#form-error");
+  function getFieldErrorElement(fieldName: string) {
+    if (!form) return null;
+    return form.querySelector<HTMLElement>(`#error-${fieldName}`);
+  }
+  function getFieldElement(fieldName: string) {
+    if (!form) return null;
+    return form.elements.namedItem(fieldName);
+  }
+  function clearErrors() {
+    if (formError) {
+      formError.textContent = "";
+      formError.hidden = true;
+    }
+    for (const fieldName of ["name", "slug", "brandId"]) {
+      const field = getFieldElement(fieldName);
+      const errorElement = getFieldErrorElement(fieldName);
+
+      if (field instanceof HTMLInputElement) {
+        field.removeAttribute("aria-invalid");
+
+        //TODO: should this be removed? gotta universalize Input and Select
+        // in terms of the .has-error class, etc.
+        const wrapper = field.closest(".input-wrapper, .select-wrapper");
+        wrapper?.classList.remove("has-error");
+      }
+
+      if (errorElement) {
+        errorElement.textContent = "";
+        errorElement.hidden = true;
+      }
+    }
+  }
+
+  function showFieldErrors(fields: Record<string, string[]>) {
+    for (const [fieldName, messages] of Object.entries(fields)) {
+      const field = getFieldElement(fieldName);
+      const errorElement = getFieldErrorElement(fieldName);
+
+      if (field instanceof HTMLInputElement) {
+        field.setAttribute("aria-invalid", "true");
+
+        //TODO: should this be removed? gotta universalize Input and Select
+        // in terms of the .has-error class, etc.
+        const wrapper = field.closest(".input-wrapper, .select-wrapper");
+        wrapper?.classList.add("has-error");
+      }
+
+      if (errorElement) {
+        //TODO: how should the messages be joined not to have excess comma?
+        //TODO: when more than one message could be shown?
+        errorElement.textContent = messages.join(", ");
+        errorElement.hidden = false;
+      }
+    }
+  }
+
+  function showFormError(message: string) {
+    if (!formError) return;
+    formError.textContent = message;
+    formError.hidden = false;
+  }
+
+  const title = document.querySelector<HTMLElement>("#modal-title");
+  const submitButton =
+    document.querySelector<HTMLButtonElement>("#submit-button");
+  const deleteButton =
+    document.querySelector<HTMLButtonElement>("#delete-button");
+  const nameInput = form.elements.namedItem("name") as HTMLInputElement;
+  const slugInput = form.elements.namedItem("slug") as HTMLInputElement;
+  const brandSelect = form.elements.namedItem("brandId") as HTMLSelectElement;
+  const brandField = form.querySelector<HTMLFormElement>("[data-brand-field]");
+
+  let entity: "brand" | "collection" = "brand";
+  let mode: "create" | "edit" = "create";
+  let initialState = "";
+
+  function getState() {
+    if (!form) {
+      throw new Error("Entity form is missing");
+    }
+    return JSON.stringify([...new FormData(form).entries()]);
+  }
+
+  function syncSubmitState() {
+    if (!form) {
+      throw new Error("Entity form is missing");
+    }
+    if (!submitButton || form.hasAttribute("data-busy")) return;
+
+    const unchanged = getState() === initialState;
+    submitButton.disabled = unchanged;
+
+    const submitText = submitButton.querySelector(".submit-button-text");
+    if (submitText) {
+      submitText.textContent =
+        mode === "edit"
+          ? unchanged
+            ? "Нет изменений"
+            : "Сохранить"
+          : "Добавить";
+    }
+  }
+
+  function resetForm() {
+    if (!form) {
+      throw new Error("Entity form is missing");
+    }
+    clearErrors();
+    form.reset();
+
+    for (const element of form.elements) {
+      if (
+        element instanceof HTMLInputElement ||
+        element instanceof HTMLSelectElement
+      ) {
+        element.disabled = false;
+      }
+    }
+
+    const idInput = form.elements.namedItem("id") as HTMLInputElement;
+    idInput.value = "";
+    brandSelect.value = "";
+    slugInput.value = "";
+
+    submitButton?.removeAttribute("disabled");
+    submitButton?.setAttribute("aria-busy", "false");
+    deleteButton?.removeAttribute("disabled");
+    deleteButton?.setAttribute("aria-busy", "false");
+  }
+
+  function openFromTrigger(trigger: HTMLElement) {
+    if (!form) {
+      throw new Error("Entity form is missing");
+    }
+
+    if (!submitButton || !brandField || !deleteButton || !title) {
+      throw new Error("Form elements are missing");
+    }
+
+    resetForm();
+
+    entity = trigger.dataset.entity as typeof entity;
+    mode = trigger.dataset.mode as typeof mode;
+
+    const idInput = form.elements.namedItem("id") as HTMLInputElement;
+
+    idInput.value = trigger.dataset.id ?? "";
+    nameInput.value = trigger.dataset.name ?? "";
+    slugInput.value = trigger.dataset.slug ?? "";
+
+    const isCollection = entity === "collection";
+    brandField.hidden = !isCollection;
+    brandField.disabled = !isCollection;
+    deleteButton.hidden = mode === "create";
+
+    if (isCollection) {
+      brandSelect.value = trigger.dataset.brandId ?? "";
+    }
+
+    title.textContent =
+      mode === "create"
+        ? entity === "brand"
+          ? "Создание бренда"
+          : "Создание коллекции"
+        : entity === "brand"
+          ? "Редактирование бренда"
+          : "Редактирование коллекции";
+
+    submitButton.querySelector(".submit-button-text")!.textContent =
+      mode === "create" ? "Добавить" : "Сохранить";
+
+    initialState = getState();
+    syncSubmitState();
+    modal.showModal();
+  }
+
+  document
+    .querySelectorAll<HTMLElement>("[data-open-modal]")
+    .forEach((trigger) => {
+      trigger.addEventListener("click", () => {
+        openFromTrigger(trigger);
+      });
+    });
+
+  document
+    .querySelectorAll<HTMLButtonElement>("[data-close-modal]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        modal.close();
+      });
+    });
+
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      modal.close();
+    }
+  });
+
+  nameInput.addEventListener("input", () => {
+    slugInput.value = generateSlug(nameInput.value);
+    syncSubmitState();
+  });
+
+  form.addEventListener("change", syncSubmitState);
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (
+      !submitButton ||
+      submitButton.disabled ||
+      form.hasAttribute("data-busy")
+    ) {
+      return;
+    }
+
+    clearErrors();
+
+    const formData = new FormData(form);
+    form.setAttribute("data-busy", "");
+    submitButton?.setAttribute("disabled", "");
+    submitButton?.setAttribute("aria-busy", "true");
+
+    try {
+      const result =
+        entity === "brand"
+          ? mode === "edit"
+            ? await actions.brand.updateBrand(formData)
+            : await actions.brand.createBrand(formData)
+          : mode === "edit"
+            ? await actions.collection.updateCollection(formData)
+            : await actions.collection.createCollection(formData);
+
+      if (result.error) {
+        if (isInputError(result.error)) {
+          showFieldErrors(result.error.fields);
+        } else {
+          showFormError("Не удалось сохранить изменения.");
+        }
+
+        return;
+      }
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+      showFormError("Произошла ошибка. Попробуйте ещё раз.");
+    } finally {
+      form.removeAttribute("data-busy");
+      submitButton?.removeAttribute("disabled");
+      submitButton?.setAttribute("aria-busy", "false");
+    }
+  });
+
+  if (deleteButton) {
+    deleteButton.addEventListener("click", async () => {
+      if (form.hasAttribute("data-busy")) return;
+
+      const name = nameInput.value;
+
+      if (
+        !confirm(
+          `Удалить ${entity === "brand" ? "бренд" : "коллекцию"} ${name}?`,
+        )
+      ) {
+        return;
+      }
+
+      const formData = new FormData(form);
+      form.setAttribute("data-busy", "");
+      deleteButton.setAttribute("disabled", "");
+      deleteButton.setAttribute("aria-busy", "true");
+
+      try {
+        const result =
+          entity === "brand"
+            ? await actions.brand.deleteBrand(formData)
+            : await actions.collection.deleteCollection(formData);
+
+        if (result.error) {
+          if (isInputError(result.error)) {
+            showFieldErrors(result.error.fields);
+          } else {
+            showFormError(
+              "Не удалось удалить " +
+                (entity === "brand" ? "бренд" : "коллекцию") +
+                ".",
+            );
+          }
+          return;
+        }
+        window.location.reload();
+      } catch (error) {
+        console.error(error);
+        showFormError("Произошла ошибка. Попробуйте ещё раз.");
+      } finally {
+        form.removeAttribute("data-busy");
+        deleteButton.removeAttribute("disabled");
+        deleteButton.setAttribute("aria-busy", "false");
+      }
+    });
+  }
+</script>
