@@ -22,7 +22,6 @@ export async function updateProduct(
       discountedPrice: product.discountedPrice,
       description: product.description,
       importantNote: product.importantNote,
-      storeLocationIds: product.storeLocationIds,
       // images: product.images,
     })
     .where(eq(products.id, product.id))

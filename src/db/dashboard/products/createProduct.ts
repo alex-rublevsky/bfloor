@@ -21,7 +21,6 @@ export async function createProduct(
       discountedPrice: product.discountedPrice,
       description: product.description,
       importantNote: product.importantNote,
-      storeLocationIds: product.storeLocationIds,
     })
     .returning()
     .then((res) => res[0]);

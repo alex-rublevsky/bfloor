@@ -59,6 +59,9 @@ const inputErrors = isInputError(creationResult?.error)
   <!--TODO: this is for files
     enctype="multipart/form-data" -->
   <!-- TODO: can the default html input validation be styled? -->
+  <!-- TODO: should i toggle
+  form.hasAttribute("data-busy")
+considering that this is a native form? -->
   <form
     id="product-form"
     method="POST"
@@ -71,16 +74,16 @@ const inputErrors = isInputError(creationResult?.error)
       {creating ? "Создание товара" : "Редактирование товара"}
 
       {
-        creationResult?.error && (
-          <p id="form-error" role="alert">
-            Ошибка создания товара
-          </p>
-        )
-      }
-      {
-        updateResult?.error && (
-          <p id="form-error" role="alert">
-            Ошибка обновления товара
+        (
+          <p
+            id="form-error"
+            role="alert"
+            hidden={!creationResult?.error && !updateResult?.error}>
+            {creationResult?.error
+              ? "Ошибка создания товара"
+              : updateResult?.error
+                ? "Ошибка обновления товара"
+                : ""}
           </p>
         )
       }

@@ -150,44 +150,38 @@ export const product = {
     }),
     handler: async (input, { locals }) => {
       requireAdmin(locals);
-      try {
-        const cleanName = input.name.replace(/\s+/g, " ");
-        const slugIsCorrect = input.slug === generateSlug(cleanName);
-        if (!slugIsCorrect) {
-          throw new ActionError({
-            code: "BAD_REQUEST",
-            message: "Slug is incorrect",
-          });
-        }
 
-        //TODO: validate that brand and collection exist + their relationship
-
-        const finalImages = await updateMedia({
-          slug: input.slug,
-          submittedImages: input.images,
-        });
-
-        return await updateProduct({
-          id: input.id,
-          isActive: input.isActive,
-          name: cleanName,
-          slug: input.slug,
-          importantNote: input.importantNote,
-          price: input.price,
-          discountedPrice: input.discountedPrice,
-          categoryId: input.categoryId,
-          brandId: input.brandId,
-          collectionId: input.collectionId,
-          description: input.description,
-          storeLocationIds: input.storeLocationIds,
-          images: finalImages,
-        });
-      } catch (error) {
+      const cleanName = input.name.replace(/\s+/g, " ");
+      const slugIsCorrect = input.slug === generateSlug(cleanName);
+      if (!slugIsCorrect) {
         throw new ActionError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : String(error),
+          code: "BAD_REQUEST",
+          message: "Slug is incorrect",
         });
       }
+
+      //TODO: validate that brand and collection exist + their relationship
+
+      const finalImages = await updateMedia({
+        slug: input.slug,
+        submittedImages: input.images,
+      });
+
+      return await updateProduct({
+        id: input.id,
+        isActive: input.isActive,
+        name: cleanName,
+        slug: input.slug,
+        importantNote: input.importantNote,
+        price: input.price,
+        discountedPrice: input.discountedPrice,
+        categoryId: input.categoryId,
+        brandId: input.brandId,
+        collectionId: input.collectionId,
+        description: input.description,
+        storeLocationIds: input.storeLocationIds,
+        images: finalImages,
+      });
     },
   }),
 };
