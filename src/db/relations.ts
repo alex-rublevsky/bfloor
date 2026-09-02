@@ -15,17 +15,17 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.products.collectionId,
       to: r.collections.id,
     }),
-    // variations: r.many.productVariations(),
-    // attributeValues: r.many.productAttributeValues(),
-    // storeLocations: r.many.productStoreLocations(),
+    productAttributeValues: r.many.productAttributeValues(),
+    variations: r.many.variations(),
+    productStoreLocations: r.many.productStoreLocations(),
+  },
+  productStoreLocations: {
+    products: r.many.products({
+      from: r.productStoreLocations.productId,
+      to: r.products.id,
+    }),
   },
   categories: {
-    // parent: r.one.categories({
-    //   from: r.categories.parentId,
-    //   to: r.categories.id,
-    //   alias: "categoryParent",
-    // }),
-    // children: r.many.categories({ alias: "categoryParent" }),
     products: r.many.products(),
   },
   brands: {
@@ -39,65 +39,54 @@ export const relations = defineRelations(schema, (r) => ({
     }),
     products: r.many.products(),
   },
-  // productVariations: {
-  //   product: r.one.products({
-  //     from: r.productVariations.productId,
-  //     to: r.products.id,
-  //   }),
-  //   attributeValues: r.many.variationAttributeValues(),
-  // },
-  // productAttributes: {
-  //   values: r.many.attributeValues(),
-  //   productValues: r.many.productAttributeValues(),
-  //   variationValues: r.many.variationAttributeValues(),
-  // },
-  // attributeValues: {
-  //   attribute: r.one.productAttributes({
-  //     from: r.attributeValues.attributeId,
-  //     to: r.productAttributes.id,
-  //   }),
-  //   products: r.many.productAttributeValues(),
-  //   variations: r.many.variationAttributeValues(),
-  // },
-  // productAttributeValues: {
-  //   product: r.one.products({
-  //     from: r.productAttributeValues.productId,
-  //     to: r.products.id,
-  //   }),
-  //   attribute: r.one.productAttributes({
-  //     from: r.productAttributeValues.attributeId,
-  //     to: r.productAttributes.id,
-  //   }),
-  //   value: r.one.attributeValues({
-  //     from: r.productAttributeValues.valueId,
-  //     to: r.attributeValues.id,
-  //   }),
-  // },
-  // variationAttributeValues: {
-  //   variation: r.one.productVariations({
-  //     from: r.variationAttributeValues.variationId,
-  //     to: r.productVariations.id,
-  //   }),
-  //   attribute: r.one.productAttributes({
-  //     from: r.variationAttributeValues.attributeId,
-  //     to: r.productAttributes.id,
-  //   }),
-  //   value: r.one.attributeValues({
-  //     from: r.variationAttributeValues.valueId,
-  //     to: r.attributeValues.id,
-  //   }),
-  // },
-  // storeLocations: {
-  //   products: r.many.productStoreLocations(),
-  // },
-  // productStoreLocations: {
-  //   product: r.one.products({
-  //     from: r.productStoreLocations.productId,
-  //     to: r.products.id,
-  //   }),
-  //   storeLocation: r.one.storeLocations({
-  //     from: r.productStoreLocations.storeLocationId,
-  //     to: r.storeLocations.id,
-  //   }),
-  // },
+  attributes: {
+    attributeValues: r.many.attributeValues(),
+    productValues: r.many.productAttributeValues(),
+    variationValues: r.many.variationAttributeValues(),
+  },
+  attributeValues: {
+    attribute: r.one.attributes({
+      from: r.attributeValues.attributeId,
+      to: r.attributes.id,
+    }),
+    productAttributeValues: r.many.productAttributeValues(),
+    variationAttributeValues: r.many.variationAttributeValues(),
+  },
+  productAttributeValues: {
+    product: r.one.products({
+      from: r.productAttributeValues.productId,
+      to: r.products.id,
+    }),
+    attribute: r.one.attributes({
+      from: r.productAttributeValues.attributeId,
+      to: r.attributes.id,
+    }),
+    //is this below needed? should it be optional? how to make it such?
+    attributeValue: r.one.attributeValues({
+      from: r.productAttributeValues.attributeValueId,
+      to: r.attributeValues.id,
+    }),
+  },
+  variations: {
+    product: r.one.products({
+      from: r.variations.productId,
+      to: r.products.id,
+    }),
+    variationAttributeValues: r.many.variationAttributeValues(),
+  },
+  variationAttributeValues: {
+    variation: r.one.variations({
+      from: r.variationAttributeValues.variationId,
+      to: r.variations.id,
+    }),
+    attribute: r.one.attributes({
+      from: r.variationAttributeValues.attributeId,
+      to: r.attributes.id,
+    }),
+    //is this below needed? should it be optional? how to make it such?
+    attributeValue: r.one.attributeValues({
+      from: r.variationAttributeValues.attributeValueId,
+      to: r.attributeValues.id,
+    }),
+  },
 }));
