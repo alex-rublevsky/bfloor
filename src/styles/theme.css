@@ -340,3 +340,63 @@ select {
     transform: scale(0.97);
   }
 }
+
+
+/*dashboard entity lists*/
+.cutoffLines {
+  --max-lines: 3;
+  --line-height: 2;
+  --entry-padding-block: var(--spacing-3xs);
+  --entry-height: calc(var(--line-height) * 1em + var(--entry-padding-block));
+  max-height: calc(var(--entry-height) * var(--max-lines));
+  line-height: var(--line-height);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.cutoffLines:has(+ .expand-btn:not(:checked))::before {
+  content: "";
+  position: absolute;
+  height: calc(2em * var(--line-height));
+  width: 100%;
+  bottom: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--background));
+}
+
+.cutoffLines.no-cutoff {
+  max-height: none;
+}
+
+.cutoffLines.no-cutoff::before {
+  display: none;
+}
+
+/*TODO: style this like a tertiary button*/
+
+.expand-btn {
+  appearance: none;
+  border: var(--border-width) solid var(--muted);
+  padding: var(--spacing-3xs);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  margin-top: var(--spacing-2xs);
+  text-align: center;
+}
+
+.expand-btn:hover {
+  background-color: var(--muted);
+}
+
+.expand-btn:before {
+  content: "Все";
+}
+
+.expand-btn:checked:before {
+  content: "Скрыть";
+}
+.cutoffLines:has(+ .expand-btn:checked) {
+  max-height: none;
+}

@@ -3,6 +3,7 @@ import { category } from "@/actions/category";
 import { brand } from "@/actions/brand";
 import { collection } from "@/actions/collection";
 import { attribute } from "@/actions/attribute";
+import { attributeValue } from "@/actions/attributeValue";
 
 export const server = {
   product,
@@ -10,4 +11,5 @@ export const server = {
   brand,
   collection,
   attribute,
+  attributeValue,
 };
