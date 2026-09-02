@@ -1,7 +1,7 @@
 ---
 import DashboardLayout from "@/layouts/DashboardLayout.astro";
 import { getProductBySlug } from "@/db/dashboard/products/productBySlug";
-import type { Product } from "@/db/dashboard/products";
+import type { ProductWithStoreLocations } from "@/db/dashboard/products/index";
 import ProductForm from "@/components/dashboard/ProductForm.astro";
 import { actions } from "astro:actions";
 
@@ -12,7 +12,7 @@ if (updateResult && !updateResult.error) {
 
 const { slug } = Astro.params;
 
-const product: Product = await getProductBySlug(slug);
+const product: ProductWithStoreLocations | null = await getProductBySlug(slug);
 
 if (!product) {
   return Astro.redirect("/dashboard/product/404");

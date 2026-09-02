@@ -8,25 +8,13 @@ import Select from "@/components/shared/Select.astro";
 import { getAllCategories } from "@/db/dashboard/categories/";
 import { STORE_LOCATIONS } from "@/lib/storeLocations";
 import { getBrandsWithCollections } from "@/db/dashboard/brands";
-import { getAllAttributes } from "@/db/dashboard/attributes";
+import { getAllAttributesWithValues } from "@/db/dashboard/attributes";
 import { actions, isInputError } from "astro:actions";
 import MarkdownEditor from "./MarkdownEditor.astro";
+import type { ProductWithStoreLocations } from "@/db/dashboard/products/index";
 
-type FormProduct = {
-  id?: number;
-  slug?: string;
-  name?: string;
-  isActive?: boolean;
-  categoryId?: number;
-  brandId?: number;
-  collectionId?: number;
-  price?: number;
-  discountedPrice?: number | null;
-  description?: string | null;
-  importantNote?: string | null;
-  images?: string | null;
-  storeLocationIds?: number[];
-};
+type FormProduct = Partial<ProductWithStoreLocations>;
+
 interface Props {
   product?: FormProduct;
 }
@@ -35,7 +23,7 @@ const creating = !product.slug;
 const categories = await getAllCategories();
 const brandsWithCollections = await getBrandsWithCollections();
 
-const attributes = await getAllAttributes();
+const attributesWithValues = await getAllAttributesWithValues();
 
 const selectedCategoryId = product.categoryId ? String(product.categoryId) : "";
 const selectedBrandId = product.brandId ? String(product.brandId) : "";
@@ -100,7 +88,7 @@ considering that this is a native form? -->
       }
     </h1>
 
-    <!-- <ImagesDropzone images={images} /> -->
+    <ImagesDropzone images={images} />
 
     <div class="textInputFields">
       <div class="nameSlug">
@@ -220,7 +208,14 @@ considering that this is a native form? -->
       </div>
       <div>
         <h4 class="text-md">Атрибуты</h4>
-        {attributes.map((attribute) => <div>{attribute.name}</div>)}
+        {
+          attributesWithValues.map((attribute) => (
+            <div>
+              {attribute.name}{" "}
+              {attribute.attributeValues.map((value) => value.name)}
+            </div>
+          ))
+        }
       </div>
     </div>
     <div class="flex gap-2xs">

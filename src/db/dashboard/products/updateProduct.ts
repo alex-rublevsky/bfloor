@@ -1,32 +1,53 @@
 import { db } from "@/db/index";
-import { products } from "@/db/schema";
+import { products, productStoreLocations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type {
   UpdateProductInput,
-  Product,
+  ProductWithStoreLocations,
 } from "@/db/dashboard/products/types";
 
 export async function updateProduct(
   product: UpdateProductInput,
-): Promise<Product> {
-  const insertProduct = await db
-    .update(products)
-    .set({
-      isActive: product.isActive,
-      slug: product.slug,
-      name: product.name,
-      categoryId: product.categoryId,
-      brandId: product.brandId,
-      collectionId: product.collectionId,
-      price: product.price,
-      discountedPrice: product.discountedPrice,
-      description: product.description,
-      importantNote: product.importantNote,
-      // images: product.images,
-    })
-    .where(eq(products.id, product.id))
-    .returning()
-    .then((res) => res[0]);
+): Promise<ProductWithStoreLocations> {
+  return await db.transaction(async (tx) => {
+    const [updatedProduct] = await tx
+      .update(products)
+      .set({
+        isActive: product.isActive,
+        slug: product.slug,
+        name: product.name,
+        images: product.images,
+        categoryId: product.categoryId,
+        brandId: product.brandId,
+        collectionId: product.collectionId,
+        price: product.price,
+        discountedPrice: product.discountedPrice,
+        description: product.description,
+        importantNote: product.importantNote,
+      })
+      .where(eq(products.id, product.id))
+      .returning();
 
-  return insertProduct;
+    if (!updatedProduct) {
+      throw new Error("Product was not found");
+    }
+
+    await tx
+      .delete(productStoreLocations)
+      .where(eq(productStoreLocations.productId, product.id));
+
+    const locationRows = product.storeLocationIds.map((storeLocationId) => ({
+      productId: product.id,
+      storeLocationId,
+    }));
+
+    if (locationRows.length > 0) {
+      await tx.insert(productStoreLocations).values(locationRows);
+    }
+
+    return {
+      ...updatedProduct,
+      storeLocationIds: product.storeLocationIds,
+    };
+  });
 }

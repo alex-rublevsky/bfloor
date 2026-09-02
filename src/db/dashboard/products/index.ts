@@ -3,6 +3,7 @@ export type {
   CreateProductInput,
   UpdateProductInput,
   DeleteProductInput,
+  ProductWithStoreLocations,
 } from "./types";
 
 export { getAllProducts } from "./allProducts";

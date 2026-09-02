@@ -13,13 +13,23 @@ import { generateSlug } from "@/lib/slugGeneration";
 const storeLocationId = z.coerce
   .number()
   .int()
-  .positive()
+  .nonnegative()
   .refine(
     (id) => STORE_LOCATIONS.some((location) => location.id === id),
     "Invalid store location",
   );
 
-const storeLocationIds = z.array(storeLocationId).default([]);
+const storeLocationIds = z
+  .array(storeLocationId)
+  .default([])
+  .superRefine((ids, ctx) => {
+    if (new Set(ids).size !== ids.length) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Duplicate store locations are not allowed",
+      });
+    }
+  });
 
 export const product = {
   createProduct: defineAction({
@@ -89,11 +99,11 @@ export const product = {
         brandId: input.brandId,
         collectionId: input.collectionId,
         price: input.price,
-        storeLocationIds: input.storeLocationIds,
         discountedPrice: input.discountedPrice,
         description: input.description,
         importantNote: input.importantNote,
         images: finalImages,
+        storeLocationIds: input.storeLocationIds,
       });
     },
   }),

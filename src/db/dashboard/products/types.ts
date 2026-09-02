@@ -3,6 +3,10 @@ import { products } from "@/db/schema";
 
 export type Product = InferSelectModel<typeof products>;
 
+export type ProductWithStoreLocations = Product & {
+  storeLocationIds: number[];
+};
+
 export type CreateProductInput = Pick<
   InferInsertModel<typeof products>,
   | "isActive"
@@ -16,8 +20,9 @@ export type CreateProductInput = Pick<
   | "description"
   | "importantNote"
   | "images"
-  | "storeLocationIds"
->;
+> & {
+  storeLocationIds: number[];
+};
 
 export type UpdateProductInput = CreateProductInput & {
   id: Product["id"];
