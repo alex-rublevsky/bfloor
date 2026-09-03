@@ -87,146 +87,152 @@ considering that this is a native form? -->
         )
       }
     </h1>
+    <div class="formWrapper">
+      <ImagesDropzone images={images} />
+      <div class="formInputsBlock">
+        <div class="inputRowWrapper">
+          <Input
+            name="name"
+            label="Название"
+            value={product.name}
+            aria-describedby="error-name"
+            required
+            autocomplete="off"
+            minlength="1"
+            error={inputErrors.name}
+            autofocus
+          />
+          <!-- TODO: fix slug field being able to become focused on click, though it is set to readonly -->
+          <Input
+            name="slug"
+            label="Ярлык"
+            value={product.slug ? product.slug : ""}
+            aria-describedby="error-slug"
+            required
+            minlength="1"
+            error={inputErrors.slug}
+            readonly={true}
+          />
+        </div>
 
-    <ImagesDropzone images={images} />
+        <div class="inputRowWrapper">
+          <!-- TODO: add logic for the price to become not required if variations are present -->
+          <Input
+            name="price"
+            label="Цена"
+            value={product.price}
+            aria-describedby="error-price"
+            required
+            error={inputErrors.price}
+            autocomplete="off"
+          />
+          <Input
+            name="discountedPrice"
+            label="Цена со скидкой"
+            value={product.discountedPrice ?? ""}
+            aria-describedby="error-discountedPrice"
+            error={inputErrors.discountedPrice}
+            autocomplete="off"
+          />
+        </div>
 
-    <div class="textInputFields">
-      <div class="nameSlug">
-        <Input
-          name="name"
-          label="Название"
-          value={product.name}
-          aria-describedby="error-name"
-          required
-          autocomplete="off"
-          minlength="1"
-          error={inputErrors.name}
-          autofocus
-        />
-        <!-- TODO: fix slug field being able to become focused on click, though it is set to readonly -->
-        <Input
-          name="slug"
-          label="Ярлык"
-          value={product.slug ? product.slug : ""}
-          aria-describedby="error-slug"
-          required
-          minlength="1"
-          error={inputErrors.slug}
-          readonly={true}
-        />
-      </div>
+        <div class="inputRowWrapper">
+          <Select
+            name="categoryId"
+            label="Категория"
+            placeholder="Выбрать"
+            value={selectedCategoryId}
+            options={categories.map((category) => ({
+              value: String(category.id),
+              label: category.name,
+            }))}
+            required
+            aria-describedby="error-categoryId"
+            error={inputErrors.categoryId}
+          />
+          <Select
+            name="brandId"
+            label="Бренд"
+            placeholder="Выбрать"
+            value={selectedBrandId}
+            options={brandsWithCollections.map((brand) => ({
+              value: String(brand.id),
+              label: brand.name,
+            }))}
+            aria-describedby="error-brandId"
+            error={inputErrors.brandId}
+          />
+          <!-- TODO: fix collection to only be pickable from the brand collections range -->
+          <!-- <Select
+      name="collectionId"
+      label="Коллекция"
+      placeholder="Выбрать"
+      value={selectedCollectionId}
+      options={}
+      aria-describedby="error-brandId"
 
-      <div class="nameSlug">
-        <!-- TODO: add logic for the price to become not required if variations are present -->
-        <Input
-          name="price"
-          label="Цена"
-          value={product.price}
-          aria-describedby="error-price"
-          required
-          error={inputErrors.price}
-          autocomplete="off"
-        />
-        <Input
-          name="discountedPrice"
-          label="Цена со скидкой"
-          value={product.discountedPrice ?? ""}
-          aria-describedby="error-discountedPrice"
-          error={inputErrors.discountedPrice}
-          autocomplete="off"
-        />
-      </div>
-
-      <div class="categoryActiveInputs">
-        <Select
-          name="categoryId"
-          label="Категория"
-          placeholder="Выбрать"
-          value={selectedCategoryId}
-          options={categories.map((category) => ({
-            value: String(category.id),
-            label: category.name,
-          }))}
-          required
-          aria-describedby="error-categoryId"
-          error={inputErrors.categoryId}
-        />
-        <Select
-          name="brandId"
-          label="Бренд"
-          placeholder="Выбрать"
-          value={selectedBrandId}
-          options={brandsWithCollections.map((brand) => ({
-            value: String(brand.id),
-            label: brand.name,
-          }))}
-          aria-describedby="error-brandId"
-          error={inputErrors.brandId}
-        />
-        <!-- TODO: fix collection to only be pickable from the brand collections range -->
-        <!-- <Select
-          name="collectionId"
-          label="Коллекция"
-          placeholder="Выбрать"
-          value={selectedCollectionId}
-          options={}
-          aria-describedby="error-brandId"
-
-          error={inputErrors.brandId}
-        /> -->
-        <Checkbox name="isActive" value="1" checked={product.isActive ?? true}>
-          Товар активен
-        </Checkbox>
-      </div>
-      <div>
-        <h4 class="text-md">В наличии в магазинах</h4>
-        {
-          STORE_LOCATIONS.map((location) => (
-            <Checkbox
-              name="storeLocationIds"
-              value={String(location.id)}
-              checked={
-                product.storeLocationIds?.includes(location.id) ?? false
-              }>
-              {location.address}
-            </Checkbox>
-          ))
-        }
-      </div>
-      <div class="nameSlug">
-        <MarkdownEditor
-          label="Важное примечание"
-          name="importantNote"
-          content={product.importantNote ?? ""}
-          lessButtons
-        />
-        <MarkdownEditor
-          label="Описание"
-          name="description"
-          content={product.description ?? ""}
-        />
-      </div>
-      <div>
-        <h4 class="text-md">Атрибуты</h4>
-        {
-          attributesWithValues.map((attribute) => (
-            <div>
-              {attribute.name}{" "}
-              {attribute.attributeValues.map((value) => value.name)}
-            </div>
-          ))
-        }
+      error={inputErrors.brandId}
+    /> -->
+          <Checkbox
+            name="isActive"
+            value="1"
+            checked={product.isActive ?? true}>
+            Товар активен
+          </Checkbox>
+        </div>
+        <div>
+          <h4 class="text-md">В наличии в магазинах</h4>
+          <div class="flex flex-wrap gap-x-sm gap-y-2xs">
+            {
+              STORE_LOCATIONS.map((location) => (
+                <Checkbox
+                  name="storeLocationIds"
+                  value={String(location.id)}
+                  checked={
+                    product.storeLocationIds?.includes(location.id) ?? false
+                  }>
+                  {location.address}
+                </Checkbox>
+              ))
+            }
+          </div>
+        </div>
+        <div class="inputRowWrapper">
+          <MarkdownEditor
+            label="Важное примечание"
+            name="importantNote"
+            content={product.importantNote ?? ""}
+            lessButtons
+          />
+          <MarkdownEditor
+            label="Описание"
+            name="description"
+            content={product.description ?? ""}
+          />
+        </div>
+        <div>
+          <h4 class="text-md">Атрибуты</h4>
+          {
+            attributesWithValues.map((attribute) => (
+              <div>
+                {attribute.name}{" "}
+                {attribute.attributeValues.map((value) => value.name)}
+              </div>
+            ))
+          }
+        </div>
       </div>
     </div>
+
     <div class="flex gap-2xs">
-      <Button id="submit-button" type="submit" disabled>
+      <Button size="lg" id="submit-button" type="submit" disabled>
         <span class="submit-text"
           >{creating ? "Добавить" : "Нет изменений"}</span
         >
       </Button>
       {
         !creating && (
-          <Button id="delete-button" variant="destructive">
+          <Button size="lg" id="delete-button" variant="destructive">
             Удалить
           </Button>
         )
@@ -237,32 +243,18 @@ considering that this is a native form? -->
 
 <style>
   form {
-    margin: auto;
-    padding-bottom: 4rem;
-    container-type: inline-size;
-    max-width: 80ch;
-  }
-  .textInputFields {
-    display: grid;
-    gap: var(--spacing-2xs);
     container-type: inline-size;
   }
-  .nameSlug {
+  .formWrapper {
     display: grid;
-    gap: var(--spacing-2xs);
-    grid-template-columns: 1fr;
-    @container (min-width: 60ch) {
+    grid-template-columns: 2fr 3fr;
+    align-items: start;
+    gap: var(--spacing-sm);
+    @container (max-width: 60rem) {
       grid-template-columns: 1fr 1fr;
     }
-  }
-
-  .categoryActiveInputs {
-    display: grid;
-    gap: var(--spacing-2xs);
-    grid-template-columns: 1fr;
-    @container (min-width: 37ch) {
-      grid-template-columns: 1fr 1fr;
-      justify-items: center;
+    @container (max-width: 55rem) {
+      grid-template-columns: 1fr;
     }
   }
 </style>

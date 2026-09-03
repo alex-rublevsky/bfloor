@@ -400,3 +400,18 @@ select {
 .cutoffLines:has(+ .expand-btn:checked) {
   max-height: none;
 }
+
+/*form styling*/
+.formInputsBlock {
+  display: grid;
+  gap: var(--spacing-2xs);
+  container-type: inline-size;
+}
+.inputRowWrapper {
+  display: grid;
+  gap: var(--spacing-2xs);
+  grid-template-columns: 1fr;
+  @container (min-width: 60ch) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
