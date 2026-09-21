@@ -6,6 +6,7 @@ export const relations = defineRelations(schema, (r) => ({
     category: r.one.categories({
       from: r.products.categoryId,
       to: r.categories.id,
+      optional: false,
     }),
     brand: r.one.brands({
       from: r.products.brandId,
