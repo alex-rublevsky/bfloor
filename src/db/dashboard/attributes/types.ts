@@ -1,15 +1,11 @@
-import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
-import { attributes, attributeValues } from "@/db/schema";
+import type {
+  Attribute,
+  AttributeValue,
+  NewAttribute,
+  NewAttributeValue,
+} from "@/db/schema";
 
-export type Attribute = InferSelectModel<typeof attributes>;
-
-export type AttributeValue = InferSelectModel<typeof attributeValues>;
-
-export type CreateAttributeInput = Pick<
-  InferInsertModel<typeof attributes>,
-  "name" | "slug"
-  // | "isStandardized"
->;
+export type CreateAttributeInput = Pick<NewAttribute, "name" | "slug">;
 
 export type UpdateAttributeInput = CreateAttributeInput & {
   id: Attribute["id"];
@@ -20,7 +16,7 @@ export type DeleteAttributeInput = {
 };
 
 export type CreateAttributeValueInput = Pick<
-  InferInsertModel<typeof attributeValues>,
+  NewAttributeValue,
   "attributeId" | "name" | "normalizedName" | "slug"
 >;
 

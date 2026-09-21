@@ -295,3 +295,23 @@ export const verification = sqliteTable("verification", {
   createdAt: integer("created_at", { mode: "timestamp" }),
   updatedAt: integer("updated_at", { mode: "timestamp" }),
 });
+
+export type Product = typeof products.$inferSelect;
+export type NewProduct = typeof products.$inferInsert;
+
+export type Category = typeof categories.$inferSelect;
+export type NewCategory = typeof categories.$inferInsert;
+
+export type Brand = typeof brands.$inferSelect;
+export type NewBrand = typeof brands.$inferInsert;
+
+export type Collection = typeof collections.$inferSelect;
+export type NewCollection = typeof collections.$inferInsert;
+
+export type Attribute = typeof attributes.$inferSelect;
+export type NewAttribute = typeof attributes.$inferInsert;
+
+export type AttributeValue = typeof attributeValues.$inferSelect;
+export type NewAttributeValue = typeof attributeValues.$inferInsert;
+
+export type ProductStoreLocation = typeof productStoreLocations.$inferSelect;

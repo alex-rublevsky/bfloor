@@ -1,14 +1,7 @@
-import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
-import { products } from "@/db/schema";
+import type { NewProduct, Product, ProductStoreLocation } from "@/db/schema";
 
-export type Product = InferSelectModel<typeof products>;
-
-export type ProductWithStoreLocations = Product & {
-  storeLocationIds: number[];
-};
-
-export type CreateProductInput = Pick<
-  InferInsertModel<typeof products>,
+type ProductMutationFields = Pick<
+  NewProduct,
   | "isActive"
   | "slug"
   | "name"
@@ -20,12 +13,18 @@ export type CreateProductInput = Pick<
   | "description"
   | "importantNote"
   | "images"
-> & {
-  storeLocationIds: number[];
+>;
+
+type StoreLocationId = ProductStoreLocation["storeLocationId"];
+
+//TODO: what is the difference between Partial<> and InferInsertModel?
+export type CreateProductInput = ProductMutationFields & {
+  storeLocationIds: StoreLocationId[];
 };
 
-export type UpdateProductInput = CreateProductInput & {
+export type UpdateProductInput = ProductMutationFields & {
   id: Product["id"];
+  storeLocationIds: StoreLocationId[];
 };
 
 export type DeleteProductInput = {

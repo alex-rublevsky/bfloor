@@ -1,10 +1,7 @@
-import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
-import { categories } from "@/db/schema";
-
-export type Category = InferSelectModel<typeof categories>;
+import type { Category, NewCategory } from "@/db/schema";
 
 export type CreateCategoryInput = Pick<
-  InferInsertModel<typeof categories>,
+  NewCategory,
   "name" | "slug" | "description"
 >;
 
