@@ -20,7 +20,7 @@ const navItems = [
     href: "/dashboard/attributes",
     match: "exact" as const,
   },
-  { label: "Заказы", href: "/dashboard/orders", match: "prefix" as const },
+  // { label: "Заказы", href: "/dashboard/orders", match: "prefix" as const },
   { label: "Прочее", href: "/dashboard/misc", match: "exact" as const },
   // {
   //     label: "Аналитика",
@@ -81,6 +81,10 @@ const hasCreateButton = (href: string) => pathname === href;
           </Button>
         ))
       }
+
+      <Button size="sm" class="store-button mobile" variant="tertiary" href="/"
+        >Магазин</Button
+      >
     </div>
 
     {
@@ -100,7 +104,7 @@ const hasCreateButton = (href: string) => pathname === href;
     }
   </div>
 
-  <Button size="sm" class="store-button" variant="primary" href="/"
+  <Button size="sm" class="store-button desktop" variant="primary" href="/"
     >Магазин</Button
   >
 </nav>
@@ -123,7 +127,7 @@ const hasCreateButton = (href: string) => pathname === href;
   .leftBlock {
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
+    /*flex-wrap: wrap;*/
     gap: var(--spacing-3xs);
     pointer-events: auto;
   }
@@ -138,21 +142,29 @@ const hasCreateButton = (href: string) => pathname === href;
   }
   .store-button {
     pointer-events: auto;
+    &.mobile {
+      display: none;
+    }
   }
 
   @media (max-width: 768px) {
     nav {
       top: auto;
       bottom: var(--spacing-3xs);
-      /*flex-wrap: wrap;*/
-      /*flex-direction: row;*/
       gap: var(--spacing-3xs);
     }
-    .leftBlock {
-      flex-direction: column-reverse;
-    }
+
     .navItemsWrapper {
       flex-wrap: wrap;
+    }
+
+    .store-button {
+      &.desktop {
+        display: none;
+      }
+      &.mobile {
+        display: block;
+      }
     }
   }
 </style>
