@@ -1,64 +1,101 @@
 ---
 import Link from "@/components/shared/Link.astro";
 import Layout from "@/layouts/Layout.astro";
+import Button from "@/components/shared/Button.astro";
+import { STORE_LOCATIONS } from "@/lib/storeLocations";
+import { Icon } from "astro-icon/components";
 
 export const prerender = true;
 ---
 
 <Layout>
   <h1 class="sr-only">Contacts and Addresses</h1>
-  <div class="sectionsLayout">
-    <section>
-      <h2 class="text-lg leading-none">Контакты</h2>
 
-      <div class="card">
-        <div class="contact">
-          <Link href="tel:+89084466740">8 908 446 6740 </Link>
-          <span class="name">Елена</span>
-        </div>
-        <div class="contact">
-          <Link href="tel:+89025559405">8 902 555 9405 </Link><span class="name"
-            >Роман</span
-          >
-        </div>
-        <Link href="tel:+89084486785">8 908 448 6785</Link>
-        <Link href="mailto:romavg@mail.ru">romavg@mail.ru</Link>
-      </div>
-    </section>
-    <section>
-      <h2 class="text-lg leading-none">Адреса</h2>
+  <section>
+    <div class="h-90 md:h-full">
+      <iframe
+        src="https://yandex.ru/map-widget/v1/?um=constructor%3A22b0e239472f3fada224e5a5d56d660e01904d9ce2b2758272c86ee79efaa7ca&source=constructor"
+        width="100%"
+        height="100%"
+        frameborder="0"></iframe>
+    </div>
+    <div class="md:pt-sm">
+      <div>
+        <h2 class="text-lg leading-none">Контакты</h2>
 
-      <div class="card">
-        <div>
-          <p>Владивосток, ул. Русская, 78</p>
-          <span class="text-sm leading-none">Вход со стороны дороги</span>
-        </div>
-
-        <div>
-          <p class="label">Часы работы:</p>
-          <p>Пн — Пт: 10 — 18</p>
-          <p>Сб: 11 — 17 Вс: Выходной</p>
-        </div>
-      </div>
-      <div class="card">
-        <p>Владивосток, ул. 100 летия, 30</p>
-
-        <div>
-          <p class="label">Часы работы:</p>
-          <p>Пн — Пт: 10 — 18</p>
-          <p>Сб: 11 — 17 Вс: Выходной</p>
+        <div class="card">
+          <div class="contact">
+            <Link href="tel:+89084466740">8 908 446 6740</Link>
+            <span class="name">Елена</span>
+          </div>
+          <div class="contact">
+            <Link href="tel:+89025559405">8 902 555 9405</Link><span
+              class="name">Роман</span
+            >
+          </div>
+          {
+            STORE_LOCATIONS.map((location) => (
+              <div class="contact">
+                <Link href={`tel:${location.phone.replace(/\D/g, "")}`}>
+                  {location.phone}
+                </Link>
+                <span class="name">{location.address}</span>
+              </div>
+            ))
+          }
+          <Link href="mailto:romavg@mail.ru">romavg@mail.ru</Link>
         </div>
       </div>
-    </section>
-  </div>
+      <div>
+        <h2 class="text-lg leading-none">Адреса</h2>
+
+        {
+          STORE_LOCATIONS.map((location) => (
+            <div class="card" data-location-id={location.id}>
+              <div>
+                <p>{location.address}</p>
+                {location.description && (
+                  <span class="text-sm leading-none">
+                    {location.description}
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <p class="label">Часы работы:</p>
+                {location.openingHours.split("\n").map((hours) => (
+                  <p>{hours}</p>
+                ))}
+              </div>
+              <Button
+                href={`https://yandex.ru/maps/?text=${encodeURIComponent(`Владивосток, ${location.address}`)}`}
+                class="mt-2xs">
+                Построить маршрут{" "}
+                <Icon
+                  class="size-7 -translate-y-0.5"
+                  name="yandexMaps"
+                  title="Яндекс Карты"
+                />
+              </Button>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
 </Layout>
 
 <style>
-  .sectionsLayout {
+  section {
     display: grid;
-    grid-template-columns: min-content min-content;
-    justify-content: center;
-    align-items: start;
+    direction: column-reverse;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-lg);
+  }
+  @media (max-width: 768px) {
+    section {
+      grid-template-columns: 1fr;
+    }
   }
   .name {
     font-style: italic;
@@ -70,7 +107,7 @@ export const prerender = true;
     background-color: var(--muted);
     padding: var(--spacing-xs);
     white-space: nowrap;
-    gap: var(--spacing-2xs);
+    margin-bottom: var(--spacing-sm);
   }
   .contact {
     display: flex;
@@ -79,10 +116,5 @@ export const prerender = true;
   }
   .label {
     font-weight: bold;
-  }
-
-  section {
-    display: grid;
-    gap: var(--spacing-sm);
   }
 </style>
