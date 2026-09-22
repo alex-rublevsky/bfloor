@@ -12,24 +12,25 @@ import Input from "./shared/Input.astro";
     </Link>
     <Button size="md" href="/store">Каталог</Button>
   </div>
-  <Input label="Поиск среди ... товаров" />
-  <Button>
-    <Icon name="phone" title="phone" />
-  </Button>
-  <div class="hidden xl:flex gap-xs items-baseline whitespace-nowrap">
-    <Link href="/delivery">Доставка и Оплата</Link>
-    <Link href="/contact">Контакты и Адреса</Link>
-    <Link href="/about">О компании</Link>
+  <Input name="Поиск" label="Поиск среди ... товаров" />
 
+  <div class="hidden xl:flex xl:gap-xs xl:items-stretch whitespace-nowrap">
+    <Link href="/delivery" class="self-center">Доставка</Link>
+    <Link href="/contact" class="self-center">Контакты и Адреса</Link>
+    <Link href="/about" class="self-center">О компании</Link>
+    <Button>
+      <Icon name="phone" title="phone" />
+    </Button>
     <Button size="md" href="/dashboard">Админка</Button>
   </div>
+  <!-- TODO: update dropdown to be html popover? -->
   <div
     class="dropdown dropdown--down hidden md:flex gap-xs xl:hidden"
     data-dropdown>
     <Button size="md" data-dropdown-button>Ещё</Button>
     <div
       class="dropdown-menu flex flex-col items-start gap-xs whitespace-nowrap">
-      <Link href="/delivery">Доставка и Оплата</Link>
+      <Link href="/delivery">Доставка</Link>
       <Link href="/contact">Контакты и Адреса</Link>
       <Link href="/about">О компании</Link>
       <Button size="md" href="/dashboard">Админка</Button>
