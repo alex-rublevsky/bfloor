@@ -24,15 +24,6 @@ export const prerender = true;
         <h2 class="text-lg leading-none">Контакты</h2>
 
         <div class="card">
-          <div class="contact">
-            <Link href="tel:+89084466740">8 908 446 6740</Link>
-            <span class="name">Елена</span>
-          </div>
-          <div class="contact">
-            <Link href="tel:+89025559405">8 902 555 9405</Link><span
-              class="name">Роман</span
-            >
-          </div>
           {
             STORE_LOCATIONS.map((location) => (
               <div class="contact">
@@ -43,6 +34,16 @@ export const prerender = true;
               </div>
             ))
           }
+
+          <div class="contact">
+            <Link href="tel:+89025559405">8 902 555 9405</Link><span
+              class="name">Роман</span
+            >
+          </div>
+          <div class="contact">
+            <Link href="tel:+89084466740">8 908 446 6740</Link>
+            <span class="name">Елена</span>
+          </div>
           <Link href="mailto:romavg@mail.ru">romavg@mail.ru</Link>
         </div>
       </div>
