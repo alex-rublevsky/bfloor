@@ -1,0 +1,40 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getAllCategories } from "@/db/storefront/allCategories";
+import { BASE_IMAGE_URL } from "@/constants";
+import { Image } from "astro:assets";
+import ImagePlaceholder from "@/components/shared/ImagePlaceholder.astro";
+const categories = await getAllCategories();
+
+export const prerender = true;
+---
+
+<Layout>
+  <main>
+    <section class="relative">
+      <h1
+        class="sticky left-2xs top-2xs pb-0 px-2xs bg-background/70 backdrop-blur-xs rounded-sm inline z-10">
+        Каталог
+      </h1>
+      <div class="autoGrid pt-sm">
+        {
+          categories.map((category) => (
+            <a href={`/store/${category.slug}`}>
+              {category.image ? (
+                <Image
+                  width={400}
+                  height={400}
+                  src={BASE_IMAGE_URL + category.image}
+                  alt={category.name}
+                />
+              ) : (
+                <ImagePlaceholder />
+              )}
+              <h5>{category.name}</h5>
+            </a>
+          ))
+        }
+      </div>
+    </section>
+  </main>
+</Layout>
