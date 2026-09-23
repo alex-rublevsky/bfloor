@@ -22,6 +22,8 @@ export default defineConfig({
     "user",
     "variation_attribute_values",
     "verification",
+    "attributes",
+    "variations",
   ],
   dbCredentials: {
     url: process.env.PUBLIC_TURSO_DATABASE_URL!,
