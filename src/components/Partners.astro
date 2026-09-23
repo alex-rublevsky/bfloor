@@ -1,0 +1,29 @@
+---
+import { getAllBrands } from "@/db/storefront/allBrands";
+const brands = await getAllBrands();
+import { Image } from "astro:assets";
+import { BASE_IMAGE_URL } from "@/constants";
+---
+
+<section>
+  <h2>Наши Партнёры</h2>
+  <div class="carousel">
+    {
+      brands.map((brand) => (
+        <Image
+          src={BASE_IMAGE_URL + brand.image}
+          height={300}
+          width={300}
+          alt={brand.name}
+        />
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .carousel {
+    display: flex;
+    overflow-x: scroll;
+  }
+</style>
