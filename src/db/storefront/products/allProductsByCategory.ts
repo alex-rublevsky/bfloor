@@ -1,10 +1,10 @@
 import { db } from "@/db/index";
-import { type Product } from "../types";
+import type { StorefrontProduct } from "./types";
 
 export async function getAllProductsByCategory(
   categoryId?: number,
   page?: number,
-): Promise<Product[] | null> {
+): Promise<StorefrontProduct[] | null> {
   if (!categoryId) return null;
 
   const pageSize = 50;
@@ -16,6 +16,12 @@ export async function getAllProductsByCategory(
     offset: offset,
     where: {
       categoryId: categoryId,
+    },
+    with: {
+      category: { columns: { name: true, slug: true } },
+      brand: { columns: { name: true, slug: true, image: true } },
+      collection: { columns: { name: true, slug: true } },
+      productStoreLocations: { columns: { storeLocationId: true } },
     },
     orderBy: {
       viewCount: "desc",
