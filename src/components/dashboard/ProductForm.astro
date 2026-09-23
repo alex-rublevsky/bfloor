@@ -89,90 +89,95 @@ considering that this is a native form? -->
     </h1>
     <div class="formWrapper">
       <ImagesDropzone images={images} />
-      <div class="formInputsBlock">
-        <div class="inputRowWrapper">
-          <Input
-            name="name"
-            label="Название"
-            value={product.name}
-            aria-describedby="error-name"
-            required
-            autocomplete="off"
-            minlength="1"
-            error={inputErrors.name}
-            autofocus
-          />
-          <!-- TODO: fix slug field being able to become focused on click, though it is set to readonly -->
-          <Input
-            name="slug"
-            label="Ярлык"
-            value={product.slug ? product.slug : ""}
-            aria-describedby="error-slug"
-            required
-            minlength="1"
-            error={inputErrors.slug}
-            readonly={true}
-          />
-        </div>
 
-        <div class="inputRowWrapper">
-          <!-- TODO: add logic for the price to become not required if variations are present -->
-          <Input
-            name="price"
-            label="Цена"
-            value={product.price}
-            aria-describedby="error-price"
-            required
-            error={inputErrors.price}
-            autocomplete="off"
-          />
-          <Input
-            name="discountedPrice"
-            label="Цена со скидкой"
-            value={product.discountedPrice ?? ""}
-            aria-describedby="error-discountedPrice"
-            error={inputErrors.discountedPrice}
-            autocomplete="off"
-          />
-        </div>
+      <fieldset>
+        <legend>Общее</legend>
 
-        <div class="inputRowWrapper">
-          <Select
-            name="categoryId"
-            label="Категория"
-            placeholder="Выбрать"
-            value={selectedCategoryId}
-            options={categories.map((category) => ({
-              value: String(category.id),
-              label: category.name,
-            }))}
-            required
-            aria-describedby="error-categoryId"
-            error={inputErrors.categoryId}
-          />
-          <Select
-            name="brandId"
-            label="Бренд"
-            placeholder="Выбрать"
-            value={selectedBrandId}
-            options={brandsWithCollections.map((brand) => ({
-              value: String(brand.id),
-              label: brand.name,
-            }))}
-            aria-describedby="error-brandId"
-            error={inputErrors.brandId}
-          />
+        <div class="formInputsBlock">
+          <div class="inputRowWrapper">
+            <Input
+              name="name"
+              label="Название"
+              value={product.name}
+              aria-describedby="error-name"
+              required
+              autocomplete="off"
+              minlength="1"
+              error={inputErrors.name}
+              autofocus
+            />
+            <!-- TODO: fix slug field being able to become focused on click, though it is set to readonly -->
+            <Input
+              name="slug"
+              label="Ярлык"
+              value={product.slug ? product.slug : ""}
+              aria-describedby="error-slug"
+              required
+              minlength="1"
+              error={inputErrors.slug}
+              readonly={true}
+            />
+          </div>
+
+          <div class="inputRowWrapper">
+            <!-- TODO: add logic for the price to become not required if variations are present -->
+            <Input
+              name="price"
+              label="Цена"
+              value={product.price}
+              aria-describedby="error-price"
+              required
+              error={inputErrors.price}
+              autocomplete="off"
+            />
+            <Input
+              name="discountedPrice"
+              label="Цена со скидкой"
+              value={product.discountedPrice ?? ""}
+              aria-describedby="error-discountedPrice"
+              error={inputErrors.discountedPrice}
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="inputRowWrapper">
+            <Select
+              name="categoryId"
+              label="Категория"
+              placeholder="Выбрать"
+              value={selectedCategoryId}
+              options={categories.map((category) => ({
+                value: String(category.id),
+                label: category.name,
+              }))}
+              required
+              aria-describedby="error-categoryId"
+              error={inputErrors.categoryId}
+            />
+            <Select
+              name="brandId"
+              label="Бренд"
+              placeholder="Выбрать"
+              value={selectedBrandId}
+              options={brandsWithCollections.map((brand) => ({
+                value: String(brand.id),
+                label: brand.name,
+              }))}
+              aria-describedby="error-brandId"
+              error={inputErrors.brandId}
+            />
+          </div>
           <!-- TODO: fix collection to only be pickable from the brand collections range -->
           <!-- <Select
-      name="collectionId"
-      label="Коллекция"
-      placeholder="Выбрать"
-      value={selectedCollectionId}
-      options={}
-      aria-describedby="error-brandId"
+        name="collectionId"
+        label="Коллекция"
+        placeholder="Выбрать"
+        value={selectedCollectionId}
+        options={}
+        aria-describedby="error-brandId"
 
-      error={inputErrors.brandId}
-    /> -->
+        error={inputErrors.brandId}
+      /> -->
           <Checkbox
             name="isActive"
             value="1"
@@ -180,9 +185,9 @@ considering that this is a native form? -->
             Товар активен
           </Checkbox>
         </div>
-        <div>
-          <h4 class="text-md">В наличии в магазинах</h4>
-          <div class="flex flex-wrap gap-x-sm gap-y-2xs">
+        <fieldset class="inline-max">
+          <legend class="text-base!">В наличии в магазинах</legend>
+          <div class="flex flex-wrap shrink-0 gap-x-sm gap-y-2xs">
             {
               STORE_LOCATIONS.map((location) => (
                 <Checkbox
@@ -196,50 +201,55 @@ considering that this is a native form? -->
               ))
             }
           </div>
-        </div>
-        <div class="inputRowWrapper">
-          <MarkdownEditor
-            label="Важное примечание"
-            name="importantNote"
-            content={product.importantNote ?? ""}
-            lessButtons
-          />
-          <MarkdownEditor
-            label="Описание"
-            name="description"
-            content={product.description ?? ""}
-          />
-        </div>
-        <div>
-          <h4 class="text-md">Атрибуты</h4>
-          {
-            attributesWithValues.map((attribute) => (
-              <div>
-                {attribute.name}{" "}
-                {attribute.attributeValues.map((value) => value.name)}
-              </div>
-            ))
-          }
-        </div>
-      </div>
-    </div>
+        </fieldset>
 
-    <div class="flex gap-2xs">
-      <Button size="lg" id="submit-button" type="submit" disabled>
-        <span class="submit-text"
-          >{creating ? "Добавить" : "Нет изменений"}</span
-        >
-      </Button>
-      {
-        !creating && (
-          <Button size="lg" id="delete-button" variant="destructive">
-            Удалить
-          </Button>
-        )
-      }
+        <MarkdownEditor
+          label="Важное примечание"
+          name="importantNote"
+          content={product.importantNote ?? ""}
+          lessButtons
+        />
+        <MarkdownEditor
+          label="Описание"
+          name="description"
+          content={product.description ?? ""}
+        />
+      </fieldset>
+
+      <!-- <h4 class="text-md">Атрибуты</h4> -->
+      <fieldset>
+        <legend>Атрибуты</legend>
+        {
+          attributesWithValues.map((attribute) => (
+            <div>
+              <h6>{attribute.name}</h6>
+              <div class="grid">
+                {attribute.attributeValues.map((value) => (
+                  <Checkbox name={attribute.name + " " + value.name}>
+                    {value.name}
+                  </Checkbox>
+                ))}
+              </div>
+            </div>
+          ))
+        }
+      </fieldset>
     </div>
   </form>
 </section>
+
+<div class="flex gap-2xs">
+  <Button size="lg" id="submit-button" type="submit" disabled>
+    <span class="submit-text">{creating ? "Добавить" : "Нет изменений"}</span>
+  </Button>
+  {
+    !creating && (
+      <Button size="lg" id="delete-button" variant="destructive">
+        Удалить
+      </Button>
+    )
+  }
+</div>
 
 <style>
   form {
@@ -272,6 +282,7 @@ considering that this is a native form? -->
     productForm.querySelector<HTMLButtonElement>("#submit-button");
 
   const mode = productForm.dataset.mode;
+  let mediaBlocked = false;
 
   function getFormState() {
     //TODO: This has several edge cases:
@@ -301,12 +312,15 @@ considering that this is a native form? -->
     if (!submitButton) return;
 
     const unchanged = getFormState() === initialFormState;
-    submitButton.disabled = unchanged;
+    submitButton.disabled = unchanged || mediaBlocked;
+    submitButton.title = mediaBlocked
+      ? "Дождитесь завершения загрузки или удалите фото с ошибкой"
+      : "";
     const submitText = submitButton.querySelector(".submit-text");
     if (submitText) {
       submitText.textContent =
         mode === "edit"
-          ? unchanged
+          ? unchanged && !mediaBlocked
             ? "Нет изменений"
             : "Сохранить"
           : "Добавить";
@@ -456,6 +470,13 @@ considering that this is a native form? -->
   productForm.addEventListener("change", () => {
     updateSubmitButton();
     scheduleDraftSave();
+  });
+  productForm.addEventListener("media-state-change", (event) => {
+    const state = (
+      event as CustomEvent<{ uploading: boolean; hasError: boolean }>
+    ).detail;
+    mediaBlocked = state.uploading || state.hasError;
+    updateSubmitButton();
   });
   window.addEventListener("pageshow", restoreDraft);
 
