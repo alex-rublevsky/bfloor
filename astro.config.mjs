@@ -2,7 +2,12 @@
 import node from "@astrojs/node";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
-import { defineConfig, envField, fontProviders } from "astro/config";
+import {
+  defineConfig,
+  envField,
+  fontProviders,
+  svgoOptimizer,
+} from "astro/config";
 
 import icon from "astro-icon";
 
@@ -10,7 +15,6 @@ import alpinejs from "@astrojs/alpinejs";
 
 // import sitemap from "@astrojs/sitemap";
 
-// https://astro.build/config
 export default defineConfig({
   site: "https://bfloor.ru",
   output: "server",
@@ -60,18 +64,30 @@ export default defineConfig({
         context: "server",
         access: "secret",
       }),
+      PUBLIC_YANDEX_STORAGE_BUCKET: envField.string({
+        context: "server",
+        access: "public",
+      }),
+      SECRET_YANDEX_STORAGE_ACCESS_KEY: envField.string({
+        context: "server",
+        access: "secret",
+      }),
+      SECRET_YANDEX_STORAGE_KEY: envField.string({
+        context: "server",
+        access: "secret",
+      }),
     },
   },
   vite: {
     plugins: [tailwindcss()],
   },
   build: {
-    concurrency: 8,
+    concurrency: 4,
   },
 
   prefetch: {
     prefetchAll: true,
-    defaultStrategy: "hover",
+    defaultStrategy: "viewport",
   },
 
   image: {
@@ -84,7 +100,9 @@ export default defineConfig({
 
   integrations: [sitemap(), icon(), alpinejs()],
 
-  vite: {
-    plugins: [tailwindcss()],
+  experimental: {
+    incrementalBuild: true,
+    svgOptimizer: svgoOptimizer(),
+    clientPrerender: true,
   },
 });
