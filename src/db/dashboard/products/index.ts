@@ -2,6 +2,7 @@ export type {
   CreateProductInput,
   UpdateProductInput,
   DeleteProductInput,
+  FormProduct,
 } from "./types";
 
 export { getAllProducts } from "./allProducts";

@@ -17,7 +17,28 @@ type ProductMutationFields = Pick<
 
 type StoreLocationId = ProductStoreLocation["storeLocationId"];
 
-//TODO: what is the difference between Partial<> and InferInsertModel?
+export type FormProduct = Partial<
+  Pick<
+    Product,
+    | "id"
+    | "isActive"
+    | "name"
+    | "slug"
+    | "images"
+    | "price"
+    | "discountedPrice"
+    | "categoryId"
+    | "brandId"
+    | "collectionId"
+    | "unitOfMeasurement"
+    | "squareMetersPerPack"
+    | "description"
+    | "importantNote"
+  >
+> & {
+  storeLocationIds?: ProductStoreLocation["storeLocationId"][];
+};
+
 export type CreateProductInput = ProductMutationFields & {
   storeLocationIds: StoreLocationId[];
 };
