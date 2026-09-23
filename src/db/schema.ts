@@ -103,6 +103,7 @@ export const products = sqliteTable(
       onDelete: "restrict",
     }),
     unitOfMeasurement: text("unit_of_measurement").notNull().default("м2"),
+    squareMetersPerPack: real("square_meters_per_pack"),
     viewCount: integer("view_count").notNull().default(0),
     description: text("description"),
     importantNote: text("important_note"),
@@ -147,6 +148,7 @@ export const variations = sqliteTable(
     // TODO: add image id's to switch the gallery to the relevant image
     price: real("price").notNull().default(0),
     discountedPrice: real("discounted_price"),
+    squareMetersPerPack: real("square_meters_per_pack"),
     createdAt: integer("created_at", { mode: "timestamp" }),
     updatedAt: integer("updated_at", { mode: "timestamp" }),
   },
