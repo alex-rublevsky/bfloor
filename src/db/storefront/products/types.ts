@@ -6,7 +6,6 @@ import type {
   ProductStoreLocation,
 } from "@/db/schema";
 
-//TODO: what is the difference between Partial<> and IfnerInsertModel?
 type StorefrontProductBase = Pick<
   Product,
   // | "id"
