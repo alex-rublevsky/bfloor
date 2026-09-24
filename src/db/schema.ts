@@ -108,8 +108,13 @@ export const products = sqliteTable(
     description: text("description"),
     importantNote: text("important_note"),
     country: integer("country"),
-    createdAt: integer("created_at", { mode: "timestamp" }),
-    updatedAt: integer("updated_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`)
+      .$onUpdate(() => new Date()),
   },
   (table) => [
     check(

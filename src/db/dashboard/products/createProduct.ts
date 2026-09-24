@@ -14,7 +14,9 @@ export async function createProduct(
       .values({
         isActive: product.isActive,
         slug: product.slug,
+        sku: product.sku,
         name: product.name,
+        images: product.images,
         categoryId: product.categoryId,
         brandId: product.brandId,
         collectionId: product.collectionId,
@@ -22,6 +24,9 @@ export async function createProduct(
         discountedPrice: product.discountedPrice,
         description: product.description,
         importantNote: product.importantNote,
+        unitOfMeasurement: product.unitOfMeasurement,
+        squareMetersPerPack: product.squareMetersPerPack,
+        country: product.country,
       })
       .returning();
     if (!insertedProduct) {

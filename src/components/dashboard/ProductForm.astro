@@ -36,6 +36,29 @@ const selectedCollectionId = product.collectionId
 
 const images = product.images ?? [];
 
+const updatedAtFormatter = new Intl.DateTimeFormat("ru-RU", {
+  timeZone: "Asia/Vladivostok",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hourCycle: "h23",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
+function formatTime(date?: Date | null) {
+  if (!date) return "";
+
+  const parts = Object.fromEntries(
+    updatedAtFormatter
+      .formatToParts(date)
+      .map(({ type, value }) => [type, value]),
+  );
+
+  return `${parts.hour}:${parts.minute}:${parts.second}, ${parts.day} ${parts.month} ${parts.year}`;
+}
+
 const creationResult = Astro.getActionResult(actions.product.createProduct);
 const updateResult = Astro.getActionResult(actions.product.updateProduct);
 
@@ -154,6 +177,15 @@ considering that this is a native form? -->
               aria-describedby="error-categoryId"
               error={inputErrors.categoryId}
             />
+            <Input
+              name="sku"
+              label="Артикул"
+              value={product.sku}
+              aria-describedby="error-sku"
+              error={inputErrors.sku}
+            />
+          </div>
+          <div class="inputRowWrapper">
             <Select
               name="brandId"
               label="Бренд"
@@ -165,6 +197,15 @@ considering that this is a native form? -->
               }))}
               aria-describedby="error-brandId"
               error={inputErrors.brandId}
+            />
+            <Select
+              name="collectionId"
+              label="Коллекция"
+              placeholder="Выбрать"
+              value={selectedCollectionId}
+              options={[]}
+              aria-describedby="error-collectionId"
+              error={inputErrors.collectionId}
             />
           </div>
           <div class="inputRowWrapper">
@@ -199,17 +240,6 @@ considering that this is a native form? -->
               error={inputErrors.country}
             />
           </div>
-          <!-- TODO: fix collection to only be pickable from the brand collections range -->
-          <!-- <Select
-        name="collectionId"
-        label="Коллекция"
-        placeholder="Выбрать"
-        value={selectedCollectionId}
-        options={}
-        aria-describedby="error-brandId"
-
-        error={inputErrors.brandId}
-      /> -->
         </div>
         <div class="inputRowWrapper gap-x-md! gap-y-sm!">
           <fieldset class="inline-max">
@@ -222,12 +252,19 @@ considering that this is a native form? -->
                     value={String(location.id)}
                     checked={
                       product.storeLocationIds?.includes(location.id) ?? false
-                    }>
+                    }
+                    aria-describedby="error-storeLocationIds">
                     {location.address}
                   </Checkbox>
                 ))
               }
             </div>
+            <span
+              id={`error-storeLocationIds`}
+              role="alert"
+              hidden={!inputErrors.storeLocationIds}>
+              {inputErrors.storeLocationIds}
+            </span>
           </fieldset>
           <Checkbox
             name="isActive"
@@ -237,7 +274,8 @@ considering that this is a native form? -->
           </Checkbox>
         </div>
 
-        <MarkdownEditor
+        <!-- TODO: re-do markdown editor from the ground up -->
+        <!-- <MarkdownEditor
           label="Важное примечание"
           name="importantNote"
           content={product.importantNote ?? ""}
@@ -247,7 +285,7 @@ considering that this is a native form? -->
           label="Описание"
           name="description"
           content={product.description ?? ""}
-        />
+        /> -->
       </fieldset>
 
       <!-- <h4 class="text-md">Атрибуты</h4> -->
@@ -285,6 +323,14 @@ considering that this is a native form? -->
         )
       }
     </div>
+    <p class="text-foreground-muted">
+      Последнее изменение: <span class="text-inherit"
+        >{formatTime(product.updatedAt)}</span
+      >
+    </p>
+    <p class="text-foreground-muted">
+      Создан: <span class="text-inherit">{formatTime(product.createdAt)}</span>
+    </p>
   </form>
 </section>
 

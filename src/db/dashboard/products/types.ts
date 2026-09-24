@@ -1,49 +1,20 @@
 import type { NewProduct, Product, ProductStoreLocation } from "@/db/schema";
 
-type ProductMutationFields = Pick<
-  NewProduct,
-  | "isActive"
-  | "slug"
-  | "name"
-  | "categoryId"
-  | "brandId"
-  | "collectionId"
-  | "price"
-  | "discountedPrice"
-  | "description"
-  | "importantNote"
-  | "images"
->;
-
 type StoreLocationId = ProductStoreLocation["storeLocationId"];
 
-export type FormProduct = Partial<
-  Pick<
-    Product,
-    | "id"
-    | "isActive"
-    | "name"
-    | "slug"
-    | "images"
-    | "price"
-    | "discountedPrice"
-    | "categoryId"
-    | "brandId"
-    | "collectionId"
-    | "unitOfMeasurement"
-    | "squareMetersPerPack"
-    | "description"
-    | "importantNote"
-  >
-> & {
-  storeLocationIds?: ProductStoreLocation["storeLocationId"][];
-};
-
-export type CreateProductInput = ProductMutationFields & {
+export type ProductWithStoreLocations = Product & {
   storeLocationIds: StoreLocationId[];
 };
 
-export type UpdateProductInput = ProductMutationFields & {
+export type NewProductWithStoreLocations = NewProduct & {
+  storeLocationIds: StoreLocationId[];
+};
+
+export type FormProduct = Partial<ProductWithStoreLocations>;
+
+export type CreateProductInput = NewProductWithStoreLocations;
+
+export type UpdateProductInput = Partial<Product> & {
   id: Product["id"];
   storeLocationIds: StoreLocationId[];
 };
