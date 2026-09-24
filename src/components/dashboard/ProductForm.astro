@@ -271,21 +271,22 @@ considering that this is a native form? -->
         </div>
       </fieldset>
     </div>
+    <div class="fixed bottom-2xs right-2xs flex gap-2xs">
+      <Button size="lg" id="submit-button" type="submit" disabled>
+        <span class="submit-text"
+          >{creating ? "Добавить" : "Нет изменений"}</span
+        >
+      </Button>
+      {
+        !creating && (
+          <Button size="lg" id="delete-button" variant="destructive">
+            Удалить
+          </Button>
+        )
+      }
+    </div>
   </form>
 </section>
-
-<div class="fixed bottom-2xs right-2xs flex gap-2xs">
-  <Button size="lg" id="submit-button" type="submit" disabled>
-    <span class="submit-text">{creating ? "Добавить" : "Нет изменений"}</span>
-  </Button>
-  {
-    !creating && (
-      <Button size="lg" id="delete-button" variant="destructive">
-        Удалить
-      </Button>
-    )
-  }
-</div>
 
 <style>
   form {
