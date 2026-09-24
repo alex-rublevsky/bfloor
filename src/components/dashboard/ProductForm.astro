@@ -11,9 +11,9 @@ import { getBrandsWithCollections } from "@/db/dashboard/brands";
 import { getAllAttributesWithValues } from "@/db/dashboard/attributes";
 import { actions, isInputError } from "astro:actions";
 import MarkdownEditor from "./MarkdownEditor.astro";
-import type { ProductWithStoreLocations } from "@/db/dashboard/products/index";
-
-type FormProduct = Partial<ProductWithStoreLocations>;
+import type { FormProduct } from "@/db/dashboard/products/index";
+import { UNITS_OF_MEASUREMENT } from "@/lib/units";
+import { COUNTRIES } from "@/lib/countries";
 
 interface Props {
   product?: FormProduct;
@@ -25,6 +25,9 @@ const brandsWithCollections = await getBrandsWithCollections();
 
 const attributesWithValues = await getAllAttributesWithValues();
 
+const selectedUnitOfMeasurement = product.unitOfMeasurement
+  ? String(product.unitOfMeasurement)
+  : "м2";
 const selectedCategoryId = product.categoryId ? String(product.categoryId) : "";
 const selectedBrandId = product.brandId ? String(product.brandId) : "";
 const selectedCollectionId = product.collectionId
@@ -101,7 +104,6 @@ considering that this is a native form? -->
               value={product.name}
               aria-describedby="error-name"
               required
-              autocomplete="off"
               minlength="1"
               error={inputErrors.name}
               autofocus
@@ -128,7 +130,6 @@ considering that this is a native form? -->
               aria-describedby="error-price"
               required
               error={inputErrors.price}
-              autocomplete="off"
             />
             <Input
               name="discountedPrice"
@@ -136,7 +137,6 @@ considering that this is a native form? -->
               value={product.discountedPrice ?? ""}
               aria-describedby="error-discountedPrice"
               error={inputErrors.discountedPrice}
-              autocomplete="off"
             />
           </div>
 
@@ -167,6 +167,38 @@ considering that this is a native form? -->
               error={inputErrors.brandId}
             />
           </div>
+          <div class="inputRowWrapper">
+            <Select
+              name="unitOfMeasurement"
+              label="Единица измерения"
+              value={selectedUnitOfMeasurement}
+              options={UNITS_OF_MEASUREMENT.map((unit) => ({
+                value: String(unit.id),
+                label: unit.value,
+              }))}
+              required
+              aria-describedby="error-unitOfMeasurement"
+              error={inputErrors.unitOfMeasurement}
+            />
+            <Input
+              name="squareMetersPerPack"
+              label="Площадь упаковки м²"
+              value={product.squareMetersPerPack ?? null}
+              aria-describedby="error-squareMetersPerPack"
+              error={inputErrors.squareMetersPerPack}
+            />
+            <Select
+              name="country"
+              label="Страна"
+              value={product.country?.toString() ?? null}
+              options={COUNTRIES.map((c) => ({
+                value: String(c.id),
+                label: c.name,
+              }))}
+              aria-describedby="error-country"
+              error={inputErrors.country}
+            />
+          </div>
           <!-- TODO: fix collection to only be pickable from the brand collections range -->
           <!-- <Select
         name="collectionId"
@@ -178,6 +210,25 @@ considering that this is a native form? -->
 
         error={inputErrors.brandId}
       /> -->
+        </div>
+        <div class="inputRowWrapper gap-x-md! gap-y-sm!">
+          <fieldset class="inline-max">
+            <legend class="text-base!">В наличии в магазинах</legend>
+            <div class="flex flex-wrap shrink-0 gap-x-sm gap-y-2xs">
+              {
+                STORE_LOCATIONS.map((location) => (
+                  <Checkbox
+                    name="storeLocationIds"
+                    value={String(location.id)}
+                    checked={
+                      product.storeLocationIds?.includes(location.id) ?? false
+                    }>
+                    {location.address}
+                  </Checkbox>
+                ))
+              }
+            </div>
+          </fieldset>
           <Checkbox
             name="isActive"
             value="1"
@@ -185,23 +236,6 @@ considering that this is a native form? -->
             Товар активен
           </Checkbox>
         </div>
-        <fieldset class="inline-max">
-          <legend class="text-base!">В наличии в магазинах</legend>
-          <div class="flex flex-wrap shrink-0 gap-x-sm gap-y-2xs">
-            {
-              STORE_LOCATIONS.map((location) => (
-                <Checkbox
-                  name="storeLocationIds"
-                  value={String(location.id)}
-                  checked={
-                    product.storeLocationIds?.includes(location.id) ?? false
-                  }>
-                  {location.address}
-                </Checkbox>
-              ))
-            }
-          </div>
-        </fieldset>
 
         <MarkdownEditor
           label="Важное примечание"
@@ -219,26 +253,28 @@ considering that this is a native form? -->
       <!-- <h4 class="text-md">Атрибуты</h4> -->
       <fieldset>
         <legend>Атрибуты</legend>
-        {
-          attributesWithValues.map((attribute) => (
-            <div>
-              <h6>{attribute.name}</h6>
-              <div class="grid">
-                {attribute.attributeValues.map((value) => (
-                  <Checkbox name={attribute.name + " " + value.name}>
-                    {value.name}
-                  </Checkbox>
-                ))}
+        <div class="autoGrid">
+          {
+            attributesWithValues.map((attribute) => (
+              <div>
+                <h6>{attribute.name}</h6>
+                <div class="grid">
+                  {attribute.attributeValues.map((value) => (
+                    <Checkbox name={attribute.name + " " + value.name}>
+                      {value.name}
+                    </Checkbox>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))
-        }
+            ))
+          }
+        </div>
       </fieldset>
     </div>
   </form>
 </section>
 
-<div class="flex gap-2xs">
+<div class="fixed bottom-2xs right-2xs flex gap-2xs">
   <Button size="lg" id="submit-button" type="submit" disabled>
     <span class="submit-text">{creating ? "Добавить" : "Нет изменений"}</span>
   </Button>
