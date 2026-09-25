@@ -92,8 +92,7 @@
   --muted-foreground: oklch(0.5 0.0374 var(--hue));
 
   /* make sure border is the same as secondary but with 50% opacity */
-  --secondary: oklch(0.5072 0.2029 var(--hue));
-  --secondary-hover: oklch(0.5072 0.2029 var(--hue) calc(l_ * _0 0.9));
+  --secondary: oklch(0.76 0.05 var(--hue));
 
   --accent: oklch(0.54 0.2203 var(--hue));
   --accent-foreground: var(--background);
@@ -101,6 +100,7 @@
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.98 0.01 25);
 
+/*TODO: perhaps border should be the same as muted — pick the best color and standardize*/
   --border: oklch(0.8895 0.1033 var(--beige-hue) / 0.5);
 
   --section-padding-x: var(--spacing-2xs);
@@ -136,6 +136,49 @@
   --space-2xl-3xl: clamp(4.25rem, 3.3947rem + 4.2763vw, 7.5rem);
 
   --border-width: clamp(0.09rem, 0.05rem + 0.03vw, 0.095rem);
+
+  input,select{
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius-sm);
+      background-color: transparent;
+      color: var(--foreground);
+      font-size: inherit;
+      font-family: inherit;
+      outline: none;
+       transition: 0.17s ease-out;
+       width: 100%;
+       padding-inline: var(--spacing-xs);
+       padding-block: 0.5em;
+       /*not to be vertically expanded becuase of an error in a neighbor input*/
+       align-self: start;
+       &:focus{
+            transition: border-color 0.17s ease-out;
+            border-color: var(--accent);
+       }
+       &:hover{
+            transition: border-color 0s;
+            border-color: oklch(from var(--secondary)  calc(l) c h );
+            &:focus{
+                 transition: border-color 0.17s ease-out;
+                 border-color: var(--accent);
+            }
+       }
+       &:disabled{
+           opacity: 0.5;
+           cursor: not-allowed;
+
+       }
+
+
+  }
+  .has-error .input-field,
+  .has-error .input-field:focus {
+    border-color: var(--destructive);
+  }
+  .has-error .input-field:focus + .input-label,
+  .has-error .input-field:not(:placeholder-shown) + .input-label {
+    color: var(--destructive);
+  }
 }
 
 @media (width >= 640px) {
@@ -193,8 +236,8 @@ legend {
 
 [id*="error"] {
   display: block;
-  margin-top: var(--spacing-3xs);
-  line-height: 1.4;
+  /*margin-top: var(--spacing-3xs);*/
+  line-height: 1.6;
   font-size: var(--step--1);
   color: var(--destructive);
 }
@@ -422,6 +465,7 @@ select {
   display: grid;
   gap: var(--spacing-2xs);
   grid-template-columns: 1fr;
+  /*align-items: start;*/
   @container (min-width: 60ch) {
     grid-template-columns: 1fr 1fr;
   }

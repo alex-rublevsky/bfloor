@@ -54,112 +54,77 @@ TODO: when the input is readonly={true}, the text should be foreground-muted col
     "input-wrapper",
     { "has-label": hasLabel, "has-error": hasError },
   ]}>
-  {
-    isTextarea ? (
-      <textarea
-        id={inputId}
-        name={name}
-        placeholder={hasLabel ? " " : placeholder}
-        class:list={["input-field", "textarea-field", { disabled: disabled }]}
-        required={required || undefined}
-        aria-invalid={hasError ? "true" : undefined}
-        rows={rows}
-        disabled={disabled}
-        autocomplete={autocomplete}
-        {...rest}>
-        {fieldValue}
-      </textarea>
-    ) : (
-      <input
-        id={inputId}
-        value={fieldValue}
-        name={name}
-        type={type}
-        placeholder={hasLabel ? " " : placeholder}
-        class:list={["input-field", { disabled: disabled }]}
-        required={required || undefined}
-        aria-invalid={hasError ? "true" : undefined}
-        step={step?.toString()}
-        disabled={disabled}
-        readonly={readonly}
-        autocomplete={autocomplete}
-        minlength={minlength}
-        autofocus={autofocus}
-        {...rest}
-      />
-    )
-  }
-  {
-    hasLabel && (
-      <label for={inputId} class="input-label">
-        {label}
-      </label>
-    )
-  }
-
+  <div class="input-control">
+    {
+      isTextarea ? (
+        <textarea
+          id={inputId}
+          name={name}
+          placeholder={hasLabel ? " " : placeholder}
+          class="input-field textarea-field"
+          required={required || undefined}
+          aria-invalid={hasError ? "true" : undefined}
+          rows={rows}
+          disabled={disabled}
+          autocomplete={autocomplete}
+          {...rest}>
+          {fieldValue}
+        </textarea>
+      ) : (
+        <input
+          id={inputId}
+          value={fieldValue}
+          name={name}
+          type={type}
+          placeholder={hasLabel ? " " : placeholder}
+          class="input-field"
+          required={required || undefined}
+          aria-invalid={hasError ? "true" : undefined}
+          step={step?.toString()}
+          disabled={disabled}
+          readonly={readonly}
+          autocomplete={autocomplete}
+          minlength={minlength}
+          autofocus={autofocus}
+          {...rest}
+        />
+      )
+    }
+    {
+      hasLabel && (
+        <label for={inputId} class="input-label">
+          {label}
+        </label>
+      )
+    }
+  </div>
   <span id={`error-${name}`} role="alert" hidden={!error}>
     {error}
   </span>
 </div>
 
 <style>
-  .input-wrapper {
+  .input-control {
     position: relative;
-    width: 100%;
-  }
-
-  .input-field {
-    width: 100%;
-    height: 2.75rem;
-    padding-inline: 0.75rem;
-    padding-block: 0.625rem;
-    border: var(--border-width) solid var(--border);
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--foreground);
-    font-size: inherit;
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.2s ease-out;
-  }
-
-  .input-field::placeholder {
-    color: var(--foreground-muted);
-  }
-
-  .input-field:focus {
-    border-color: var(--primary);
-  }
-
-  .has-label .input-field {
-    padding-top: 0.7em;
-    padding-bottom: 0.25em;
   }
 
   .textarea-field {
     height: auto;
-    min-height: 6rem;
-    padding-block: 1.125rem 0.625rem;
+    min-height: 6em;
+    /*padding-block: 1.125rem 0.625rem;*/
     resize: vertical;
   }
 
   .input-label {
     pointer-events: none;
     position: absolute;
-    left: 0.75rem;
+    left: var(--spacing-xs);
     z-index: 1;
-    /* Default state: sitting inside the input, vertically centred */
-    top: 1.375rem;
-    transform: translateY(-50%);
+    top: 50%;
+    translate: 0 -50%;
     color: var(--muted-foreground);
-    font-size: 1em;
-    transition:
-      top 0.25s ease-out,
-      transform 0.25s ease-out,
-      font-size 0.25s ease-out,
-      color 0.25s ease-out,
-      padding-inline 0.25s ease-out,
-      background-color 0.25s ease-out;
+    font-size: var(--text-base);
+    transition: 0.17s ease-out;
   }
 
   .textarea-field + .input-label {
@@ -169,31 +134,16 @@ TODO: when the input is readonly={true}, the text should be foreground-muted col
   .input-field:focus + .input-label,
   .input-field:not(:placeholder-shown) + .input-label {
     top: 0;
-    transform: translateY(-50%);
-    font-size: 0.75rem;
+    translate: calc(-1 * var(--spacing-3xs) / 1.8) -50%;
+    font-size: var(--text-xs);
     color: var(--foreground);
     background-color: var(--background);
-    padding-inline: 0.25rem;
+    padding-inline: var(--spacing-3xs);
   }
 
   @media (prefers-reduced-motion: reduce) {
     .input-label {
       transition: none;
     }
-  }
-
-  .disabled {
-    opacity: 0.5;
-    pointer-events: none;
-  }
-
-  .has-error .input-field,
-  .has-error .input-field:focus {
-    border-color: var(--destructive);
-  }
-
-  .has-error .input-field:focus + .input-label,
-  .has-error .input-field:not(:placeholder-shown) + .input-label {
-    color: var(--destructive);
   }
 </style>

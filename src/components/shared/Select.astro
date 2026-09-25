@@ -1,36 +1,150 @@
 ---
-interface Props {
-    name: string;
-    selectedOption?: number;
-    options: { id: number; name: string }[];
-    label: string;
-    required?: boolean;
-    disabled?: boolean;
+interface Option {
+  value: string;
+  label: string;
 }
+
+interface Props {
+  name: string;
+  label: string;
+  options: Option[];
+  value?: string | null;
+  placeholder?: string;
+  required?: boolean;
+  error?: string[];
+}
+
 const {
-    name,
-    selectedOption,
-    options,
-    label,
-    required = false,
-    disabled = false,
+  name,
+  label,
+  options,
+  value = "",
+  placeholder,
+  required,
+  error,
+  ...rest
 } = Astro.props;
+
+const selectId = `select-${name}`;
+const hasError = !!error;
 ---
 
-<div>
-    <label for={name}>{label}:</label>
+<div class:list={["select-wrapper", { "has-error": hasError }]}>
+  <select
+    id={selectId}
+    name={name}
+    class="select-field input-field"
+    required={required || undefined}
+    {...rest}>
+    <button>
+      <selectedcontent></selectedcontent>
+    </button>
+    {
+      placeholder !== undefined && (
+        <option value="" selected={value === ""}>
+          {placeholder}
+        </option>
+      )
+    }
+    {
+      options.map((option) => (
+        <option value={option.value} selected={option.value === value}>
+          {option.label}
+        </option>
+      ))
+    }
+  </select>
+  <label for={selectId} class="select-label">{label}</label>
 
-    <select name={name} id={name} value={selectedOption} required={required}>
-        <option value="">— Выбрать —</option>
-        {
-            options.map((option: { id: number; name: string }) => (
-                <option
-                    selected={option.id === selectedOption}
-                    value={option.id}
-                >
-                    {option.name}
-                </option>
-            ))
-        }
-    </select>
+  <span id={`error-${name}`} role="alert" hidden={!error}>
+    {error}
+  </span>
 </div>
+
+<style>
+  select,
+  ::picker(select) {
+    appearance: base-select;
+  }
+
+  select {
+    cursor: pointer;
+    &::picker-icon {
+      color: var(--color-primary);
+      /*TODO: why can't this transition be inherited fom select?*/
+      transition: rotate 0.17s ease-out;
+    }
+    &:open::picker-icon {
+      rotate: 180deg;
+    }
+  }
+
+  ::picker(select) {
+    top: calc(anchor(bottom) + var(--spacing-3xs));
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--background);
+    box-shadow: 0 1px 15px 0 rgba(0, 0, 0, 0.15);
+  }
+
+  option {
+    padding: var(--spacing-3xs) var(--spacing-xs);
+    border-bottom: var(--border-width) solid var(--border);
+    &:last-of-type {
+      border-bottom: none;
+    }
+    &:hover,
+    :focus {
+      background: var(--border);
+      &:active {
+        background: var(--muted);
+      }
+    }
+    &::checkmark {
+      /*TODO: update checkmark*/
+      color: var(--color-primary);
+      /*content: "☑️";*/
+      order: 1;
+      margin-left: auto;
+    }
+    &:checked {
+      font-weight: bold;
+    }
+  }
+
+  select:has(option:checked[value=""]) {
+    color: var(--foreground-muted);
+  }
+
+  .select-wrapper {
+    position: relative;
+    display: inline-grid;
+    width: max-content;
+  }
+
+  /*inline grid and grid area are for the long label
+  to be taken into account of the width of the select
+  e.g. with единица измерения: м2 */
+  .select-field,
+  .select-label {
+    grid-area: 1 / 1;
+  }
+
+  .select-label {
+    position: relative;
+    align-self: start;
+    justify-self: start;
+    left: var(--spacing-xs);
+    top: 0;
+    z-index: 1;
+    translate: calc(-1 * var(--spacing-3xs) / 1.8) -50%;
+    padding-inline: var(--spacing-3xs);
+    background-color: var(--background);
+    color: var(--foreground);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+    pointer-events: none;
+    /*for a balanced look with a long label and short value*/
+    margin-right: 1.8em;
+  }
+</style>
