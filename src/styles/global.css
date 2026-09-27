@@ -45,47 +45,49 @@ textarea {
 }
 
 .dropdown.active > button {
-    color: var(--color-primary);
-    background-color: var(--color-background);
-    opacity: 70%;
-    backdrop-filter: blur(12px);
+  color: var(--color-primary);
+  background-color: var(--color-background);
+  opacity: 70%;
+  backdrop-filter: blur(12px);
 }
 
 .dropdown {
-    position: relative;
+  position: relative;
 }
 
 .dropdown-menu {
-    position: absolute;
-    right:0;
-    bottom: calc(100% + 0.5rem);
-    background-color: var(--color-background);
-    padding: var(--spacing-2xs);
-    border-radius: var(--radius-sm);
-    box-shadow: 0 1px 15px 0 rgba(0, 0, 0, .15);
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(-10px);
-    transition: opacity 150ms ease-in-out, transform 150ms ease-in-out;
-    z-index: 30;
-
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.5rem);
+  background-color: var(--color-background);
+  padding: var(--spacing-2xs);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 15px 0 rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
+  transition:
+    opacity 150ms ease-in-out,
+    transform 150ms ease-in-out;
+  z-index: 30;
 }
 
 .dropdown-menu {
-    position: absolute;
-    right:0;
-    bottom: calc(100% + 0.5rem);
-    background-color: var(--color-background);
-    padding: var(--spacing-2xs);
-    border-radius: var(--radius-sm);
-    box-shadow: 0 1px 15px 0 rgba(0, 0, 0, .15);
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(-10px);
-    transition: opacity 150ms ease-in-out, transform 150ms ease-in-out;
-    z-index: 30;
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.5rem);
+  background-color: var(--color-background);
+  padding: var(--spacing-2xs);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 15px 0 rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
+  transition:
+    opacity 150ms ease-in-out,
+    transform 150ms ease-in-out;
+  z-index: 30;
 }
-
 
 .dropdown--down .dropdown-menu {
   top: calc(100% + 0.5rem);
@@ -93,9 +95,8 @@ textarea {
   transform: translateY(-10px);
 }
 
-
 .dropdown.active > button + .dropdown-menu {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }

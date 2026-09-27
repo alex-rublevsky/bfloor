@@ -14,6 +14,8 @@
 *::before,
 *::after {
   corner-shape: squircle;
+  scrollbar-color: var(--muted) transparent;
+  scrollbar-width: thin;
 }
 
 /*.break-balance {text-wrap: balance;}*/
@@ -100,7 +102,7 @@
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.98 0.01 25);
 
-/*TODO: perhaps border should be the same as muted — pick the best color and standardize*/
+  /*TODO: perhaps border should be the same as muted — pick the best color and standardize*/
   --border: oklch(0.8895 0.1033 var(--beige-hue) / 0.5);
 
   --section-padding-x: var(--spacing-2xs);
@@ -137,40 +139,81 @@
 
   --border-width: clamp(0.09rem, 0.05rem + 0.03vw, 0.095rem);
 
-  input,select{
-      border: var(--border-width) solid var(--border);
-      border-radius: var(--radius-sm);
-      background-color: transparent;
-      color: var(--foreground);
-      font-size: inherit;
-      font-family: inherit;
-      outline: none;
-       transition: 0.17s ease-out;
-       width: 100%;
-       padding-inline: var(--spacing-xs);
-       padding-block: 0.5em;
-       /*not to be vertically expanded becuase of an error in a neighbor input*/
-       align-self: start;
-       &:focus{
-            transition: border-color 0.17s ease-out;
-            border-color: var(--accent);
-       }
-       &:hover{
-            transition: border-color 0s;
-            border-color: oklch(from var(--secondary)  calc(l) c h );
-            &:focus{
-                 transition: border-color 0.17s ease-out;
-                 border-color: var(--accent);
-            }
-       }
-       &:disabled{
-           opacity: 0.5;
-           cursor: not-allowed;
+  select option {
+    cursor: pointer;
+    white-space: wrap;
 
-       }
-
-
+    /*width: min-content;*/
+    line-height: 111%;
   }
+
+  option {
+    width: 100%;
+    padding: var(--spacing-3xs) var(--spacing-xs);
+    border-bottom: var(--border-width) solid var(--border);
+    &:last-of-type {
+      border-bottom: none;
+    }
+    &:hover,
+    :focus {
+      background: var(--border);
+      &:active {
+        background: var(--muted);
+      }
+    }
+    &::checkmark {
+      /*TODO: update checkmark*/
+      color: var(--color-primary);
+      /*content: "☑️";*/
+      order: 1;
+      margin-left: auto;
+    }
+    &:checked {
+      font-weight: bold;
+    }
+  }
+
+  textarea {
+    field-sizing: content;
+  }
+
+  select,
+  ::picker(select) {
+    appearance: base-select;
+  }
+
+  input,
+  select {
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius-sm);
+    background-color: transparent;
+    color: var(--foreground);
+    font-size: inherit;
+    font-family: inherit;
+    outline: none;
+    transition: 0.17s ease-out;
+    width: 100%;
+
+    /*not to be vertically expanded becuase of an error in a neighbor input*/
+    align-self: start;
+    &:focus {
+      transition: border-color 0.17s ease-out;
+      border-color: var(--accent);
+    }
+    &:hover {
+      transition: border-color 0s;
+      border-color: oklch(from var(--secondary) calc(l) c h);
+      &:focus {
+        transition: border-color 0.17s ease-out;
+        border-color: var(--accent);
+      }
+    }
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
   .has-error .input-field,
   .has-error .input-field:focus {
     border-color: var(--destructive);
@@ -202,36 +245,35 @@ html {
   background-color: var(--background);
   scrollbar-gutter: stable;
   &:has(dialog[open]) {
-      overflow: hidden;
+    overflow: hidden;
   }
 }
 
 dialog {
-    margin: auto;
-    background-color: var(--background);
-    border-radius: var(--radius-md);
-    box-shadow: 0 1px 25px 0 rgba(0, 0, 0, .15);
-    &::backdrop {
-        background-color:       color-mix(in oklch, var(--foreground) 30%, transparent);
-        backdrop-filter: blur(0.15rem);
-        cursor: pointer;
-    }
-    & > .wrapper {
-        padding: var(--spacing-sm);
-
-    }
+  margin: auto;
+  background-color: var(--background);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 25px 0 rgba(0, 0, 0, 0.15);
+  &::backdrop {
+    background-color: color-mix(in oklch, var(--foreground) 30%, transparent);
+    backdrop-filter: blur(0.15rem);
+    cursor: pointer;
+  }
+  & > .wrapper {
+    padding: var(--spacing-sm);
+  }
 }
 
 fieldset {
-    border: var(--border-width) solid var(--muted);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-2xs) var(--spacing-sm) var(--spacing-xs) var(--spacing-sm);
-
+  border: var(--border-width) solid var(--muted);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-2xs) var(--spacing-sm) var(--spacing-xs)
+    var(--spacing-sm);
 }
 
 legend {
-    font-size: var(--text-md);
-    font-weight: 300;
+  font-size: var(--text-md);
+  font-weight: 300;
 }
 
 [id*="error"] {
@@ -242,9 +284,7 @@ legend {
   color: var(--destructive);
 }
 
-
 @layer base {
-
   body {
     accent-color: var(--accent);
     background-color: var(--background);
@@ -343,11 +383,6 @@ legend {
   }
 }
 
-textarea,
-select {
-  field-sizing: content;
-}
-
 .skeleton {
   animation: skeleton-loading 1s linear infinite alternate;
 }
@@ -394,7 +429,6 @@ select {
     transform: scale(0.97);
   }
 }
-
 
 /*dashboard entity lists*/
 .cutoffLines {

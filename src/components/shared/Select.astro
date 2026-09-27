@@ -62,12 +62,13 @@ const hasError = !!error;
 </div>
 
 <style>
-  select,
-  ::picker(select) {
-    appearance: base-select;
-  }
-
   select {
+    field-sizing: content;
+    /*this padding is to be synced with input's*/
+    padding-inline: var(--spacing-xs);
+    padding-block: 0.5em;
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius-sm);
     cursor: pointer;
     &::picker-icon {
       color: var(--color-primary);
@@ -82,34 +83,10 @@ const hasError = !!error;
   ::picker(select) {
     top: calc(anchor(bottom) + var(--spacing-3xs));
     border: var(--border-width) solid var(--border);
-    border-radius: var(--radius-sm);
+    /*TODO: why does the supposed var(--radius-sm) appear larger here? fix the 0.5rem*/
+    border-radius: 0.5rem;
     background: var(--background);
     box-shadow: 0 1px 15px 0 rgba(0, 0, 0, 0.15);
-  }
-
-  option {
-    padding: var(--spacing-3xs) var(--spacing-xs);
-    border-bottom: var(--border-width) solid var(--border);
-    &:last-of-type {
-      border-bottom: none;
-    }
-    &:hover,
-    :focus {
-      background: var(--border);
-      &:active {
-        background: var(--muted);
-      }
-    }
-    &::checkmark {
-      /*TODO: update checkmark*/
-      color: var(--color-primary);
-      /*content: "☑️";*/
-      order: 1;
-      margin-left: auto;
-    }
-    &:checked {
-      font-weight: bold;
-    }
   }
 
   select:has(option:checked[value=""]) {
