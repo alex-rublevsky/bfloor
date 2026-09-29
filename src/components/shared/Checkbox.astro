@@ -1,13 +1,37 @@
 ---
 interface Props {
-    name: string;
-    label: string;
-    checked: boolean;
+  name?: string;
+  value?: string;
+  disabled?: boolean;
+  checked?: boolean;
 }
-const { name, label, checked } = Astro.props;
+
+const { name, value, disabled, checked, ...rest } = Astro.props;
 ---
 
-<div>
-    <input id={name} type="checkbox" name={name} checked={checked} />
-    <label for={name}>{label}</label>
-</div>
+<label class="checkbox-wrapper">
+  <input
+    type="checkbox"
+    name={name}
+    value={value}
+    checked={checked}
+    disabled={disabled}
+    class="checkbox-input"
+    {...rest}
+  />
+  <slot />
+</label>
+
+<style>
+  .checkbox-wrapper {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    gap: var(--spacing-3xs);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    & input {
+      align-self: center;
+    }
+  }
+</style>
