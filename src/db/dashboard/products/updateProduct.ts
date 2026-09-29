@@ -1,9 +1,5 @@
 import { db } from "@/db/index";
-import {
-  products,
-  productStoreLocations,
-  productAttributeValues,
-} from "@/db/schema";
+import { products, storeLocations, productAttributeValues } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type {
   ProductWithRelations,
@@ -43,8 +39,8 @@ export async function updateProduct(
     }
 
     await tx
-      .delete(productStoreLocations)
-      .where(eq(productStoreLocations.productId, product.id));
+      .delete(storeLocations)
+      .where(eq(storeLocations.productId, product.id));
 
     const locationRows = product.storeLocationIds.map((storeLocationId) => ({
       productId: product.id,
@@ -52,7 +48,7 @@ export async function updateProduct(
     }));
 
     if (locationRows.length > 0) {
-      await tx.insert(productStoreLocations).values(locationRows);
+      await tx.insert(storeLocations).values(locationRows);
     }
 
     await tx

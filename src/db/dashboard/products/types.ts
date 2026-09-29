@@ -1,12 +1,12 @@
 import type {
   NewProduct,
   Product,
-  ProductStoreLocation,
+  StoreLocation,
   AttributeValue,
   Attribute,
 } from "@/db/schema";
 
-type StoreLocationId = ProductStoreLocation["storeLocationId"];
+type StoreLocationId = StoreLocation["storeLocationId"];
 
 export type AttributeSelection = {
   attributeId: Attribute["id"];

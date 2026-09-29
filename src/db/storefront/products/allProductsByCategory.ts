@@ -11,7 +11,7 @@ export async function getAllProductsByCategory(
   const safePage = Math.max(1, Math.floor(page ?? 1));
   const offset = (safePage - 1) * pageSize;
 
-  return await db.query.products.findMany({
+  const products = await db.query.products.findMany({
     limit: pageSize,
     offset: offset,
     where: {
@@ -21,10 +21,17 @@ export async function getAllProductsByCategory(
       category: { columns: { name: true, slug: true } },
       brand: { columns: { name: true, slug: true, image: true } },
       collection: { columns: { name: true, slug: true } },
-      productStoreLocations: { columns: { storeLocationId: true } },
+      storeLocations: { columns: { storeLocationId: true } },
     },
     orderBy: {
       viewCount: "desc",
     },
   });
+
+  return products.map((product) => ({
+    ...product,
+    storeLocations: product.storeLocations.map(
+      ({ storeLocationId }) => storeLocationId,
+    ),
+  }));
 }

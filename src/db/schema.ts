@@ -161,8 +161,8 @@ export const variations = sqliteTable(
   (table) => [index("variations_productId_idx").on(table.productId)],
 );
 
-export const productStoreLocations = sqliteTable(
-  "product_store_locations",
+export const storeLocations = sqliteTable(
+  "store_locations",
   {
     productId: integer("product_id")
       .references(() => products.id, { onDelete: "cascade" })
@@ -171,14 +171,8 @@ export const productStoreLocations = sqliteTable(
   },
   (table) => [
     primaryKey({ columns: [table.storeLocationId, table.productId] }),
-    index("product_storeLocations_idx").on(
-      table.productId,
-      table.storeLocationId,
-    ),
-    check(
-      "product_storeLocationId_check",
-      sql`${table.storeLocationId} IN (0, 1, 2)`,
-    ),
+    index("storeLocations_idx").on(table.productId, table.storeLocationId),
+    check("storeLocationId_check", sql`${table.storeLocationId} IN (0, 1, 2)`),
   ],
 );
 
@@ -322,6 +316,6 @@ export type NewAttribute = typeof attributes.$inferInsert;
 export type AttributeValue = typeof attributeValues.$inferSelect;
 export type NewAttributeValue = typeof attributeValues.$inferInsert;
 
-export type ProductStoreLocation = typeof productStoreLocations.$inferSelect;
+export type StoreLocation = typeof storeLocations.$inferSelect;
 
 export type ProductAttributeValues = typeof productAttributeValues.$inferSelect;

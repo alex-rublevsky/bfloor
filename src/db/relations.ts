@@ -18,11 +18,11 @@ export const relations = defineRelations(schema, (r) => ({
     }),
     productAttributeValues: r.many.productAttributeValues(),
     variations: r.many.variations(),
-    productStoreLocations: r.many.productStoreLocations(),
+    storeLocations: r.many.storeLocations(),
   },
-  productStoreLocations: {
+  storeLocations: {
     products: r.many.products({
-      from: r.productStoreLocations.productId,
+      from: r.storeLocations.productId,
       to: r.products.id,
     }),
   },

@@ -17,7 +17,7 @@ export async function getProductBySlug(
           attributeValue: true,
         },
       },
-      productStoreLocations: {
+      storeLocations: {
         columns: {
           storeLocationId: true,
         },
@@ -28,7 +28,7 @@ export async function getProductBySlug(
 
   return {
     ...row,
-    storeLocationIds: row.productStoreLocations.map(
+    storeLocationIds: row.storeLocations.map(
       ({ storeLocationId }) => storeLocationId,
     ),
     attributeValueIds: row.productAttributeValues.map(

@@ -1,9 +1,5 @@
 import { db } from "@/db/index";
-import {
-  products,
-  productStoreLocations,
-  productAttributeValues,
-} from "@/db/schema";
+import { products, storeLocations, productAttributeValues } from "@/db/schema";
 import type {
   CreateProductInput,
   ProductWithRelations,
@@ -42,7 +38,7 @@ export async function createProduct(
     }));
 
     if (locationRows.length > 0) {
-      await tx.insert(productStoreLocations).values(locationRows);
+      await tx.insert(storeLocations).values(locationRows);
     }
 
     const attributeRows = product.productAttributeValues.map((selection) => ({
