@@ -1,23 +1,35 @@
-import type { NewProduct, Product, ProductStoreLocation } from "@/db/schema";
+import type {
+  NewProduct,
+  Product,
+  ProductStoreLocation,
+  AttributeValue,
+  Attribute,
+} from "@/db/schema";
 
 type StoreLocationId = ProductStoreLocation["storeLocationId"];
 
-export type ProductWithStoreLocations = Product & {
-  storeLocationIds: StoreLocationId[];
+export type AttributeSelection = {
+  attributeId: Attribute["id"];
+  attributeValueId: AttributeValue["id"];
 };
 
-export type NewProductWithStoreLocations = NewProduct & {
-  storeLocationIds: StoreLocationId[];
+export type ProductFormData = Partial<Product> & {
+  storeLocationIds?: StoreLocationId[];
+  attributeValueIds?: AttributeValue["id"][];
 };
 
-export type FormProduct = Partial<ProductWithStoreLocations>;
+type ProductRelations = {
+  storeLocationIds: StoreLocationId[];
+  productAttributeValues: AttributeSelection[];
+};
 
-export type CreateProductInput = NewProductWithStoreLocations;
+export type ProductWithRelations = Product & ProductRelations;
+
+export type CreateProductInput = NewProduct & ProductRelations;
 
 export type UpdateProductInput = Partial<Product> & {
   id: Product["id"];
-  storeLocationIds: StoreLocationId[];
-};
+} & ProductRelations;
 
 export type DeleteProductInput = {
   id: Product["id"];

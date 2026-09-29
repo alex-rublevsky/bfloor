@@ -1,20 +1,27 @@
 import { db } from "@/db/index";
-import { products, productStoreLocations } from "@/db/schema";
+import {
+  products,
+  productStoreLocations,
+  productAttributeValues,
+} from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type {
+  ProductWithRelations,
   UpdateProductInput,
-  ProductWithStoreLocations,
 } from "@/db/dashboard/products/types";
 
+//TODO: is it appropriate to have UpdateProductInput as a return type?
+// same for the createProduct function
 export async function updateProduct(
   product: UpdateProductInput,
-): Promise<ProductWithStoreLocations> {
+): Promise<ProductWithRelations> {
   return await db.transaction(async (tx) => {
     const [updatedProduct] = await tx
       .update(products)
       .set({
         isActive: product.isActive,
         slug: product.slug,
+        sku: product.sku,
         name: product.name,
         images: product.images,
         categoryId: product.categoryId,
@@ -24,6 +31,9 @@ export async function updateProduct(
         discountedPrice: product.discountedPrice,
         description: product.description,
         importantNote: product.importantNote,
+        unitOfMeasurement: product.unitOfMeasurement,
+        squareMetersPerPack: product.squareMetersPerPack,
+        country: product.country,
       })
       .where(eq(products.id, product.id))
       .returning();
@@ -45,9 +55,24 @@ export async function updateProduct(
       await tx.insert(productStoreLocations).values(locationRows);
     }
 
+    await tx
+      .delete(productAttributeValues)
+      .where(eq(productAttributeValues.productId, product.id));
+
+    const attributeRows = product.productAttributeValues.map((selection) => ({
+      productId: updatedProduct.id,
+      attributeId: selection.attributeId,
+      attributeValueId: selection.attributeValueId,
+    }));
+
+    if (attributeRows.length > 0) {
+      await tx.insert(productAttributeValues).values(attributeRows);
+    }
+
     return {
       ...updatedProduct,
       storeLocationIds: product.storeLocationIds,
+      productAttributeValues: product.productAttributeValues,
     };
   });
 }

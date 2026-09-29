@@ -1,13 +1,17 @@
 import { db } from "@/db/index";
-import { products, productStoreLocations } from "@/db/schema";
+import {
+  products,
+  productStoreLocations,
+  productAttributeValues,
+} from "@/db/schema";
 import type {
   CreateProductInput,
-  ProductWithStoreLocations,
+  ProductWithRelations,
 } from "@/db/dashboard/products/types";
 
 export async function createProduct(
   product: CreateProductInput,
-): Promise<ProductWithStoreLocations> {
+): Promise<ProductWithRelations> {
   return await db.transaction(async (tx) => {
     const [insertedProduct] = await tx
       .insert(products)
@@ -41,6 +45,20 @@ export async function createProduct(
       await tx.insert(productStoreLocations).values(locationRows);
     }
 
-    return { ...insertedProduct, storeLocationIds: product.storeLocationIds };
+    const attributeRows = product.productAttributeValues.map((selection) => ({
+      productId: insertedProduct.id,
+      attributeId: selection.attributeId,
+      attributeValueId: selection.attributeValueId,
+    }));
+
+    if (attributeRows.length > 0) {
+      await tx.insert(productAttributeValues).values(attributeRows);
+    }
+
+    return {
+      ...insertedProduct,
+      storeLocationIds: product.storeLocationIds,
+      productAttributeValues: product.productAttributeValues,
+    };
   });
 }

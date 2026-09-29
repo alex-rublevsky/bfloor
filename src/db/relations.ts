@@ -42,7 +42,7 @@ export const relations = defineRelations(schema, (r) => ({
   },
   attributes: {
     attributeValues: r.many.attributeValues(),
-    productValues: r.many.productAttributeValues(),
+    productAttributeValues: r.many.productAttributeValues(),
     variationValues: r.many.variationAttributeValues(),
   },
   attributeValues: {

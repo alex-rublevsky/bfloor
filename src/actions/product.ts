@@ -17,6 +17,10 @@ import { STORE_LOCATIONS } from "@/lib/storeLocations";
 import { generateSlug } from "@/lib/slugGeneration";
 import { UNITS_OF_MEASUREMENT } from "@/lib/units";
 import { COUNTRIES } from "@/lib/countries";
+import { db } from "@/db";
+import { attributeValues } from "@/db/schema";
+import { inArray } from "drizzle-orm";
+import type { AttributeSelection } from "@/db/dashboard/products/index";
 
 type UnitOfMeasurement = (typeof UNITS_OF_MEASUREMENT)[number]["id"];
 const unitOfMeasurementIds = UNITS_OF_MEASUREMENT.map(({ id }) => id) as [
@@ -62,6 +66,42 @@ const sku = z.preprocess(
   z.string().trim().normalize().toUpperCase().nullable(),
 );
 
+const attributeValueIds = z
+  .array(z.coerce.number().int().positive())
+  .default([]);
+
+async function resolveProductAttributeValues(
+  ids: number[],
+): Promise<AttributeSelection[]> {
+  const uniqueIds = [...new Set(ids)];
+
+  if (uniqueIds.length !== ids.length) {
+    throw new ActionError({
+      code: "BAD_REQUEST",
+      message: "Duplicate attribute values are not allowed",
+    });
+  }
+
+  if (uniqueIds.length === 0) return [];
+
+  const rows = await db
+    .select({
+      attributeId: attributeValues.attributeId,
+      attributeValueId: attributeValues.id,
+    })
+    .from(attributeValues)
+    .where(inArray(attributeValues.id, uniqueIds));
+
+  if (rows.length !== uniqueIds.length) {
+    throw new ActionError({
+      code: "BAD_REQUEST",
+      message: "One or more attribute values are invalid",
+    });
+  }
+
+  return rows;
+}
+
 export const product = {
   createProduct: defineAction({
     accept: "form",
@@ -79,7 +119,8 @@ export const product = {
         .toLowerCase()
         .nonempty("Ярлык обязателен"),
       sku,
-      //TODO: add superRefine to check whether the slug matches the name
+      //TODO: category must be nonempty.
+      // TODO: make sure no property is converted to a valid one from empty/null/[]
       categoryId: z.coerce
         .number("Категория обязательна")
         .int()
@@ -109,6 +150,7 @@ export const product = {
         z.coerce.number().nonnegative().nullable(),
       ),
       country,
+      attributeValueIds,
     }),
     handler: async (input, { locals }) => {
       requireAdmin(locals);
@@ -120,14 +162,18 @@ export const product = {
           message: "Slug is incorrect",
         });
       }
-
-      //TODO: validate that brand and collection exist + their relationship
+      // TODO: validate that the category exists
+      // TODO: validate that brand and collection exist + their relationship
 
       // const media = await prepareMedia({
       //   slug: input.slug,
       //   submittedImages: input.images,
       //   currentImages: [],
       // });
+
+      const attributeSelections = await resolveProductAttributeValues(
+        input.attributeValueIds,
+      );
 
       try {
         const created = await createProduct({
@@ -147,6 +193,7 @@ export const product = {
           unitOfMeasurement: input.unitOfMeasurement,
           squareMetersPerPack: input.squareMetersPerPack,
           country: input.country,
+          productAttributeValues: attributeSelections,
         });
         // await finalizeMedia(media).catch((error) => {
         //   console.error("Unable to finalize product media", error);
@@ -223,6 +270,7 @@ export const product = {
         z.coerce.number().nonnegative().nullable(),
       ),
       country,
+      attributeValueIds,
     }),
     handler: async (input, { locals }) => {
       requireAdmin(locals);
@@ -252,6 +300,10 @@ export const product = {
       //   currentImages: existingProduct.images,
       // });
 
+      const attributeSelections = await resolveProductAttributeValues(
+        input.attributeValueIds,
+      );
+
       try {
         const updated = await updateProduct({
           id: input.id,
@@ -271,6 +323,7 @@ export const product = {
           unitOfMeasurement: input.unitOfMeasurement,
           squareMetersPerPack: input.squareMetersPerPack,
           country: input.country,
+          productAttributeValues: attributeSelections,
         });
         // await finalizeMedia(media).catch((error) => {
         //   console.error("Unable to finalize product media", error);

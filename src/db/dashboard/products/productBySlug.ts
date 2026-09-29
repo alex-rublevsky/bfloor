@@ -1,9 +1,9 @@
 import { db } from "@/db/index";
-import type { ProductWithStoreLocations } from "@/db/dashboard/products/types";
+import type { ProductFormData } from "@/db/dashboard/products/types";
 
 export async function getProductBySlug(
   slug?: string,
-): Promise<ProductWithStoreLocations | null> {
+): Promise<ProductFormData | null> {
   if (!slug) throw new Error("slug is required");
 
   const row = await db.query.products.findFirst({
@@ -11,6 +11,12 @@ export async function getProductBySlug(
       slug: slug,
     },
     with: {
+      productAttributeValues: {
+        with: {
+          attribute: true,
+          attributeValue: true,
+        },
+      },
       productStoreLocations: {
         columns: {
           storeLocationId: true,
@@ -23,7 +29,10 @@ export async function getProductBySlug(
   return {
     ...row,
     storeLocationIds: row.productStoreLocations.map(
-      (location) => location.storeLocationId,
+      ({ storeLocationId }) => storeLocationId,
+    ),
+    attributeValueIds: row.productAttributeValues.map(
+      ({ attributeValueId }) => attributeValueId,
     ),
   };
 }

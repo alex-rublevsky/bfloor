@@ -323,3 +323,5 @@ export type AttributeValue = typeof attributeValues.$inferSelect;
 export type NewAttributeValue = typeof attributeValues.$inferInsert;
 
 export type ProductStoreLocation = typeof productStoreLocations.$inferSelect;
+
+export type ProductAttributeValues = typeof productAttributeValues.$inferSelect;

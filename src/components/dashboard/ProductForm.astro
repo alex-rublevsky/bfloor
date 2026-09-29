@@ -11,12 +11,13 @@ import { getBrandsWithCollections } from "@/db/dashboard/brands";
 import { getAllAttributesWithValues } from "@/db/dashboard/attributes";
 import { actions, isInputError } from "astro:actions";
 import MarkdownEditor from "./MarkdownEditor.astro";
-import type { FormProduct } from "@/db/dashboard/products/index";
+import type { ProductFormData } from "@/db/dashboard/products/index";
 import { UNITS_OF_MEASUREMENT } from "@/lib/units";
 import { COUNTRIES } from "@/lib/countries";
+import SelectListBox from "../shared/SelectListBox.astro";
 
 interface Props {
-  product?: FormProduct;
+  product?: ProductFormData;
 }
 const { product = {} } = Astro.props as Props;
 const creating = !product.slug;
@@ -288,22 +289,24 @@ considering that this is a native form? -->
         /> -->
       </fieldset>
 
-      <!-- <h4 class="text-md">Атрибуты</h4> -->
       <fieldset>
         <legend>Атрибуты</legend>
-        <div class="autoGrid">
+        <div class="flex flex-wrap gap-md">
           {
             attributesWithValues.map((attribute) => (
-              <div>
-                <h6>{attribute.name}</h6>
-                <div class="grid">
-                  {attribute.attributeValues.map((value) => (
-                    <Checkbox name={attribute.name + " " + value.name}>
-                      {value.name}
-                    </Checkbox>
-                  ))}
-                </div>
-              </div>
+              <SelectListBox
+                id={`attribute-${attribute.id}`}
+                multiple
+                name={"attributeValueIds"}
+                label={attribute.name}
+                value={product.attributeValueIds?.map(String) ?? []}
+                options={attribute.attributeValues.map((c) => ({
+                  value: String(c.id),
+                  label: c.name,
+                }))}
+                aria-describedby={"error-attribute-" + attribute.name}
+                error={inputErrors.attributeValueIds}
+              />
             ))
           }
         </div>

@@ -1,0 +1,166 @@
+---
+interface Option {
+  value: string;
+  label: string;
+}
+
+interface Props {
+  name: string;
+  id?: string;
+  label: string;
+  options: Option[];
+  multiple?: boolean;
+  size?: string;
+  value?: string | string[] | null;
+  required?: boolean;
+  error?: string[];
+}
+
+const {
+  name,
+  id,
+  label,
+  options,
+  multiple,
+  size,
+  value = "",
+  // placeholder,
+  required,
+  error,
+  ...rest
+} = Astro.props;
+
+const selectId = id ?? `select-${name}`;
+const hasError = !!error;
+---
+
+<div class:list={["select-wrapper", { "has-error": hasError }]}>
+  <select
+    multiple={multiple}
+    size={size ?? null}
+    id={selectId}
+    name={name}
+    class="select-field input-field"
+    required={required || undefined}
+    {...rest}>
+    {
+      options.map((option) => (
+        <option
+          value={option.value}
+          selected={
+            Array.isArray(value)
+              ? value.includes(option.value)
+              : option.value === value
+          }>
+          {option.label}
+        </option>
+      ))
+    }
+  </select>
+  <label for={selectId} class="select-label">{label}</label>
+
+  <span id={`error-${name}`} role="alert" hidden={!error}>
+    {error}
+  </span>
+</div>
+
+<style>
+  @keyframes detect-scroll {
+    from,
+    to {
+      --can-scroll:;
+    }
+  }
+
+  @keyframes reveal {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  option:first-of-type {
+    padding-top: 0.75em;
+  }
+
+  select {
+    height: 100%;
+    overflow-y: auto;
+    animation: detect-scroll;
+    animation-timeline: --scroll-timeline;
+    scroll-timeline: --scroll-timeline block;
+    animation-fill-mode: none;
+    &::before,
+    &::after {
+      animation: reveal linear both;
+      animation-timeline: --scroll-timeline;
+      content: "";
+      display: block;
+      position: sticky;
+      left: 0em;
+      right: 0em;
+      height: 1em;
+      --visibility-if-can-scroll: var(--can-scroll) visible;
+      --visibility-if-cant-scroll: hidden;
+      visibility: var(
+        --visibility-if-can-scroll,
+        var(--visibility-if-cant-scroll)
+      );
+    }
+    &::before {
+      top: 0;
+      margin-bottom: -1em;
+      background: linear-gradient(var(--background) 50%, transparent);
+      /*animation-range: 0em 1em;*/
+      /*either this line at the top or two below: animate top shadow or keep it always there*/
+      animation: none;
+      opacity: 1;
+      visibility: visible;
+    }
+    &::after {
+      bottom: 0;
+      margin-top: -1em;
+      background: linear-gradient(transparent, var(--background));
+      animation-direction: reverse;
+      animation-range: calc(100% - 2em) calc(100% - 0em);
+    }
+
+    & option {
+      max-width: 25ch;
+    }
+  }
+
+  .select-wrapper {
+    height: 10rem;
+    position: relative;
+    display: inline-grid;
+    width: max-content;
+  }
+
+  /*inline grid and grid area are for the long label
+  to be taken into account of the width of the select
+  e.g. with единица измерения: м2 */
+  .select-field,
+  .select-label {
+    grid-area: 1 / 1;
+  }
+
+  .select-label {
+    position: relative;
+    align-self: start;
+    justify-self: start;
+    left: var(--spacing-xs);
+    top: 0;
+    z-index: 1;
+    translate: calc(-1 * var(--spacing-3xs) / 1.8) -50%;
+    padding-inline: var(--spacing-3xs);
+    background-color: var(--background);
+    color: var(--foreground);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+    pointer-events: none;
+    margin-right: 1.8em;
+  }
+</style>

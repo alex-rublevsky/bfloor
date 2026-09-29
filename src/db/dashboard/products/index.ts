@@ -1,8 +1,9 @@
 export type {
+  AttributeSelection,
   CreateProductInput,
   UpdateProductInput,
   DeleteProductInput,
-  FormProduct,
+  ProductFormData,
 } from "./types";
 
 export { getAllProducts } from "./allProducts";
