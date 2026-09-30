@@ -23,17 +23,47 @@ import Input from "./shared/Input.astro";
     </Button>
     <Button size="md" href="/dashboard">Админка</Button>
   </div>
-  <!-- TODO: update dropdown to be html popover? -->
-  <div
-    class="dropdown dropdown--down hidden md:flex gap-xs xl:hidden"
-    data-dropdown>
-    <Button size="md" data-dropdown-button>Ещё</Button>
-    <div
-      class="dropdown-menu flex flex-col items-start gap-xs whitespace-nowrap">
-      <Link href="/delivery">Доставка</Link>
-      <Link href="/contact">Контакты и Адреса</Link>
-      <Link href="/about">О компании</Link>
-      <Button size="md" href="/dashboard">Админка</Button>
-    </div>
+  <div class="hidden md:flex gap-xs xl:hidden">
+    <Button popovertarget="menu" size="md">Ещё</Button>
+  </div>
+  <!-- <button popovertarget="menu">еще</button> -->
+  <div id="menu" popover class="menu">
+    <!-- class="items-start gap-xs whitespace-nowrap" -->
+    <Button variant="ghost" href="/delivery">Доставка</Button>
+    <Button variant="ghost" href="/contact">Контакты и Адреса</Button>
+    <Button variant="ghost" href="/about">О компании</Button>
+    <Button href="/dashboard">Админка</Button>
   </div>
 </nav>
+
+<style>
+  .menu {
+    /*margin: 0;
+    inset: auto;*/
+    margin-top: var(--spacing-3xs);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 1px 15px 0 rgba(0, 0, 0, 0.15);
+    position-area: y-end span-x-start;
+
+    transition-property: translate, overlay, display, opacity;
+    transition-timing-function: ease-out;
+    transition-duration: 170ms;
+    transition-behavior: allow-discrete;
+    translate: 0 -0.3rem;
+    opacity: 0;
+    flex-direction: column;
+
+    &:popover-open {
+      display: flex;
+      translate: 0 0;
+      opacity: 1;
+      @starting-style {
+        translate: 0 -0.3rem;
+        opacity: 0;
+      }
+    }
+    & a {
+      border-radius: 0;
+    }
+  }
+</style>
