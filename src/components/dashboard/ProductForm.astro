@@ -154,6 +154,7 @@ considering that this is a native form? -->
               aria-describedby="error-price"
               required
               error={inputErrors.price}
+              type="number"
             />
             <Input
               name="discountedPrice"
@@ -161,6 +162,7 @@ considering that this is a native form? -->
               value={product.discountedPrice ?? ""}
               aria-describedby="error-discountedPrice"
               error={inputErrors.discountedPrice}
+              type="number"
             />
           </div>
 
@@ -228,6 +230,8 @@ considering that this is a native form? -->
               value={product.squareMetersPerPack ?? null}
               aria-describedby="error-squareMetersPerPack"
               error={inputErrors.squareMetersPerPack}
+              type="number"
+              step=".01"
             />
             <Select
               name="country"
