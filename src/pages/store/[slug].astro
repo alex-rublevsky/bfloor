@@ -3,7 +3,7 @@ import ProductCard from "@/components/shared/ProductCard.astro";
 import Layout from "@/layouts/Layout.astro";
 import { getCategoryBySlug } from "@/db/storefront/getCategoryBySlug";
 import { getAllProductsByCategory } from "@/db/storefront/products/allProductsByCategory";
-import type { Category } from "@/db/storefront/getCategoryBySlug";
+import type { Category } from "@/db/schema";
 // import Filters from "@/components/Filters.astro";
 
 const { slug } = Astro.params;

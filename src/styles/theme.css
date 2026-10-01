@@ -10,12 +10,28 @@
   text-shadow: none;
 }
 
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
 *,
 *::before,
 *::after {
   corner-shape: squircle;
+}
+
+* {
   scrollbar-color: var(--muted) transparent;
   scrollbar-width: thin;
+}
+
+[popover] {
+  box-shadow: 0 3px 20px 0
+    color-mix(in oklch, var(--foreground) 20%, transparent);
+  margin-top: var(--spacing-3xs);
+  border-radius: var(--radius-sm);
+  background-color: var(--background);
 }
 
 /*.break-balance {text-wrap: balance;}*/
@@ -37,6 +53,8 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-border: var(--border);
 
   /* Tailwind text-* utilities resolve from fluid vars. */
@@ -101,6 +119,9 @@
 
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.98 0.01 25);
+
+  --success: oklch(0.6595 0.2579 141.36);
+  --success-foreground: oklch(0.9191 0.168 145);
 
   /*TODO: perhaps border should be the same as muted — pick the best color and standardize*/
   --border: oklch(0.8895 0.1033 var(--beige-hue) / 0.5);
@@ -202,15 +223,21 @@
     }
     &:hover {
       transition: border-color 0s;
-      border-color: oklch(from var(--secondary) calc(l) c h);
+      border-color: var(--secondary);
       &:focus {
         transition: border-color 0.17s ease-out;
-        border-color: var(--accent);
+        border-color: var(--secondary);
       }
     }
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+    &:user-valid {
+      border-color: var(--success);
+    }
+    &:user-invalid {
+      border-color: var(--destructive);
     }
   }
 
@@ -240,7 +267,6 @@ input:-webkit-autofill:focus {
 html {
   font-size: var(--step-0);
   font-family: var(--font-sans);
-  /* scroll-behavior: smooth; */
   overflow-x: hidden;
   background-color: var(--background);
   scrollbar-gutter: stable;

@@ -1,6 +1,15 @@
 @import "tailwindcss";
 @import "./theme.css";
 
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+:target {
+  scroll-margin: 20vb;
+}
+
 .autoGrid {
   /* Fluid min column: ~5rem on narrow viewports → ~10rem from ~360px up (replaces 5rem / 10rem @ 360px). */
   --min-col-size: clamp(

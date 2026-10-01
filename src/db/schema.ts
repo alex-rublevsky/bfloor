@@ -44,8 +44,8 @@ export const collections = sqliteTable(
 
 export const attributes = sqliteTable("attributes", {
   id: integer("id").primaryKey(),
-  name: text("name").notNull(),
-  slug: text("slug").unique().notNull(),
+  name: text("name").notNull().unique(),
+  slug: text("slug").unique().notNull().unique(),
 });
 
 export const attributeValues = sqliteTable(
@@ -207,6 +207,7 @@ export const productAttributeValues = sqliteTable(
     index("product_attributeId_attributeValueId_idx").on(
       table.attributeId,
       table.attributeValueId,
+      table.productId,
     ),
   ],
 );
