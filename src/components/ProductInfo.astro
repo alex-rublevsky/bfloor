@@ -7,6 +7,7 @@ import { Icon } from "astro-icon/components";
 import { STORE_LOCATIONS } from "@/lib/storeLocations";
 import { Image } from "astro:assets";
 import type { StorefrontProduct } from "@/db/storefront/products/types";
+import { COUNTRIES } from "@/lib/countries";
 
 interface Props {
   product: StorefrontProduct;
@@ -18,6 +19,12 @@ const editHref = `/dashboard/product/${product.slug}`;
 const transferLocation = STORE_LOCATIONS.find(
   (location) => !product.storeLocations.includes(location.id),
 );
+
+const brand = product.brand;
+
+const country = brand
+  ? COUNTRIES.find((country) => country.id === brand.countryId)
+  : null;
 ---
 
 <div
@@ -53,23 +60,39 @@ const transferLocation = STORE_LOCATIONS.find(
   </div>
   <div class="flex items-center gap-3xs">
     {
-      product.brand ? (
+      brand ? (
         <div class="flex items-center">
           <span>Бренд: </span>
-          <a href={`/brand/${product.brand.slug}`}>
-            {product.brand.image ? (
+          <a href={`/brand/${brand.slug}`}>
+            {brand.image ? (
               <Image
-                src={BASE_IMAGE_URL + product.brand.image}
+                src={BASE_IMAGE_URL + brand.image}
                 width={100}
                 height={100}
                 fit="contain"
-                class="size-full object-contain p-3xs rounded-lg hover:bg-muted"
-                alt={"Логотип бренда " + product.brand.name}
+                class="p-3xs hover:bg-muted"
+                alt={"Логотип бренда " + brand.name}
               />
             ) : (
-              product.brand.name
+              brand.name
             )}
           </a>
+          {country ? (
+            <>
+              <span>
+                Страна проиводства:{" "}
+                <Image
+                  src={BASE_IMAGE_URL + country?.flagImage}
+                  width={52.5}
+                  height={35}
+                  fit="contain"
+                  class="inline"
+                  alt={"Флаг " + country.name}
+                />{" "}
+                {country.name}
+              </span>
+            </>
+          ) : null}
         </div>
       ) : null
     }

@@ -19,7 +19,9 @@ export async function getAllProductsByCategory(
     },
     with: {
       category: { columns: { name: true, slug: true } },
-      brand: { columns: { name: true, slug: true, image: true } },
+      brand: {
+        columns: { name: true, slug: true, image: true, countryId: true },
+      },
       collection: { columns: { name: true, slug: true } },
       storeLocations: { columns: { storeLocationId: true } },
     },

@@ -3,6 +3,7 @@ import DashboardLayout from "@/layouts/DashboardLayout.astro";
 import { getBrandsWithCollections } from "@/db/dashboard/brands/";
 import { Image } from "astro:assets";
 import { BASE_IMAGE_URL } from "@/constants";
+import { COUNTRIES } from "@/lib/countries";
 import Button from "@/components/shared/Button.astro";
 import { Icon } from "astro-icon/components";
 import Input from "@/components/shared/Input.astro";
@@ -28,6 +29,7 @@ const brandsWithCollections = await getBrandsWithCollections();
                 data-id={brand.id}
                 data-name={brand.name}
                 data-slug={brand.slug}
+                data-country-id={brand.countryId ?? ""}
                 variant="ghost"
                 class="p-3xs rounded-sm hover:bg-muted aspect-square relative">
                 {brand.image ? (
@@ -128,6 +130,19 @@ const brandsWithCollections = await getBrandsWithCollections();
           readonly={true}
           required
         />
+        <!-- TODO: integrate the country select fully -->
+        <Select
+          name="countryId"
+          label="Страна"
+          placeholder="Выбрать"
+          value={""}
+          options={COUNTRIES.map((country) => ({
+            value: String(country.id),
+            label: country.name,
+          }))}
+          aria-describedby="error-country"
+        />
+        <!-- error={inputErrors.country} -->
         <div data-brand-field hidden>
           <!-- Only needed when editing/creating collections -->
           <!-- TODO: is this brand options from brandsWithCollections appropriate? -->
@@ -204,11 +219,14 @@ const brandsWithCollections = await getBrandsWithCollections();
       formError.textContent = "";
       formError.hidden = true;
     }
-    for (const fieldName of ["name", "slug", "brandId"]) {
+    for (const fieldName of ["name", "slug", "countryId", "brandId"]) {
       const field = getFieldElement(fieldName);
       const errorElement = getFieldErrorElement(fieldName);
 
-      if (field instanceof HTMLInputElement) {
+      if (
+        field instanceof HTMLInputElement ||
+        field instanceof HTMLSelectElement
+      ) {
         field.removeAttribute("aria-invalid");
 
         //TODO: should this be removed? gotta universalize Input and Select
@@ -229,7 +247,10 @@ const brandsWithCollections = await getBrandsWithCollections();
       const field = getFieldElement(fieldName);
       const errorElement = getFieldErrorElement(fieldName);
 
-      if (field instanceof HTMLInputElement) {
+      if (
+        field instanceof HTMLInputElement ||
+        field instanceof HTMLSelectElement
+      ) {
         field.setAttribute("aria-invalid", "true");
 
         //TODO: should this be removed? gotta universalize Input and Select
@@ -260,6 +281,9 @@ const brandsWithCollections = await getBrandsWithCollections();
     document.querySelector<HTMLButtonElement>("#delete-button");
   const nameInput = form.elements.namedItem("name") as HTMLInputElement;
   const slugInput = form.elements.namedItem("slug") as HTMLInputElement;
+  const countrySelect = form.elements.namedItem(
+    "countryId",
+  ) as HTMLSelectElement;
   const brandSelect = form.elements.namedItem("brandId") as HTMLSelectElement;
   const brandField = form.querySelector<HTMLFormElement>("[data-brand-field]");
 
@@ -312,11 +336,13 @@ const brandsWithCollections = await getBrandsWithCollections();
 
     const idInput = form.elements.namedItem("id") as HTMLInputElement;
     idInput.value = "";
+    countrySelect.value = "";
     brandSelect.value = "";
     slugInput.value = "";
 
     submitButton?.removeAttribute("disabled");
     submitButton?.setAttribute("aria-busy", "false");
+
     deleteButton?.removeAttribute("disabled");
     deleteButton?.setAttribute("aria-busy", "false");
   }
@@ -342,12 +368,19 @@ const brandsWithCollections = await getBrandsWithCollections();
     slugInput.value = trigger.dataset.slug ?? "";
 
     const isCollection = entity === "collection";
+
     brandField.hidden = !isCollection;
     brandField.disabled = !isCollection;
+
+    countrySelect.hidden = isCollection;
+    countrySelect.disabled = isCollection;
+
     deleteButton.hidden = mode === "create";
 
     if (isCollection) {
       brandSelect.value = trigger.dataset.brandId ?? "";
+    } else {
+      countrySelect.value = trigger.dataset.countryId ?? "";
     }
 
     title.textContent =

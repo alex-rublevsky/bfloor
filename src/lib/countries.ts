@@ -1,0 +1,80 @@
+export const COUNTRIES = [
+  {
+    id: 1,
+    name: "Чехия",
+    code: "CZ",
+    flagImage: "flags/cz.svg",
+  },
+  {
+    id: 51,
+    name: "Россия",
+    code: "RU",
+    flagImage: "flags/ru.svg",
+  },
+  {
+    id: 82,
+    name: "Германия",
+    code: "DE",
+    flagImage: "flags/de.svg",
+  },
+  {
+    id: 117,
+    name: "Италия",
+    code: "IT",
+    flagImage: "flags/it.svg",
+  },
+  {
+    id: 125,
+    name: "Швейцария",
+    code: "CH",
+    flagImage: "flags/ch.svg",
+  },
+  {
+    id: 133,
+    name: "Финляндия",
+    code: "FI",
+    flagImage: "flags/fi.svg",
+  },
+  {
+    id: 147,
+    name: "Австрия",
+    code: "AT",
+    flagImage: "flags/at.svg",
+  },
+  {
+    id: 148,
+    name: "Португалия",
+    code: "PT",
+    flagImage: "flags/pt.svg",
+  },
+  {
+    id: 154,
+    name: "Китай",
+    code: "CN",
+    flagImage: "flags/cn.svg",
+  },
+  {
+    id: 234,
+    name: "Польша",
+    code: "PL",
+    flagImage: "flags/pl.svg",
+  },
+  {
+    id: 239,
+    name: "Бельгия",
+    code: "BE",
+    flagImage: "flags/be.svg",
+  },
+  {
+    id: 241,
+    name: "Сербия",
+    code: "RS",
+    flagImage: "flags/rs.svg",
+  },
+  {
+    id: 245,
+    name: "Голландия",
+    code: "NL",
+    flagImage: "flags/nl.svg",
+  },
+] as const;

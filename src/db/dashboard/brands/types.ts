@@ -1,8 +1,6 @@
 import type { Brand, Collection, NewBrand, NewCollection } from "@/db/schema";
 
-export type CreateBrandInput = Pick<NewBrand, "slug" | "name">;
-
-export type UpdateBrandInput = CreateBrandInput & {
+export type UpdateBrandInput = NewBrand & {
   id: Brand["id"];
 };
 

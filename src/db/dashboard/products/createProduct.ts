@@ -26,7 +26,6 @@ export async function createProduct(
         importantNote: product.importantNote,
         unitOfMeasurement: product.unitOfMeasurement,
         squareMetersPerPack: product.squareMetersPerPack,
-        country: product.country,
       })
       .returning();
     if (!insertedProduct) {

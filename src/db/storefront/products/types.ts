@@ -25,7 +25,7 @@ type StorefrontProductBase = Pick<
 >;
 
 type CategorySummary = Pick<Category, "name" | "slug">;
-type BrandSummary = Pick<Brand, "name" | "slug" | "image">;
+type BrandSummary = Pick<Brand, "name" | "slug" | "image" | "countryId">;
 type CollectionSummary = Pick<Collection, "name" | "slug">;
 type StoreLocationId = StoreLocation["storeLocationId"];
 

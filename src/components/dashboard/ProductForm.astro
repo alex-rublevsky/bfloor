@@ -13,7 +13,6 @@ import { actions, isInputError } from "astro:actions";
 import MarkdownEditor from "./MarkdownEditor.astro";
 import type { ProductFormData } from "@/db/dashboard/products/index";
 import { UNITS_OF_MEASUREMENT } from "@/lib/units";
-import { COUNTRIES } from "@/lib/countries";
 import SelectListBox from "../shared/SelectListBox.astro";
 
 interface Props {
@@ -232,17 +231,6 @@ considering that this is a native form? -->
               error={inputErrors.squareMetersPerPack}
               type="number"
               step=".01"
-            />
-            <Select
-              name="country"
-              label="Страна"
-              value={product.country?.toString() ?? null}
-              options={COUNTRIES.map((c) => ({
-                value: String(c.id),
-                label: c.name,
-              }))}
-              aria-describedby="error-country"
-              error={inputErrors.country}
             />
           </div>
         </div>

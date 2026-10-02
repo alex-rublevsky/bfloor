@@ -107,7 +107,6 @@ export const products = sqliteTable(
     viewCount: integer("view_count").notNull().default(0),
     description: text("description"),
     importantNote: text("important_note"),
-    country: integer("country"),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
       .default(sql`(unixepoch())`),

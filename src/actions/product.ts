@@ -16,7 +16,6 @@ import { deleteObjects } from "@/lib/storage";
 import { STORE_LOCATIONS } from "@/lib/storeLocations";
 import { generateSlug } from "@/lib/slugGeneration";
 import { UNITS_OF_MEASUREMENT } from "@/lib/units";
-import { COUNTRIES } from "@/lib/countries";
 import { db } from "@/db";
 import { attributeValues } from "@/db/schema";
 import { inArray } from "drizzle-orm";
@@ -28,16 +27,6 @@ const unitOfMeasurementIds = UNITS_OF_MEASUREMENT.map(({ id }) => id) as [
   ...UnitOfMeasurement[],
 ];
 const unitOfMeasurement = z.enum(unitOfMeasurementIds);
-
-type Country = (typeof COUNTRIES)[number]["id"];
-const countryIds = COUNTRIES.map(({ id }) => z.literal(id)) as [
-  z.ZodLiteral<Country>,
-  ...z.ZodLiteral<Country>[],
-];
-const country = z.preprocess(
-  (value) => (value === "" || value == null ? null : Number(value)),
-  z.union(countryIds, "Ошибка со страной").nullable(),
-);
 
 const storeLocationId = z.coerce
   .number()
@@ -149,7 +138,7 @@ export const product = {
         (value) => (value === "" ? null : value),
         z.coerce.number().nonnegative().nullable(),
       ),
-      country,
+
       attributeValueIds,
     }),
     handler: async (input, { locals }) => {
@@ -192,7 +181,7 @@ export const product = {
           storeLocationIds: input.storeLocationIds,
           unitOfMeasurement: input.unitOfMeasurement,
           squareMetersPerPack: input.squareMetersPerPack,
-          country: input.country,
+
           productAttributeValues: attributeSelections,
         });
         // await finalizeMedia(media).catch((error) => {
@@ -269,7 +258,7 @@ export const product = {
         (value) => (value === "" ? null : value),
         z.coerce.number().nonnegative().nullable(),
       ),
-      country,
+
       attributeValueIds,
     }),
     handler: async (input, { locals }) => {
@@ -322,7 +311,7 @@ export const product = {
           // images: media.finalImages,
           unitOfMeasurement: input.unitOfMeasurement,
           squareMetersPerPack: input.squareMetersPerPack,
-          country: input.country,
+
           productAttributeValues: attributeSelections,
         });
         // await finalizeMedia(media).catch((error) => {
