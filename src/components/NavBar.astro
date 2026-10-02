@@ -3,6 +3,7 @@ import Button from "./shared/Button.astro";
 import Link from "@/components/shared/Link.astro";
 import { Icon } from "astro-icon/components";
 import Input from "./shared/Input.astro";
+import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
 ---
 
 <nav class="flex justify-between items-stretch gap-2xs px-2xs py-2xs">
@@ -12,7 +13,16 @@ import Input from "./shared/Input.astro";
     </Link>
     <Button size="md" href="/store">Каталог</Button>
   </div>
-  <Input name="Поиск" label="Поиск среди ... товаров" />
+  <!-- TODO: integrate number of items in the placeholder  -->
+
+  <div class="flex flex-col">
+    <PagefindConfig excerpt-length="15" class="pagefind-ui" />
+    <pagefind-input></pagefind-input>
+    <pagefind-summary></pagefind-summary>
+    <pagefind-filter-dropdown filter="location" label="Доступен на"
+    ></pagefind-filter-dropdown>
+    <pagefind-results show-images="true"></pagefind-results>
+  </div>
 
   <div class="hidden xl:flex xl:gap-xs xl:items-stretch whitespace-nowrap">
     <Link href="/delivery" class="self-center">Доставка</Link>

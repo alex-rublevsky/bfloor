@@ -2,6 +2,8 @@
 import node from "@astrojs/node";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
+import pagefind from "astro-pagefind";
+
 import {
   defineConfig,
   envField,
@@ -98,7 +100,7 @@ export default defineConfig({
     mode: "standalone",
   }),
 
-  integrations: [sitemap(), icon(), alpinejs()],
+  integrations: [sitemap(), icon(), alpinejs(), pagefind()],
 
   experimental: {
     incrementalBuild: true,

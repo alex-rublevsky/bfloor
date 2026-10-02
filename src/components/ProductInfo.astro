@@ -114,7 +114,10 @@ const country = brand
       <div>
         <span>Доступен на: </span>
         {product.storeLocations.map((storeLocation) => (
-          <a href="/contact" class="text-accent hover:underline">
+          <a
+            href="/contact"
+            class="text-accent hover:underline"
+            data-pagefind-filter="location">
             {
               STORE_LOCATIONS.find((location) => location.id === storeLocation)
                 ?.address
