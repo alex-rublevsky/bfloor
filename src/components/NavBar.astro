@@ -6,7 +6,7 @@ import Input from "./shared/Input.astro";
 import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
 ---
 
-<nav class="flex justify-between items-stretch gap-2xs px-2xs py-2xs">
+<nav class="flex justify-between items-stretch gap-2xs px-2xs py-2xs h-14">
   <div class="hidden md:flex gap-sm items-stretch">
     <Link href="/" class="self-center">
       <Icon name="logo" title="Лого BeautyFloor" />
@@ -15,15 +15,10 @@ import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
   </div>
   <!-- TODO: integrate number of items in the placeholder  -->
 
-  <div class="flex flex-col">
-    <PagefindConfig excerpt-length="15" class="pagefind-ui" />
-    <pagefind-input></pagefind-input>
-    <pagefind-summary></pagefind-summary>
-    <pagefind-filter-dropdown filter="location" label="Доступен на"
-    ></pagefind-filter-dropdown>
-    <pagefind-results show-images="true"></pagefind-results>
+  <div class="flex-1">
+    <PagefindConfig excerpt-length="10" />
+    <pagefind-input placeholder="Поиск"></pagefind-input>
   </div>
-
   <div class="hidden xl:flex xl:gap-xs xl:items-stretch whitespace-nowrap">
     <Link href="/delivery" class="self-center">Доставка</Link>
     <Link href="/contact" class="self-center">Контакты и Адреса</Link>
@@ -45,7 +40,10 @@ import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
     <Button href="/dashboard">Админка</Button>
   </div>
 </nav>
-
+<div>
+  <pagefind-summary></pagefind-summary>
+  <pagefind-results show-images="true"></pagefind-results>
+</div>
 <style>
   .menu {
     /*margin: 0;
@@ -74,4 +72,47 @@ import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
       border-radius: 0;
     }
   }
+
+  :root {
+    --pf-outline-focus: var(--primary);
+    --pf-outline-width: var(--border-width);
+    --pf-background: var(--background);
+    --pf-font: var(--font-overused-grotesk);
+    --pf-border-radius: var(--radius-sm);
+
+    pagefind-input {
+      --pf-border: var(--border);
+      /*hover for the "clear" button:*/
+      --pf-hover: var(--muted);
+      --pf-text-muted: var(--foreground);
+      --pf-border: var(--border);
+
+      --pf-input-height: calc(3.5rem - 2 * var(--spacing-2xs));
+      --pf-input-font-size: var(--text-sm);
+    }
+    pagefind-results {
+      --pf-border: var(--border);
+      /*this actually changes the active color:*/
+      --pf-hover: var(--muted);
+    }
+    pagefind-summary {
+      --pf-text-muted: var(--foreground-muted);
+      --pf-summary-font-size: var(--text-sm);
+      padding-left: var(--spacing-2xs);
+    }
+  }
 </style>
+<script>
+  // TODO:
+  //   1. integrate custom components e.g. to use a custom clear button, etc.
+  //   2. try grid styling for the results
+  //   3. how to change result's border color on hover
+
+  import { getInstanceManager } from "@pagefind/component-ui";
+
+  const instance = getInstanceManager().getInstance("default");
+
+  instance.setTranslations({
+    clear_search: "Очистить",
+  });
+</script>
