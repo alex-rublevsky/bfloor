@@ -1,0 +1,501 @@
+---
+import DashboardLayout from "@/layouts/DashboardLayout.astro";
+import { getAllCategories } from "@/db/dashboard/categories/";
+import { Image } from "astro:assets";
+import { BASE_IMAGE_URL } from "@/constants";
+import ImagePlaceholder from "@/components/shared/ImagePlaceholder.astro";
+import Button from "@/components/shared/Button.astro";
+import { Icon } from "astro-icon/components";
+import Input from "@/components/shared/Input.astro";
+import SelectListBox from "@/components/shared/SelectListBox.astro";
+import { getAllAttributes } from "@/db/dashboard/attributes/";
+
+const categories = await getAllCategories();
+const attributes = await getAllAttributes();
+---
+
+<DashboardLayout>
+  <main>
+    {
+      categories.length > 0 ? (
+        // TODO: use autogrid here after i simplify it?
+        <section class="pt-xl bg-muted/30 autoGrid">
+          <h1 class="sr-only">Категории</h1>
+
+          {categories.map((cat) => (
+            <button
+              command="show-modal"
+              commandfor="category-dialog"
+              class="categoryButton"
+              data-mode="edit"
+              data-id={cat.id}
+              data-name={cat.name}
+              data-slug={cat.slug}
+              data-description={cat.description}
+              data-hidden-attributes={JSON.stringify(cat.hiddenAttributes)}>
+              {cat.image ? (
+                <Image
+                  src={BASE_IMAGE_URL + cat.image}
+                  width={300}
+                  height={300}
+                  class="size-full object-contain"
+                  alt={"Фото категории " + cat.name}
+                />
+              ) : (
+                <ImagePlaceholder />
+              )}
+              <span>Изменить</span>
+              <p>{cat.name}</p>
+            </button>
+          ))}
+        </section>
+      ) : (
+        <section class="h-screen grid place-items-center">
+          <h1 class="text-lg!">Категорий не найдено</h1>
+        </section>
+      )
+    }
+  </main>
+  <dialog id="category-dialog" aria-labelledby="modal-title">
+    <form>
+      <input type="hidden" name="id" />
+
+      <div class="titleCloseButtonRow">
+        <h2 class="text-md" id="modal-title"></h2>
+        <p id="form-error" role="alert" hidden></p>
+
+        <Button
+          command="close"
+          commandfor="category-dialog"
+          variant="tertiary"
+          class="aspect-square"
+          aria-label="Закрыть">
+          <!-- TODO: for all other icon buttons set aria hidden to true and aria label on the button itself -->
+          <Icon name="x" aria-hidden="true" />
+        </Button>
+      </div>
+      <div class="inputsBlock">
+        <div class="nameSlugBlock">
+          <Input
+            name="name"
+            aria-describedby="error-name"
+            label="Название"
+            value={""}
+            required
+            autofocus
+          />
+          <Input
+            name="slug"
+            aria-describedby="error-slug"
+            label="Ярлык"
+            value={""}
+            readonly={true}
+            required
+          />
+          <Input
+            as="textarea"
+            name="description"
+            aria-describedby="error-description"
+            label="Описание"
+            value={""}
+          />
+        </div>
+        <!-- TODO: should aria-describedby also be implemented for the selectlistbox? select? -->
+        <SelectListBox
+          name="hiddenAttributes"
+          label="Спрятать атрибуты"
+          options={attributes.map((att) => ({
+            value: String(att.id),
+            label: att.name,
+          }))}
+        />
+      </div>
+
+      <div class="flex gap-2xs">
+        <Button id="submit-button" type="submit">
+          <span class="submit-button-text"></span>
+        </Button>
+
+        <!-- !creating &&  -->
+        <Button id="delete-button" variant="destructive"> Удалить </Button>
+      </div>
+    </form>
+  </dialog>
+</DashboardLayout>
+
+<style>
+  .categoryButton {
+    border-radius: var(--radius-md);
+    overflow: clip;
+    background-color: var(--background);
+    position: relative;
+    cursor: pointer;
+    display: grid;
+    place-items: end center;
+    &:hover {
+      background-color: var(--muted);
+    }
+    & :nth-child(1) {
+      grid-area: 1/1;
+    }
+    & span {
+      display: none;
+      height: 50%;
+      width: 100%;
+      place-content: end;
+      background: linear-gradient(to bottom, transparent, var(--muted) 60%);
+      padding: var(--spacing-xs);
+      font-weight: bold;
+      grid-area: 1/1;
+    }
+    &:hover span {
+      display: block;
+    }
+    & p {
+      padding: var(--spacing-2xs);
+      line-height: 105%;
+    }
+  }
+
+  form {
+    display: grid;
+    gap: var(--spacing-2xs);
+  }
+
+  .titleCloseButtonRow {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+  .inputsBlock {
+    display: grid;
+    gap: var(--spacing-2xs);
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+
+    & .nameSlugBlock {
+      display: grid;
+      gap: var(--spacing-2xs);
+    }
+  }
+</style>
+
+<script>
+  import { actions, isInputError } from "astro:actions";
+  import { generateSlug } from "@/lib/slugGeneration";
+
+  const modal = document.querySelector("dialog") as HTMLDialogElement;
+  const form = document.querySelector<HTMLFormElement>("form");
+
+  if (!modal || !form) {
+    throw new Error("Entity modal markup is missing");
+  }
+
+  const formError = form.querySelector<HTMLElement>("#form-error");
+  function getFieldErrorElement(fieldName: string) {
+    if (!form) return null;
+    return form.querySelector<HTMLElement>(`#error-${fieldName}`);
+  }
+  function getFieldElement(fieldName: string) {
+    if (!form) return null;
+    return form.elements.namedItem(fieldName);
+  }
+  function clearErrors() {
+    if (formError) {
+      formError.textContent = "";
+      formError.hidden = true;
+    }
+    for (const fieldName of ["name", "slug", "hiddenAttributes"]) {
+      const field = getFieldElement(fieldName);
+      const errorElement = getFieldErrorElement(fieldName);
+
+      if (
+        field instanceof HTMLInputElement ||
+        field instanceof HTMLSelectElement
+      ) {
+        field.removeAttribute("aria-invalid");
+
+        //TODO: should this be removed? gotta universalize Input and Select
+        // in terms of the .has-error class, etc.
+        const wrapper = field.closest(".input-wrapper, .select-wrapper");
+        wrapper?.classList.remove("has-error");
+      }
+
+      if (errorElement) {
+        errorElement.textContent = "";
+        errorElement.hidden = true;
+      }
+    }
+  }
+
+  function showFieldErrors(fields: Record<string, string[]>) {
+    for (const [fieldName, messages] of Object.entries(fields)) {
+      const field = getFieldElement(fieldName);
+      const errorElement = getFieldErrorElement(fieldName);
+
+      if (
+        field instanceof HTMLInputElement ||
+        field instanceof HTMLSelectElement
+      ) {
+        field.setAttribute("aria-invalid", "true");
+
+        //TODO: should this be removed? gotta universalize Input and Select
+        // in terms of the .has-error class, etc.
+        const wrapper = field.closest(".input-wrapper, .select-wrapper");
+        wrapper?.classList.add("has-error");
+      }
+
+      if (errorElement) {
+        //TODO: how should the messages be joined not to have excess comma?
+        //TODO: when more than one message could be shown?
+        errorElement.textContent = messages.join(", ");
+        errorElement.hidden = false;
+      }
+    }
+  }
+
+  function showFormError(message: string) {
+    if (!formError) return;
+    formError.textContent = message;
+    formError.hidden = false;
+  }
+
+  const title = document.querySelector<HTMLElement>("#modal-title");
+  const submitButton =
+    document.querySelector<HTMLButtonElement>("#submit-button");
+  const deleteButton =
+    document.querySelector<HTMLButtonElement>("#delete-button");
+  const nameInput = form.elements.namedItem("name") as HTMLInputElement;
+  const slugInput = form.elements.namedItem("slug") as HTMLInputElement;
+  const descriptionInput = form.elements.namedItem(
+    "description",
+  ) as HTMLTextAreaElement;
+  const hiddenAttributesSelect = form.elements.namedItem(
+    "hiddenAttributes",
+  ) as HTMLSelectElement;
+
+  let mode: "create" | "edit" = "create";
+  let initialState = "";
+
+  function getState() {
+    if (!form) {
+      throw new Error("Форма не найдена");
+    }
+    return JSON.stringify([...new FormData(form).entries()]);
+  }
+
+  function syncSubmitState() {
+    if (!form) {
+      throw new Error("Форма не найдена");
+    }
+    if (!submitButton || form.hasAttribute("data-busy")) return;
+
+    const unchanged = getState() === initialState;
+    submitButton.disabled = unchanged;
+
+    const submitText = submitButton.querySelector(".submit-button-text");
+    if (submitText) {
+      submitText.textContent =
+        mode === "edit"
+          ? unchanged
+            ? "Нет изменений"
+            : "Сохранить"
+          : "Добавить";
+    }
+  }
+
+  function resetForm() {
+    if (!form) {
+      throw new Error("Форма не найдена");
+    }
+    clearErrors();
+    form.reset();
+
+    for (const element of form.elements) {
+      if (
+        element instanceof HTMLInputElement ||
+        element instanceof HTMLSelectElement
+      ) {
+        element.disabled = false;
+      }
+    }
+
+    const idInput = form.elements.namedItem("id") as HTMLInputElement;
+    idInput.value = "";
+    slugInput.value = "";
+    descriptionInput.value = "";
+    for (const option of hiddenAttributesSelect.options) {
+      option.selected = false;
+    }
+
+    submitButton?.removeAttribute("disabled");
+    submitButton?.setAttribute("aria-busy", "false");
+
+    deleteButton?.removeAttribute("disabled");
+    deleteButton?.setAttribute("aria-busy", "false");
+  }
+
+  // code below is to be updated
+  function openFromTrigger(trigger: HTMLElement) {
+    if (!form) {
+      throw new Error("Форма не найдена");
+    }
+
+    // TODO: can this be simplified while achieving the same result?
+    if (
+      !submitButton ||
+      !hiddenAttributesSelect ||
+      !nameInput ||
+      !slugInput ||
+      !descriptionInput ||
+      !deleteButton ||
+      !title
+    ) {
+      throw new Error("Элементы формы не найдены");
+    }
+
+    resetForm();
+
+    mode = trigger.dataset.mode as typeof mode;
+
+    const idInput = form.elements.namedItem("id") as HTMLInputElement;
+
+    idInput.value = trigger.dataset.id ?? "";
+    nameInput.value = trigger.dataset.name ?? "";
+    slugInput.value = trigger.dataset.slug ?? "";
+    descriptionInput.value = trigger.dataset.description ?? "";
+    const selectedIds = JSON.parse(
+      trigger.dataset.hiddenAttributes ?? "[]",
+    ) as number[];
+
+    for (const option of hiddenAttributesSelect.options) {
+      option.selected = selectedIds.includes(Number(option.value));
+    }
+
+    deleteButton.hidden = mode === "create";
+
+    title.textContent =
+      mode === "create" ? "Создание категории" : "Редактирование категории";
+
+    submitButton.querySelector(".submit-button-text")!.textContent =
+      mode === "create" ? "Добавить" : "Сохранить";
+
+    initialState = getState();
+    syncSubmitState();
+  }
+
+  const dialogs = document.querySelectorAll("dialog");
+
+  dialogs.forEach((dialog) => {
+    // Listen for close (as normal)
+    // dialog.addEventListener("close", () => {
+    //   // Dialog was closed
+    // });
+
+    // Listen for command
+    dialog.addEventListener("command", (event) => {
+      const commandEvent = event as CommandEvent;
+
+      if (commandEvent.command == "show-modal") {
+        openFromTrigger(commandEvent.source as HTMLElement);
+        console.log(commandEvent.source);
+      }
+
+      // Another way to listen for close
+      else if (commandEvent.command == "close") {
+      }
+    });
+  });
+
+  nameInput.addEventListener("input", () => {
+    slugInput.value = generateSlug(nameInput.value);
+    syncSubmitState();
+  });
+
+  form.addEventListener("change", syncSubmitState);
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (
+      !submitButton ||
+      submitButton.disabled ||
+      form.hasAttribute("data-busy")
+    ) {
+      return;
+    }
+
+    clearErrors();
+
+    const formData = new FormData(form);
+    form.setAttribute("data-busy", "");
+    submitButton?.setAttribute("disabled", "");
+    submitButton?.setAttribute("aria-busy", "true");
+
+    try {
+      const result =
+        mode === "edit"
+          ? await actions.category.updateCategory(formData)
+          : await actions.category.createCategory(formData);
+
+      if (result.error) {
+        if (isInputError(result.error)) {
+          showFieldErrors(result.error.fields);
+        } else {
+          showFormError(String(result.error.message));
+        }
+        return;
+      }
+      // TODO: should this be updated to refresh only the changed data?
+
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+      showFormError("Произошла ошибка. Попробуйте ещё раз.");
+    } finally {
+      form.removeAttribute("data-busy");
+      submitButton?.removeAttribute("disabled");
+      submitButton?.setAttribute("aria-busy", "false");
+    }
+  });
+
+  if (deleteButton) {
+    deleteButton.addEventListener("click", async () => {
+      if (form.hasAttribute("data-busy")) return;
+
+      const name = nameInput.value;
+
+      if (!confirm(`Удалить категорию ${name}?`)) {
+        return;
+      }
+
+      const formData = new FormData(form);
+      form.setAttribute("data-busy", "");
+      deleteButton.setAttribute("disabled", "");
+      deleteButton.setAttribute("aria-busy", "true");
+
+      try {
+        const result = await actions.category.deleteCategory(formData);
+
+        if (result.error) {
+          if (isInputError(result.error)) {
+            showFieldErrors(result.error.fields);
+          } else {
+            showFormError(String(result.error.message));
+          }
+          return;
+        }
+        // TODO: should this be updated to refresh only the changed data?
+
+        window.location.reload();
+      } catch (error) {
+        console.error(error);
+        showFormError("Произошла ошибка. Попробуйте ещё раз.");
+      } finally {
+        form.removeAttribute("data-busy");
+        deleteButton.removeAttribute("disabled");
+        deleteButton.setAttribute("aria-busy", "false");
+      }
+    });
+  }
+</script>

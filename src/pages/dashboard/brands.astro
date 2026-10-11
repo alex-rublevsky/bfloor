@@ -12,18 +12,18 @@ import Select from "@/components/shared/Select.astro";
 const brandsWithCollections = await getBrandsWithCollections();
 ---
 
-<!-- TODO: do not allow for a collection to change its brand if there are products associated with this collection -->
 <DashboardLayout>
   <main>
     {
       brandsWithCollections.length > 0 ? (
-        <section class="pt-xl bg-muted/30 gap-2xs grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <section class="pt-xl bg-muted/30 autoGrid">
           <h1 class="sr-only">Бренды и коллекции</h1>
           {brandsWithCollections.map((brand) => (
             // TODO: somehow implement the name to be there for search, but not be visible for brand entries
             <div class="bg-background rounded-md p-2xs">
               <Button
-                data-open-modal
+                command="show-modal"
+                commandfor="brand-dialog"
                 data-entity="brand"
                 data-mode="edit"
                 data-id={brand.id}
@@ -57,7 +57,8 @@ const brandsWithCollections = await getBrandsWithCollections();
                   ]}>
                   {brand.collections.map((collection) => (
                     <Button
-                      data-open-modal
+                      command="show-modal"
+                      commandfor="brand-dialog"
                       data-entity="collection"
                       data-mode="edit"
                       data-id={collection.id}
@@ -75,7 +76,8 @@ const brandsWithCollections = await getBrandsWithCollections();
                   class="expand-btn"
                 />
                 <Button
-                  data-open-modal
+                  command="show-modal"
+                  commandfor="brand-dialog"
                   data-entity="collection"
                   data-brand-id={brand.id}
                   data-mode="create"
@@ -96,82 +98,82 @@ const brandsWithCollections = await getBrandsWithCollections();
       )
     }
   </main>
-  <dialog aria-labelledby="modal-title">
-    <div class="wrapper">
-      <form>
-        <input type="hidden" name="id" />
+  <dialog id="brand-dialog" aria-labelledby="modal-title">
+    <form>
+      <input type="hidden" name="id" />
 
-        <div class="flex gap-md">
-          <h2 class="text-md" id="modal-title"></h2>
-          <p id="form-error" role="alert" hidden></p>
+      <div class="flex gap-md">
+        <h2 class="text-md" id="modal-title"></h2>
+        <p id="form-error" role="alert" hidden></p>
 
-          <Button
-            data-close-modal
-            variant="tertiary"
-            class="aspect-square"
-            aria-label="Закрыть">
-            <!-- TODO: for all other icon buttons set aria hidden to true and aria label on the button itself -->
-            <Icon name="x" aria-hidden="true" />
-          </Button>
-        </div>
-        <Input
-          name="name"
-          aria-describedby="error-name"
-          label="Название"
-          value={""}
-          required
-          autofocus
-        />
-        <Input
-          name="slug"
-          aria-describedby="error-slug"
-          label="Ярлык"
-          value={""}
-          readonly={true}
-          required
-        />
-        <!-- TODO: integrate the country select fully -->
+        <Button
+          command="close"
+          commandfor="brand-dialog"
+          variant="tertiary"
+          class="aspect-square"
+          aria-label="Закрыть">
+          <!-- TODO: for all other icon buttons set aria hidden to true and aria label on the button itself -->
+          <Icon name="x" aria-hidden="true" />
+        </Button>
+      </div>
+      <Input
+        name="name"
+        aria-describedby="error-name"
+        label="Название"
+        value={""}
+        required
+        autofocus
+      />
+      <Input
+        name="slug"
+        aria-describedby="error-slug"
+        label="Ярлык"
+        value={""}
+        readonly={true}
+        required
+      />
+      <!-- TODO: integrate the country select fully -->
+      <Select
+        name="countryId"
+        label="Страна"
+        placeholder="Выбрать"
+        value={""}
+        options={COUNTRIES.map((country) => ({
+          value: String(country.id),
+          label: country.name,
+        }))}
+        aria-describedby="error-countryId"
+      />
+      <!-- error={inputErrors.country} -->
+      <div data-brand-field hidden>
+        <!-- Only needed when editing/creating collections -->
+        <!-- TODO: is this brand options from brandsWithCollections appropriate? -->
         <Select
-          name="countryId"
-          label="Страна"
+          name="brandId"
+          label="Бренд"
           placeholder="Выбрать"
-          value={""}
-          options={COUNTRIES.map((country) => ({
-            value: String(country.id),
-            label: country.name,
+          options={brandsWithCollections.map((brand) => ({
+            value: String(brand.id),
+            label: brand.name,
           }))}
-          aria-describedby="error-country"
         />
-        <!-- error={inputErrors.country} -->
-        <div data-brand-field hidden>
-          <!-- Only needed when editing/creating collections -->
-          <!-- TODO: is this brand options from brandsWithCollections appropriate? -->
-          <Select
-            name="brandId"
-            label="Бренд"
-            placeholder="Выбрать"
-            options={brandsWithCollections.map((brand) => ({
-              value: String(brand.id),
-              label: brand.name,
-            }))}
-          />
-        </div>
-        <div class="flex gap-2xs">
-          <Button id="submit-button" type="submit">
-            <!-- disabled={!creating} -->
-            <!-- {creating ? "Добавить" : "Нет изменений"} -->
-            <span class="submit-button-text"></span>
-          </Button>
+      </div>
+      <div class="flex gap-2xs">
+        <Button id="submit-button" type="submit">
+          <!-- disabled={!creating} -->
+          <!-- {creating ? "Добавить" : "Нет изменений"} -->
+          <span class="submit-button-text"></span>
+        </Button>
 
-          <!-- !creating &&  -->
-          <Button id="delete-button" variant="destructive"> Удалить </Button>
-        </div>
-      </form>
-    </div>
+        <!-- !creating &&  -->
+        <Button id="delete-button" variant="destructive"> Удалить </Button>
+      </div>
+    </form>
   </dialog>
 </DashboardLayout>
 
 <style>
+  /*TODO: simplify the span positioning to be like in categories page*/
   button[data-entity="brand"][data-mode="edit"] {
     overflow: hidden;
     &:hover span {
@@ -293,14 +295,14 @@ const brandsWithCollections = await getBrandsWithCollections();
 
   function getState() {
     if (!form) {
-      throw new Error("Entity form is missing");
+      throw new Error("Форма не найдена");
     }
     return JSON.stringify([...new FormData(form).entries()]);
   }
 
   function syncSubmitState() {
     if (!form) {
-      throw new Error("Entity form is missing");
+      throw new Error("Форма не найдена");
     }
     if (!submitButton || form.hasAttribute("data-busy")) return;
 
@@ -320,7 +322,7 @@ const brandsWithCollections = await getBrandsWithCollections();
 
   function resetForm() {
     if (!form) {
-      throw new Error("Entity form is missing");
+      throw new Error("Форма не найдена");
     }
     clearErrors();
     form.reset();
@@ -349,11 +351,12 @@ const brandsWithCollections = await getBrandsWithCollections();
 
   function openFromTrigger(trigger: HTMLElement) {
     if (!form) {
-      throw new Error("Entity form is missing");
+      throw new Error("Форма не найдена");
     }
 
+    // TODO: can this be simplified while achieving the same result?
     if (!submitButton || !brandField || !deleteButton || !title) {
-      throw new Error("Form elements are missing");
+      throw new Error("Элементы формы не найдены");
     }
 
     resetForm();
@@ -400,26 +403,27 @@ const brandsWithCollections = await getBrandsWithCollections();
     modal.showModal();
   }
 
-  document
-    .querySelectorAll<HTMLElement>("[data-open-modal]")
-    .forEach((trigger) => {
-      trigger.addEventListener("click", () => {
-        openFromTrigger(trigger);
-      });
-    });
+  const dialogs = document.querySelectorAll("dialog");
 
-  document
-    .querySelectorAll<HTMLButtonElement>("[data-close-modal]")
-    .forEach((button) => {
-      button.addEventListener("click", () => {
-        modal.close();
-      });
-    });
+  dialogs.forEach((dialog) => {
+    // Listen for close (as normal)
+    // dialog.addEventListener("close", () => {
+    //   // Dialog was closed
+    // });
 
-  modal.addEventListener("click", (event) => {
-    if (event.target === modal) {
-      modal.close();
-    }
+    // Listen for command
+    dialog.addEventListener("command", (event) => {
+      const commandEvent = event as CommandEvent;
+
+      if (commandEvent.command == "show-modal") {
+        openFromTrigger(commandEvent.source as HTMLElement);
+        console.log(commandEvent.source);
+      }
+
+      // Another way to listen for close
+      else if (commandEvent.command == "close") {
+      }
+    });
   });
 
   nameInput.addEventListener("input", () => {
@@ -461,11 +465,12 @@ const brandsWithCollections = await getBrandsWithCollections();
         if (isInputError(result.error)) {
           showFieldErrors(result.error.fields);
         } else {
-          showFormError("Не удалось сохранить изменения.");
+          showFormError(String(result.error.message));
         }
 
         return;
       }
+      // TODO: should this be updated to refresh only the changed data?
       window.location.reload();
     } catch (error) {
       console.error(error);
@@ -506,14 +511,11 @@ const brandsWithCollections = await getBrandsWithCollections();
           if (isInputError(result.error)) {
             showFieldErrors(result.error.fields);
           } else {
-            showFormError(
-              "Не удалось удалить " +
-                (entity === "brand" ? "бренд" : "коллекцию") +
-                ".",
-            );
+            showFormError(String(result.error.message));
           }
           return;
         }
+        // TODO: should this be updated to refresh only the changed data?
         window.location.reload();
       } catch (error) {
         console.error(error);

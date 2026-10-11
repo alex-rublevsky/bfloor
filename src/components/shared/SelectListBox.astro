@@ -14,6 +14,8 @@ interface Props {
   value?: string | string[] | null;
   required?: boolean;
   error?: string[];
+  hidden?: boolean;
+  disabled?: boolean;
 }
 
 const {
@@ -21,12 +23,14 @@ const {
   id,
   label,
   options,
-  multiple,
+  multiple = true,
   size,
   value = "",
   // placeholder,
   required,
   error,
+  hidden = false,
+  disabled = false,
   ...rest
 } = Astro.props;
 
@@ -34,7 +38,7 @@ const selectId = id ?? `select-${name}`;
 const hasError = !!error;
 ---
 
-<div class:list={["select-wrapper", { "has-error": hasError }]}>
+<div class:list={["select-wrapper", { "has-error": hasError }]} hidden={hidden}>
   <select
     multiple={multiple}
     size={size ?? null}
@@ -42,6 +46,7 @@ const hasError = !!error;
     name={name}
     class="select-field input-field"
     required={required || undefined}
+    disabled={disabled}
     {...rest}>
     {
       options.map((option) => (

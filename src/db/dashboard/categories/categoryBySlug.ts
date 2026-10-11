@@ -1,5 +1,5 @@
 import { db } from "@/db/index";
-import type { Category } from "@/db/dashboard/categories/types";
+import type { Category } from "@/db/schema";
 
 export async function getCategoryBySlug(
   slug?: string,

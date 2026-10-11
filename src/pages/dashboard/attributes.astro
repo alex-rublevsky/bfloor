@@ -12,22 +12,21 @@ const attributesWithValues = await getAllAttributesWithValues();
   <main>
     {
       attributesWithValues.length > 0 ? (
-        <section class="pt-xl grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <section class="pt-xl bg-muted/30 autoGrid">
           <h1 class="sr-only">Атрибуты</h1>
           {attributesWithValues.map((att) => (
             <div class="bg-background rounded-md p-2xs">
-              <Button
-                data-open-modal
+              <button
+                command="show-modal"
+                commandfor="attribute-dialog"
                 data-entity="attribute"
                 data-mode="edit"
                 data-id={att.id}
                 data-name={att.name}
-                data-slug={att.slug}
-                variant="ghost"
-                class="p-3xs rounded-sm hover:bg-muted aspect-square relative">
-                {att.name}
+                data-slug={att.slug}>
+                <h5>{att.name}</h5>
                 <span>Изменить</span>
-              </Button>
+              </button>
               <div class="grid">
                 <div
                   class:list={[
@@ -36,7 +35,8 @@ const attributesWithValues = await getAllAttributesWithValues();
                   ]}>
                   {att.attributeValues.map((attributeValue) => (
                     <Button
-                      data-open-modal
+                      command="show-modal"
+                      commandfor="attribute-dialog"
                       data-entity="attributeValue"
                       data-mode="edit"
                       data-id={attributeValue.id}
@@ -54,7 +54,8 @@ const attributesWithValues = await getAllAttributesWithValues();
                   class="expand-btn"
                 />
                 <Button
-                  data-open-modal
+                  command="show-modal"
+                  commandfor="attribute-dialog"
                   data-entity="attributeValue"
                   data-attribute-id={att.id}
                   data-mode="create"
@@ -75,7 +76,7 @@ const attributesWithValues = await getAllAttributesWithValues();
       )
     }
   </main>
-  <dialog aria-labelledby="modal-title">
+  <dialog id="attribute-dialog" aria-labelledby="modal-title">
     <div class="wrapper">
       <form>
         <input type="hidden" name="id" />
@@ -86,7 +87,8 @@ const attributesWithValues = await getAllAttributesWithValues();
           <p id="form-error" role="alert" hidden></p>
 
           <Button
-            data-close-modal
+            command="close"
+            commandfor="attribute-dialog"
             variant="tertiary"
             class="aspect-square"
             aria-label="Закрыть">
@@ -124,26 +126,34 @@ const attributesWithValues = await getAllAttributesWithValues();
 </DashboardLayout>
 
 <style>
-  /*TODO: universalize these buttons to have reusable styles for both attributes and brands*/
   button[data-entity="attribute"][data-mode="edit"] {
+    width: 100%;
+    padding: var(--spacing-lg) var(--spacing-xs);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    position: relative;
+    text-align: left;
     overflow: hidden;
+    &:hover {
+      background-color: var(--muted);
+    }
+    & span {
+      display: none;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-weight: bold;
+      padding: var(--spacing-3xs);
+      background: linear-gradient(to bottom, transparent, var(--muted) 60%);
+      height: 50%;
+    }
     &:hover span {
       display: flex;
       align-items: end;
       justify-content: center;
     }
-  }
-
-  button[data-entity="attribute"][data-mode="edit"] span {
-    display: none;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    text-align: center;
-    padding: var(--spacing-xs);
-    background: linear-gradient(to bottom, transparent, var(--muted) 60%);
-    height: 50%;
   }
 </style>
 
@@ -336,26 +346,27 @@ const attributesWithValues = await getAllAttributesWithValues();
     modal.showModal();
   }
 
-  document
-    .querySelectorAll<HTMLElement>("[data-open-modal]")
-    .forEach((trigger) => {
-      trigger.addEventListener("click", () => {
-        openFromTrigger(trigger);
-      });
-    });
+  const dialogs = document.querySelectorAll("dialog");
 
-  document
-    .querySelectorAll<HTMLButtonElement>("[data-close-modal]")
-    .forEach((button) => {
-      button.addEventListener("click", () => {
-        modal.close();
-      });
-    });
+  dialogs.forEach((dialog) => {
+    // Listen for close (as normal)
+    // dialog.addEventListener("close", () => {
+    //   // Dialog was closed
+    // });
 
-  modal.addEventListener("click", (event) => {
-    if (event.target === modal) {
-      modal.close();
-    }
+    // Listen for command
+    dialog.addEventListener("command", (event) => {
+      const commandEvent = event as CommandEvent;
+
+      if (commandEvent.command == "show-modal") {
+        openFromTrigger(commandEvent.source as HTMLElement);
+        console.log(commandEvent.source);
+      }
+
+      // Another way to listen for close
+      else if (commandEvent.command == "close") {
+      }
+    });
   });
 
   nameInput.addEventListener("input", () => {
@@ -397,11 +408,13 @@ const attributesWithValues = await getAllAttributesWithValues();
         if (isInputError(result.error)) {
           showFieldErrors(result.error.fields);
         } else {
-          showFormError("Не удалось сохранить изменения.");
+          showFormError(result.error.message);
         }
 
         return;
       }
+      // TODO: should this be updated to refresh only the changed data?
+
       window.location.reload();
     } catch (error) {
       console.error(error);
@@ -442,14 +455,12 @@ const attributesWithValues = await getAllAttributesWithValues();
           if (isInputError(result.error)) {
             showFieldErrors(result.error.fields);
           } else {
-            showFormError(
-              "Не удалось удалить " +
-                (entity === "attribute" ? "атрибут" : "значение атрибута") +
-                ".",
-            );
+            showFormError(result.error.message);
           }
           return;
         }
+        // TODO: should this be updated to refresh only the changed data?
+
         window.location.reload();
       } catch (error) {
         console.error(error);

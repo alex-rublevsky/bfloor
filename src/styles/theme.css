@@ -194,9 +194,9 @@
     }
   }
 
-  textarea {
+  /*textarea {
     field-sizing: content;
-  }
+  }*/
 
   select,
   ::picker(select) {
@@ -277,16 +277,14 @@ html {
 
 dialog {
   margin: auto;
+  padding: var(--spacing-sm);
   background-color: var(--background);
   border-radius: var(--radius-md);
   box-shadow: 0 1px 25px 0 rgba(0, 0, 0, 0.15);
   &::backdrop {
     background-color: color-mix(in oklch, var(--foreground) 30%, transparent);
-    backdrop-filter: blur(0.15rem);
-    cursor: pointer;
-  }
-  & > .wrapper {
-    padding: var(--spacing-sm);
+    backdrop-filter: blur(0.2rem);
+    /*cursor: pointer;*/
   }
 }
 
@@ -304,8 +302,8 @@ legend {
 
 [id*="error"] {
   display: block;
-  /*margin-top: var(--spacing-3xs);*/
-  line-height: 1.6;
+  margin-top: var(--spacing-3xs);
+  line-height: 1.2;
   font-size: var(--step--1);
   color: var(--destructive);
 }
@@ -446,12 +444,14 @@ legend {
 }
 
 @layer base {
-  a {
+  a,
+  button {
     display: inline-block;
     transition: transform 70ms ease-out;
   }
 
-  a:active:not(:has(button:active)) {
+  a,
+  button:active:not(:has(button:active)) {
     transform: scale(0.97);
   }
 }

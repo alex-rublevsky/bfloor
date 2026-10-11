@@ -1,6 +1,4 @@
 export type {
-  Attribute,
-  AttributeValue,
   CreateAttributeInput,
   UpdateAttributeInput,
   DeleteAttributeInput,
@@ -9,6 +7,7 @@ export type {
   DeleteAttributeValueInput,
 } from "./types";
 
+export { getAllAttributes } from "./allAttributes";
 export { getAllAttributesWithValues } from "./allAttributesWithValues";
 export { getAttributeBySlug } from "./attributeBySlug";
 export { createAttribute } from "./createAttribute";

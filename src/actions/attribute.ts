@@ -6,35 +6,47 @@ import {
   updateAttribute,
   createAttribute,
 } from "@/db/dashboard/attributes/index";
-import { generateSlug } from "@/lib/slugGeneration";
+
+import { cleanNameAndValidateSlug, id, name, slug } from "./helpers";
+import { db } from "@/db";
+import { attributes, attributeValues } from "@/db/schema";
+import { and, eq, ne, or } from "drizzle-orm";
+
+async function validateAttributeUniqueness(
+  name: string,
+  slug: string,
+  id: number = 0,
+) {
+  const [suchAttributeAlreadyExists] = await db
+    .select({ id: attributes.id })
+    .from(attributes)
+    .where(
+      or(
+        and(eq(attributes.slug, slug), ne(attributes.id, id)),
+        and(eq(attributes.name, name), ne(attributes.id, id)),
+      ),
+    )
+    .limit(1);
+
+  if (suchAttributeAlreadyExists) {
+    throw new ActionError({
+      code: "CONFLICT",
+      message: "Атрибут с таким названием или ярлыком уже существует",
+    });
+  }
+}
+
+const attributeFields = { name, slug };
 
 export const attribute = {
   createAttribute: defineAction({
     accept: "form",
-    input: z.object({
-      name: z
-        .string("Название обязательно")
-        .trim()
-        .normalize()
-        .nonempty("Название обязательно"),
-      slug: z
-        .string("Ярлык обязателен")
-        .trim()
-        .normalize()
-        .toLowerCase()
-        .nonempty("Ярлык обязателен"),
-    }),
+    input: z.object(attributeFields),
     handler: async (input, { locals }) => {
       requireAdmin(locals);
-      const cleanName = input.name.replace(/\s+/g, " ");
+      const cleanName = cleanNameAndValidateSlug(input.name, input.slug);
 
-      const slugIsCorrect = input.slug === generateSlug(cleanName);
-      if (!slugIsCorrect) {
-        throw new ActionError({
-          code: "BAD_REQUEST",
-          message: "Slug is incorrect",
-        });
-      }
+      await validateAttributeUniqueness(cleanName, input.slug);
 
       return await createAttribute({
         name: cleanName,
@@ -45,11 +57,25 @@ export const attribute = {
   deleteAttribute: defineAction({
     accept: "form",
     input: z.object({
-      id: z.coerce.number().int().positive(),
+      id: id("атрибута"),
       // image: z.string(),
     }),
     handler: async (input, { locals }) => {
       requireAdmin(locals);
+
+      const [attribueValueExists] = await db
+        .select({ id: attributeValues.id })
+        .from(attributeValues)
+        .where(eq(attributeValues.attributeId, input.id))
+        .limit(1);
+
+      if (attribueValueExists) {
+        throw new ActionError({
+          code: "CONFLICT",
+          message: "Перед удалением атрибута удалите его значения",
+        });
+      }
+
       return await deleteAttribute({
         id: input.id,
       });
@@ -58,30 +84,29 @@ export const attribute = {
   updateAttribute: defineAction({
     accept: "form",
     input: z.object({
-      name: z
-        .string("Название обязательно")
-        .trim()
-        .normalize()
-        .nonempty("Название обязательно"),
-      slug: z
-        .string("Ярлык обязателен")
-        .trim()
-        .normalize()
-        .toLowerCase()
-        .nonempty("Ярлык обязателен"),
-      id: z.coerce.number().int().positive("ID атрибута обязателен"),
+      ...attributeFields,
+      id: id("атрибута"),
     }),
     handler: async (input, { locals }) => {
       requireAdmin(locals);
-      const cleanName = input.name.replace(/\s+/g, " ");
 
-      const slugIsCorrect = input.slug === generateSlug(cleanName);
-      if (!slugIsCorrect) {
+      const [thisAttributeExists] = await db
+        .select({ id: attributes.id })
+        .from(attributes)
+        .where(eq(attributes.id, input.id))
+        .limit(1);
+
+      if (!thisAttributeExists) {
         throw new ActionError({
-          code: "BAD_REQUEST",
-          message: "Slug is incorrect",
+          code: "NOT_FOUND",
+          message: "Атрибут не найден",
         });
       }
+
+      const cleanName = cleanNameAndValidateSlug(input.name, input.slug);
+
+      await validateAttributeUniqueness(cleanName, input.slug, input.id);
+
       return await updateAttribute({
         name: cleanName,
         slug: input.slug,

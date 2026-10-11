@@ -16,6 +16,10 @@ export const categories = sqliteTable("categories", {
   name: text("name").unique().notNull(),
   slug: text("slug").unique().notNull(),
   image: text("image"),
+  hiddenAttributes: text("hidden_attributes", { mode: "json" })
+    .$type<number[]>()
+    .notNull()
+    .default(sql`'[]'`),
   description: text("description"),
 });
 
@@ -32,13 +36,14 @@ export const collections = sqliteTable(
   {
     id: integer("id").primaryKey(),
     name: text("name").notNull(),
-    slug: text("slug").unique().notNull(),
+    slug: text("slug").notNull(),
     brandId: integer("brand_id")
       .notNull()
       .references(() => brands.id, { onDelete: "restrict" }),
   },
   (table) => [
     unique("collections_brand_name_unique").on(table.brandId, table.name),
+    unique("collections_brand_slug_unique").on(table.brandId, table.slug),
   ],
 );
 
@@ -91,6 +96,11 @@ export const products = sqliteTable(
       .$type<string[]>()
       .notNull()
       .default(sql`'[]'`),
+    // TODO:
+    //   1. integrate fully.
+    //   2. migrate to attributes
+    //   3. delete from the system
+    dimensions: text("dimensions"),
     price: real("price"),
     discountedPrice: real("discounted_price"),
     categoryId: integer("category_id")

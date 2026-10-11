@@ -1,20 +1,19 @@
 import { db } from "@/db/index";
 import { categories } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import type {
-  UpdateCategoryInput,
-  Category,
-} from "@/db/dashboard/categories/types";
+import type { UpdateCategoryInput } from "@/db/dashboard/categories/types";
+import type { Category } from "@/db/schema";
 
 export async function updateCategory(
   category: UpdateCategoryInput,
-): Promise<Category> {
+): Promise<Category | null> {
   const insertedCategory = await db
     .update(categories)
     .set({
       slug: category.slug,
       name: category.name,
       description: category.description,
+      hiddenAttributes: category.hiddenAttributes,
     })
     .where(eq(categories.id, category.id))
     .returning()

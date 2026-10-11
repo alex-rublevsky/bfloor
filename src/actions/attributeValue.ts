@@ -6,37 +6,62 @@ import {
   updateAttributeValue,
   createAttributeValue,
 } from "@/db/dashboard/attributes/index";
-import { generateSlug } from "@/lib/slugGeneration";
+import { cleanNameAndValidateSlug, id, name, slug } from "./helpers";
+import { db } from "@/db";
+import { attributeValues, productAttributeValues } from "@/db/schema";
+import { and, eq, ne, or } from "drizzle-orm";
+
+const attributeValueFields = {
+  name,
+  slug,
+  attributeId: z
+    .int("ID значения атрибута должно быть целым числом")
+    .positive("ID значения атрибута должен быть больше нуля"),
+};
+
+async function validateValueUniquenessWithinAttribute(
+  name: string,
+  slug: string,
+  attributeId: number,
+  id: number = 0,
+) {
+  const [suchAttributeValueAlreadyExists] = await db
+    .select({ id: attributeValues.id })
+    .from(attributeValues)
+    .where(
+      and(
+        eq(attributeValues.attributeId, attributeId),
+        or(
+          and(eq(attributeValues.slug, slug), ne(attributeValues.id, id)),
+          and(eq(attributeValues.name, name), ne(attributeValues.id, id)),
+        ),
+      ),
+    )
+    .limit(1);
+
+  if (suchAttributeValueAlreadyExists) {
+    throw new ActionError({
+      code: "CONFLICT",
+      message:
+        "Значение с таким названием или ярлыком уже существует у этого атрибута",
+    });
+  }
+}
 
 export const attributeValue = {
   createAttributeValue: defineAction({
     accept: "form",
-    input: z.object({
-      name: z
-        .string("Название обязательно")
-        .trim()
-        .normalize()
-        .nonempty("Название обязательно"),
-      slug: z
-        .string("Ярлык обязателен")
-        .trim()
-        .normalize()
-        .toLowerCase()
-        .nonempty("Ярлык обязателен"),
-      //TODO: is this correct? how would this handle 0/null? is it appropriate to use coerce.number() here?
-      attributeId: z.coerce.number().int().positive("ID атрибута обязателен"),
-    }),
+    input: z.object(attributeValueFields),
     handler: async (input, { locals }) => {
       requireAdmin(locals);
-      const cleanName = input.name.replace(/\s+/g, " ");
 
-      const slugIsCorrect = input.slug === generateSlug(cleanName);
-      if (!slugIsCorrect) {
-        throw new ActionError({
-          code: "BAD_REQUEST",
-          message: "Slug is incorrect",
-        });
-      }
+      const cleanName = cleanNameAndValidateSlug(input.name, input.slug);
+
+      await validateValueUniquenessWithinAttribute(
+        cleanName,
+        input.slug,
+        input.attributeId,
+      );
 
       //TODO: validate uniqueness
       return await createAttributeValue({
@@ -50,10 +75,24 @@ export const attributeValue = {
   deleteAttributeValue: defineAction({
     accept: "form",
     input: z.object({
-      id: z.coerce.number().int().positive(),
+      id: id("значения атрибута"),
     }),
     handler: async (input, { locals }) => {
       requireAdmin(locals);
+
+      const [productExists] = await db
+        .select({ id: productAttributeValues.id })
+        .from(productAttributeValues)
+        .where(eq(productAttributeValues.attributeValueId, input.id))
+        .limit(1);
+
+      if (productExists) {
+        throw new ActionError({
+          code: "CONFLICT",
+          message:
+            "Перед удалением значения атрибута удалите товары связанные с ним",
+        });
+      }
       return await deleteAttributeValue({
         id: input.id,
       });
@@ -62,32 +101,33 @@ export const attributeValue = {
   updateAttributeValue: defineAction({
     accept: "form",
     input: z.object({
-      name: z
-        .string("Название обязательно")
-        .trim()
-        .normalize()
-        .nonempty("Название обязательно"),
-      slug: z
-        .string("Ярлык обязателен")
-        .trim()
-        .normalize()
-        .toLowerCase()
-        .nonempty("Ярлык обязателен"),
-      id: z.coerce.number().int().positive(),
-      attributeId: z.coerce.number().int().positive("ID атрибута обязателен"),
+      ...attributeValueFields,
+      id: id("значения атрибута"),
     }),
     handler: async (input, { locals }) => {
       requireAdmin(locals);
-      const cleanName = input.name.replace(/\s+/g, " ");
 
-      const slugIsCorrect = input.slug === generateSlug(cleanName);
+      const [thisAttributeValueExists] = await db
+        .select({ id: attributeValues.id })
+        .from(attributeValues)
+        .where(eq(attributeValues.id, input.id))
+        .limit(1);
 
-      if (!slugIsCorrect) {
+      if (!thisAttributeValueExists) {
         throw new ActionError({
-          code: "BAD_REQUEST",
-          message: "Slug is incorrect",
+          code: "NOT_FOUND",
+          message: "Значение атрибута не найдено",
         });
       }
+
+      const cleanName = cleanNameAndValidateSlug(input.name, input.slug);
+
+      await validateValueUniquenessWithinAttribute(
+        cleanName,
+        input.slug,
+        input.attributeId,
+        input.id,
+      );
 
       return await updateAttributeValue({
         id: input.id,

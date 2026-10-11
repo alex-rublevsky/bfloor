@@ -39,21 +39,21 @@ const createItems = [
   {
     label: "Категория",
     href: "/dashboard/categories",
-    hrefTo: "/dashboard/categories/new",
+    commandFor: "category-dialog",
     match: "exact" as const,
   },
   {
     label: "Бренд",
     href: "/dashboard/brands",
-    // hrefTo: "/dashboard/brands/new",
     dataEntity: "brand",
+    commandFor: "brand-dialog",
     match: "exact" as const,
   },
   {
     label: "Атрибут",
     href: "/dashboard/attributes",
     dataEntity: "attribute",
-    // hrefTo: "/dashboard/attributes/new",
+    commandFor: "attribute-dialog",
     match: "exact" as const,
   },
 ];
@@ -93,9 +93,10 @@ const hasCreateButton = (href: string) => pathname === href;
           size="sm"
           variant="primary"
           href={item.hrefTo}
-          data-open-modal={item.dataEntity ? "" : undefined}
           data-entity={item.dataEntity ?? undefined}
-          data-mode={item.dataEntity ? "create" : undefined}
+          data-mode={item.commandFor ? "create" : undefined}
+          command={item.commandFor ? "show-modal" : undefined}
+          commandfor={item.commandFor ?? undefined}
           style={hasCreateButton(item.href) ? null : "display: none"}>
           <Icon name="plus" title={`Создать ${item.label}`} />
           {item.label}

@@ -25,7 +25,11 @@ const products = await getAllProductsByCategory(category.id, page);
       <p>{category.description ?? "Описание ещё не добавлено"}</p>
     </div>
     <div class="storeLayout">
-      <div class="bg-muted/30"><h2>Фильтры</h2></div>
+      <div class="bg-muted/30">
+        <h2>Фильтры</h2>
+        <pagefind-filter-dropdown filter="location" label="Доступен на"
+        ></pagefind-filter-dropdown>
+      </div>
       <div class="autoGrid">
         {
           products ? (

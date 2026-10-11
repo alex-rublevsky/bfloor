@@ -4,14 +4,14 @@ export function requireAdmin(locals: App.Locals) {
   if (!locals.user) {
     throw new ActionError({
       code: "UNAUTHORIZED",
-      message: "You must be signed in.",
+      message: "Необходимо войти в систему",
     });
   }
 
   if (!isAdmin(locals.user.email)) {
     throw new ActionError({
       code: "FORBIDDEN",
-      message: "You do not have access.",
+      message: "У вас нет доступа",
     });
   }
 

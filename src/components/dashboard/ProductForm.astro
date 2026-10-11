@@ -10,18 +10,47 @@ import { STORE_LOCATIONS } from "@/lib/storeLocations";
 import { getBrandsWithCollections } from "@/db/dashboard/brands";
 import { getAllAttributesWithValues } from "@/db/dashboard/attributes";
 import { actions, isInputError } from "astro:actions";
-import MarkdownEditor from "./MarkdownEditor.astro";
+// import MarkdownEditor from "./MarkdownEditor.astro";
 import type { ProductFormData } from "@/db/dashboard/products/index";
 import { UNITS_OF_MEASUREMENT } from "@/lib/units";
-import SelectListBox from "../shared/SelectListBox.astro";
+import SelectListBox from "@/components/shared/SelectListBox.astro";
 
 interface Props {
   product?: ProductFormData;
 }
 const { product = {} } = Astro.props as Props;
 const creating = !product.slug;
+
+// TODO: load all in parallel with Promise.all()
+// // const [categories, brandsWithCollections, attributesWithValues] =
+//   await Promise.all([
+//     getAllCategories(),
+//     getBrandsWithCollections(),
+//     getAllAttributesWithValues(),
+//   ]);
+
 const categories = await getAllCategories();
+const categoryPolicies = Object.fromEntries(
+  categories.map((category) => [
+    String(category.id),
+    category.hiddenAttributes ?? [],
+  ]),
+);
+const selectedCategoryHiddenAttributes = new Set(
+  categories.find((category) => category.id === product.categoryId)
+    ?.hiddenAttributes ?? [],
+);
+
 const brandsWithCollections = await getBrandsWithCollections();
+const collectionsByBrand = Object.fromEntries(
+  brandsWithCollections.map((brand) => [
+    String(brand.id),
+    brand.collections.map((collection) => ({
+      value: String(collection.id),
+      label: collection.name,
+    })),
+  ]),
+);
 
 const attributesWithValues = await getAllAttributesWithValues();
 
@@ -30,6 +59,15 @@ const selectedUnitOfMeasurement = product.unitOfMeasurement
   : "м2";
 const selectedCategoryId = product.categoryId ? String(product.categoryId) : "";
 const selectedBrandId = product.brandId ? String(product.brandId) : "";
+const selectedBrand = brandsWithCollections.find(
+  (brand) => String(brand.id) === selectedBrandId,
+);
+const initialCollectionOptions =
+  selectedBrand?.collections.map((collection) => ({
+    value: String(collection.id),
+    label: collection.name,
+  })) ?? [];
+
 const selectedCollectionId = product.collectionId
   ? String(product.collectionId)
   : "";
@@ -62,11 +100,27 @@ function formatTime(date?: Date | null) {
 const creationResult = Astro.getActionResult(actions.product.createProduct);
 const updateResult = Astro.getActionResult(actions.product.updateProduct);
 
-const inputErrors = isInputError(creationResult?.error)
-  ? creationResult.error.fields
-  : isInputError(updateResult?.error)
-    ? updateResult.error.fields
-    : {};
+const creationError = creationResult?.error;
+const updateError = updateResult?.error;
+const formError =
+  creationError && !isInputError(creationError)
+    ? creationError.message
+    : updateError && !isInputError(updateError)
+      ? updateError.message
+      : undefined;
+const inputErrors =
+  creationError && isInputError(creationError)
+    ? creationError.fields
+    : updateError && isInputError(updateError)
+      ? updateError.fields
+      : {};
+const log = {
+  creationResult,
+  updateResult,
+  creationError,
+  updateError,
+  formError,
+};
 ---
 
 <section class="pt-xl">
@@ -80,6 +134,8 @@ considering that this is a native form? -->
     id="product-form"
     method="POST"
     data-mode={creating ? "create" : "edit"}
+    data-category-policies={JSON.stringify(categoryPolicies)}
+    data-collections-by-brand={JSON.stringify(collectionsByBrand)}
     action={creating
       ? actions.product.createProduct
       : actions.product.updateProduct}>
@@ -89,15 +145,8 @@ considering that this is a native form? -->
 
       {
         (
-          <p
-            id="form-error"
-            role="alert"
-            hidden={!creationResult?.error && !updateResult?.error}>
-            {creationResult?.error
-              ? "Ошибка создания товара"
-              : updateResult?.error
-                ? "Ошибка обновления товара"
-                : ""}
+          <p id="form-error" role="alert" hidden={!formError}>
+            {formError}
           </p>
         )
       }
@@ -113,194 +162,276 @@ considering that this is a native form? -->
         )
       }
     </h1>
-    <div class="formWrapper">
-      <ImagesDropzone images={images} />
+    <div>
+      <div class="images-and-general-wrapper">
+        <ImagesDropzone images={images} />
 
-      <fieldset>
-        <legend>Общее</legend>
+        <fieldset>
+          <legend>Общее</legend>
 
-        <div class="formInputsBlock">
-          <div class="inputRowWrapper">
-            <Input
-              name="name"
-              label="Название"
-              value={product.name}
-              aria-describedby="error-name"
-              required
-              minlength="1"
-              error={inputErrors.name}
-              autofocus
-            />
-            <!-- TODO: fix slug field being able to become focused on click, though it is set to readonly -->
-            <Input
-              name="slug"
-              label="Ярлык"
-              value={product.slug ? product.slug : ""}
-              aria-describedby="error-slug"
-              required
-              minlength="1"
-              error={inputErrors.slug}
-              readonly={true}
-            />
-          </div>
-
-          <div class="inputRowWrapper">
-            <!-- TODO: add logic for the price to become not required if variations are present -->
-            <Input
-              name="price"
-              label="Цена"
-              value={product.price}
-              aria-describedby="error-price"
-              required
-              error={inputErrors.price}
-              type="number"
-            />
-            <Input
-              name="discountedPrice"
-              label="Цена со скидкой"
-              value={product.discountedPrice ?? ""}
-              aria-describedby="error-discountedPrice"
-              error={inputErrors.discountedPrice}
-              type="number"
-            />
-          </div>
-
-          <div class="inputRowWrapper">
-            <Select
-              name="categoryId"
-              label="Категория"
-              placeholder="Выбрать"
-              value={selectedCategoryId}
-              options={categories.map((category) => ({
-                value: String(category.id),
-                label: category.name,
-              }))}
-              required
-              aria-describedby="error-categoryId"
-              error={inputErrors.categoryId}
-            />
-            <Input
-              name="sku"
-              label="Артикул"
-              value={product.sku}
-              aria-describedby="error-sku"
-              error={inputErrors.sku}
-            />
-          </div>
-          <div class="inputRowWrapper">
-            <Select
-              name="brandId"
-              label="Бренд"
-              placeholder="Выбрать"
-              value={selectedBrandId}
-              options={brandsWithCollections.map((brand) => ({
-                value: String(brand.id),
-                label: brand.name,
-              }))}
-              aria-describedby="error-brandId"
-              error={inputErrors.brandId}
-            />
-            <Select
-              name="collectionId"
-              label="Коллекция"
-              placeholder="Выбрать"
-              value={selectedCollectionId}
-              options={[]}
-              aria-describedby="error-collectionId"
-              error={inputErrors.collectionId}
-            />
-          </div>
-          <div class="inputRowWrapper">
-            <Select
-              name="unitOfMeasurement"
-              label="Единица измерения"
-              value={selectedUnitOfMeasurement}
-              options={UNITS_OF_MEASUREMENT.map((unit) => ({
-                value: String(unit.id),
-                label: unit.value,
-              }))}
-              required
-              aria-describedby="error-unitOfMeasurement"
-              error={inputErrors.unitOfMeasurement}
-            />
-            <Input
-              name="squareMetersPerPack"
-              label="Площадь упаковки м²"
-              value={product.squareMetersPerPack ?? null}
-              aria-describedby="error-squareMetersPerPack"
-              error={inputErrors.squareMetersPerPack}
-              type="number"
-              step=".01"
-            />
-          </div>
-        </div>
-        <div class="inputRowWrapper gap-x-md! gap-y-sm!">
-          <fieldset class="inline-max">
-            <legend class="text-base!">В наличии в магазинах</legend>
-            <div class="flex flex-wrap shrink-0 gap-x-sm gap-y-2xs">
-              {
-                STORE_LOCATIONS.map((location) => (
-                  <Checkbox
-                    name="storeLocationIds"
-                    value={String(location.id)}
-                    checked={
-                      product.storeLocationIds?.includes(location.id) ?? false
-                    }
-                    aria-describedby="error-storeLocationIds">
-                    {location.address}
-                  </Checkbox>
-                ))
-              }
+          <div class="formInputsBlock">
+            <div class="inputRowWrapper">
+              <Input
+                name="name"
+                label="Название"
+                value={product.name}
+                aria-describedby="error-name"
+                required
+                minlength="1"
+                error={inputErrors.name}
+                autofocus={creating ? true : false}
+              />
+              <!-- TODO: fix slug field being able to become focused on click, though it is set to readonly -->
+              <Input
+                name="slug"
+                label="Ярлык"
+                value={product.slug ? product.slug : ""}
+                aria-describedby="error-slug"
+                required
+                minlength="1"
+                error={inputErrors.slug}
+                readonly={true}
+              />
             </div>
-            <span
-              id={`error-storeLocationIds`}
-              role="alert"
-              hidden={!inputErrors.storeLocationIds}>
-              {inputErrors.storeLocationIds}
-            </span>
-          </fieldset>
-          <Checkbox
-            name="isActive"
-            value="1"
-            checked={product.isActive ?? true}>
-            Товар активен
-          </Checkbox>
-        </div>
 
-        <!-- TODO: re-do markdown editor from the ground up -->
-        <!-- <MarkdownEditor
-          label="Важное примечание"
-          name="importantNote"
-          content={product.importantNote ?? ""}
-          lessButtons
-        />
-        <MarkdownEditor
-          label="Описание"
-          name="description"
-          content={product.description ?? ""}
-        /> -->
-      </fieldset>
+            <div class="inputRowWrapper">
+              <!-- TODO: add logic for the price to become not required if variations are present -->
+              <Input
+                name="price"
+                label="Цена"
+                value={product.price}
+                aria-describedby="error-price"
+                required
+                error={inputErrors.price}
+                type="number"
+              />
+              <Input
+                name="discountedPrice"
+                label="Цена со скидкой"
+                value={product.discountedPrice ?? ""}
+                aria-describedby="error-discountedPrice"
+                error={inputErrors.discountedPrice}
+                type="number"
+              />
+            </div>
+
+            <div class="inputRowWrapper">
+              <Select
+                name="categoryId"
+                label="Категория"
+                placeholder="Выбрать"
+                value={selectedCategoryId}
+                options={categories.map((category) => ({
+                  value: String(category.id),
+                  label: category.name,
+                }))}
+                required
+                aria-describedby="error-categoryId"
+                error={inputErrors.categoryId}
+              />
+              <Input
+                name="sku"
+                label="Артикул"
+                value={product.sku}
+                aria-describedby="error-sku"
+                error={inputErrors.sku}
+              />
+            </div>
+            <div class="inputRowWrapper">
+              <Select
+                name="brandId"
+                label="Бренд"
+                placeholder="Выбрать"
+                value={selectedBrandId}
+                options={brandsWithCollections.map((brand) => ({
+                  value: String(brand.id),
+                  label: brand.name,
+                }))}
+                aria-describedby="error-brandId"
+                error={inputErrors.brandId}
+              />
+              <Select
+                name="collectionId"
+                label="Коллекция"
+                placeholder={selectedBrandId
+                  ? "Выбрать"
+                  : "Сначала выберите бренд"}
+                value={selectedCollectionId}
+                options={initialCollectionOptions}
+                disabled={!selectedBrandId}
+                aria-describedby="error-collectionId"
+                error={inputErrors.collectionId}
+              />
+            </div>
+            <div class="inputRowWrapper">
+              <Select
+                name="unitOfMeasurement"
+                label="Единица измерения"
+                value={selectedUnitOfMeasurement}
+                options={UNITS_OF_MEASUREMENT.map((unit) => ({
+                  value: String(unit.id),
+                  label: unit.value,
+                }))}
+                required
+                aria-describedby="error-unitOfMeasurement"
+                error={inputErrors.unitOfMeasurement}
+              />
+              <Input
+                name="squareMetersPerPack"
+                label="Площадь упаковки м²"
+                value={product.squareMetersPerPack ?? null}
+                aria-describedby="error-squareMetersPerPack"
+                error={inputErrors.squareMetersPerPack}
+                type="number"
+                step=".001"
+              />
+            </div>
+          </div>
+          <div class="inputRowWrapper gap-x-md! gap-y-sm!">
+            <fieldset class="inline-max">
+              <legend class="text-base!">В наличии в магазинах</legend>
+              <div class="flex flex-wrap shrink-0 gap-x-sm gap-y-2xs">
+                {
+                  STORE_LOCATIONS.map((location) => (
+                    <Checkbox
+                      name="storeLocationIds"
+                      value={String(location.id)}
+                      checked={
+                        product.storeLocationIds?.includes(location.id) ?? false
+                      }
+                      aria-describedby="error-storeLocationIds">
+                      {location.address}
+                    </Checkbox>
+                  ))
+                }
+              </div>
+              <span
+                id={`error-storeLocationIds`}
+                role="alert"
+                hidden={!inputErrors.storeLocationIds}>
+                {inputErrors.storeLocationIds}
+              </span>
+            </fieldset>
+            <Checkbox
+              name="isActive"
+              value="1"
+              checked={product.isActive ?? true}>
+              Товар активен
+            </Checkbox>
+          </div>
+
+          <!-- <MarkdownEditor
+            label="Важное примечание"
+            name="importantNote"
+            content={product.importantNote ?? ""}
+            lessButtons
+          />
+          <MarkdownEditor
+            label="Описание"
+            name="description"
+            content={product.description ?? ""}
+          /> -->
+        </fieldset>
+      </div>
 
       <fieldset>
         <legend>Атрибуты</legend>
         <div class="flex flex-wrap gap-md">
           {
-            attributesWithValues.map((attribute) => (
-              <SelectListBox
-                id={`attribute-${attribute.id}`}
-                multiple
-                name={"attributeValueIds"}
-                label={attribute.name}
-                value={product.attributeValueIds?.map(String) ?? []}
-                options={attribute.attributeValues.map((c) => ({
-                  value: String(c.id),
-                  label: c.name,
-                }))}
-                aria-describedby={"error-attribute-" + attribute.name}
-                error={inputErrors.attributeValueIds}
-              />
-            ))
+            attributesWithValues.map((attribute) => {
+              const initiallyHidden = selectedCategoryHiddenAttributes.has(
+                attribute.id,
+              );
+              return (
+                <SelectListBox
+                  id={`attribute-${attribute.id}`}
+                  data-attribute-id={attribute.id}
+                  name="attributeValueIds"
+                  label={attribute.name}
+                  value={product.attributeValueIds?.map(String) ?? []}
+                  options={attribute.attributeValues.map((c) => ({
+                    value: String(c.id),
+                    label: c.name,
+                  }))}
+                  aria-describedby={"error-attribute-" + attribute.name}
+                  hidden={initiallyHidden}
+                  disabled={initiallyHidden}
+                  error={inputErrors.attributeValueIds}
+                />
+              );
+            })
           }
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <!-- TODO: update all names, labels, errors, etc. for all variation fields -->
+        <!-- TODO: fix the button to center the icon when the slot is empty -->
+        <legend class="flex items-center gap-2xs"
+          >Вариации <Button
+            id="addVariationButton"
+            size="sm"
+            class="aspect-square"><Icon name="plus" title="Добавить" /></Button
+          ></legend
+        >
+        <SelectListBox
+          name="attributesForVariations"
+          id="attributesForVariations"
+          label="Отличительные атрибуты"
+          options={attributesWithValues.map((attribute) => ({
+            value: String(attribute.id),
+            label: attribute.name,
+          }))}
+        />
+        <div class="flex flex-wrap gap-md">
+          <div id="listOfVariations"></div>
+          <template id="variationEntry">
+            <div class="inputRowWrapper variation">
+              <div>
+                <Input
+                  name="squareMetersPerPack"
+                  label="Площадь упаковки м²"
+                  value={product.squareMetersPerPack ?? null}
+                  aria-describedby="error-squareMetersPerPack"
+                  error={inputErrors.squareMetersPerPack}
+                  type="number"
+                  step=".01"
+                />
+                <Button
+                  class="aspect-square"
+                  data-action="delete-variation"
+                  variant="tertiary"><Icon name="x" title="Удалить" /></Button
+                >
+              </div>
+              <div>
+                <Input
+                  name="price"
+                  label="Цена"
+                  value={product.price}
+                  aria-describedby="error-price"
+                  required
+                  error={inputErrors.price}
+                  type="number"
+                />
+                <Input
+                  name="discountedPrice"
+                  label="Цена со скидкой"
+                  value={product.discountedPrice ?? ""}
+                  aria-describedby="error-discountedPrice"
+                  error={inputErrors.discountedPrice}
+                  type="number"
+                />
+              </div>
+            </div>
+          </template>
+
+          <template id="variation-attribute-template">
+            <div class="variation-attribute" data-variation-attribute>
+              <label data-attribute-label></label>
+
+              <select data-attribute-select data-attribute-id></select>
+            </div>
+          </template>
         </div>
       </fieldset>
     </div>
@@ -318,14 +449,17 @@ considering that this is a native form? -->
         )
       }
     </div>
-    <p class="text-foreground-muted">
-      Последнее изменение: <span class="text-inherit"
-        >{formatTime(product.updatedAt)}</span
-      >
-    </p>
-    <p class="text-foreground-muted">
-      Создан: <span class="text-inherit">{formatTime(product.createdAt)}</span>
-    </p>
+    <div>
+      <p class="text-foreground-muted">
+        Последнее изменение: <span class="text-inherit"
+          >{formatTime(product.updatedAt)}</span
+        >
+      </p>
+      <p class="text-foreground-muted">
+        Создан: <span class="text-inherit">{formatTime(product.createdAt)}</span
+        >
+      </p>
+    </div>
   </form>
 </section>
 
@@ -333,7 +467,8 @@ considering that this is a native form? -->
   form {
     container-type: inline-size;
   }
-  .formWrapper {
+
+  .images-and-general-wrapper {
     display: grid;
     grid-template-columns: 2fr 3fr;
     align-items: start;
@@ -345,7 +480,101 @@ considering that this is a native form? -->
       grid-template-columns: 1fr;
     }
   }
+
+  .variation {
+    border: var(--border-width) solid var(--muted);
+    padding: var(--spacing-2xs);
+    border-radius: var(--radius-md);
+  }
 </style>
+
+<script>
+  const listOfVariations = document.getElementById(
+    "listOfVariations",
+  ) as HTMLElement;
+  const addVariationButton = document.getElementById(
+    "addVariationButton",
+  ) as HTMLButtonElement;
+
+  const variationTemplate = document.getElementById(
+    "variationEntry",
+  ) as HTMLTemplateElement;
+  const attributeTemplate = document.getElementById(
+    "variation-attribute-template",
+  ) as HTMLTemplateElement;
+
+  const attributesSelectionForVariations = document.getElementById(
+    "attributesForVariations",
+  ) as HTMLSelectElement;
+
+  function syncAttributeVisibility() {
+    // TODO: this is to be merged with the already existing syncAttributeVisibility()
+  }
+  addVariationButton.onclick = () => {
+    const clone = variationTemplate.content.cloneNode(true);
+    listOfVariations?.appendChild(clone);
+    syncAttributeVisibility();
+  };
+
+  listOfVariations.addEventListener("click", (event) => {
+    const target = event.target as HTMLElement;
+    const deleteButton = target.closest<HTMLButtonElement>(
+      '[data-action="delete-variation"]',
+    );
+
+    if (!deleteButton) return;
+
+    deleteButton.closest(".variation")?.remove();
+    syncAttributeVisibility();
+  });
+
+  //   attributesSelectionForVariations.onchange = (e) => {
+  //     console.log("change");
+  //     const variations = document.querySelectorAll<HTMLElement>(".variation");
+  //
+  //     variations.forEach((variation) => {
+  //       const clone = atributeInputTemplate.content.cloneNode(true);
+  //       variation.appendChild(clone);
+  //     });
+  //   };
+  //
+  //
+  type VariationAttribute = {
+    id: string;
+    name: string;
+    values: {
+      id: string;
+      name: string;
+    }[];
+  };
+  //   function createAttributeControl(
+  //     attribute: VariationAttribute,
+  //     variationIndex: number,
+  //     selectedValueId?: string,
+  //   ) {
+  //     const fragment = attributeTemplate.content.cloneNode(true);
+  //
+  //     const wrapper = fragment.querySelector("[data-variation-attribute]");
+  //     const label = fragment.querySelector("[data-attribute-label]");
+  //     const select = fragment.querySelector("[data-attribute-select]");
+  //
+  //     wrapper.dataset.attributeId = attribute.id;
+  //     label.textContent = attribute.name;
+  //
+  //     select.name = `variations[${variationIndex}][attributeValueIds][${attribute.id}]`;
+  //
+  //     for (const value of attribute.values) {
+  //       const option = new Option(value.name, value.id);
+  //       option.selected = value.id === selectedValueId;
+  //       select.append(option);
+  //     }
+  //
+  //     return fragment;
+  //   }
+</script>
+
+<!-- TODO: for data-category-policies and data-collections-by-brandfor instead use a compact JSON script block.  -->
+<!-- TODO: this script and other scripts from the dashboard should be fetched from a separate file using src="" to allow for their caching -->
 
 <script>
   import { generateSlug } from "@/lib/slugGeneration";
@@ -362,6 +591,90 @@ considering that this is a native form? -->
   const mode = productForm.dataset.mode;
   let mediaBlocked = false;
 
+  const categorySelect = productForm.elements.namedItem(
+    "categoryId",
+  ) as HTMLSelectElement;
+
+  const categoryPolicies = JSON.parse(
+    productForm.dataset.categoryPolicies ?? "{}",
+  ) as Record<string, number[]>;
+
+  const attributeSelects = productForm.querySelectorAll<HTMLSelectElement>(
+    "select[data-attribute-id]",
+  );
+
+  const brandSelect = productForm.elements.namedItem(
+    "brandId",
+  ) as HTMLSelectElement;
+
+  const collectionSelect = productForm.elements.namedItem(
+    "collectionId",
+  ) as HTMLSelectElement;
+
+  type CollectionOption = {
+    value: string;
+    label: string;
+  };
+
+  const collectionsByBrand = JSON.parse(
+    productForm.dataset.collectionsByBrand ?? "{}",
+  ) as Record<string, CollectionOption[]>;
+
+  function syncCollectionOptions() {
+    const brandId = brandSelect.value;
+    const currentCollectionId = collectionSelect.value;
+    const collections = brandId ? (collectionsByBrand[brandId] ?? []) : [];
+
+    for (const option of Array.from(collectionSelect.options)) {
+      option.remove();
+    }
+
+    collectionSelect.append(
+      new Option(brandId ? "Выбрать" : "Сначала выберите бренд", ""),
+    );
+
+    for (const collection of collections) {
+      collectionSelect.append(new Option(collection.label, collection.value));
+    }
+
+    collectionSelect.disabled = !brandId;
+
+    const collectionStillBelongsToBrand = collections.some(
+      (collection) => collection.value === currentCollectionId,
+    );
+
+    collectionSelect.value = collectionStillBelongsToBrand
+      ? currentCollectionId
+      : "";
+  }
+
+  function syncAttributeVisibility() {
+    const categoryId = categorySelect.value;
+
+    const hiddenIds = new Set(
+      categoryId ? (categoryPolicies[categoryId] ?? []) : [],
+    );
+
+    for (const select of attributeSelects) {
+      const attributeId = Number(select.dataset.attributeId);
+      const hidden = hiddenIds.has(attributeId);
+      const wrapper = select.closest<HTMLElement>(".select-wrapper");
+
+      if (hidden) {
+        select.disabled = true;
+        wrapper?.setAttribute("hidden", "");
+        select.dataset.hiddenByCategory = "true";
+      } else {
+        select.disabled = false;
+        wrapper?.removeAttribute("hidden");
+        select.dataset.hiddenByCategory = "false";
+      }
+    }
+
+    // TODO: grey out and deselect all value in the general attribute that has been picked in the variations. keep synced
+  }
+
+  syncAttributeVisibility();
   function getFormState() {
     //TODO: This has several edge cases:
     // - checkbox order matters;
@@ -376,6 +689,16 @@ considering that this is a native form? -->
     // - Normalize numeric empty values to null.
     // - Represent checkboxes explicitly as booleans or sorted arrays.
     // - Compare semantic values rather than raw FormData.
+    //
+    // TODO: TEST FOR:
+    // active checked;
+    // active unchecked;
+    // empty SKU;
+    // empty discounted price;
+    // empty square meters;
+    // empty country;
+    // no collection;
+    // no brand.
     return JSON.stringify(
       [...new FormData(productForm).entries()].map(([key, value]) => [
         key,
@@ -434,6 +757,14 @@ considering that this is a native form? -->
     }
   }
   function saveDraft() {
+    // TODO: analyzse this potential issue. is it relevant or important?
+    // Disabled hidden selects are absent from FormData, so after a category change:
+    // 1. an attribute is selected;
+    // 2. the category is changed so that attribute becomes hidden;
+    // 3. the draft is saved;
+    // 4. the hidden select is omitted from session storage;
+    // 5. the page is restored;
+    // 6. the value may be lost from the draft.
     const state: Record<string, string[]> = {};
     for (const [name, value] of new FormData(productForm)) {
       // Files cannot be restored from sessionStorage.
@@ -538,6 +869,8 @@ considering that this is a native form? -->
     }
 
     updateSlug();
+    syncCollectionOptions();
+    syncAttributeVisibility();
     updateSubmitButton();
   }
 
@@ -545,17 +878,23 @@ considering that this is a native form? -->
     updateSubmitButton();
     scheduleDraftSave();
   });
-  productForm.addEventListener("change", () => {
+  productForm.addEventListener("change", (event) => {
+    if (event.target === categorySelect) {
+      syncAttributeVisibility();
+    }
+    if (event.target === brandSelect) {
+      syncCollectionOptions();
+    }
     updateSubmitButton();
     scheduleDraftSave();
   });
-  productForm.addEventListener("media-state-change", (event) => {
-    const state = (
-      event as CustomEvent<{ uploading: boolean; hasError: boolean }>
-    ).detail;
-    mediaBlocked = state.uploading || state.hasError;
-    updateSubmitButton();
-  });
+  // productForm.addEventListener("media-state-change", (event) => {
+  //   const state = (
+  //     event as CustomEvent<{ uploading: boolean; hasError: boolean }>
+  //   ).detail;
+  //   mediaBlocked = state.uploading || state.hasError;
+  //   updateSubmitButton();
+  // });
   window.addEventListener("pageshow", restoreDraft);
 
   //event listeners
@@ -586,8 +925,8 @@ considering that this is a native form? -->
         deleteButton.setAttribute("aria-busy", "true");
         const { error } = await actions.product.deleteProduct(formData);
         if (error) {
-          confirm("Произошла ошибка при удалении");
-          throw new Error("Произошла ошибка при удалении");
+          confirm(`Не удалось удалить товар: ${error.message}`);
+          throw new Error(`Не удалось удалить товар: ${error.message}`);
         } else {
           navigate("/dashboard");
         }

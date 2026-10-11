@@ -1,11 +1,6 @@
 import type { Category, NewCategory } from "@/db/schema";
 
-export type CreateCategoryInput = Pick<
-  NewCategory,
-  "name" | "slug" | "description"
->;
-
-export type UpdateCategoryInput = CreateCategoryInput & {
+export type UpdateCategoryInput = NewCategory & {
   id: Category["id"];
 };
 

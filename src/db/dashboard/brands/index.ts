@@ -1,9 +1,6 @@
 export type {
-  Brand,
-  CreateBrandInput,
   UpdateBrandInput,
   DeleteBrandInput,
-  Collection,
   CreateCollectionInput,
   UpdateCollectionInput,
   DeleteCollectionInput,

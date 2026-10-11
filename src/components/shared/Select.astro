@@ -11,6 +11,7 @@ interface Props {
   value?: string | null;
   placeholder?: string;
   required?: boolean;
+  disabled?: boolean;
   error?: string[];
 }
 
@@ -20,7 +21,8 @@ const {
   options,
   value = "",
   placeholder,
-  required,
+  required = false,
+  disabled = false,
   error,
   ...rest
 } = Astro.props;
@@ -34,7 +36,8 @@ const hasError = !!error;
     id={selectId}
     name={name}
     class="select-field input-field"
-    required={required || undefined}
+    required={required}
+    disabled={disabled}
     {...rest}>
     <button>
       <selectedcontent></selectedcontent>
