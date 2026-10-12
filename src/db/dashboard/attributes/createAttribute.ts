@@ -1,6 +1,7 @@
 import { db } from "@/db/index";
 import { attributes } from "@/db/schema";
-import type { CreateAttributeInput, Attribute } from "./types";
+import type { CreateAttributeInput } from "./types";
+import type { Attribute } from "@/db/schema";
 
 export async function createAttribute(
   attribute: CreateAttributeInput,

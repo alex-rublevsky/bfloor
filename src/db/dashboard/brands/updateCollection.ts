@@ -1,7 +1,8 @@
 import { db } from "@/db/index";
 import { collections } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import type { UpdateCollectionInput, Collection } from "./types";
+import type { UpdateCollectionInput } from "./types";
+import type { Collection } from "@/db/schema";
 
 export async function updateCollection(
   collection: UpdateCollectionInput,

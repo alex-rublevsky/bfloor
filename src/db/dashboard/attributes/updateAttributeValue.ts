@@ -1,7 +1,8 @@
 import { db } from "@/db/index";
 import { attributeValues } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import type { UpdateAttributeValueInput, AttributeValue } from "./types";
+import type { UpdateAttributeValueInput } from "./types";
+import type { AttributeValue } from "@/db/schema";
 
 export async function updateAttributeValue(
   attributeValue: UpdateAttributeValueInput,

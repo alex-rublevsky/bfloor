@@ -1,7 +1,7 @@
 ---
 import Gallery from "@/components/Gallery.astro";
 import ProductInfo from "@/components/ProductInfo.astro";
-import type { StorefrontProduct } from "@/db/storefront/products/types";
+import type { StorefrontProductDetails } from "@/db/storefront/products/types";
 import { getProductsForSlugPages } from "@/db/storefront/products/allProductsForSlug";
 import Layout from "@/layouts/Layout.astro";
 import type { GetStaticPaths } from "astro";
@@ -21,7 +21,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 };
 
 interface Props {
-  product: StorefrontProduct;
+  product: StorefrontProductDetails;
 }
 const { product } = Astro.props;
 ---

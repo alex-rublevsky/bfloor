@@ -1,5 +1,5 @@
 import { db } from "@/db/index";
-import type { Brand } from "@/db/dashboard/brands/types";
+import type { Brand } from "@/db/schema";
 
 export async function getBrandBySlug(slug?: string): Promise<Brand | null> {
   if (!slug) throw new Error("slug is required");

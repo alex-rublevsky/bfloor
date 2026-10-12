@@ -41,5 +41,8 @@ export type StorefrontProduct = StorefrontProductBase & {
   brand?: BrandSummary | null;
   collection?: CollectionSummary | null;
   storeLocations: StoreLocationId[];
+};
+
+export type StorefrontProductDetails = StorefrontProduct & {
   attributes: StorefrontAttribute[];
 };

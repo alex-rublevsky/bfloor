@@ -1,16 +1,16 @@
 ---
 import Badge from "@/components/shared/Badge.astro";
 import Button from "@/components/shared/Button.astro";
-import LinkifiedText from "@/components/shared/LinkifiedText.astro";
+// import LinkifiedText from "@/components/shared/LinkifiedText.astro";
 import { ADMIN_STOREFRONT_FLAG_KEY, BASE_IMAGE_URL } from "@/constants";
 import { Icon } from "astro-icon/components";
 import { STORE_LOCATIONS } from "@/lib/storeLocations";
 import { Image } from "astro:assets";
-import type { StorefrontProduct } from "@/db/storefront/products/types";
+import type { StorefrontProductDetails } from "@/db/storefront/products/types";
 import { COUNTRIES } from "@/lib/countries";
 
 interface Props {
-  product: StorefrontProduct;
+  product: StorefrontProductDetails;
 }
 
 const { product } = Astro.props;
@@ -40,7 +40,7 @@ const country = brand
       ) : null
     }{product.name ? product.name : "no name"}
   </h1>
-
+  <!-- TODO: use <output> for showing the total price with quantity: https://youtu.be/HgNDii20FG4?si=XU0n5vSZ9-pEnSjs -->
   <div class="flex gap-2xs">
     {
       product.discountedPrice ? (
@@ -167,20 +167,20 @@ const country = brand
     ) : null
   }
 
-  {
+  <!-- {
     product.importantNote ? (
       <LinkifiedText
         content={product.importantNote}
         class="product-note text-base"
       />
     ) : null
-  }
-  <div class="mt-6">
+  } -->
+  <!-- <div class="mt-6">
     <LinkifiedText
       content={product.description}
       class="product-description text-base"
     />
-  </div>
+  </div> -->
 </div>
 
 <style>

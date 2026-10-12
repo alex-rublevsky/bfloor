@@ -1,7 +1,9 @@
 import { db } from "@/db";
-import type { StorefrontProduct, StorefrontAttribute } from "./types";
+import type { StorefrontProductDetails, StorefrontAttribute } from "./types";
 
-export async function getProductsForSlugPages(): Promise<StorefrontProduct[]> {
+export async function getProductsForSlugPages(): Promise<
+  StorefrontProductDetails[]
+> {
   const products = await db.query.products.findMany({
     where: { isActive: true },
     with: {

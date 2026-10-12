@@ -1,6 +1,7 @@
 import { db } from "@/db/index";
 import { collections } from "@/db/schema";
-import type { CreateCollectionInput, Collection } from "./types";
+import type { CreateCollectionInput } from "./types";
+import type { Collection } from "@/db/schema";
 
 export async function createCollection(
   collection: CreateCollectionInput,
