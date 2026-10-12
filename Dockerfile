@@ -11,7 +11,7 @@ FROM base AS build
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store,sharing=locked pnpm fetch --frozen-lockfile
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store,sharing=locked pnpm fetch
 
 COPY . .
 
