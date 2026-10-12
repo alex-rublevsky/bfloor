@@ -3,6 +3,7 @@ import node from "@astrojs/node";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import pagefind from "astro-pagefind";
+import { fileURLToPath } from "node:url";
 
 import {
   defineConfig,
@@ -82,6 +83,11 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+    resolve: {
+      alias: {
+        "@": fileURLToPath(new URL("./src", import.meta.url)),
+      },
+    },
   },
   build: {
     concurrency: 4,
