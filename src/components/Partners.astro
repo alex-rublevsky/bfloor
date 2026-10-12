@@ -8,22 +8,88 @@ import { BASE_IMAGE_URL } from "@/constants";
 <section>
   <h2>Наши Партнёры</h2>
   <div class="carousel">
-    {
-      brands.map((brand) => (
-        <Image
-          src={BASE_IMAGE_URL + brand.image}
-          height={300}
-          width={300}
-          alt={brand.name}
-        />
-      ))
-    }
+    <div class="group">
+      {
+        brands.map((brand) => (
+          // TODO: add placeholder in case the image is absent
+          <a href={"store/" + brand.slug}>
+            {brand.image ? (
+              <Image
+                src={BASE_IMAGE_URL + brand.image}
+                height={300}
+                width={300}
+                fit="contain"
+                alt={"Логотип бренда " + brand.name}
+              />
+            ) : (
+              brand.name
+            )}
+          </a>
+        ))
+      }
+    </div>
+    <div aria-hidden class="group">
+      {
+        brands.map((brand) => (
+          // TODO: add placeholder in case the image is absent
+          <a href={"store/" + brand.slug}>
+            {brand.image ? (
+              <Image
+                src={BASE_IMAGE_URL + brand.image}
+                height={300}
+                width={300}
+                fit="contain"
+                alt={"Логотип бренда " + brand.name}
+              />
+            ) : (
+              brand.name
+            )}
+          </a>
+        ))
+      }
+    </div>
   </div>
 </section>
 
 <style>
   .carousel {
+    overflow-x: auto;
+    scrollbar-width: none;
     display: flex;
-    overflow-x: scroll;
+    overflow: hidden; /* prevents manual scrolling */
+    touch-action: pan-y; /* allows vertical page scrolling */
+
+    pointer-events: none;
+    &:hover .group {
+      --spin-duration: 40s;
+    }
+    & a {
+      pointer-events: auto;
+      &:hover {
+        background-color: var(--muted);
+      }
+      & img {
+        object-fit: contain;
+        mix-blend-mode: darken;
+      }
+    }
+  }
+
+  .group {
+    --spin-duration: 20s;
+    display: flex;
+    flex: 0 0 5em;
+    animation: spin var(--spin-duration) infinite linear;
+    gap: var(--spacing-2xs);
+    padding-right: var(--spacing-2xs);
+  }
+
+  @keyframes spin {
+    from {
+      translate: 0;
+    }
+    to {
+      translate: -100%;
+    }
   }
 </style>
