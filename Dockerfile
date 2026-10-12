@@ -17,7 +17,7 @@ COPY . .
 
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store,sharing=locked pnpm install --offline --frozen-lockfile
 
-RUN --mount=type=secret,id=env,required=true sh -eu -c 'set -a; . /run/secrets/env; set +a; pnpm build'
+RUN pnpm build
 
 # remove devDeps
 RUN pnpm prune --prod
