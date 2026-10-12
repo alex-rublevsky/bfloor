@@ -1,0 +1,319 @@
+---
+interface Props {
+  content?: string;
+  name?: string;
+  label?: string;
+  lessButtons?: boolean;
+}
+
+import Button from "../shared/Button.astro";
+
+const { content = "", name, label, lessButtons = false } = Astro.props;
+---
+
+<div class="editor-field">
+  {label && <label class="text-base">{label}</label>}
+  <div class="tiptap-wrapper">
+    <div class="tiptap-toolbar" role="toolbar" aria-label="Text formatting">
+      <div class="tiptap-group">
+        <Button
+          variant="editorTool"
+          data-action="bold"
+          name="bold"
+          title="Жирный"
+          aria-label="Bold"
+        />
+        <Button
+          variant="editorTool"
+          data-action="italic"
+          name="italic"
+          title="Курсив"
+          aria-label="Italic"
+        />
+      </div>
+      <span
+        class="tiptap-sep"
+        aria-hidden="true"
+        style={lessButtons ? "display: none;" : ""}></span>
+      <div class="tiptap-group" style={lessButtons ? "display: none;" : ""}>
+        <Button
+          variant="editorTool"
+          data-action="h2"
+          title="Heading 2"
+          aria-label="Heading 2">H2</Button
+        >
+        <Button
+          variant="editorTool"
+          data-action="h3"
+          title="Heading 3"
+          aria-label="Heading 3">H3</Button
+        >
+      </div>
+      <span
+        class="tiptap-sep"
+        aria-hidden="true"
+        style={lessButtons ? "display: none;" : ""}></span>
+      <div class="tiptap-group" style={lessButtons ? "display: none;" : ""}>
+        <Button
+          variant="editorTool"
+          data-action="bulletList"
+          name="bulletList"
+          title="Список"
+          aria-label="Bullet list"
+        />
+        <Button
+          variant="editorTool"
+          data-action="orderedList"
+          name="numberedList"
+          title="Нумерованный список"
+          aria-label="Numbered list"
+        />
+      </div>
+      <span class="tiptap-sep" aria-hidden="true"></span>
+      <div class="tiptap-group">
+        <Button
+          variant="editorTool"
+          data-action="link"
+          name="link"
+          title="Ссылка"
+          aria-label="Link"
+        />
+      </div>
+      <span class="tiptap-sep" aria-hidden="true"></span>
+      <div class="tiptap-group">
+        <Button
+          variant="editorTool"
+          data-action="undo"
+          name="undo"
+          title="Undo (Ctrl+Z)"
+          aria-label="Undo"
+        />
+        <Button
+          variant="editorTool"
+          data-action="redo"
+          name="redo"
+          title="Redo (Ctrl+Y)"
+          aria-label="Redo"
+        />
+      </div>
+    </div>
+    <div class="tiptap-editor" data-content={content}></div>
+  </div>
+</div>
+
+{name && <input type="hidden" name={name} />}
+
+<script>
+  import { Editor } from "@tiptap/core";
+  import Link from "@tiptap/extension-link";
+  import StarterKit from "@tiptap/starter-kit";
+  import { stripEmptyParagraphs } from "@/lib/clean-rich-text";
+
+  // Astro deduplicates identical <script> blocks, so this single script
+  // initialises every editor instance found on the page.
+  document
+    .querySelectorAll<HTMLElement>(".tiptap-wrapper")
+    .forEach((wrapper) => {
+      const editorEl = wrapper.querySelector<HTMLElement>(".tiptap-editor")!;
+      const toolbar = wrapper.querySelector<HTMLElement>(".tiptap-toolbar")!;
+      const editor = new Editor({
+        element: editorEl,
+        extensions: [
+          StarterKit,
+          Link.configure({
+            openOnClick: false,
+            defaultProtocol: "https",
+            HTMLAttributes: {
+              rel: "noopener noreferrer nofollow",
+              target: "_blank",
+            },
+          }),
+        ],
+        content: editorEl.dataset.content ?? "",
+      });
+
+      const hiddenInput = wrapper.closest<HTMLElement>(".editor-field")
+        ?.nextElementSibling as HTMLInputElement | null;
+      const sync = () => {
+        if (hiddenInput?.tagName === "INPUT")
+          hiddenInput.value = stripEmptyParagraphs(editor.getHTML());
+      };
+      sync();
+      editor.on("update", sync);
+
+      function syncToolbar() {
+        toolbar
+          .querySelectorAll<HTMLButtonElement>("button[data-action]")
+          .forEach((button) => {
+            const action = button.dataset.action!;
+            if (action === "undo") {
+              button.disabled = !editor.can().undo();
+              return;
+            }
+            if (action === "redo") {
+              button.disabled = !editor.can().redo();
+              return;
+            }
+
+            const active =
+              action === "bold"
+                ? editor.isActive("bold")
+                : action === "italic"
+                  ? editor.isActive("italic")
+                  : action === "h2"
+                    ? editor.isActive("heading", { level: 2 })
+                    : action === "h3"
+                      ? editor.isActive("heading", { level: 3 })
+                      : action === "bulletList"
+                        ? editor.isActive("bulletList")
+                        : action === "orderedList"
+                          ? editor.isActive("orderedList")
+                          : action === "link"
+                            ? editor.isActive("link")
+                            : false;
+
+            button.classList.toggle("is-active", active);
+          });
+      }
+
+      editor.on("selectionUpdate", syncToolbar);
+      editor.on("update", syncToolbar);
+      syncToolbar();
+
+      toolbar.addEventListener("click", (event) => {
+        const button = (event.target as Element).closest<HTMLButtonElement>(
+          "button[data-action]",
+        );
+        if (!button || button.disabled) return;
+        const action = button.dataset.action;
+        if (action === "bold") editor.chain().focus().toggleBold().run();
+        if (action === "italic") editor.chain().focus().toggleItalic().run();
+        if (action === "h2")
+          editor.chain().focus().toggleHeading({ level: 2 }).run();
+        if (action === "h3")
+          editor.chain().focus().toggleHeading({ level: 3 }).run();
+        if (action === "bulletList")
+          editor.chain().focus().toggleBulletList().run();
+        if (action === "orderedList")
+          editor.chain().focus().toggleOrderedList().run();
+        if (action === "undo") editor.chain().focus().undo().run();
+        if (action === "redo") editor.chain().focus().redo().run();
+        if (action === "link") {
+          const url = window.prompt(
+            "URL",
+            editor.getAttributes("link").href ?? "",
+          );
+          if (url === null) return;
+          if (url === "") editor.chain().focus().unsetLink().run();
+          else editor.chain().focus().setLink({ href: url }).run();
+        }
+      });
+    });
+</script>
+
+<style>
+  .tiptap-wrapper {
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: border-color 0.2s ease-out;
+  }
+
+  .tiptap-wrapper:focus-within {
+    border-color: var(--foreground);
+  }
+
+  .tiptap-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.125rem;
+    padding: 0.25rem;
+    border-bottom: var(--border-width) solid var(--border);
+    background: var(--muted);
+  }
+
+  .tiptap-group {
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+  }
+
+  .tiptap-sep {
+    width: var(--border-width);
+    height: 1.25rem;
+    margin-inline: 0.25rem;
+    background: var(--border);
+  }
+
+  .tiptap-editor {
+    min-height: 8rem;
+    padding: var(--spacing-xs);
+  }
+
+  .tiptap-editor p {
+    font-size: inherit;
+  }
+
+  .tiptap-editor :global(.ProseMirror) {
+    min-height: 7rem;
+    outline: none;
+  }
+
+  .tiptap-editor :global(.ProseMirror > * + *) {
+    margin-top: 1em;
+  }
+
+  .tiptap-editor :global(.ProseMirror h2) {
+    font-size: var(--text-lg);
+    font-weight: 600;
+  }
+
+  .tiptap-editor :global(.ProseMirror h3) {
+    font-size: var(--text-md);
+    font-weight: 600;
+  }
+
+  .tiptap-editor :global(.ProseMirror ul),
+  .tiptap-editor :global(.ProseMirror ol) {
+    padding-left: 1.5rem;
+  }
+
+  .tiptap-editor :global(.ProseMirror ul) {
+    list-style: disc;
+  }
+
+  .tiptap-editor :global(.ProseMirror ol) {
+    list-style: decimal;
+  }
+
+  .tiptap-editor :global(.ProseMirror li + li) {
+    margin-top: 0.25em;
+  }
+
+  .tiptap-editor :global(.ProseMirror strong) {
+    font-weight: 700;
+  }
+
+  .tiptap-editor :global(.ProseMirror em) {
+    font-style: italic;
+  }
+
+  .tiptap-editor :global(.ProseMirror a) {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  .tiptap-editor :global(.ProseMirror a:hover) {
+    opacity: 0.75;
+  }
+
+  .tiptap-editor :global(.ProseMirror p.is-editor-empty:first-child::before) {
+    content: "Начните вводить текст…";
+    float: left;
+    height: 0;
+    color: var(--muted-foreground);
+    pointer-events: none;
+  }
+</style>

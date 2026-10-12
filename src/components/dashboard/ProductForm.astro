@@ -10,10 +10,10 @@ import { STORE_LOCATIONS } from "@/lib/storeLocations";
 import { getBrandsWithCollections } from "@/db/dashboard/brands";
 import { getAllAttributesWithValues } from "@/db/dashboard/attributes";
 import { actions, isInputError } from "astro:actions";
-// import MarkdownEditor from "./MarkdownEditor.astro";
 import type { ProductFormData } from "@/db/dashboard/products/index";
 import { UNITS_OF_MEASUREMENT } from "@/lib/units";
 import SelectListBox from "@/components/shared/SelectListBox.astro";
+import MarkdownEditor from "./MarkdownEditor.astro";
 
 interface Props {
   product?: ProductFormData;
@@ -319,19 +319,20 @@ considering that this is a native form? -->
               Товар активен
             </Checkbox>
           </div>
-
-          <!-- <MarkdownEditor
-            label="Важное примечание"
-            name="importantNote"
-            content={product.importantNote ?? ""}
-            lessButtons
-          />
-          <MarkdownEditor
-            label="Описание"
-            name="description"
-            content={product.description ?? ""}
-          /> -->
         </fieldset>
+      </div>
+      <div class="markdown-inputs-wrapper">
+        <MarkdownEditor
+          label="Важное примечание"
+          name="importantNote"
+          content={product.importantNote ?? ""}
+          lessButtons
+        />
+        <MarkdownEditor
+          label="Описание"
+          name="description"
+          content={product.description ?? ""}
+        />
       </div>
 
       <fieldset>
@@ -476,6 +477,17 @@ considering that this is a native form? -->
     @container (max-width: 60rem) {
       grid-template-columns: 1fr 1fr;
     }
+    @container (max-width: 55rem) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .markdown-inputs-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: var(--spacing-sm);
+
     @container (max-width: 55rem) {
       grid-template-columns: 1fr;
     }
