@@ -3,45 +3,40 @@ import { getAllBrands } from "@/db/storefront/allBrands";
 import { Image } from "astro:assets";
 import { BASE_IMAGE_URL } from "@/constants";
 const brands = await getAllBrands();
+const brandsWithImages = brands.filter((brand) => brand.image);
 ---
 
-<section>
+<section class="no-padding">
+  <!-- TODO: show the total number
+    TODO: make it a link to all brands page -->
   <h2>Наши Партнёры</h2>
   <div class="carousel">
     <div class="group">
       {
-        brands.map((brand) => (
-          // TODO: add placeholder in case the image is absent
+        brandsWithImages.map((brand) => (
           <a href={"store/" + brand.slug}>
-            {brand.image ? (
-              <Image
-                src={BASE_IMAGE_URL + brand.image}
-                height={300}
-                width={300}
-                alt={"Логотип бренда " + brand.name}
-              />
-            ) : (
-              brand.name
-            )}
+            <Image
+              src={BASE_IMAGE_URL + brand.image}
+              height={300}
+              width={300}
+              fit="contain"
+              alt={"Логотип бренда " + brand.name}
+            />
           </a>
         ))
       }
     </div>
     <div aria-hidden class="group">
       {
-        brands.map((brand) => (
-          // TODO: add placeholder in case the image is absent
+        brandsWithImages.map((brand) => (
           <a href={"store/" + brand.slug}>
-            {brand.image ? (
-              <Image
-                src={BASE_IMAGE_URL + brand.image}
-                height={300}
-                width={300}
-                alt={"Логотип бренда " + brand.name}
-              />
-            ) : (
-              brand.name
-            )}
+            <Image
+              src={BASE_IMAGE_URL + brand.image}
+              height={300}
+              width={300}
+              fit="contain"
+              alt={"Логотип бренда " + brand.name}
+            />
           </a>
         ))
       }
@@ -50,36 +45,42 @@ const brands = await getAllBrands();
 </section>
 
 <style>
+  h2 {
+    padding-inline: var(--section-padding-x);
+  }
   .carousel {
     overflow-x: auto;
     scrollbar-width: none;
     display: flex;
     overflow: hidden;
     touch-action: pan-y;
-
     pointer-events: none;
-    &:hover .group {
-      --spin-duration: 40s;
-    }
+
     & a {
       pointer-events: auto;
+      background-color: var(--background);
+
       &:hover {
         background-color: var(--muted);
       }
       & img {
+        width: clamp(8rem, 20vw, 13rem);
+        aspect-ratio: 1/1;
         object-fit: contain;
         mix-blend-mode: darken;
+        padding: var(--spacing-2xs);
       }
     }
   }
 
   .group {
-    --spin-duration: 20s;
+    --mobile-speed: 40s;
     display: flex;
-    flex: 0 0 5em;
-    animation: spin var(--spin-duration) infinite linear;
-    gap: var(--spacing-2xs);
-    padding-right: var(--spacing-2xs);
+    flex: 0 0 auto;
+    animation: spin var(--mobile-speed) infinite linear;
+    @media (min-width: 768px) {
+      --mobile-speed: 60s;
+    }
   }
 
   @keyframes spin {
@@ -91,3 +92,19 @@ const brands = await getAllBrands();
     }
   }
 </style>
+
+<script>
+  const carousel = document.querySelector(".carousel");
+  const groups = carousel?.querySelectorAll(".group");
+
+  function setSpeed(rate: any) {
+    groups?.forEach((group) => {
+      group.getAnimations().forEach((animation) => {
+        animation.updatePlaybackRate(rate);
+      });
+    });
+  }
+
+  carousel?.addEventListener("pointerenter", () => setSpeed(0.5));
+  carousel?.addEventListener("pointerleave", () => setSpeed(1));
+</script>
