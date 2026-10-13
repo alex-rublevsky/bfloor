@@ -4,36 +4,33 @@ import Button from "@/components/shared/Button.astro";
 import Link from "@/components/shared/Link.astro";
 ---
 
-<div class="bottomBar">
-  <div class="flex gap-2xs justify-center md:justify-end">
-    <div class="flex gap-2xs md:hidden">
-      <Button size="md" href="/" variant="tertiary">Главная</Button>
+<nav>
+  <Button href="/" variant="tertiary">Главная</Button>
 
-      <Button size="md" href="/store">Каталог</Button>
-      <div class="dropdown flex" data-dropdown>
-        <Button size="md" data-dropdown-button>Ещё</Button>
-        <div
-          class="dropdown-menu flex flex-col items-start gap-xs whitespace-nowrap">
-          <Link href="/delivery">Доставка и Оплата</Link>
-          <Link href="/contact">Контакты и Адреса</Link>
-          <Link href="/about">О компании</Link>
+  <Button href="/store">Каталог</Button>
 
-          <Button size="md" href="/dashboard">Админка</Button>
-        </div>
-      </div>
-    </div>
-    <!-- <Button class="aspect-square" size="md" variant="tertiary">
-      <Icon name="cart" title="Корзина" />
-    </Button> -->
+  <Button variant="tertiary" popovertarget="bottom-menu">Ещё</Button>
+  <div id="bottom-menu" popover class="menu menu--above">
+    <Button variant="ghost" href="/delivery">Доставка и Оплата</Button>
+    <Button variant="ghost" href="/contact">Контакты и Адреса</Button>
+    <Button variant="ghost" href="/about">О компании</Button>
+    <!-- TODO: make admin button be visible only when admin flag is present -->
+    <!-- <Button size="md" href="/dashboard">Админка</Button> -->
   </div>
-</div>
+</nav>
 
 <style>
-  .bottomBar {
+  nav {
+    display: flex;
+    gap: var(--spacing-2xs);
+    justify-content: center;
     position: fixed;
     left: var(--spacing-2xs);
     right: var(--spacing-2xs);
     bottom: var(--spacing-2xs);
     z-index: 10;
+    @media (min-width: 768px) {
+      display: none;
+    }
   }
 </style>

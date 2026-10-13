@@ -6,7 +6,7 @@ import Input from "./shared/Input.astro";
 import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
 ---
 
-<nav class="flex justify-between items-stretch gap-2xs px-2xs py-2xs h-14">
+<nav>
   <div class="hidden md:flex gap-sm items-stretch">
     <Link href="/" class="self-center">
       <Icon name="logo" title="Лого BeautyFloor" />
@@ -23,21 +23,20 @@ import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
     <Link href="/delivery" class="self-center">Доставка</Link>
     <Link href="/contact" class="self-center">Контакты и Адреса</Link>
     <Link href="/about" class="self-center">О компании</Link>
-    <Button>
+    <!-- <Button>
       <Icon name="phone" title="phone" />
-    </Button>
+    </Button> -->
     <Button size="md" href="/dashboard">Админка</Button>
   </div>
   <div class="hidden md:flex gap-xs xl:hidden">
-    <Button popovertarget="menu" size="md">Ещё</Button>
+    <Button popovertarget="top-menu" size="md">Ещё</Button>
   </div>
-  <!-- <button popovertarget="menu">еще</button> -->
-  <div id="menu" popover class="menu">
-    <!-- class="items-start gap-xs whitespace-nowrap" -->
+  <div id="top-menu" popover class="menu">
     <Button variant="ghost" href="/delivery">Доставка</Button>
     <Button variant="ghost" href="/contact">Контакты и Адреса</Button>
     <Button variant="ghost" href="/about">О компании</Button>
-    <Button href="/dashboard">Админка</Button>
+    <!-- TODO: make admin button be visible only when admin flag is present -->
+    <!-- <Button href="/dashboard">Админка</Button> -->
   </div>
 </nav>
 <div>
@@ -45,32 +44,13 @@ import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
   <pagefind-results show-images="true"></pagefind-results>
 </div>
 <style>
-  .menu {
-    /*margin: 0;
-    inset: auto;*/
-
-    position-area: y-end span-x-start;
-
-    transition-property: translate, overlay, display, opacity;
-    transition-timing-function: ease-out;
-    transition-duration: 170ms;
-    transition-behavior: allow-discrete;
-    translate: 0 -0.3rem;
-    opacity: 0;
-    flex-direction: column;
-
-    &:popover-open {
-      display: flex;
-      translate: 0 0;
-      opacity: 1;
-      @starting-style {
-        translate: 0 -0.3rem;
-        opacity: 0;
-      }
-    }
-    & a {
-      border-radius: 0;
-    }
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: var(--spacing-2xs);
+    padding: var(--spacing-2xs);
+    height: 3.5rem;
   }
 
   :root {
