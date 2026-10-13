@@ -1,8 +1,8 @@
 ---
 import { getAllBrands } from "@/db/storefront/allBrands";
-const brands = await getAllBrands();
 import { Image } from "astro:assets";
 import { BASE_IMAGE_URL } from "@/constants";
+const brands = await getAllBrands();
 ---
 
 <section>
@@ -18,7 +18,6 @@ import { BASE_IMAGE_URL } from "@/constants";
                 src={BASE_IMAGE_URL + brand.image}
                 height={300}
                 width={300}
-                fit="contain"
                 alt={"Логотип бренда " + brand.name}
               />
             ) : (
@@ -38,7 +37,6 @@ import { BASE_IMAGE_URL } from "@/constants";
                 src={BASE_IMAGE_URL + brand.image}
                 height={300}
                 width={300}
-                fit="contain"
                 alt={"Логотип бренда " + brand.name}
               />
             ) : (
@@ -56,8 +54,8 @@ import { BASE_IMAGE_URL } from "@/constants";
     overflow-x: auto;
     scrollbar-width: none;
     display: flex;
-    overflow: hidden; /* prevents manual scrolling */
-    touch-action: pan-y; /* allows vertical page scrolling */
+    overflow: hidden;
+    touch-action: pan-y;
 
     pointer-events: none;
     &:hover .group {
