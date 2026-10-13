@@ -3,17 +3,10 @@ import type { StorefrontProduct } from "./types";
 
 export async function getAllProductsByCategory(
   categoryId?: number,
-  page?: number,
 ): Promise<StorefrontProduct[] | null> {
   if (!categoryId) return null;
 
-  const pageSize = 50;
-  const safePage = Math.max(1, Math.floor(page ?? 1));
-  const offset = (safePage - 1) * pageSize;
-
   const products = await db.query.products.findMany({
-    limit: pageSize,
-    offset: offset,
     where: {
       categoryId: categoryId,
     },

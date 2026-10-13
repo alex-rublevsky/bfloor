@@ -1,0 +1,72 @@
+---
+import Button from "./Button.astro";
+
+const { length, currentPage, firstUrl, prevUrl, nextUrl, lastUrl, baseUrl } =
+  Astro.props;
+const paginationList = Array.from({ length }, (_, i) => i + 1);
+const pageUrl = (pageNumber: number) =>
+  pageNumber === 1 ? baseUrl : `${baseUrl}/${pageNumber}`;
+---
+
+<nav aria-label="Страницы каталога">
+  {
+    firstUrl ? (
+      <Button href={`${firstUrl}`}>&#171;</Button>
+    ) : (
+      <Button disabled href={""}>
+        &#171;
+      </Button>
+    )
+  }
+
+  {
+    prevUrl ? (
+      <Button href={`${prevUrl}`}>&#8249;</Button>
+    ) : (
+      <Button disabled href={""}>
+        &#8249;
+      </Button>
+    )
+  }
+
+  {
+    paginationList.map((num) => (
+      <Button
+        variant="tertiary"
+        href={pageUrl(num)}
+        aria-current={currentPage === num ? "page" : undefined}
+        class={` ${currentPage == num ? "disabled active" : ""}`}>
+        {num}
+      </Button>
+    ))
+  }
+
+  {
+    !nextUrl ? (
+      <Button disabled href={`${nextUrl}`}>
+        &#8250;
+      </Button>
+    ) : (
+      <Button href={`${nextUrl}`}>&#8250;</Button>
+    )
+  }
+
+  {
+    lastUrl ? (
+      <Button href={`${lastUrl}`}>&#187;</Button>
+    ) : (
+      <Button disabled href={`${lastUrl}`}>
+        &#187;
+      </Button>
+    )
+  }
+</nav>
+
+<style>
+  nav {
+    display: flex;
+    flex-direction: row;
+    gap: var(--spacing-2xs);
+    padding-bottom: var(--spacing-2xs);
+  }
+</style>

@@ -1,0 +1,94 @@
+---
+import type { Page } from "astro";
+import ProductCard from "@/components/shared/ProductCard.astro";
+import Layout from "@/layouts/Layout.astro";
+import { getAllProductsByCategory } from "@/db/storefront/products/allProductsByCategory";
+import type { Category } from "@/db/schema";
+import Pagination from "@/components/shared/Pagination.astro";
+import { getAllCategories } from "@/db/storefront/allCategories";
+export const prerender = true;
+
+type Props = {
+  page: Page<any>;
+  category: Category;
+};
+const { slug } = Astro.params;
+
+if (!slug) return Astro.redirect("/store");
+
+export async function getStaticPaths({ paginate }: any) {
+  const categories = await getAllCategories();
+
+  const results = await Promise.all(
+    categories.map(async (category) => {
+      const products = (await getAllProductsByCategory(category.id)) ?? [];
+
+      return paginate(products, {
+        params: {
+          slug: category.slug,
+        },
+        props: {
+          category,
+        },
+        pageSize: 50,
+      });
+    }),
+  );
+
+  return results.flat();
+}
+
+const categoryBaseUrl = `/store/${slug}`;
+
+const { page, category } = Astro.props;
+---
+
+<Layout title={category.name}>
+  <section>
+    <div>
+      <h1 class="text-lg">{category.name}</h1>
+      {category.description ? <p>{category.description}</p> : null}
+    </div>
+    <Pagination
+      length={page.lastPage}
+      currentPage={page.currentPage}
+      firstUrl={page.url.first}
+      prevUrl={page.url.prev}
+      nextUrl={page.url.next}
+      lastUrl={page.url.last}
+      baseUrl={categoryBaseUrl}
+    />
+    <div>
+      <!-- <div class="bg-muted/30">
+        <h2>Фильтры</h2>
+        <pagefind-filter-dropdown filter="location" label="Доступен на"
+        ></pagefind-filter-dropdown>
+      </div> -->
+      <div class="autoGrid">
+        <!-- {
+          products ? (
+            products.length > 0 ? (
+              products.map((product: any) => <ProductCard product={product} />)
+            ) : (
+              <p>Товаров не найдено</p>
+            )
+          ) : (
+            <p>Товаров не найдено</p>
+          )
+        } -->
+        {
+          ((page as any).data || []).map((product: any) => (
+            <ProductCard product={product} />
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .storeLayout {
+    display: grid;
+    grid-template-columns: auto 1fr;
+  }
+</style>
