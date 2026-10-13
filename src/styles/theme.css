@@ -159,6 +159,8 @@
   --space-2xl-3xl: clamp(4.25rem, 3.3947rem + 4.2763vw, 7.5rem);
 
   --border-width: clamp(0.09rem, 0.05rem + 0.03vw, 0.095rem);
+  /*TODO: standardize border widths in calculations.*/
+  --border-width-thick: clamp(0.15rem, 0.2vw, 0.2rem);
 
   select option {
     cursor: pointer;
@@ -446,12 +448,13 @@ legend {
 @layer base {
   a,
   button {
-    display: inline-block;
+    display: block;
     transition: transform 70ms ease-out;
+    cursor: pointer;
   }
 
-  a,
-  button:active:not(:has(button:active)) {
+  a:active,
+  button:active {
     transform: scale(0.97);
   }
 }

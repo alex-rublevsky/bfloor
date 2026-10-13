@@ -1,47 +1,132 @@
 ---
-import { Image } from "astro:assets";
+import BannerImage  from "@/components/BannerImage.astro";
 import { BASE_IMAGE_URL } from "../constants";
 
 const bannerImages = [
-  //"cork-mobile.webp",
-
-  { image: "banners/cork.webp", alt: "" },
-
-  // "elochka-mobile.webp",
-
-  { image: "banners/elochka.webp", alt: "" },
-
-  // "sale-mobile.webp",
-
-  { image: "banners/sale.webp", alt: "" },
+  {
+    desktopImage: "banners/cork.webp",
+    mobileImage: "banners/cork-mobile.webp",
+    alt: "Настенная пробка всегда в наличии",
+    href: "/store/wall-cork",
+  },
+  // TODO: update the href to lead to filtered to ёлочка category
+  {
+    desktopImage: "banners/elochka.webp",
+    mobileImage: "banners/elochka-mobile.webp",
+    alt: `Ламинат "Ëлочкой". BeautyFloor — эксклюзивный представитель ламината CBM на Дальнем Востоке`,
+    href: "/store/laminate",
+  },
+  {
+    desktopImage: "banners/sale.webp",
+    mobileImage: "banners/sale-mobile.webp",
+    alt: "Распродажа остатков! 100+ позиций",
+    href: "/store/rasprodazha",
+  },
 ];
 ---
 
 <section class="no-padding">
-  <div class="relative w-full">
-    <Image
-      src={BASE_IMAGE_URL + bannerImages[0].image}
-      width={1920}
-      height={600}
-      alt={bannerImages[0].alt}
-      loading="eager"
-      priority
-      class="w-full h-auto object-contain"
-    />
-  </div>
-  <div class="flex gap-2xs p-2xs">
+  <div>
     {
-      bannerImages.map((image) => (
-        <Image
-          src={BASE_IMAGE_URL + image.image}
-          width={900}
-          height={550}
-          alt={image.alt}
-          loading="eager"
-          priority
-          class="h-20 w-auto object-contain rounded-sm"
-        />
+      bannerImages.map((image, index) => (
+        <a href={image.href}>
+          <!-- TODO: is there "priority" or "loading="eager" tag for picture element? -->
+          <BannerImage
+          id="banner"
+            mobileImgUrl={BASE_IMAGE_URL + image.mobileImage}
+            desktopImgUrl={BASE_IMAGE_URL + image.desktopImage}
+            alt={image.alt}
+            data-index={index}
+          />
+        </a>
+      ))
+    }
+  </div>
+  <div id="previewRow" class="flex gap-2xs pt-2xs pl-2xs">
+    {
+      bannerImages.map((image, index) => (
+        <button>
+
+          <BannerImage
+          id="preview"
+            mobileImgUrl={BASE_IMAGE_URL + image.mobileImage}
+            desktopImgUrl={BASE_IMAGE_URL + image.desktopImage}
+            alt={image.alt}
+
+             data-index={index}
+               class:list={index === 0 ? "is-active" : undefined}
+          />
+        </button>
       ))
     }
   </div>
 </section>
+
+<style>
+  @media (min-width: 768px) {
+    a:active {
+      transform: scale(0.99);
+    }
+  }
+
+  a:active::after,
+  button:active::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: color-mix(in oklch, var(--muted) 15%, transparent);
+    pointer-events: none;
+  }
+
+  picture#banner {
+    display: none;
+    &[data-index="0"] {
+      display: block;
+    }
+  }
+
+  button {
+    position: relative;
+    border-radius: var(--radius-sm);
+    overflow: clip;
+
+  }
+
+  button:has(picture.is-active)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: var(--border-width-thick) solid var(--accent);
+    pointer-events: none;
+    border-radius: var(--radius-sm);
+  }
+  picture#preview :global(img) {
+    height: clamp(3.5rem, 7vw ,5rem);
+  aspect-ratio: 5 / 3;
+    justify-content: start;
+    object-fit: cover;
+
+  }
+</style>
+
+<script>
+  const previewRow = document.getElementById("previewRow") as HTMLElement;
+  const banners = document.querySelectorAll<HTMLElement>("#banner");
+  const previews = document.querySelectorAll<HTMLElement>("#preview");
+
+  previewRow.onclick = function (event) {
+    let preview = (event.target as HTMLElement).closest(
+      "#preview",
+    ) as HTMLElement;
+    if (!preview || !previewRow.contains(preview)) return;
+    previews.forEach((preview) => {
+      preview.classList.remove("is-active");
+    });
+
+    preview.classList.add("is-active");
+    banners.forEach((banner) => {
+      banner.style.display = "none";
+    });
+    banners[Number(preview.dataset.index)].style.display = "block";
+  };
+</script>

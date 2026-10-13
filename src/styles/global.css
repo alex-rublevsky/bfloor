@@ -28,13 +28,6 @@
   );
 }
 
-@media screen and (max-width: 600px) {
-  .hideOnMobile {
-    visibility: hidden;
-    display: none;
-  }
-}
-
 .productCard {
   transition-duration: 70ms;
   transition-timing-function: ease-out;
