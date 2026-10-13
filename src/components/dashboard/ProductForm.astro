@@ -334,7 +334,14 @@ considering that this is a native form? -->
           content={product.description ?? ""}
         />
       </div>
-
+      <div class="py-md">
+        <Input
+          as="textarea"
+          name="dimensions"
+          label="Габариты"
+          value={product.dimensions ?? ""}
+        />
+      </div>
       <fieldset>
         <legend>Атрибуты</legend>
         <div class="flex flex-wrap gap-md">
