@@ -15,10 +15,11 @@ import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
   </div>
   <!-- TODO: integrate number of items in the placeholder  -->
 
-  <div class="flex-1">
+  <!-- TODO: make the search stable, fix indexing of images, titles, etc. -->
+  <!-- <div class="flex-1">
     <PagefindConfig excerpt-length="10" />
     <pagefind-input placeholder="Поиск"></pagefind-input>
-  </div>
+  </div> -->
   <div class="hidden xl:flex xl:gap-xs xl:items-stretch whitespace-nowrap">
     <Link href="/delivery" class="self-center">Доставка</Link>
     <Link href="/contact" class="self-center">Контакты и Адреса</Link>
@@ -46,6 +47,10 @@ import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
 </div>
 <style>
   nav {
+    position: sticky;
+    inset: 0;
+    z-index: 99;
+    background-color: var(--background);
     display: flex;
     justify-content: space-between;
     align-items: stretch;
