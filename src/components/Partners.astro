@@ -12,9 +12,11 @@ const brandsWithImages = brands.filter((brand) => brand.image);
   <h2>Наши Партнёры</h2>
   <div class="carousel">
     <div class="group">
+      <!-- TODO: fix the links to brand pages when those are working -->
+      <!-- href={"store/" + brand.slug} -->
       {
         brandsWithImages.map((brand) => (
-          <a href={"store/" + brand.slug}>
+          <a>
             <Image
               src={BASE_IMAGE_URL + brand.image}
               height={300}
@@ -27,9 +29,11 @@ const brandsWithImages = brands.filter((brand) => brand.image);
       }
     </div>
     <div aria-hidden class="group">
+      <!-- TODO: fix the links to brand pages when those are working -->
+      <!-- href={"store/" + brand.slug} -->
       {
         brandsWithImages.map((brand) => (
-          <a href={"store/" + brand.slug}>
+          <a>
             <Image
               src={BASE_IMAGE_URL + brand.image}
               height={300}
