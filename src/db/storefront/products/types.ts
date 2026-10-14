@@ -6,11 +6,12 @@ import type {
   StoreLocation,
   Attribute,
   AttributeValue,
+  Variation,
 } from "@/db/schema";
 
 type StorefrontProductBase = Pick<
   Product,
-  // | "id"
+  | "id"
   | "slug"
   | "name"
   | "categoryId"
@@ -41,8 +42,13 @@ export type StorefrontProduct = StorefrontProductBase & {
   brand?: BrandSummary | null;
   collection?: CollectionSummary | null;
   storeLocations: StoreLocationId[];
+  hasVariations: boolean;
 };
 
 export type StorefrontProductDetails = StorefrontProduct & {
   attributes: StorefrontAttribute[];
+  variations: Pick<
+    Variation,
+    "id" | "price" | "discountedPrice" | "squareMetersPerPack"
+  >[];
 };

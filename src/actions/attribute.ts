@@ -76,9 +76,17 @@ export const attribute = {
         });
       }
 
-      return await deleteAttribute({
+      const deletionResult = await deleteAttribute({
         id: input.id,
       });
+      if (deletionResult === null) {
+        throw new ActionError({
+          code: "NOT_FOUND",
+          message: "Атрибут не найден",
+        });
+      } else {
+        return deletionResult;
+      }
     },
   }),
   updateAttribute: defineAction({
@@ -107,11 +115,19 @@ export const attribute = {
 
       await validateAttributeUniqueness(cleanName, input.slug, input.id);
 
-      return await updateAttribute({
+      const updateResult = await updateAttribute({
         name: cleanName,
         slug: input.slug,
         id: input.id,
       });
+      if (updateResult === null) {
+        throw new ActionError({
+          code: "NOT_FOUND",
+          message: "Атрибут не найден",
+        });
+      } else {
+        return updateResult;
+      }
     },
   }),
 };

@@ -20,7 +20,10 @@ export type CreateAttributeValueInput = Pick<
   "attributeId" | "name" | "normalizedName" | "slug"
 >;
 
-export type UpdateAttributeValueInput = CreateAttributeValueInput & {
+export type UpdateAttributeValueInput = Omit<
+  CreateAttributeValueInput,
+  "attributeId"
+> & {
   id: AttributeValue["id"];
 };
 

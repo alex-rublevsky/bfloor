@@ -6,16 +6,16 @@ import type { AttributeValue } from "@/db/schema";
 
 export async function updateAttributeValue(
   attributeValue: UpdateAttributeValueInput,
-): Promise<AttributeValue> {
-  const insertedAttributeValue = await db
+): Promise<AttributeValue | null> {
+  const [updatedAttributeValue] = await db
     .update(attributeValues)
     .set({
-      slug: attributeValue.slug,
       name: attributeValue.name,
+      normalizedName: attributeValue.normalizedName,
+      slug: attributeValue.slug,
     })
     .where(eq(attributeValues.id, attributeValue.id))
-    .returning()
-    .then((res) => res[0]);
+    .returning();
 
-  return insertedAttributeValue;
+  return updatedAttributeValue ?? null;
 }

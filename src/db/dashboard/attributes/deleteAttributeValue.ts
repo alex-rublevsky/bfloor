@@ -7,11 +7,10 @@ import type { AttributeValue } from "@/db/schema";
 export async function deleteAttributeValue(
   attributeValue: DeleteAttributeValueInput,
 ): Promise<AttributeValue | null> {
-  const deletedAttributeValue = await db
+  const [deletedAttributeValue] = await db
     .delete(attributeValues)
     .where(eq(attributeValues.id, attributeValue.id))
-    .returning()
-    .then((res) => res[0]);
+    .returning();
 
-  return { ...deletedAttributeValue };
+  return deletedAttributeValue ?? null;
 }

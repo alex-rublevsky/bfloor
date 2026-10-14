@@ -440,35 +440,32 @@ export const product = {
         );
       // TODO:verify that every submitted variation value belongs to the selected attribute
 
-      try {
-        const updated = await updateProduct({
-          id: input.id,
-          isActive: input.isActive,
-          name: cleanName,
-          slug: input.slug,
-          sku: input.sku,
-          importantNote: input.importantNote,
-          price: input.price,
-          discountedPrice: input.discountedPrice,
-          categoryId: input.categoryId,
-          brandId: input.brandId,
-          collectionId: input.collectionId,
-          description: input.description,
-          storeLocationIds: input.storeLocationIds,
-          // images: media.finalImages,
-          unitOfMeasurement: input.unitOfMeasurement,
-          squareMetersPerPack: input.squareMetersPerPack,
-          productAttributeValues: productAttributeValues,
+      const updateResult = await updateProduct({
+        id: input.id,
+        isActive: input.isActive,
+        name: cleanName,
+        slug: input.slug,
+        sku: input.sku,
+        importantNote: input.importantNote,
+        price: input.price,
+        discountedPrice: input.discountedPrice,
+        categoryId: input.categoryId,
+        brandId: input.brandId,
+        collectionId: input.collectionId,
+        description: input.description,
+        storeLocationIds: input.storeLocationIds,
+        // images: media.finalImages,
+        unitOfMeasurement: input.unitOfMeasurement,
+        squareMetersPerPack: input.squareMetersPerPack,
+        productAttributeValues: productAttributeValues,
+      });
+      if (updateResult === null) {
+        throw new ActionError({
+          code: "NOT_FOUND",
+          message: "Товар не найден",
         });
-        // await finalizeMedia(media).catch((error) => {
-        //   console.error("Unable to finalize product media", error);
-        // });
-        return updated;
-      } catch (error) {
-        // await rollbackPreparedMedia(media).catch((cleanupError) => {
-        //   console.error("Unable to roll back product media", cleanupError);
-        // });
-        throw error;
+      } else {
+        return updateResult;
       }
     },
   }),

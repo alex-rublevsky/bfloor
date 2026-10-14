@@ -140,12 +140,20 @@ export const brand = {
 
       await validateBrandUniqueness(cleanName, input.slug, input.id);
 
-      return await updateBrand({
+      const updateResult = await updateBrand({
         id: input.id,
         name: cleanName,
         slug: input.slug,
         countryId: input.countryId,
       });
+      if (updateResult === null) {
+        throw new ActionError({
+          code: "NOT_FOUND",
+          message: "Бренд не найден",
+        });
+      } else {
+        return updateResult;
+      }
     },
   }),
 };

@@ -8,19 +8,16 @@ import {
 } from "@/db/dashboard/attributes/index";
 import { cleanNameAndValidateSlug, id, name, slug } from "./helpers";
 import { db } from "@/db";
-import { attributeValues, productAttributeValues } from "@/db/schema";
+import {
+  attributes,
+  attributeValues,
+  productAttributeValues,
+  variationAttributeValues,
+} from "@/db/schema";
 import { and, eq, ne, or } from "drizzle-orm";
 
-const attributeValueFields = {
-  name,
-  slug,
-  attributeId: z
-    .int("ID значения атрибута должно быть целым числом")
-    .positive("ID значения атрибута должен быть больше нуля"),
-};
-
 async function validateValueUniquenessWithinAttribute(
-  name: string,
+  normalizedName: string,
   slug: string,
   attributeId: number,
   id: number = 0,
@@ -33,7 +30,10 @@ async function validateValueUniquenessWithinAttribute(
         eq(attributeValues.attributeId, attributeId),
         or(
           and(eq(attributeValues.slug, slug), ne(attributeValues.id, id)),
-          and(eq(attributeValues.name, name), ne(attributeValues.id, id)),
+          and(
+            eq(attributeValues.normalizedName, normalizedName),
+            ne(attributeValues.id, id),
+          ),
         ),
       ),
     )
@@ -51,14 +51,37 @@ async function validateValueUniquenessWithinAttribute(
 export const attributeValue = {
   createAttributeValue: defineAction({
     accept: "form",
-    input: z.object(attributeValueFields),
+    input: z.object({
+      name,
+      slug,
+      attributeId: z
+        .int("ID значения атрибута должно быть целым числом")
+        .positive("ID значения атрибута должен быть больше нуля"),
+    }),
     handler: async (input, { locals }) => {
       requireAdmin(locals);
 
-      const cleanName = cleanNameAndValidateSlug(input.name, input.slug);
+      const [parentAttribute] = await db
+        .select({
+          id: attributes.id,
+        })
+        .from(attributes)
+        .where(eq(attributes.id, input.attributeId))
+        .limit(1);
 
+      if (!parentAttribute) {
+        throw new ActionError({
+          code: "NOT_FOUND",
+          message: "Атрибут не найден",
+        });
+      }
+
+      const cleanName = cleanNameAndValidateSlug(input.name, input.slug);
+      const normalizedName = cleanName.toLowerCase();
+
+      // const attributeId =
       await validateValueUniquenessWithinAttribute(
-        cleanName,
+        normalizedName,
         input.slug,
         input.attributeId,
       );
@@ -66,7 +89,7 @@ export const attributeValue = {
       //TODO: validate uniqueness
       return await createAttributeValue({
         name: cleanName,
-        normalizedName: input.name.toLowerCase(),
+        normalizedName,
         slug: input.slug,
         attributeId: input.attributeId,
       });
@@ -93,27 +116,54 @@ export const attributeValue = {
             "Перед удалением значения атрибута удалите товары связанные с ним",
         });
       }
-      return await deleteAttributeValue({
+
+      const [variationExists] = await db
+        .select({ id: variationAttributeValues.id })
+        .from(variationAttributeValues)
+        .where(eq(variationAttributeValues.attributeValueId, input.id))
+        .limit(1);
+
+      if (variationExists) {
+        throw new ActionError({
+          code: "CONFLICT",
+          message:
+            "Перед удалением значения атрибута удалите вариации товаров связанные с ним",
+        });
+      }
+
+      const deletionResult = await deleteAttributeValue({
         id: input.id,
       });
+      if (deletionResult === null) {
+        throw new ActionError({
+          code: "NOT_FOUND",
+          message: "Значение атрибута не найдено",
+        });
+      } else {
+        return deletionResult;
+      }
     },
   }),
   updateAttributeValue: defineAction({
     accept: "form",
     input: z.object({
-      ...attributeValueFields,
       id: id("значения атрибута"),
+      name,
+      slug,
     }),
     handler: async (input, { locals }) => {
       requireAdmin(locals);
 
-      const [thisAttributeValueExists] = await db
-        .select({ id: attributeValues.id })
+      const [existingValue] = await db
+        .select({
+          id: attributeValues.id,
+          attributeId: attributeValues.attributeId,
+        })
         .from(attributeValues)
         .where(eq(attributeValues.id, input.id))
         .limit(1);
 
-      if (!thisAttributeValueExists) {
+      if (!existingValue) {
         throw new ActionError({
           code: "NOT_FOUND",
           message: "Значение атрибута не найдено",
@@ -121,21 +171,29 @@ export const attributeValue = {
       }
 
       const cleanName = cleanNameAndValidateSlug(input.name, input.slug);
+      const normalizedName = cleanName.toLowerCase();
 
       await validateValueUniquenessWithinAttribute(
-        cleanName,
+        normalizedName,
         input.slug,
-        input.attributeId,
+        existingValue.attributeId,
         input.id,
       );
 
-      return await updateAttributeValue({
-        id: input.id,
+      const updateResult = await updateAttributeValue({
+        id: existingValue.id,
         name: cleanName,
+        normalizedName,
         slug: input.slug,
-        normalizedName: input.name.toLowerCase(),
-        attributeId: input.attributeId,
       });
+      if (updateResult === null) {
+        throw new ActionError({
+          code: "NOT_FOUND",
+          message: "Значение атрибута не найдено",
+        });
+      } else {
+        return updateResult;
+      }
     },
   }),
 };

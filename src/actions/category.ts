@@ -160,13 +160,23 @@ export const category = {
       // 2. find products within this category that have those attributes applied to them
       // 3. prompt the user to confirm that those (list them) products will have these (listed) attributes with thier selected values deleted from them
 
-      return await updateCategory({
+      // TODO: add NOT FOUND via updateResult that can be null
+
+      const updateResult = await updateCategory({
         name: cleanName,
         slug: input.slug,
         description: input.description,
         hiddenAttributes: input.hiddenAttributes,
         id: input.id,
       });
+      if (updateResult === null) {
+        throw new ActionError({
+          code: "NOT_FOUND",
+          message: "Категория не найдена",
+        });
+      } else {
+        return updateResult;
+      }
     },
   }),
 };

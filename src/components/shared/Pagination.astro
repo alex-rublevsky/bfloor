@@ -8,65 +8,69 @@ const pageUrl = (pageNumber: number) =>
   pageNumber === 1 ? baseUrl : `${baseUrl}/${pageNumber}`;
 ---
 
-<nav aria-label="Страницы каталога">
-  {
-    firstUrl ? (
-      <Button href={`${firstUrl}`}>&#171;</Button>
-    ) : (
-      <Button disabled href={""}>
-        &#171;
-      </Button>
-    )
-  }
+<!-- TODO: why disabled arrow buttons are wider? -->{
+  paginationList.length > 1 ? (
+    <nav aria-label="Страницы каталога">
+      {firstUrl ? (
+        <Button variant="secondary" href={`${firstUrl}`}>
+          &#171;
+        </Button>
+      ) : (
+        <Button variant="secondary" disabled href={""}>
+          &#171;
+        </Button>
+      )}
 
-  {
-    prevUrl ? (
-      <Button href={`${prevUrl}`}>&#8249;</Button>
-    ) : (
-      <Button disabled href={""}>
-        &#8249;
-      </Button>
-    )
-  }
+      {prevUrl ? (
+        <Button variant="secondary" href={`${prevUrl}`}>
+          &#8249;
+        </Button>
+      ) : (
+        <Button variant="secondary" disabled href={""}>
+          &#8249;
+        </Button>
+      )}
 
-  {
-    paginationList.map((num) => (
-      <Button
-        variant="tertiary"
-        href={pageUrl(num)}
-        aria-current={currentPage === num ? "page" : undefined}
-        class={` ${currentPage == num ? "disabled active" : ""}`}>
-        {num}
-      </Button>
-    ))
-  }
+      {paginationList.map((num) => (
+        <Button
+          variant={currentPage === num ? "primary" : "tertiary"}
+          href={pageUrl(num)}
+          aria-current={currentPage === num ? "page" : undefined}
+          class={` ${currentPage == num ? "disabled active" : ""}`}>
+          {num}
+        </Button>
+      ))}
 
-  {
-    !nextUrl ? (
-      <Button disabled href={`${nextUrl}`}>
-        &#8250;
-      </Button>
-    ) : (
-      <Button href={`${nextUrl}`}>&#8250;</Button>
-    )
-  }
+      {!nextUrl ? (
+        <Button variant="secondary" disabled>
+          &#8250;
+        </Button>
+      ) : (
+        <Button variant="secondary" href={`${nextUrl}`}>
+          &#8250;
+        </Button>
+      )}
 
-  {
-    lastUrl ? (
-      <Button href={`${lastUrl}`}>&#187;</Button>
-    ) : (
-      <Button disabled href={`${lastUrl}`}>
-        &#187;
-      </Button>
-    )
-  }
-</nav>
+      {lastUrl ? (
+        <Button variant="secondary" href={`${lastUrl}`}>
+          &#187;
+        </Button>
+      ) : (
+        <Button variant="secondary" disabled>
+          &#187;
+        </Button>
+      )}
+    </nav>
+  ) : undefined
+}
 
 <style>
   nav {
+    width: 100%;
+    justify-content: center;
     display: flex;
     flex-direction: row;
-    gap: var(--spacing-2xs);
-    padding-bottom: var(--spacing-2xs);
+    gap: var(--spacing-3xs);
+    padding-block: var(--spacing-sm);
   }
 </style>

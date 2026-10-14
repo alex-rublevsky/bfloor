@@ -148,12 +148,20 @@ export const collection = {
 
       await validateBrandExisting(input.brandId);
 
-      return await updateCollection({
+      const updateResult = await updateCollection({
         id: input.id,
         name: cleanName,
         slug: input.slug,
         brandId: input.brandId,
       });
+      if (updateResult === null) {
+        throw new ActionError({
+          code: "NOT_FOUND",
+          message: "Коллекция не найдена",
+        });
+      } else {
+        return updateResult;
+      }
     },
   }),
 };

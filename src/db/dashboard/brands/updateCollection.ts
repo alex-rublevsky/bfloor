@@ -6,8 +6,8 @@ import type { Collection } from "@/db/schema";
 
 export async function updateCollection(
   collection: UpdateCollectionInput,
-): Promise<Collection> {
-  const insertedCollection = await db
+): Promise<Collection | null> {
+  const [updatedCollection] = await db
     .update(collections)
     .set({
       slug: collection.slug,
@@ -15,8 +15,7 @@ export async function updateCollection(
       brandId: collection.brandId,
     })
     .where(eq(collections.id, collection.id))
-    .returning()
-    .then((res) => res[0]);
+    .returning();
 
-  return insertedCollection;
+  return updatedCollection ?? null;
 }

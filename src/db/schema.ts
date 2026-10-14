@@ -50,7 +50,7 @@ export const collections = sqliteTable(
 export const attributes = sqliteTable("attributes", {
   id: integer("id").primaryKey(),
   name: text("name").notNull().unique(),
-  slug: text("slug").unique().notNull().unique(),
+  slug: text("slug").notNull().unique(),
 });
 
 export const attributeValues = sqliteTable(
@@ -310,6 +310,9 @@ export const verification = sqliteTable("verification", {
 
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
+
+export type Variation = typeof variations.$inferSelect;
+export type NewVariation = typeof variations.$inferInsert;
 
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;

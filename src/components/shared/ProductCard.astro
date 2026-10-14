@@ -17,29 +17,59 @@ const { images } = product;
 ---
 
 <a class="productCard" href={`/product/${product.slug}`}>
-  <div>
-    {
-      images ? (
-        <Image
-          src={BASE_IMAGE_URL + images[0]}
-          width={500}
-          height={500}
-          alt={product.name}
-          loading="lazy"
-          class="object-cover"
-        />
-      ) : (
-        <ImagePlaceholder />
-      )
-    }
+  <div class="w-full aspect-square overflow-clip">
+    <div class="productCardwrap">
+      <!-- TODO: perhaps integrate getImage for aproppriate image sizes, just like BannerImage.astro -->
+      {
+        images ? (
+          // onerror="this.onerror=null;this.src='/image.svg';this.classList.add('broken-img');"
+          <Image
+            src={BASE_IMAGE_URL + images[0]}
+            width={500}
+            height={500}
+            alt={product.name}
+            loading="lazy"
+            class=" mix-blend-darken"
+          />
+        ) : (
+          <ImagePlaceholder />
+        )
+      }
+    </div>
   </div>
   <div class="flex gap-2xs">
-    <p>{product.price}</p>
-    {
-      product.discountedPrice ? (
-        <p class="line-through">{product.discountedPrice}</p>
-      ) : null
-    }
+    {product.discountedPrice ? (
+      <p>
+        {product.hasVariations ? "от " : ""}{product.discountedPrice}Р
+      </p>
+    ) : null}
+    <p
+      class={`${product.discountedPrice ? "line-through text-foreground-muted" : undefined}`}>
+      {product.hasVariations ? "от " : ""}{product.price}Р
+    </p>
   </div>
   <p class="text-sm">{product.name}</p>
 </a>
+
+<style>
+  img {
+    object-fit: cover;
+    /*position: relative;
+    text-align: center;*/
+
+    /*&::after {
+      position: absolute;
+      top: 0;
+      left: 0;
+      place-content: middle;
+      align-content: center;
+      width: 100%;
+      height: 100%;
+      background-color: var(--muted);
+      content: "🖼" " " "Картинка сломана";
+    }*/
+    /*&.broken-img {
+      background-color: var(--muted);
+    }*/
+  }
+</style>

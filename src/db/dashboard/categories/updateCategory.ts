@@ -7,7 +7,7 @@ import type { Category } from "@/db/schema";
 export async function updateCategory(
   category: UpdateCategoryInput,
 ): Promise<Category | null> {
-  const insertedCategory = await db
+  const [updatedCategory] = await db
     .update(categories)
     .set({
       slug: category.slug,
@@ -16,8 +16,7 @@ export async function updateCategory(
       hiddenAttributes: category.hiddenAttributes,
     })
     .where(eq(categories.id, category.id))
-    .returning()
-    .then((res) => res[0]);
+    .returning();
 
-  return insertedCategory;
+  return updatedCategory ?? null;
 }

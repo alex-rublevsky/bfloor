@@ -7,6 +7,31 @@ export async function getProductsForSlugPages(): Promise<
   const products = await db.query.products.findMany({
     where: { isActive: true },
     with: {
+      variations: {
+        columns: {
+          id: true,
+          price: true,
+          discountedPrice: true,
+          squareMetersPerPack: true,
+        },
+        with: {
+          variationAttributeValues: {
+            columns: { attributeValueId: true, attributeId: true },
+            with: {
+              attribute: {
+                columns: {
+                  name: true,
+                },
+              },
+              attributeValue: {
+                columns: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
       category: { columns: { name: true, slug: true } },
       brand: {
         columns: { name: true, slug: true, image: true, countryId: true },
@@ -31,7 +56,6 @@ export async function getProductsForSlugPages(): Promise<
           },
         },
       },
-      // variations: { orderBy: { weight: "desc" } },
     },
   });
 
@@ -60,6 +84,7 @@ export async function getProductsForSlugPages(): Promise<
     }, []);
 
     return {
+      id: product.id,
       slug: product.slug,
       name: product.name,
       categoryId: product.categoryId,
@@ -75,6 +100,8 @@ export async function getProductsForSlugPages(): Promise<
       category: product.category,
       brand: product.brand,
       collection: product.collection,
+      variations: product.variations,
+      hasVariations: product.variations.length > 0,
 
       storeLocations: product.storeLocations.map(
         ({ storeLocationId }) => storeLocationId,

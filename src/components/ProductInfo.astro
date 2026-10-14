@@ -25,6 +25,8 @@ const brand = product.brand;
 const country = brand
   ? COUNTRIES.find((country) => country.id === brand.countryId)
   : null;
+
+const variations = product.variations;
 ---
 
 <div
@@ -53,117 +55,137 @@ const country = brand
       )
     }
     <!-- TODO: make this visible only when ADMIN_STOREFRONT_FLAG_KEY is present in local storage -->
-    <Button variant="primary" size="sm" href={editHref}>
+    <!-- <Button variant="primary" size="sm" href={editHref}>
       <Icon name="edit" title="Изменить" />
       Изменить
-    </Button>
+    </Button> -->
   </div>
-  <div class="flex items-center gap-3xs">
+
+  {
+    variations ? (
+      <div class="flex flex-row flex-wrap">
+        {variations.map((variation) => (
+          <Button size="sm" variant="tertiary">
+            {variation.price}
+          </Button>
+        ))}
+      </div>
+    ) : undefined
+  }
+
+  <dl>
     {
       brand ? (
-        <div class="flex items-center">
-          <span>Бренд: </span>
+        <div class="description-row items-center">
+          <dt>Бренд:</dt>
           <a href={`/brand/${brand.slug}`}>
-            {brand.image ? (
-              <Image
-                src={BASE_IMAGE_URL + brand.image}
-                width={100}
-                height={100}
-                fit="contain"
-                class="p-3xs hover:bg-muted"
-                alt={"Логотип бренда " + brand.name}
-              />
-            ) : (
-              brand.name
-            )}
-          </a>
-          {country ? (
-            <>
-              <span>
-                Страна производства:{" "}
+            <dd>
+              {brand.image ? (
                 <Image
-                  src={BASE_IMAGE_URL + country?.flagImage}
-                  width={52.5}
-                  height={35}
+                  src={BASE_IMAGE_URL + brand.image}
+                  width={100}
+                  height={100}
                   fit="contain"
-                  class="inline"
-                  alt={"Флаг " + country.name}
-                />{" "}
-                {country.name}
+                  class="brand-image"
+                  alt={"Логотип бренда " + brand.name}
+                />
+              ) : (
+                <span class="brand-name">{brand.name}</span>
+              )}
+            </dd>
+          </a>
+        </div>
+      ) : null
+    }
+
+    {
+      product.collection ? (
+        <div class="description-row">
+          <dt>Коллекция:</dt>
+          <a href={`/brand/${product.collection.slug}`}>
+            <dd> {product.collection.name}</dd>
+          </a>
+        </div>
+      ) : null
+    }
+    {
+      country ? (
+        <div>
+          <div class="description-row">
+            <dt> Страна производства:</dt>
+            <dd>
+              <Image
+                src={BASE_IMAGE_URL + country?.flagImage}
+                width={52.5}
+                height={35}
+                fit="contain"
+                class="inline mr-2xs"
+                alt={"Флаг " + country.name}
+              />
+              {country.name}
+            </dd>
+          </div>
+        </div>
+      ) : null
+    }
+    {
+      product.storeLocations.length > 0 ? (
+        <div class="description-row">
+          <dt>Доступен на:</dt>
+          <dd class="flex flex-wrap justify-end ">
+            {" "}
+            {product.storeLocations.map((storeLocation) => (
+              <a href="/contact" data-pagefind-filter="location">
+                {
+                  STORE_LOCATIONS.find(
+                    (location) => location.id === storeLocation,
+                  )?.address
+                }
+              </a>
+            ))}
+          </dd>
+          {product.storeLocations.length === 1 ? (
+            <>
+              <button id="locationsPopoverTrigger" popovertarget="locations">
+                ?
+              </button>
+              <span popover id="locations">
+                можем переместить <br /> товар на{" "}
+                <a href="/contact">{transferLocation?.address}</a>
+                <br />
+                или{" "}
+                <a href="/delivery" class="text-accent hover:underline">
+                  {" "}
+                  сделать доставку
+                </a>
               </span>
             </>
           ) : null}
         </div>
       ) : null
     }
-    {
-      product.collection ? (
-        <div>
-          <span>Коллекция: </span>
-          <a
-            href={`/brand/${product.collection.slug}`}
-            class="text-accent hover:underline">
-            {product.collection.name}
-          </a>
-        </div>
-      ) : null
-    }
-  </div>
-  {
-    product.storeLocations.length > 0 ? (
-      <div>
-        <span>Доступен на: </span>
-        {product.storeLocations.map((storeLocation) => (
-          <a
-            href="/contact"
-            class="text-accent hover:underline"
-            data-pagefind-filter="location">
-            {
-              STORE_LOCATIONS.find((location) => location.id === storeLocation)
-                ?.address
-            }
-          </a>
-        ))}
-        {product.storeLocations.length === 1 ? (
-          <>
-            <button id="locationsPopoverTrigger" popovertarget="locations">
-              ?
-            </button>
-            <span popover id="locations">
-              можем переместить <br /> товар на{" "}
-              <a href="/contact" class="text-accent hover:underline">
-                {transferLocation?.address}
-              </a>
-              <br />
-              или{" "}
-              <a href="/delivery" class="text-accent hover:underline">
-                {" "}
-                сделать доставку
-              </a>
-            </span>
-          </>
-        ) : null}
-      </div>
-    ) : null
-  }
+  </dl>
 
   {
     product.attributes.length > 0 ? (
-      <dl class="mt-sm space-y-xs">
-        {product.attributes.map((attribute) => (
-          <div class="flex gap-xs">
-            <dt class="font-medium">{attribute.name}:</dt>
-            <dd>
-              {attribute.values.map((value, index) => (
-                <>
-                  {index > 0 ? ", " : null}
-                  {value.name}
-                </>
-              ))}
-            </dd>
-          </div>
-        ))}
-      </dl>
+      <>
+        <hr />
+        <dl class="mt">
+          {product.attributes.map((attribute) => (
+            <div class="description-row">
+              <dt>{attribute.name}:</dt>
+              <dd>
+                {attribute.values.map((value, index) => (
+                  <>
+                    {index > 0 ? ", " : null}
+                    {value.name}
+                  </>
+                ))}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </>
     ) : null
   }
 
@@ -184,16 +206,53 @@ const country = brand
 </div>
 
 <style>
+  dl {
+    /*border: var(--border-width) solid var(--border);*/
+    padding-block: var(--spacing-xs);
+    display: grid;
+    gap: var(--spacing-3xs);
+    & a,
+    .brand-name {
+      white-space: nowrap;
+      font-size: inherit;
+    }
+    & .brand-name {
+      color: inherit;
+    }
+    & a {
+      color: var(--accent);
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+    & dt {
+      white-space: nowrap;
+    }
+    & .brand-image {
+      translate: var(--spacing-3xs);
+      padding: var(--spacing-3xs);
+      &:hover {
+        background-color: var(--muted);
+      }
+    }
+  }
+  .description-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: var(--spacing-2xs);
+    font-size: var(--text-sm);
+  }
   #locationsPopoverTrigger {
-    margin-left: 0.5em;
+    margin-left: var(--spacing-3xs);
     background-color: var(--border);
-    width: var(--spacing-lg);
-    height: var(--spacing-lg);
+    width: var(--spacing-md);
+    height: var(--spacing-md);
     border-radius: var(--radius-sm);
     border: var(--border-width) solid var(--muted);
     color: var(--primary);
-    font-weight: 500;
-    font-size: var(--text-base);
+    font-weight: 400;
+    font-size: var(--text-sm);
     cursor: pointer;
     transition:
       scale 70ms ease-out,

@@ -36,9 +36,11 @@
 .productCard:active {
   transform: scale(0.97);
 }
-.productCard img {
+
+.productCardwrap {
   transition-duration: 300ms;
-}
-.productCard:hover img {
-  transform: scale(1.06);
+  background-color: var(--background);
+  &:hover {
+    transform: scale(1.06);
+  }
 }
