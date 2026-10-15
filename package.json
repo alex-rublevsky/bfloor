@@ -21,6 +21,7 @@
     "@aws-sdk/client-s3": "^3.1132.0",
     "@dnd-kit/dom": "^0.5.0",
     "@libsql/client": "^0.17.4",
+    "@pagefind/component-ui": "^1.5.2",
     "@tailwindcss/vite": "^4.3.3",
     "@tiptap/core": "^3.31.3",
     "@tiptap/extension-link": "^3.31.3",
@@ -41,7 +42,6 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "@pagefind/component-ui": "^1.5.2",
     "@types/alpinejs__persist": "^3.13.4",
     "drizzle-kit": "1.0.0-rc.4",
     "prettier": "3.9.6",
