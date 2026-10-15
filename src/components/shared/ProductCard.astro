@@ -19,17 +19,24 @@ const { images } = product;
 <a class="productCard" href={`/product/${product.slug}`}>
   <div class="w-full aspect-square overflow-clip">
     <div class="productCardwrap">
-      <!-- TODO: perhaps integrate getImage for aproppriate image sizes, just like BannerImage.astro -->
+      <!-- TODO: perhaps integrate getImage for aproppriate image sizes, just like BannerImage.astro -->\
+      <!-- TODO: substitute for Image -->
+      <!-- <Image
+        src={BASE_IMAGE_URL + images[0]}
+        width={500}
+        height={500}
+        alt={product.name}
+        loading="lazy"
+        class=" mix-blend-darken"
+      /> -->
       {
         images ? (
           // onerror="this.onerror=null;this.src='/image.svg';this.classList.add('broken-img');"
-          <Image
+
+          <img
             src={BASE_IMAGE_URL + images[0]}
-            width={500}
-            height={500}
-            alt={product.name}
-            loading="lazy"
             class=" mix-blend-darken"
+            alt={product.name}
           />
         ) : (
           <ImagePlaceholder />
