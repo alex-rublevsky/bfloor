@@ -166,12 +166,6 @@ importers:
 
   .:
     dependencies:
-      '@alpinejs/persist':
-        specifier: ^3.17.3
-        version: 3.17.3
-      '@astrojs/alpinejs':
-        specifier: ^1.0.0
-        version: 1.0.0(@types/alpinejs@3.13.11)(alpinejs@3.17.3)
       '@astrojs/node':
         specifier: ^11.1.5
         version: 11.1.5(astro@7.3.5(@types/node@26.5.1)(jiti@2.7.0)(yaml@2.9.1))
@@ -181,18 +175,12 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.1132.0
         version: 3.1132.0
-      '@aws-sdk/s3-presigned-post':
-        specifier: ^3.1132.0
-        version: 3.1132.0
       '@dnd-kit/dom':
         specifier: ^0.5.0
         version: 0.5.0
       '@libsql/client':
         specifier: ^0.17.4
         version: 0.17.4
-      '@pagefind/component-ui':
-        specifier: ^1.5.2
-        version: 1.5.2
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@8.3.0(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))
@@ -248,6 +236,9 @@ importers:
       '@astrojs/check':
         specifier: ^0.9.10
         version: 0.9.10(@emnapi/runtime@1.11.3)(prettier-plugin-astro@0.14.1)(prettier@3.9.6)(typescript@6.0.3)
+      '@pagefind/component-ui':
+        specifier: ^1.5.2
+        version: 1.5.2
       '@types/alpinejs__persist':
         specifier: ^3.13.4
         version: 3.13.4
@@ -260,23 +251,11 @@ importers:
       prettier-plugin-astro:
         specifier: 0.14.1
         version: 0.14.1
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
 
 packages:
 
-  '@alpinejs/persist@3.17.3':
-    resolution: {integrity: sha512-6Fm40qY3uIFoLEHd1jAolt3iUgdYGDqgW7N4W2hqBlJO4JMzMHAMzcN9weFBcMcwd9eQrO016Qvt3kryGu1abw==}
-
   '@antfu/install-pkg@2.1.0':
     resolution: {integrity: sha512-sdg9NxU3zR4Mnawfbc/x6GB5Wf17WYud5qOuEuxXjaKpYpMkISSJEjItGebXJ2bQ4DIcly4NYH23mtkGJjvKUw==}
-
-  '@astrojs/alpinejs@1.0.0':
-    resolution: {integrity: sha512-xmLFD8MBunXCG39nS3dmINQfdhqlDNbHAYyw8n6jfLGL/AFeyYOtz6p1EtXX8NEbGLHk7mUOHoaC3j1WudUYoQ==}
-    peerDependencies:
-      '@types/alpinejs': ^3.0.0
-      alpinejs: ^3.0.0
 
   '@astrojs/astro2tsx@0.1.2':
     resolution: {integrity: sha512-Uj/M9zbrhu5cIZEvWAGTbQJRKSxXWJ/E59BZwt7F+chrKhbfttW+9rkS/l+1QxoJP1KU3UnpM62M7yszfAI0WA==}
@@ -449,10 +428,6 @@ packages:
 
   '@aws-sdk/nested-clients@3.997.45':
     resolution: {integrity: sha512-mooq9Q+jLa18VoM7HouczmslZU60iiB0aKc/Ztnq/luIL1ud0z4DnYprLR/ZO1gp331S9tJctM1HZr7u6YKBXQ==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/s3-presigned-post@3.1132.0':
-    resolution: {integrity: sha512-MBqzQ36b/HY7pzP1WcDS5V85VvEjvaCkI6gOso9JDi6IOYEz8E4yk9CVqV1qsEzaJupugaDOAF01413ce81RZA==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/signature-v4-multi-region@3.996.46':
@@ -3494,17 +3469,10 @@ packages:
 
 snapshots:
 
-  '@alpinejs/persist@3.17.3': {}
-
   '@antfu/install-pkg@2.1.0':
     dependencies:
       package-manager-detector: 1.8.0
       tinyexec: 1.3.1
-
-  '@astrojs/alpinejs@1.0.0(@types/alpinejs@3.13.11)(alpinejs@3.17.3)':
-    dependencies:
-      '@types/alpinejs': 3.13.11
-      alpinejs: 3.17.3
 
   '@astrojs/astro2tsx@0.1.2(@emnapi/runtime@1.11.3)':
     dependencies:
@@ -3785,16 +3753,6 @@ snapshots:
       '@smithy/core': 3.34.1
       '@smithy/fetch-http-handler': 5.8.0
       '@smithy/node-http-handler': 4.12.1
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws-sdk/s3-presigned-post@3.1132.0':
-    dependencies:
-      '@aws-sdk/client-s3': 3.1132.0
-      '@aws-sdk/core': 3.978.0
-      '@aws-sdk/types': 3.974.5
-      '@smithy/core': 3.34.1
-      '@smithy/signature-v4': 5.7.3
       '@smithy/types': 4.18.0
       tslib: 2.8.1
 
