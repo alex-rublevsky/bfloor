@@ -1,13 +1,12 @@
 ---
 import Badge from "@/components/shared/Badge.astro";
-import Button from "@/components/shared/Button.astro";
 // import LinkifiedText from "@/components/shared/LinkifiedText.astro";
-import { ADMIN_STOREFRONT_FLAG_KEY, BASE_IMAGE_URL } from "@/constants";
-import { Icon } from "astro-icon/components";
+import { BASE_IMAGE_URL } from "@/constants";
 import { STORE_LOCATIONS } from "@/lib/storeLocations";
 import { Image } from "astro:assets";
 import type { StorefrontProductDetails } from "@/db/storefront/products/types";
 import { COUNTRIES } from "@/lib/countries";
+import Button from "./shared/Button.astro";
 
 interface Props {
   product: StorefrontProductDetails;
@@ -15,7 +14,6 @@ interface Props {
 
 const { product } = Astro.props;
 
-const editHref = `/dashboard/product/${product.slug}`;
 const transferLocation = STORE_LOCATIONS.find(
   (location) => !product.storeLocations.includes(location.id),
 );
@@ -54,6 +52,7 @@ const variations = product.variations;
         <h3>{product.price}Р</h3>
       )
     }
+    <span>/{product.unitOfMeasurement}</span>
     <!-- TODO: make this visible only when ADMIN_STOREFRONT_FLAG_KEY is present in local storage -->
     <!-- <Button variant="primary" size="sm" href={editHref}>
       <Icon name="edit" title="Изменить" />
@@ -70,7 +69,7 @@ const variations = product.variations;
           </Button>
         ))}
       </div>
-    ) : undefined
+    ) : null
   }
 
   <dl>
@@ -115,25 +114,34 @@ const variations = product.variations;
       ) : null
     }
     {
+      product.sku ? (
+        <div class="description-row">
+          <dt>Артикул:</dt>
+          <dd> {product.sku}</dd>
+        </div>
+      ) : null
+    }
+    {
       country ? (
         <div>
           <div class="description-row">
             <dt> Страна производства:</dt>
             <dd>
+              {country.name}
               <Image
                 src={BASE_IMAGE_URL + country?.flagImage}
                 width={52.5}
                 height={35}
                 fit="contain"
-                class="inline mr-2xs"
+                class="inline ml-2xs pointer-events-none"
                 alt={"Флаг " + country.name}
               />
-              {country.name}
             </dd>
           </div>
         </div>
       ) : null
     }
+    <!-- TODO: add a comma if there are 2 options. i think attributes already has a clean approach? -->
     {
       product.storeLocations.length > 0 ? (
         <div class="description-row">

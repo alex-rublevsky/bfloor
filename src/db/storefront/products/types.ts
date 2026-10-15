@@ -46,9 +46,8 @@ export type StorefrontProduct = StorefrontProductBase & {
 };
 
 export type StorefrontProductDetails = StorefrontProduct & {
+  unitOfMeasurement: Product["unitOfMeasurement"];
+  sku: Product["sku"];
   attributes: StorefrontAttribute[];
-  variations: Pick<
-    Variation,
-    "id" | "price" | "discountedPrice" | "squareMetersPerPack"
-  >[];
+  variations: Variation[];
 };

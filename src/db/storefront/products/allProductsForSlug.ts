@@ -96,7 +96,8 @@ export async function getProductsForSlugPages(): Promise<
       importantNote: product.importantNote,
       images: product.images,
       updatedAt: product.updatedAt,
-
+      unitOfMeasurement: product.unitOfMeasurement,
+      sku: product.sku,
       category: product.category,
       brand: product.brand,
       collection: product.collection,
