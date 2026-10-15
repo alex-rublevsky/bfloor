@@ -10,6 +10,7 @@ import {
   envField,
   fontProviders,
   svgoOptimizer,
+  passthroughImageService,
 } from "astro/config";
 
 import icon from "astro-icon";
@@ -99,6 +100,8 @@ export default defineConfig({
   },
 
   image: {
+    // TODO: make it work later with actual image processing
+    service: passthroughImageService(),
     domains: ["storage.yandexcloud.net"],
   },
 
