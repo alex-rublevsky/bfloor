@@ -15,8 +15,6 @@ import {
 
 import icon from "astro-icon";
 
-import alpinejs from "@astrojs/alpinejs";
-
 // import sitemap from "@astrojs/sitemap";
 
 export default defineConfig({
@@ -68,15 +66,23 @@ export default defineConfig({
         context: "server",
         access: "secret",
       }),
-      PUBLIC_YANDEX_STORAGE_BUCKET: envField.string({
+      S3_URL: envField.string({
         context: "server",
         access: "public",
       }),
-      SECRET_YANDEX_STORAGE_ACCESS_KEY: envField.string({
+      S3_BUCKET_NAME: envField.string({
         context: "server",
         access: "secret",
       }),
-      SECRET_YANDEX_STORAGE_KEY: envField.string({
+      S3_ACCESS_KEY: envField.string({
+        context: "server",
+        access: "secret",
+      }),
+      S3_SECRET_ACCESS_KEY: envField.string({
+        context: "server",
+        access: "secret",
+      }),
+      S3_REGION: envField.string({
         context: "server",
         access: "secret",
       }),
@@ -99,6 +105,7 @@ export default defineConfig({
     defaultStrategy: "viewport",
   },
 
+  // TODO: update
   image: {
     // TODO: make it work later with actual image processing
     service: passthroughImageService(),
@@ -109,7 +116,7 @@ export default defineConfig({
     mode: "standalone",
   }),
 
-  integrations: [sitemap(), icon(), alpinejs(), pagefind()],
+  integrations: [sitemap(), icon(), pagefind()],
 
   experimental: {
     incrementalBuild: true,

@@ -10,10 +10,11 @@ interface ImportMetaEnv {
   readonly PUBLIC_GOOGLE_CLIENT_ID: string;
   readonly SECRET_GOOGLE_CLIENT: string;
 
-  readonly PUBLIC_YANDEX_STORAGE_BUCKET: string;
-  readonly SECRET_YANDEX_STORAGE_ACCESS_KEY: string;
-  readonly SECRET_YANDEX_STORAGE_KEY: string;
-  readonly PUBLIC_YANDEX_STORAGE_REGION: string;
+  readonly S3_URL: string;
+  readonly S3_BUCKET_NAME: string;
+  readonly S3_ACCESS_KEY: string;
+  readonly S3_SECRET_ACCESS_KEY: string;
+  readonly S3_REGION: string;
 }
 
 interface ImportMeta {
