@@ -13,12 +13,12 @@ FROM base AS build
 
 ARG PUBLIC_GOOGLE_CLIENT_ID
 ARG PUBLIC_BETTER_AUTH_URL
-ARG S3_BUCKET_NAME
+ARG S3_URL
 ARG PUBLIC_TURSO_DATABASE_URL
 
 ENV PUBLIC_GOOGLE_CLIENT_ID=$PUBLIC_GOOGLE_CLIENT_ID \
     PUBLIC_BETTER_AUTH_URL=$PUBLIC_BETTER_AUTH_URL \
-    S3_BUCKET_NAME=$S3_BUCKET_NAME \
+    S3_URL=$S3_URL \
     PUBLIC_TURSO_DATABASE_URL=$PUBLIC_TURSO_DATABASE_URL
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -33,6 +33,7 @@ RUN --mount=type=secret,id=SECRET_GOOGLE_CLIENT,env=SECRET_GOOGLE_CLIENT,require
     --mount=type=secret,id=SECRET_BETTER_AUTH,env=SECRET_BETTER_AUTH,required=true \
     --mount=type=secret,id=SECRET_ADMIN_EMAILS,env=SECRET_ADMIN_EMAILS,required=true \
     --mount=type=secret,id=SECRET_TURSO_AUTH_TOKEN,env=SECRET_TURSO_AUTH_TOKEN,required=true \
+    --mount=type=secret,id=S3_BUCKET_NAME,env=S3_BUCKET_NAME,required=true \
     --mount=type=secret,id=S3_ACCESS_KEY,env=S3_ACCESS_KEY,required=true \
     --mount=type=secret,id=S3_SECRET_ACCESS_KEY,env=S3_SECRET_ACCESS_KEY,required=true \
     pnpm build
