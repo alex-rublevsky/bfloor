@@ -34,6 +34,7 @@ RUN --mount=type=secret,id=SECRET_GOOGLE_CLIENT,env=SECRET_GOOGLE_CLIENT,require
     --mount=type=secret,id=SECRET_ADMIN_EMAILS,env=SECRET_ADMIN_EMAILS,required=true \
     --mount=type=secret,id=SECRET_TURSO_AUTH_TOKEN,env=SECRET_TURSO_AUTH_TOKEN,required=true \
     --mount=type=secret,id=S3_BUCKET_NAME,env=S3_BUCKET_NAME,required=true \
+    --mount=type=secret,id=S3_REGION,env=S3_REGION,required=true \
     --mount=type=secret,id=S3_ACCESS_KEY,env=S3_ACCESS_KEY,required=true \
     --mount=type=secret,id=S3_SECRET_ACCESS_KEY,env=S3_SECRET_ACCESS_KEY,required=true \
     pnpm build
