@@ -46,4 +46,8 @@
   &:hover {
     transform: scale(1.06);
   }
+  & img {
+    mix-blend-mode: darken;
+    aspect-ratio: 1/1;
+  }
 }
