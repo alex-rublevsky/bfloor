@@ -109,7 +109,7 @@ export default defineConfig({
   image: {
     // TODO: make it work later with actual image processing
     service: passthroughImageService(),
-    domains: ["storage.yandexcloud.net"],
+    domains: ["s3.twcstorage.ru"],
   },
 
   adapter: node({
