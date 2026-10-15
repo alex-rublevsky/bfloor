@@ -39,11 +39,14 @@ const { images } = product;
     </div>
   </div>
   <div class="flex gap-2xs">
-    {product.discountedPrice ? (
-      <p>
-        {product.hasVariations ? "от " : ""}{product.discountedPrice}Р
-      </p>
-    ) : null}
+    {
+      product.discountedPrice ? (
+        <p>
+          {product.hasVariations ? "от " : ""}
+          {product.discountedPrice}Р
+        </p>
+      ) : null
+    }
     <p
       class={`${product.discountedPrice ? "line-through text-foreground-muted" : undefined}`}>
       {product.hasVariations ? "от " : ""}{product.price}Р
