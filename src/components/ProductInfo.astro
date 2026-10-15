@@ -73,15 +73,6 @@ const variations = product.variations;
   }
 
   <dl>
-    <!-- TODO: substitute for Image -->
-    <!-- <Image
-        src={BASE_IMAGE_URL + brand.image}
-        width={100}
-        height={100}
-        fit="contain"
-        class="brand-image"
-        alt={"Логотип бренда " + brand.name}
-      /> -->
     {
       brand ? (
         <div class="description-row items-center">
@@ -89,9 +80,12 @@ const variations = product.variations;
           <a href={`/brand/${brand.slug}`}>
             <dd>
               {brand.image ? (
-                <img
+                <Image
                   src={BASE_IMAGE_URL + brand.image}
-                  class="brand-image size-12"
+                  width={100}
+                  height={100}
+                  fit="contain"
+                  class="brand-image"
                   alt={"Логотип бренда " + brand.name}
                 />
               ) : (

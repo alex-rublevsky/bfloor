@@ -12,7 +12,12 @@ const { images, ...rest } = Astro.props;
     {
       images.map((img, index) => (
         <button>
-          <img data-index={index} id="preview" src={BASE_IMAGE_URL + img} />
+          <img
+            class:list={index === 0 ? "is-active" : undefined}
+            data-index={index}
+            id="preview"
+            src={BASE_IMAGE_URL + img}
+          />
         </button>
       ))
     }
