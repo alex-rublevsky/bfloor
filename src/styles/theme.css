@@ -447,9 +447,14 @@ legend {
 }
 
 @layer base {
-  a,
+  a {
+    display: inline-block;
+  }
   button {
     display: block;
+  }
+  a,
+  button {
     transition: transform 70ms ease-out;
     cursor: pointer;
   }
