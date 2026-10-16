@@ -97,7 +97,7 @@ export default defineConfig({
     },
   },
   build: {
-    concurrency: 2,
+    concurrency: 1,
   },
 
   prefetch: {
