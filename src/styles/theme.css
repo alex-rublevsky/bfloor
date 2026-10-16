@@ -448,7 +448,17 @@ legend {
 
 @layer base {
   a {
+    color: var(--accent);
     display: inline-block;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  .text-link {
+    color: var(--foreground) !important;
+    &:hover {
+      color: var(--accent) !important;
+    }
   }
   button {
     display: block;

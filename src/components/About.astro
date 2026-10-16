@@ -15,16 +15,19 @@ import Button from "@/components/shared/Button.astro";
   /> -->
   <Image
     src={BASE_IMAGE_URL + "about/elena.webp"}
-    width={4240}
-    height={2832}
+    width={2120}
+    height={1416}
     alt="Директор"
     loading="lazy"
     class="object-cover rounded-lg w-full"
+    style="view-transition-name: about-image;"
   />
 
   <div>
-    <h2 class="text-xl">О компании</h2>
-    <p>
+    <h2 class="text-xl" style="view-transition-name: about-title;">
+      О компании
+    </h2>
+    <p style="view-transition-name: about-paragraph;">
       У нас большой выбор напольных покрытий, для домов, офисов, спортивных
       площадок и других мест отдыха. Мы предоставляем не только
       высококачественную продукцию, но и необходимые инструменты для укладки и

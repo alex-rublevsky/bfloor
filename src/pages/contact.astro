@@ -1,5 +1,4 @@
 ---
-import Link from "@/components/shared/Link.astro";
 import Layout from "@/layouts/Layout.astro";
 import Button from "@/components/shared/Button.astro";
 import { STORE_LOCATIONS } from "@/lib/storeLocations";
@@ -27,24 +26,26 @@ export const prerender = true;
           {
             STORE_LOCATIONS.map((location) => (
               <div class="contact">
-                <Link href={`tel:${location.phone.replace(/\D/g, "")}`}>
+                <a
+                  class="text-link"
+                  href={`tel:${location.phone.replace(/\D/g, "")}`}>
                   {location.phone}
-                </Link>
+                </a>
                 <span class="name">{location.address}</span>
               </div>
             ))
           }
 
           <div class="contact">
-            <Link href="tel:+89025559405">8 902 555 9405</Link><span
+            <a class="text-link" href="tel:+89025559405">8 902 555 9405</a><span
               class="name">Роман</span
             >
           </div>
           <div class="contact">
-            <Link href="tel:+89084466740">8 908 446 6740</Link>
+            <a class="text-link" href="tel:+89084466740">8 908 446 6740</a>
             <span class="name">Елена</span>
           </div>
-          <Link href="mailto:romavg@mail.ru">romavg@mail.ru</Link>
+          <a class="text-link" href="mailto:romavg@mail.ru">romavg@mail.ru</a>
         </div>
       </div>
       <div>

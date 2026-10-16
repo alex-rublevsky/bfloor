@@ -1,6 +1,5 @@
 ---
 import Button from "./shared/Button.astro";
-import Link from "@/components/shared/Link.astro";
 import { Icon } from "astro-icon/components";
 import Input from "./shared/Input.astro";
 import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
@@ -8,9 +7,9 @@ import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
 
 <nav>
   <div class="hidden md:flex gap-sm items-stretch">
-    <Link href="/" class="self-center">
+    <a href="/" class="self-center">
       <Icon name="logo" title="Лого BeautyFloor" />
-    </Link>
+    </a>
     <Button size="md" href="/store">Каталог</Button>
   </div>
   <!-- TODO: integrate number of items in the placeholder  -->
@@ -21,9 +20,9 @@ import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
     <pagefind-input placeholder="Поиск"></pagefind-input>
   </div> -->
   <div class="hidden xl:flex xl:gap-xs xl:items-stretch whitespace-nowrap">
-    <Link href="/delivery" class="self-center">Доставка</Link>
-    <Link href="/contact" class="self-center">Контакты и Адреса</Link>
-    <Link href="/about" class="self-center">О компании</Link>
+    <a href="/delivery" class="text-link">Доставка</a>
+    <a href="/contact" class="text-link">Контакты и Адреса</a>
+    <a href="/about" class="text-link">О компании</a>
     <!-- <Button>
       <Icon name="phone" title="phone" />
     </Button> -->
@@ -41,11 +40,14 @@ import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
     <!-- <Button href="/dashboard">Админка</Button> -->
   </div>
 </nav>
-<div>
+<!-- <div>
   <pagefind-summary></pagefind-summary>
   <pagefind-results show-images="true"></pagefind-results>
-</div>
+</div> -->
 <style>
+  .text-link {
+    align-self: center;
+  }
   nav {
     position: sticky;
     inset: 0;
