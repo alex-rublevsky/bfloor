@@ -1,5 +1,5 @@
 ---
-import BannerImage  from "@/components/BannerImage.astro";
+import BannerImage from "@/components/BannerImage.astro";
 import { BASE_IMAGE_URL } from "../constants";
 
 const bannerImages = [
@@ -24,15 +24,16 @@ const bannerImages = [
   },
 ];
 ---
+
 <!-- TODO: add smooth transition between banners -->
 <section class="no-padding">
   <div>
+    <!-- TODO: is there "priority" or "loading="eager" tag for picture element? -->
     {
       bannerImages.map((image, index) => (
         <a href={image.href}>
-          <!-- TODO: is there "priority" or "loading="eager" tag for picture element? -->
           <BannerImage
-          id="banner"
+            id="banner"
             mobileImgUrl={BASE_IMAGE_URL + image.mobileImage}
             desktopImgUrl={BASE_IMAGE_URL + image.desktopImage}
             alt={image.alt}
@@ -46,15 +47,13 @@ const bannerImages = [
     {
       bannerImages.map((image, index) => (
         <button>
-
           <BannerImage
-          id="preview"
+            id="preview"
             mobileImgUrl={BASE_IMAGE_URL + image.mobileImage}
             desktopImgUrl={BASE_IMAGE_URL + image.desktopImage}
             alt={image.alt}
-
-             data-index={index}
-               class:list={index === 0 ? "is-active" : undefined}
+            data-index={index}
+            class:list={index === 0 ? "is-active" : undefined}
           />
         </button>
       ))
@@ -63,9 +62,9 @@ const bannerImages = [
 </section>
 
 <style>
-a {
+  a {
     display: block;
-}
+  }
   @media (min-width: 768px) {
     a:active {
       transform: scale(0.99);
@@ -81,6 +80,11 @@ a {
     pointer-events: none;
   }
 
+  picture#banner,
+  picture#preview {
+    user-select: none;
+  }
+
   picture#banner {
     display: none;
     &[data-index="0"] {
@@ -92,7 +96,6 @@ a {
     position: relative;
     border-radius: var(--radius-sm);
     overflow: clip;
-
   }
 
   button:has(picture.is-active)::after {
@@ -104,11 +107,9 @@ a {
     border-radius: var(--radius-sm);
   }
   picture#preview :global(img) {
-    height: clamp(3.5rem, 7vw ,5rem);
-  aspect-ratio: 5 / 3;
-    justify-content: start;
+    height: clamp(3.5rem, 7vw, 5rem);
+    aspect-ratio: 5 / 3;
     object-fit: cover;
-
   }
 </style>
 
