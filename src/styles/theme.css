@@ -401,12 +401,12 @@ legend {
     overflow-wrap: break-word;
   }
 
-  span {
-    color: var(--foreground);
-    font-size: var(--step-0);
-  }
+  span,
+  button,
+  p,
   a {
-    font-size: var(--step-0);
+    color: var(--foreground);
+    font-size: var(--text-base);
   }
 }
 
@@ -465,6 +465,7 @@ legend {
   }
   a,
   button {
+    line-height: 0.97;
     transition: transform 70ms ease-out;
     cursor: pointer;
   }
@@ -576,7 +577,8 @@ legend {
     }
   }
   & a {
-    border-radius: 0;
+    border-radius: 0 !important;
+    justify-content: flex-end !important;
   }
 }
 .menu--above {

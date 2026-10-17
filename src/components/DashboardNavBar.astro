@@ -90,8 +90,7 @@ const hasCreateButton = (href: string) => pathname === href;
     {
       createItems.map((item) => (
         <Button
-          size="sm"
-          variant="primary"
+          class="createButton"
           href={item.hrefTo}
           data-entity={item.dataEntity ?? undefined}
           data-mode={item.commandFor ? "create" : undefined}
@@ -105,12 +104,15 @@ const hasCreateButton = (href: string) => pathname === href;
     }
   </div>
 
-  <Button size="sm" class="store-button desktop" variant="primary" href="/"
+  <Button class="store-button desktop" variant="tertiary" href="/"
     >Магазин</Button
   >
 </nav>
 
 <style>
+  a {
+    display: block;
+  }
   nav {
     position: fixed;
     left: var(--spacing-3xs);
@@ -119,32 +121,35 @@ const hasCreateButton = (href: string) => pathname === href;
     display: flex;
     flex-direction: row;
     gap: var(--spacing-sm);
-    align-items: stretch;
     justify-content: space-between;
     z-index: 2;
     pointer-events: none;
-  }
 
-  .leftBlock {
-    display: flex;
-    flex-direction: row;
-    /*flex-wrap: wrap;*/
-    gap: var(--spacing-3xs);
-    pointer-events: auto;
-  }
-  .navItemsWrapper {
-    display: flex;
-    gap: var(--spacing-3xs);
-    background-color: color-mix(in oklch, var(--background) 70%, transparent);
-    border: 0.1rem solid color-mix(in oklch, var(--muted) 70%, transparent);
-    padding: var(--spacing-3xs);
-    backdrop-filter: blur(0.3rem);
-    border-radius: var(--radius-sm);
-  }
-  .store-button {
-    pointer-events: auto;
-    &.mobile {
-      display: none;
+    .createButton {
+      align-self: center;
+    }
+    .store-button {
+      align-self: center;
+      pointer-events: auto;
+      &.mobile {
+        display: none;
+      }
+    }
+
+    .leftBlock {
+      display: flex;
+      flex-direction: row;
+      gap: var(--spacing-3xs);
+      pointer-events: auto;
+    }
+    .navItemsWrapper {
+      display: flex;
+      gap: var(--spacing-3xs);
+      background-color: color-mix(in oklch, var(--background) 70%, transparent);
+      border: 0.1rem solid color-mix(in oklch, var(--muted) 70%, transparent);
+      padding: var(--spacing-3xs);
+      backdrop-filter: blur(0.3rem);
+      border-radius: var(--radius-sm);
     }
   }
 

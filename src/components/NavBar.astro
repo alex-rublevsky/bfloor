@@ -6,11 +6,11 @@ import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
 ---
 
 <nav>
-  <div class="hidden md:flex gap-sm items-stretch">
+  <div class="flex gap-sm items-stretch">
     <a href="/" class="self-center">
       <Icon name="logo" title="Лого BeautyFloor" />
     </a>
-    <Button size="md" href="/store">Каталог</Button>
+    <Button href="/store"> Каталог</Button>
   </div>
   <!-- TODO: integrate number of items in the placeholder  -->
 
@@ -30,7 +30,7 @@ import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
     <!-- <Button size="md" href="/dashboard">Админка</Button> -->
   </div>
   <div class="hidden md:flex gap-xs xl:hidden">
-    <Button popovertarget="top-menu" size="md">Ещё</Button>
+    <Button popovertarget="top-menu">Ещё</Button>
   </div>
   <div id="top-menu" popover class="menu">
     <Button variant="ghost" href="/delivery">Доставка</Button>
@@ -49,16 +49,19 @@ import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
     align-self: center;
   }
   nav {
-    position: sticky;
-    inset: 0;
-    z-index: 99;
-    background-color: var(--background);
-    display: flex;
-    justify-content: space-between;
-    align-items: stretch;
-    gap: var(--spacing-2xs);
-    padding: var(--spacing-2xs);
-    height: 3.5rem;
+    display: none;
+    @media (min-width: 768) {
+      position: sticky;
+      inset: 0;
+      z-index: 99;
+      background-color: var(--background);
+      display: flex;
+      justify-content: space-between;
+      align-items: stretch;
+      gap: var(--spacing-2xs);
+      padding: var(--spacing-2xs);
+      height: 3.5rem;
+    }
   }
 
   :root {

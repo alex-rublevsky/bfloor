@@ -227,16 +227,16 @@ const { content = "", name, label, lessButtons = false } = Astro.props;
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.125rem;
+    gap: var(--spacing-3xs);
     padding: 0.25rem;
     border-bottom: var(--border-width) solid var(--border);
-    background: var(--muted);
+    background: color-mix(in oklch, var(--muted) 10%, transparent);
   }
 
   .tiptap-group {
     display: flex;
     align-items: center;
-    gap: 0.125rem;
+    gap: var(--spacing-3xs);
   }
 
   .tiptap-sep {

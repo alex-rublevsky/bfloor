@@ -5,7 +5,7 @@ import type { HTMLAttributes } from "astro/types";
 type Variant =
   "primary" | "secondary" | "tertiary" | "ghost" | "destructive" | "editorTool";
 
-type Size = "default" | "xs" | "sm" | "md" | "lg";
+type Size = "sm" | "default" | "lg";
 
 type Props = Omit<
   HTMLAttributes<"button">,
@@ -45,11 +45,9 @@ const variantClasses: Record<Variant, string> = {
 };
 
 const sizeClasses: Record<Size, string> = {
-  default: "px-4 py-2 leading-[0.97]",
-  md: "px-2 text-base",
-  sm: "px-1.5 text-sm",
-  xs: "px-1 py-[0.5] text-sm",
-  lg: "h-12 px-6 text-base! font-normal [&_svg]:size-6",
+  sm: "px-2xs py-3xs text-sm",
+  default: "px-xs py-2xs",
+  lg: "py-xs px-md text-md font-normal [&_svg]:size-6",
 };
 
 const variantClass = variantClasses[resolvedVariant];
@@ -90,6 +88,7 @@ const composedClass = `${variantClass ? ` ${variantClass}` : ""}${sizeClass ? ` 
 <style>
   a,
   button {
+    height: min-content;
     display: grid;
     justify-content: center;
     border-radius: var(--radius-sm);
@@ -99,6 +98,7 @@ const composedClass = `${variantClass ? ` ${variantClass}` : ""}${sizeClass ? ` 
       color: inherit;
     }
     & .contentWrapper {
+      font-size: inherit;
       align-items: center;
       gap: var(--spacing-3xs);
       display: inline-flex;
@@ -106,6 +106,7 @@ const composedClass = `${variantClass ? ` ${variantClass}` : ""}${sizeClass ? ` 
   }
 
   a {
+    color: var(--foreground);
     text-decoration: none;
   }
 
