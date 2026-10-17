@@ -44,7 +44,7 @@ const { page, category } = Astro.props;
 ---
 
 <Layout title={category.name}>
-  <section>
+  <section class="no-padding">
     <div class="titlePagination">
       <h1 class="text-xl pb-0">{category.name}</h1>
       <Pagination
@@ -110,5 +110,6 @@ const { page, category } = Astro.props;
     align-items: center;
     gap: var(--spacing-2xs) var(--spacing-md);
     padding-block: var(--spacing-xs) var(--spacing-md);
+    padding-inline: var(--section-padding-x);
   }
 </style>

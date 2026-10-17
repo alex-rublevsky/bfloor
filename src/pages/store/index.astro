@@ -11,7 +11,7 @@ export const prerender = true;
 
 <Layout>
   <main>
-    <section class="relative">
+    <section class="relative no-padding">
       <h1
         class="sticky left-2xs top-2xs pb-0 px-2xs bg-background/70 backdrop-blur-xs rounded-sm inline z-10">
         Каталог
@@ -42,5 +42,10 @@ export const prerender = true;
 <style>
   a {
     text-decoration: none;
+  }
+  h5 {
+    padding-top: var(--spacing-3xs);
+    font-weight: 500;
+    line-height: 105%;
   }
 </style>
