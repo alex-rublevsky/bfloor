@@ -1,6 +1,6 @@
 ---
 import Input from "@/components/shared/Input.astro";
-// import ImagesDropzone from "@/components/dashboard/ImageDropzone.astro";
+import ImagesDropzone from "@/components/dashboard/ImageDropzone.astro";
 import { Icon } from "astro-icon/components";
 import Button from "@/components/shared/Button.astro";
 import Checkbox from "@/components/shared/Checkbox.astro";
@@ -140,31 +140,32 @@ considering that this is a native form? -->
       ? actions.product.createProduct
       : actions.product.updateProduct}>
     {!creating && <input type="hidden" name="id" value={product.id} />}
-    <h1 class="text-lg pb-2">
-      {creating ? "Создание товара" : "Редактирование товара"}
-
-      {
-        (
-          <p id="form-error" role="alert" hidden={!formError}>
-            {formError}
-          </p>
-        )
-      }
+    <div class="flex flex-row flex-wrap gap-xs items-center">
+      <h1 class="text-lg pb-3xs">
+        {creating ? "Создание товара" : "Редактирование товара"}
+      </h1>
       {
         !creating && product.slug && (
           <Button
             size="sm"
-            class="inline-block align-baseline ml-xs"
+            class="w-min h-min"
             href={`/product/${product.slug}`}>
-            <Icon name="eye" title="Открыть в новой вкладке" class="size-5" />В
-            магазине
+            <Icon name="eye" title="Открыть в новой вкладке" />В магазине
           </Button>
         )
       }
-    </h1>
+    </div>
+    {
+      (
+        <p id="form-error" role="alert" hidden={!formError}>
+          {formError}
+        </p>
+      )
+    }
+
     <div>
       <div class="images-and-general-wrapper">
-        <!-- <ImagesDropzone images={images} /> -->
+        <ImagesDropzone images={images} />
 
         <fieldset>
           <legend>Общее</legend>
