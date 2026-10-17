@@ -42,6 +42,12 @@ const { images, ...rest } = Astro.props;
     grid-template-columns: auto 1fr;
     align-items: start;
     gap: var(--spacing-3xs);
+
+    @container (max-width: 40rem) {
+      margin-inline: auto;
+      grid-template-columns: auto;
+      grid-template-rows: 1fr auto;
+    }
   }
   button:active::after {
     content: "";
@@ -54,9 +60,12 @@ const { images, ...rest } = Astro.props;
   img#mainImage {
     display: none;
     /*TODO: make this responsive through cqh*/
-    max-height: calc(100dvh - 8rem);
+    max-height: calc(90dvh - 8rem);
     &[data-index="0"] {
       display: block;
+    }
+    @container (max-width: 50rem) {
+      max-height: calc(60dvh);
     }
   }
 
@@ -77,11 +86,17 @@ const { images, ...rest } = Astro.props;
   #previewRow {
     display: grid;
     gap: var(--spacing-3xs);
+
+    @container (max-width: 40rem) {
+      display: flex;
+      flex-direction: row;
+      order: 1;
+    }
   }
 
   .previewButton {
     aspect-ratio: 1/1;
-    max-width: 4rem;
+    height: clamp(4rem, 7vw, 5rem);
   }
   img#preview {
     object-fit: cover;

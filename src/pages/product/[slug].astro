@@ -27,15 +27,36 @@ const { product } = Astro.props;
 ---
 
 <Layout title={product.name}>
-  <section
-    data-pagefind-body
-    class="no-padding relative flex flex-col items-start gap-sm md:flex-row lg:gap-md">
-    <Gallery
-      class="w-full self-start lg:sticky lg:top-0"
-      images={product.images}
-      slug={product.slug}
-      alt={product.name}
-    />
+  <section data-pagefind-body class="no-padding mainSection">
+    <Gallery images={product.images} />
     <ProductInfo product={product} />
   </section>
+  <section class="pb-3xl">
+    <h2>Поможем с укладкой</h2>
+    <p>
+      Наш специалист Роман с 16-ти летним опытом проконсультирует вас,
+      осуществит доставку и уложит любое покрытие из нашего магазина
+    </p>
+    <p class="text-md pt-sm">
+      Позвонить Роману: <a class="text-md" href="tel:+89025559405"
+        >8 902 555 9405</a
+      >
+    </p>
+  </section>
 </Layout>
+
+<style>
+  .mainSection {
+    display: grid;
+    container-type: inline-size;
+    grid-template-rows: 1fr auto;
+    @media (min-width: 35rem) {
+      grid-template-rows: auto;
+      grid-template-columns: 6fr 4fr;
+    }
+  }
+  /*TODO: proportionally decrease sizes of all headings...?*/
+  h2 {
+    font-size: var(--text-xl);
+  }
+</style>

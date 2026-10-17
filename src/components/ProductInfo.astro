@@ -27,8 +27,7 @@ const country = brand
 const variations = product.variations;
 ---
 
-<div
-  class="px-(--space-2xs) mx-auto lg:min-w-[40ch] lg:max-w-[55ch] lg:pl-0 lg:pr-5 lg:py-5">
+<div class="infoBlock">
   <h1 class="text-lg! leading-[1.35] pb-2xs">
     {
       product.category ? (
@@ -115,13 +114,15 @@ const variations = product.variations;
         </div>
       ) : null
     }
+    <!-- TODO: fix label not being baseline aligned with the country -->
+
     {
       country ? (
         <div>
           <div class="description-row">
-            <dt> Страна производства:</dt>
+            <dt class="self-center">Страна производства:</dt>
             <dd>
-              {country.name}
+              <span class="text-sm"> {country.name}</span>
               <Image
                 src={BASE_IMAGE_URL + country?.flagImage}
                 width={52.5}
@@ -135,40 +136,43 @@ const variations = product.variations;
         </div>
       ) : null
     }
-    <!-- TODO: add a comma if there are 2 options. i think attributes already has a clean approach? -->
+    <!-- TODO: seems not to be perfectly aligned by the baseline, just like the country -->
+
     {
       product.storeLocations.length > 0 ? (
         <div class="description-row">
-          <dt>Доступен на:</dt>
-          <dd class="flex flex-wrap justify-end ">
-            {" "}
-            {product.storeLocations.map((storeLocation) => (
-              <a href="/contact" data-pagefind-filter="location">
-                {
-                  STORE_LOCATIONS.find(
-                    (location) => location.id === storeLocation,
-                  )?.address
-                }
-              </a>
-            ))}
-          </dd>
-          {product.storeLocations.length === 1 ? (
-            <>
-              <button id="locationsPopoverTrigger" popovertarget="locations">
-                ?
-              </button>
-              <span popover id="locations">
-                можем переместить <br /> товар на{" "}
-                <a href="/contact">{transferLocation?.address}</a>
-                <br />
-                или{" "}
-                <a href="/delivery" class="text-accent hover:underline">
-                  {" "}
-                  сделать доставку
-                </a>
-              </span>
-            </>
-          ) : null}
+          <dt class="self-center">Доступен на:</dt>
+          <div class="flex flex-row gap-3xs items-center">
+            <dd class="locationEntries">
+              {product.storeLocations.map((storeLocation, index) => (
+                <>
+                  {index > 0 ? ", " : null}
+                  <a href="/contact" data-pagefind-filter="location">
+                    {
+                      STORE_LOCATIONS.find(
+                        (location) => location.id === storeLocation,
+                      )?.address
+                    }
+                  </a>
+                </>
+              ))}
+            </dd>
+            {product.storeLocations.length === 1 ? (
+              <>
+                <button id="locationsPopoverTrigger" popovertarget="locations">
+                  ?
+                </button>
+                <div popover id="locations">
+                  <p>
+                    {"Можем переместить товар на "}
+                    <a href="/contact">{transferLocation?.address}</a>
+                    {" или "}
+                    <a href="/delivery">{" сделать доставку"}</a>
+                  </p>
+                </div>
+              </>
+            ) : null}
+          </div>
         </div>
       ) : null
     }
@@ -214,8 +218,16 @@ const variations = product.variations;
 </div>
 
 <style>
+  .infoBlock {
+    padding-inline: var(--section-padding-x);
+    @media (min-width: 35rem) {
+      max-width: 55ch;
+      padding-block: var(--spacing-xs);
+      padding-inline: var(--spacing-sm);
+    }
+  }
+
   dl {
-    /*border: var(--border-width) solid var(--border);*/
     padding-block: var(--spacing-xs);
     display: grid;
     gap: var(--spacing-3xs);
@@ -227,23 +239,36 @@ const variations = product.variations;
     & .brand-name {
       color: inherit;
     }
+  }
 
-    }
-    & .brand-image {
-      translate: var(--spacing-3xs);
-      padding: var(--spacing-3xs);
-      &:hover {
-        background-color: var(--muted);
-      }
+  & .brand-image {
+    translate: var(--spacing-3xs);
+    padding: var(--spacing-3xs);
+    &:hover {
+      background-color: var(--muted);
     }
   }
-  .description-row {
+
+  & .description-row {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     gap: var(--spacing-2xs);
     font-size: var(--text-sm);
+
+    & .locationEntries {
+      text-align: right;
+    }
+    & dt {
+      white-space: nowrap;
+    }
+    & dd,
+    dt,
+    span {
+      font-size: inherit;
+    }
   }
+
   #locationsPopoverTrigger {
     margin-left: var(--spacing-3xs);
     background-color: var(--border);
@@ -273,6 +298,11 @@ const variations = product.variations;
   [popover]#locations {
     padding: var(--spacing-xs);
     position-area: y-end span-x-start;
-    line-height: 130%;
+
+    & p {
+      font-size: var(--text-sm);
+      line-height: 130%;
+      max-width: 22ch;
+    }
   }
 </style>

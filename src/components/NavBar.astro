@@ -19,7 +19,7 @@ import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
     <PagefindConfig excerpt-length="10" />
     <pagefind-input placeholder="Поиск"></pagefind-input>
   </div> -->
-  <div class="hidden xl:flex xl:gap-xs xl:items-stretch whitespace-nowrap">
+  <div class="hidden md:flex md:gap-xs xl:items-stretch whitespace-nowrap">
     <a href="/delivery" class="text-link">Доставка</a>
     <a href="/contact" class="text-link">Контакты и Адреса</a>
     <a href="/about" class="text-link">О компании</a>
@@ -29,7 +29,7 @@ import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
     <!-- TODO: make this show up only when admin tag is present -->
     <!-- <Button size="md" href="/dashboard">Админка</Button> -->
   </div>
-  <div class="hidden md:flex gap-xs xl:hidden">
+  <div class="hidden sm:flex gap-xs md:hidden">
     <Button popovertarget="top-menu">Ещё</Button>
   </div>
   <div id="top-menu" popover class="menu">
@@ -54,7 +54,8 @@ import PagefindConfig from "astro-pagefind/components/PagefindConfig.astro";
       position: sticky;
       inset: 0;
       z-index: 99;
-      background-color: var(--background);
+      background-color: color-mix(in oklch, var(--background) 85%, transparent);
+      backdrop-filter: blur(6px);
       display: flex;
       justify-content: space-between;
       align-items: stretch;
