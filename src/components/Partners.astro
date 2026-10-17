@@ -80,12 +80,12 @@ const brandsWithImages = brands.filter((brand) => brand.image);
   }
 
   .group {
-    --mobile-speed: 40s;
+    --speed: 80s;
     display: flex;
     flex: 0 0 auto;
-    animation: spin var(--mobile-speed) infinite linear;
+    animation: spin var(--speed) infinite linear;
     @media (min-width: 768px) {
-      --mobile-speed: 60s;
+      --speed: 70s;
     }
   }
 
