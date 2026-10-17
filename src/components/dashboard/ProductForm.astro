@@ -146,10 +146,7 @@ considering that this is a native form? -->
       </h1>
       {
         !creating && product.slug && (
-          <Button
-            size="sm"
-            class="w-min h-min"
-            href={`/product/${product.slug}`}>
+          <Button size="sm" class="" href={`/product/${product.slug}`}>
             <Icon name="eye" title="Открыть в новой вкладке" />В магазине
           </Button>
         )
@@ -444,14 +441,14 @@ considering that this is a native form? -->
       </fieldset>
     </div>
     <div class="fixed bottom-2xs right-2xs flex gap-2xs">
-      <Button size="lg" id="submit-button" type="submit" disabled>
+      <Button id="submit-button" type="submit" disabled>
         <span class="submit-text"
           >{creating ? "Добавить" : "Нет изменений"}</span
         >
       </Button>
       {
         !creating && (
-          <Button size="lg" id="delete-button" variant="destructive">
+          <Button id="delete-button" variant="destructive">
             Удалить
           </Button>
         )

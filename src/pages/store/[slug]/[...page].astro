@@ -45,19 +45,20 @@ const { page, category } = Astro.props;
 
 <Layout title={category.name}>
   <section>
-    <div>
-      <h1 class="text-lg">{category.name}</h1>
-      {category.description ? <p>{category.description}</p> : null}
+    <div class="titlePagination">
+      <h1 class="text-xl pb-0">{category.name}</h1>
+      <Pagination
+        length={page.lastPage}
+        currentPage={page.currentPage}
+        firstUrl={page.url.first}
+        prevUrl={page.url.prev}
+        nextUrl={page.url.next}
+        lastUrl={page.url.last}
+        baseUrl={categoryBaseUrl}
+      />
+      <!-- {category.description ? <p>{category.description}</p> : null} -->
     </div>
-    <Pagination
-      length={page.lastPage}
-      currentPage={page.currentPage}
-      firstUrl={page.url.first}
-      prevUrl={page.url.prev}
-      nextUrl={page.url.next}
-      lastUrl={page.url.last}
-      baseUrl={categoryBaseUrl}
-    />
+
     <div>
       <!-- <div class="bg-muted/30">
         <h2>Фильтры</h2>
@@ -83,6 +84,16 @@ const { page, category } = Astro.props;
         }
       </div>
     </div>
+    <Pagination
+      class="pt-lg pb-xl justify-center w-full"
+      length={page.lastPage}
+      currentPage={page.currentPage}
+      firstUrl={page.url.first}
+      prevUrl={page.url.prev}
+      nextUrl={page.url.next}
+      lastUrl={page.url.last}
+      baseUrl={categoryBaseUrl}
+    />
   </section>
 </Layout>
 
@@ -90,5 +101,14 @@ const { page, category } = Astro.props;
   .storeLayout {
     display: grid;
     grid-template-columns: auto 1fr;
+  }
+  .titlePagination {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-2xs) var(--spacing-md);
+    padding-block: var(--spacing-xs) var(--spacing-md);
   }
 </style>

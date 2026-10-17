@@ -1,8 +1,16 @@
 ---
 import Button from "./Button.astro";
 
-const { length, currentPage, firstUrl, prevUrl, nextUrl, lastUrl, baseUrl } =
-  Astro.props;
+const {
+  class: className,
+  length,
+  currentPage,
+  firstUrl,
+  prevUrl,
+  nextUrl,
+  lastUrl,
+  baseUrl,
+} = Astro.props;
 const paginationList = Array.from({ length }, (_, i) => i + 1);
 const pageUrl = (pageNumber: number) =>
   pageNumber === 1 ? baseUrl : `${baseUrl}/${pageNumber}`;
@@ -10,29 +18,30 @@ const pageUrl = (pageNumber: number) =>
 
 <!-- TODO: why disabled arrow buttons are wider? -->{
   paginationList.length > 1 ? (
-    <nav aria-label="Страницы каталога">
+    <nav aria-label="Страницы каталога" class={`${className ?? undefined}`}>
       {firstUrl ? (
-        <Button variant="secondary" href={`${firstUrl}`}>
+        <Button size="pagination" variant="secondary" href={`${firstUrl}`}>
           &#171;
         </Button>
       ) : (
-        <Button variant="secondary" disabled href={""}>
+        <Button size="pagination" variant="secondary" disabled href={""}>
           &#171;
         </Button>
       )}
 
       {prevUrl ? (
-        <Button variant="secondary" href={`${prevUrl}`}>
+        <Button size="pagination" variant="secondary" href={`${prevUrl}`}>
           &#8249;
         </Button>
       ) : (
-        <Button variant="secondary" disabled href={""}>
+        <Button size="pagination" variant="secondary" disabled href={""}>
           &#8249;
         </Button>
       )}
 
       {paginationList.map((num) => (
         <Button
+          size="pagination"
           variant={currentPage === num ? "primary" : "tertiary"}
           href={pageUrl(num)}
           aria-current={currentPage === num ? "page" : undefined}
@@ -42,21 +51,21 @@ const pageUrl = (pageNumber: number) =>
       ))}
 
       {!nextUrl ? (
-        <Button variant="secondary" disabled>
+        <Button size="pagination" variant="secondary" disabled>
           &#8250;
         </Button>
       ) : (
-        <Button variant="secondary" href={`${nextUrl}`}>
+        <Button size="pagination" variant="secondary" href={`${nextUrl}`}>
           &#8250;
         </Button>
       )}
 
       {lastUrl ? (
-        <Button variant="secondary" href={`${lastUrl}`}>
+        <Button size="pagination" variant="secondary" href={`${lastUrl}`}>
           &#187;
         </Button>
       ) : (
-        <Button variant="secondary" disabled>
+        <Button size="pagination" variant="secondary" disabled>
           &#187;
         </Button>
       )}
@@ -66,11 +75,8 @@ const pageUrl = (pageNumber: number) =>
 
 <style>
   nav {
-    width: 100%;
-    justify-content: center;
     display: flex;
     flex-direction: row;
     gap: var(--spacing-3xs);
-    padding-block: var(--spacing-sm);
   }
 </style>
