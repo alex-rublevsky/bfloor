@@ -5,9 +5,10 @@ interface Props {
   images: string[];
 }
 
-const { images, ...rest } = Astro.props;
+const { images } = Astro.props;
 ---
 
+<!-- TODO: add skeletons -->
 <div class="gallery">
   <div id="previewRow">
     {
@@ -19,7 +20,7 @@ const { images, ...rest } = Astro.props;
             height={100}
             fit="cover"
             id="preview"
-            alt={`Превью изображение галереи номер ${index + 1}`}
+            alt={`Превью изображения галереи номер ${index + 1}`}
             data-index={index}
             class:list={index === 0 ? "is-active" : undefined}
           />
@@ -30,7 +31,14 @@ const { images, ...rest } = Astro.props;
   <div class="mainImageWrapper">
     {
       images.map((img, index) => (
-        <img data-index={index} id="mainImage" src={BASE_IMAGE_URL + img} />
+        <Image
+          width={2000}
+          height={2000}
+          alt={`Фото товара`}
+          data-index={index}
+          id="mainImage"
+          src={BASE_IMAGE_URL + img}
+        />
       ))
     }
   </div>
@@ -60,6 +68,7 @@ const { images, ...rest } = Astro.props;
   img#mainImage {
     display: none;
     /*TODO: make this responsive through cqh*/
+    object-fit: contain;
     max-height: calc(90dvh - 8rem);
     &[data-index="0"] {
       display: block;
