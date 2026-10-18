@@ -114,13 +114,6 @@ const inputErrors =
     : updateError && isInputError(updateError)
       ? updateError.fields
       : {};
-const log = {
-  creationResult,
-  updateResult,
-  creationError,
-  updateError,
-  formError,
-};
 ---
 
 <section class="pt-xl">
@@ -504,90 +497,7 @@ considering that this is a native form? -->
   }
 </style>
 
-<script>
-  const listOfVariations = document.getElementById(
-    "listOfVariations",
-  ) as HTMLElement;
-  const addVariationButton = document.getElementById(
-    "addVariationButton",
-  ) as HTMLButtonElement;
-
-  const variationTemplate = document.getElementById(
-    "variationEntry",
-  ) as HTMLTemplateElement;
-  const attributeTemplate = document.getElementById(
-    "variation-attribute-template",
-  ) as HTMLTemplateElement;
-
-  const attributesSelectionForVariations = document.getElementById(
-    "attributesForVariations",
-  ) as HTMLSelectElement;
-
-  function syncAttributeVisibility() {
-    // TODO: this is to be merged with the already existing syncAttributeVisibility()
-  }
-  addVariationButton.onclick = () => {
-    const clone = variationTemplate.content.cloneNode(true);
-    listOfVariations?.appendChild(clone);
-    syncAttributeVisibility();
-  };
-
-  listOfVariations.addEventListener("click", (event) => {
-    const target = event.target as HTMLElement;
-    const deleteButton = target.closest<HTMLButtonElement>(
-      '[data-action="delete-variation"]',
-    );
-
-    if (!deleteButton) return;
-
-    deleteButton.closest(".variation")?.remove();
-    syncAttributeVisibility();
-  });
-
-  //   attributesSelectionForVariations.onchange = (e) => {
-  //     console.log("change");
-  //     const variations = document.querySelectorAll<HTMLElement>(".variation");
-  //
-  //     variations.forEach((variation) => {
-  //       const clone = atributeInputTemplate.content.cloneNode(true);
-  //       variation.appendChild(clone);
-  //     });
-  //   };
-  //
-  //
-  type VariationAttribute = {
-    id: string;
-    name: string;
-    values: {
-      id: string;
-      name: string;
-    }[];
-  };
-  //   function createAttributeControl(
-  //     attribute: VariationAttribute,
-  //     variationIndex: number,
-  //     selectedValueId?: string,
-  //   ) {
-  //     const fragment = attributeTemplate.content.cloneNode(true);
-  //
-  //     const wrapper = fragment.querySelector("[data-variation-attribute]");
-  //     const label = fragment.querySelector("[data-attribute-label]");
-  //     const select = fragment.querySelector("[data-attribute-select]");
-  //
-  //     wrapper.dataset.attributeId = attribute.id;
-  //     label.textContent = attribute.name;
-  //
-  //     select.name = `variations[${variationIndex}][attributeValueIds][${attribute.id}]`;
-  //
-  //     for (const value of attribute.values) {
-  //       const option = new Option(value.name, value.id);
-  //       option.selected = value.id === selectedValueId;
-  //       select.append(option);
-  //     }
-  //
-  //     return fragment;
-  //   }
-</script>
+<script src="@/scripts/productHandling"></script>
 
 <!-- TODO: for data-category-policies and data-collections-by-brandfor instead use a compact JSON script block.  -->
 <!-- TODO: this script and other scripts from the dashboard should be fetched from a separate file using src="" to allow for their caching -->
