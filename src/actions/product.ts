@@ -36,24 +36,40 @@ import {
 async function validateProductUniqueness(
   name: string,
   slug: string,
+  collectionId: number | null,
   id: number = 0,
 ) {
-  const [suchProductAlreadyExists] = await db
+  const [suchProductSlugAlreadyExists] = await db
     .select({ id: products.id })
     .from(products)
-    .where(
-      or(
-        and(eq(products.slug, slug), ne(products.id, id)),
-        and(eq(products.name, name), ne(products.id, id)),
-      ),
-    )
+    .where(and(eq(products.slug, slug), ne(products.id, id)))
     .limit(1);
 
-  if (suchProductAlreadyExists) {
+  if (suchProductSlugAlreadyExists) {
     throw new ActionError({
       code: "CONFLICT",
-      message: "Товар с таким названием или ярлыком уже существует",
+      message: "Товар с таким ярлыком уже существует",
     });
+  }
+  if (collectionId) {
+    const [suchProductNameAlreadyExists] = await db
+      .select({ id: products.id })
+      .from(products)
+      .where(
+        and(
+          eq(products.collectionId, collectionId),
+          eq(products.name, name),
+          ne(products.id, id),
+        ),
+      )
+      .limit(1);
+
+    if (suchProductNameAlreadyExists) {
+      throw new ActionError({
+        code: "CONFLICT",
+        message: "Товар с таким названием уже существует в этой коллекции",
+      });
+    }
   }
 }
 
@@ -311,7 +327,11 @@ export const product = {
       requireAdmin(locals);
       const cleanName = cleanNameAndValidateSlug(input.name, input.slug);
 
-      await validateProductUniqueness(cleanName, input.slug);
+      await validateProductUniqueness(
+        cleanName,
+        input.slug,
+        input.collectionId,
+      );
 
       // TODO: integrate validation of price and discounted price relative to variations —
       // 1. price and discount are to be permitted only if there are no variations
@@ -419,7 +439,12 @@ export const product = {
 
       const cleanName = cleanNameAndValidateSlug(input.name, input.slug);
 
-      await validateProductUniqueness(cleanName, input.slug, input.id);
+      await validateProductUniqueness(
+        cleanName,
+        input.slug,
+        input.collectionId,
+        input.id,
+      );
 
       await validateDiscount(input.price, input.discountedPrice);
 
