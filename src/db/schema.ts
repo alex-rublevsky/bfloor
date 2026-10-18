@@ -90,7 +90,7 @@ export const products = sqliteTable(
     id: integer("id").primaryKey(),
     sku: text("sku"),
     isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
-    name: text("name").unique().notNull(),
+    name: text("name").notNull(),
     slug: text("slug").unique().notNull(),
     images: text("images", { mode: "json" })
       .$type<string[]>()
@@ -131,6 +131,10 @@ export const products = sqliteTable(
       sql`${table.unitOfMeasurement} IN ('м2', 'lm', 'pi', 'pa', 'l')`,
     ),
     unique("products_sku_brandId_unique").on(table.sku, table.brandId),
+    unique("products_name_collection_unique").on(
+      table.name,
+      table.collectionId,
+    ),
 
     //for dashboard, where we show both active and inactive products
     //TODO: or remove this and add a toggle of active to the dashboard filters?
