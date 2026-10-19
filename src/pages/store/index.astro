@@ -20,16 +20,20 @@ export const prerender = true;
         {
           categories.map((category) => (
             <a href={`/store/${category.slug}`}>
-              {category.image ? (
-                <Image
-                  width={500}
-                  height={500}
-                  src={BASE_IMAGE_URL + category.image}
-                  alt={category.name}
-                />
-              ) : (
-                <ImagePlaceholder />
-              )}
+              <div class="entityImageWrapper">
+                <div class="entityImage">
+                  {category.image ? (
+                    <Image
+                      width={500}
+                      height={500}
+                      src={BASE_IMAGE_URL + category.image}
+                      alt={category.name}
+                    />
+                  ) : (
+                    <ImagePlaceholder />
+                  )}
+                </div>
+              </div>
               <h5>{category.name}</h5>
             </a>
           ))
@@ -40,9 +44,6 @@ export const prerender = true;
 </Layout>
 
 <style>
-  a {
-    text-decoration: none;
-  }
   h5 {
     padding-top: var(--spacing-3xs);
     font-weight: 500;

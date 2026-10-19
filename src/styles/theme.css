@@ -453,6 +453,9 @@ legend {
     &:hover {
       text-decoration: underline;
     }
+    &:has(.entityImageWrapper) {
+      text-decoration: none;
+    }
   }
   .text-link {
     color: var(--foreground) !important;

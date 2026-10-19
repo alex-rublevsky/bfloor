@@ -15,30 +15,38 @@ if (!product) {
 const { images } = product;
 ---
 
-<a class="productCard" href={`/dashboard/product/${product.slug}`}>
-  <div class="rounded aspect-square overflow-hidden">
-    {
-      images ? (
-        <Image
-          src={BASE_IMAGE_URL + images[0]}
-          width={500}
-          height={500}
-          alt={product.name}
-          loading="lazy"
-          class="object-cover"
-        />
-      ) : (
-        <ImagePlaceholder />
-      )
-    }
+<a href={`/dashboard/product/${product.slug}`}>
+  <div class="entityImageWrapper">
+    <div class="entityImage">
+      {
+        images ? (
+          <Image
+            src={BASE_IMAGE_URL + images[0]}
+            width={500}
+            height={500}
+            alt={product.name}
+            loading="lazy"
+            class="object-cover mix-blend-darken"
+          />
+        ) : (
+          <ImagePlaceholder />
+        )
+      }
+    </div>
   </div>
   <div class="flex gap-2xs">
-    <p>{product.price}</p>
     {
       product.discountedPrice ? (
-        <p class="line-through">{product.discountedPrice}</p>
+        <p>
+          {product.hasVariations ? "от " : ""}
+          {product.discountedPrice}Р
+        </p>
       ) : null
     }
+    <p
+      class={`${product.discountedPrice ? "line-through text-foreground-muted" : undefined}`}>
+      {product.hasVariations ? "от " : ""}{product.price}Р
+    </p>
   </div>
   <p class="text-sm">{product.name}</p>
 </a>

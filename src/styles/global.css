@@ -30,24 +30,23 @@
     minmax(min(var(--min-col-size), 100%), 1fr)
   );
 }
-
-.productCard {
-  transition-duration: 70ms;
-  transition-timing-function: ease-out;
-  z-index: 1;
-}
-.productCard:active {
-  transform: scale(0.97);
+.entityImageWrapper {
+  overflow: clip;
+  aspect-ratio: 1/1;
+  user-select: none;
 }
 
-.productCardwrap {
+.entityImage {
   transition-duration: 300ms;
   background-color: var(--background);
+  height: 100%;
+
   &:hover {
     transform: scale(1.06);
   }
   & img {
+    height: 100%;
     mix-blend-mode: darken;
-    aspect-ratio: 1/1;
+    object-fit: cover;
   }
 }
