@@ -29,15 +29,7 @@ const variations = product.variations;
 
 <div class="infoBlock">
   <h1 class="text-lg! leading-[1.35] pb-2xs">
-    {
-      product.category ? (
-        <a
-          href={`/?category=${product.category.slug}`}
-          class="mr-1.5 inline-block align-baseline">
-          <Badge size="large">{product.category.name}</Badge>
-        </a>
-      ) : null
-    }{product.name ? product.name : "no name"}
+    {product.name ? product.name : null}
   </h1>
   <!-- TODO: use <output> for showing the total price with quantity: https://youtu.be/HgNDii20FG4?si=XU0n5vSZ9-pEnSjs -->
   <div class="flex gap-2xs">
@@ -72,6 +64,18 @@ const variations = product.variations;
   }
 
   <dl>
+    {
+      product.category ? (
+        <div class="description-row">
+          <dt>Категория:</dt>
+          <dd>
+            <a href={`/store/${product.category.slug}`}>
+              {product.category.name}
+            </a>
+          </dd>
+        </div>
+      ) : null
+    }
     {
       brand ? (
         <div class="description-row items-center">
