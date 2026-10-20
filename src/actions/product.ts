@@ -33,6 +33,14 @@ import {
   slug,
 } from "./helpers";
 
+function generateUniqueSlug(slug: string, collectionId: number | null) {
+  if (collectionId) {
+    return slug + "-" + collectionId;
+  } else {
+    return slug;
+  }
+}
+
 async function validateProductUniqueness(
   name: string,
   slug: string,
@@ -326,10 +334,11 @@ export const product = {
     handler: async (input, { locals }) => {
       requireAdmin(locals);
       const cleanName = cleanNameAndValidateSlug(input.name, input.slug);
+      const uniqueSlug = generateUniqueSlug(input.slug, input.collectionId);
 
       await validateProductUniqueness(
         cleanName,
-        input.slug,
+        uniqueSlug,
         input.collectionId,
       );
 
@@ -362,7 +371,7 @@ export const product = {
         const created = await createProduct({
           isActive: input.isActive,
           name: cleanName,
-          slug: input.slug,
+          slug: uniqueSlug,
           sku: input.sku,
           categoryId: input.categoryId,
           brandId: input.brandId,
@@ -437,11 +446,15 @@ export const product = {
         });
       }
 
+      // TODO: slug CAN be different than the name, since the slug is
+      // globally unique while the name is unique within a collection.
+      // Though it should still be 1:1 in the context of all entities other than products
       const cleanName = cleanNameAndValidateSlug(input.name, input.slug);
+      const uniqueSlug = generateUniqueSlug(input.slug, input.collectionId);
 
       await validateProductUniqueness(
         cleanName,
-        input.slug,
+        uniqueSlug,
         input.collectionId,
         input.id,
       );
@@ -469,7 +482,7 @@ export const product = {
         id: input.id,
         isActive: input.isActive,
         name: cleanName,
-        slug: input.slug,
+        slug: uniqueSlug,
         sku: input.sku,
         importantNote: input.importantNote,
         price: input.price,
