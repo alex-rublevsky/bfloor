@@ -13,7 +13,8 @@ import { BASE_IMAGE_URL } from "@/constants";
       height={1416}
       alt="Директор"
       loading="lazy"
-      class="object-cover rounded-lg w-full"
+      class="skeleton rounded-lg w-full"
+      onload="this.closest('.skeleton')?.classList.remove('skeleton')"
       style="view-transition-name: about-image;"
     />
     <h1 style="view-transition-name: about-title;">О компании</h1>
@@ -31,7 +32,8 @@ import { BASE_IMAGE_URL } from "@/constants";
       height={500}
       alt="Подпись директора"
       loading="lazy"
-      class="py-md object-cover w-40 mx-auto"
+      class="skeleton py-md w-40 mx-auto"
+      onload="this.closest('.skeleton')?.classList.remove('skeleton')"
     />
 
     <p>
@@ -71,7 +73,8 @@ import { BASE_IMAGE_URL } from "@/constants";
       height={1500}
       alt="Заяц Маскот"
       loading="lazy"
-      class="object-cover rounded-lg w-full"
+      class="skeleton rounded-lg w-full"
+      onload="this.closest('.skeleton')?.classList.remove('skeleton')"
     />
   </section>
 </Layout>

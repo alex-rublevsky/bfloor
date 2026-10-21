@@ -38,7 +38,8 @@ const brandsWithCollections = await getBrandsWithCollections();
                     width={300}
                     height={300}
                     fit="contain"
-                    class="size-full object-contain mix-blend-darken"
+                    class="skeleton size-full object-contain mix-blend-darken"
+                    onload="this.closest('.skeleton')?.classList.remove('skeleton')"
                     alt={"Логотип бренда " + brand.name}
                   />
                 ) : (

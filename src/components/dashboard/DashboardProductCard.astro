@@ -26,7 +26,8 @@ const { images } = product;
             height={500}
             alt={product.name}
             loading="lazy"
-            class="object-cover mix-blend-darken"
+            class="skeleton object-cover mix-blend-darken"
+            onload="this.closest('.skeleton')?.classList.remove('skeleton')"
           />
         ) : (
           <ImagePlaceholder />

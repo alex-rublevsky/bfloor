@@ -24,6 +24,8 @@ const { images } = Astro.props;
             alt=""
             width={100}
             height={100}
+            class="skeleton"
+            onload="this.closest('.skeleton')?.classList.remove('skeleton')"
           />
           <p class="text-2xs">{image}</p>
         </div>
@@ -41,3 +43,30 @@ const { images } = Astro.props;
     flex-wrap: wrap;
   }
 </style>
+
+<script>
+  const label = document.querySelector("label") as HTMLLabelElement;
+  label.onclick = function (event) {
+    console.log("a");
+  };
+  try {
+    console.log("Метаданные бакета");
+
+    const response = await fetch("/api/s3", {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Request failed: ${response.status}`);
+    }
+
+    const objects = await response.json();
+
+    console.log("Success", objects);
+  } catch (e) {
+    console.log("Error", e);
+  }
+  // get secure url from server
+  // post the image directly to the s3 bucket
+  // post request to my server to save extra data
+</script>

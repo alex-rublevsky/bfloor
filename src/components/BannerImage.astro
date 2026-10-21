@@ -29,5 +29,10 @@ const desktopImg = await getImage({
 <picture {...rest} id={id}>
   <source media="(max-width: 799px)" srcset={mobileImg.src} />
   <source media="(min-width: 800px)" srcset={desktopImg.src} />
-  <img src={desktopImg.src} alt={alt} />
+  <img
+    src={desktopImg.src}
+    alt={alt}
+    class="skeleton"
+    onload="this.closest('.skeleton')?.classList.remove('skeleton')"
+  />
 </picture>

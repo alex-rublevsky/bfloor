@@ -22,6 +22,8 @@ const brandsWithImages = brands.filter((brand) => brand.image);
               height={300}
               width={300}
               fit="contain"
+              class="skeleton"
+              onload="this.closest('.skeleton')?.classList.remove('skeleton')"
               alt={"Логотип бренда " + brand.name}
             />
           </a>
@@ -39,6 +41,8 @@ const brandsWithImages = brands.filter((brand) => brand.image);
               height={300}
               width={300}
               fit="contain"
+              class="skeleton"
+              onload="this.closest('.skeleton')?.classList.remove('skeleton')"
               alt={"Логотип бренда " + brand.name}
             />
           </a>

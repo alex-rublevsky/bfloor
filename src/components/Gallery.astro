@@ -23,6 +23,8 @@ const { images } = Astro.props;
             alt={`Превью изображения галереи номер ${index + 1}`}
             data-index={index}
             class:list={index === 0 ? "is-active" : undefined}
+            class="skeleton"
+            onload="this.closest('.skeleton')?.classList.remove('skeleton')"
           />
         </button>
       ))
@@ -38,6 +40,8 @@ const { images } = Astro.props;
           data-index={index}
           id="mainImage"
           src={BASE_IMAGE_URL + img}
+          class="skeleton"
+          onload="this.closest('.skeleton')?.classList.remove('skeleton')"
         />
       ))
     }

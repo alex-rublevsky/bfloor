@@ -148,7 +148,8 @@ function formatDate(dateString: string): string {
                     alt={testimonial.name}
                     width={48}
                     height={48}
-                    class="size-full object-cover"
+                    class="skeleton size-full object-cover"
+                    onload="this.closest('.skeleton')?.classList.remove('skeleton')"
                     loading={index === 0 ? "eager" : "lazy"}
                   />
                 </div>

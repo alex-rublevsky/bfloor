@@ -15,6 +15,8 @@ import Button from "@/components/shared/Button.astro";
         height={1000}
         alt="Заяц Маскот"
         loading="eager"
+        class="skeleton"
+        onload="this.closest('.skeleton')?.classList.remove('skeleton')"
       />
       <!-- TODO: make "404" to be a visible text placeholder for the image -->
       <h1 class="sr-only text-[6rem] font-thin text-secondary">404</h1>

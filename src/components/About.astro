@@ -5,21 +5,14 @@ import Button from "@/components/shared/Button.astro";
 ---
 
 <section class="grid md:grid-cols-2 gap-md">
-  <!-- <Image
-    src={BASE_IMAGE_URL + "banners/bubisha.webp"}
-    width={500}
-    height={500}
-    alt="Заяц Маскот"
-    loading="lazy"
-    class="object-cover rounded-lg w-full"
-  /> -->
   <Image
     src={BASE_IMAGE_URL + "about/elena.webp"}
     width={2120}
     height={1416}
     alt="Директор"
     loading="lazy"
-    class="object-cover rounded-lg w-full"
+    class="skeleton rounded-lg w-full"
+    onload="this.closest('.skeleton')?.classList.remove('skeleton')"
     style="view-transition-name: about-image;"
   />
 

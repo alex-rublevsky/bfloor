@@ -86,9 +86,17 @@ const bannerImages = [
   }
 
   picture#banner {
+    aspect-ratio: 1920/600;
     display: none;
     &[data-index="0"] {
       display: block;
+    }
+    & img {
+      height: 100%;
+      width: 100%;
+    }
+    @media (max-width: 799) {
+      aspect-ratio: 1100/550;
     }
   }
 

@@ -38,7 +38,8 @@ const attributes = await getAllAttributes();
                   src={BASE_IMAGE_URL + cat.image}
                   width={300}
                   height={300}
-                  class="size-full object-contain"
+                  class="skeleton size-full object-contain"
+                  onload="this.closest('.skeleton')?.classList.remove('skeleton')"
                   alt={"Фото категории " + cat.name}
                 />
               ) : (

@@ -28,6 +28,8 @@ export const prerender = true;
                       height={500}
                       src={BASE_IMAGE_URL + category.image}
                       alt={category.name}
+                      class="skeleton"
+                      onload="this.closest('.skeleton')?.classList.remove('skeleton')"
                     />
                   ) : (
                     <ImagePlaceholder />

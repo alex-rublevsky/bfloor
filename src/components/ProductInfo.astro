@@ -89,7 +89,8 @@ const variations = product.variations;
                   width={100}
                   height={100}
                   fit="contain"
-                  class="brand-image"
+                  class="skeleton brand-image"
+                  onload="this.closest('.skeleton')?.classList.remove('skeleton')"
                   alt={"Логотип бренда " + brand.name}
                 />
               ) : (
@@ -133,7 +134,8 @@ const variations = product.variations;
                 width={52.5}
                 height={35}
                 fit="contain"
-                class="inline ml-2xs pointer-events-none"
+                class="skeleton inline ml-2xs pointer-events-none"
+                onload="this.closest('.skeleton')?.classList.remove('skeleton')"
                 alt={"Флаг " + country.name}
               />
             </dd>

@@ -29,6 +29,8 @@ const { images } = product;
             height={500}
             alt={product.name}
             loading="lazy"
+            class="skeleton"
+            onload="this.closest('.skeleton')?.classList.remove('skeleton')"
           />
         ) : (
           <ImagePlaceholder />
