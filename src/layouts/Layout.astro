@@ -35,3 +35,20 @@ const { title = SITE_TITLE, description = SITE_DESCRIPTION } =
     }
   }
 </style>
+
+<script>
+  document.addEventListener(
+    "error",
+    (event) => {
+      const image = event.target;
+
+      if (!(image instanceof HTMLImageElement)) return;
+      if (image.dataset.fallbackApplied) return;
+
+      image.dataset.fallbackApplied = "true";
+      image.src = "/broken-image.svg";
+      image.alt = "Сломанная картинка";
+    },
+    true,
+  );
+</script>
