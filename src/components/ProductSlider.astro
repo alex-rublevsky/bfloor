@@ -42,7 +42,7 @@ const totalDiscountedCount = discountedProducts[0]?.totalDiscountedCount ?? 0;
     gap: var(--spacing-2xs);
     grid-auto-flow: column;
     overflow-x: scroll;
-    scroll-snap-type: x mandatory;
+    scroll-snap-type: x proximity;
     grid-auto-columns: var(--fluid-slider-card-col);
     /* select the children */
     & > :global(*) {
