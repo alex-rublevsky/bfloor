@@ -16,7 +16,10 @@ export const prerender = true;
         src="https://yandex.ru/map-widget/v1/?um=constructor%3A22b0e239472f3fada224e5a5d56d660e01904d9ce2b2758272c86ee79efaa7ca&source=constructor"
         width="100%"
         height="100%"
-        frameborder="0"></iframe>
+        frameborder="0"
+        class="skeleton"
+        onload="this.closest('.skeleton')?.classList.remove('skeleton')"
+      ></iframe>
     </div>
     <div class="md:pt-sm">
       <div>
