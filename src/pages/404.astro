@@ -8,24 +8,37 @@ import Button from "@/components/shared/Button.astro";
 
 <Layout title="Страница не найдена — BeautyFloor">
   <main class="grid place-items-center">
-    <div class="text-center">
+    <div class="blockWrapper">
       <Image
         src={BASE_IMAGE_URL + "other/bubisha-404.jpg"}
         width={1000}
         height={1000}
         alt="Заяц Маскот"
-        loading="lazy"
-        class="object-cover rounded-lg w-92"
+        loading="eager"
       />
       <!-- TODO: make "404" to be a visible text placeholder for the image -->
       <h1 class="sr-only text-[6rem] font-thin text-secondary">404</h1>
       <h3 class="font-normal pt-sm text-foreground-muted">
         Страница не найдена
       </h3>
-      <h5 class="font-normal pt-xs pb-md text-foreground-muted">
+      <h5 class="font-normal pt-2xs pb-sm text-foreground-muted">
         Зато найден зайка...
       </h5>
-      <Button href="/" size="lg">Вернуться в каталог</Button>
+      <Button class="w-full" href="/" size="lg">Вернуться на главную</Button>
     </div>
   </main>
 </Layout>
+
+<style>
+  .blockWrapper {
+    display: grid;
+    justify-items: center;
+    @media (max-width: 768) {
+      translate: 0 -1.4rem;
+    }
+  }
+  img {
+    border-radius: var(--radius-md);
+    width: min(80vw, 23rem);
+  }
+</style>
