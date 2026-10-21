@@ -3,16 +3,35 @@ import Head from "@/components/shared/Head.astro";
 import NavBar from "@/components/NavBar.astro";
 import BottomNavBar from "@/components/BottomNavBar.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "@/constants";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = SITE_TITLE, description = SITE_DESCRIPTION } =
+  Astro.props as Props;
 ---
 
 <!doctype html>
 <html lang="ru">
   <head>
-    <Head title={SITE_TITLE} description={SITE_DESCRIPTION} />
+    <Head title={title} description={description} />
   </head>
-  <body class="min-h-screen">
+  <body>
     <NavBar />
-    <BottomNavBar />
     <slot />
+    <BottomNavBar />
   </body>
 </html>
+
+<style>
+  body {
+    min-height: 100dvh;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    @media (max-width: 768) {
+      grid-template-rows: 1fr auto;
+    }
+  }
+</style>
