@@ -26,7 +26,7 @@
   display: grid;
   gap: var(--spacing-2xs);
   grid-template-columns: repeat(
-    auto-fit,
+    auto-fill,
     minmax(min(var(--min-col-size), 100%), 1fr)
   );
 }
