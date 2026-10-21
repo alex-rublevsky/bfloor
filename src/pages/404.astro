@@ -1,0 +1,31 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Image } from "astro:assets";
+export const prerender = true;
+import { BASE_IMAGE_URL } from "@/constants";
+import Button from "@/components/shared/Button.astro";
+---
+
+<Layout title="Страница не найдена — BeautyFloor">
+  <main class="grid place-items-center">
+    <div class="text-center">
+      <Image
+        src={BASE_IMAGE_URL + "other/bubisha-404.jpg"}
+        width={1000}
+        height={1000}
+        alt="Заяц Маскот"
+        loading="lazy"
+        class="object-cover rounded-lg w-92"
+      />
+      <!-- TODO: make "404" to be a visible text placeholder for the image -->
+      <h1 class="sr-only text-[6rem] font-thin text-secondary">404</h1>
+      <h3 class="font-normal pt-sm text-foreground-muted">
+        Страница не найдена
+      </h3>
+      <h5 class="font-normal pt-xs pb-md text-foreground-muted">
+        Зато найден зайка...
+      </h5>
+      <Button href="/" size="lg">Вернуться в каталог</Button>
+    </div>
+  </main>
+</Layout>
