@@ -7,7 +7,9 @@ import Button from "@/components/shared/Button.astro";
 
   <Button href="/store">Каталог</Button>
 
-  <Button variant="tertiary" popovertarget="bottom-menu">Ещё</Button>
+  <Button variant="tertiary" class="hideSpinner" popovertarget="bottom-menu"
+    >Ещё</Button
+  >
   <div id="bottom-menu" popover class="menu menu--above">
     <Button variant="ghost" href="/delivery">Доставка и Оплата</Button>
     <Button variant="ghost" href="/contact">Контакты и Адреса</Button>

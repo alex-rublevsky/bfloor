@@ -130,17 +130,17 @@ const composedClass = `${variantClass ? ` ${variantClass}` : ""}${sizeClass ? ` 
         visibility: visible;
       }
     }
-  }
-
-  button:disabled,
-  button[aria-disabled="true"] {
-    cursor: not-allowed;
     /*this is for pagination arrow buttons that become larger than needed because of invisible loader*/
     &.hideSpinner {
       .spinner {
         display: none;
       }
     }
+  }
+
+  button:disabled,
+  button[aria-disabled="true"] {
+    cursor: not-allowed;
   }
 
   .primary {
