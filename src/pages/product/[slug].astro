@@ -5,6 +5,7 @@ import type { StorefrontProductDetails } from "@/db/storefront/products/types";
 import { getProductsForSlugPages } from "@/db/storefront/products/allProductsForSlug";
 import Layout from "@/layouts/Layout.astro";
 import type { GetStaticPaths } from "astro";
+import { SITE_DESCRIPTION, SITE_TITLE } from "@/constants";
 
 export const prerender = true;
 
@@ -24,9 +25,22 @@ interface Props {
   product: StorefrontProductDetails;
 }
 const { product } = Astro.props;
+
+const title =
+  product.category.name +
+  " " +
+  product.brand?.name +
+  " " +
+  product.name +
+  " - " +
+  SITE_TITLE;
+
+// TODO: include attributes — декор под дерево, класс износостойкости 33, толщина 12 мм. Подходит для тёплого пола; фаска с четырёх сторон.
+// if there is not description, make it via name + attribues + SITE_DESCRIPTION
+const description = product.description ?? SITE_DESCRIPTION;
 ---
 
-<Layout title={product.name}>
+<Layout title={title} description={description}>
   <section data-pagefind-body class="no-padding mainSection">
     <Gallery images={product.images} />
     <ProductInfo product={product} />
