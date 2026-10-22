@@ -164,7 +164,6 @@ const composedClass = `${variantClass ? ` ${variantClass}` : ""}${sizeClass ? ` 
   }
   .secondary {
     background-color: var(--background);
-    color: var(--foreground);
     border: var(--border-width) solid var(--primary);
     &:hover {
       color: var(--background);
@@ -181,7 +180,7 @@ const composedClass = `${variantClass ? ` ${variantClass}` : ""}${sizeClass ? ` 
 
   .tertiary {
     background-color: color-mix(in oklch, var(--background) 70%, transparent);
-    color: var(--foreground);
+
     border: var(--border-width) solid
       color-mix(in oklch, var(--muted) 80%, transparent);
     backdrop-filter: blur(4px);

@@ -58,15 +58,13 @@
   --color-border: var(--border);
 
   /* Tailwind text-* utilities resolve from fluid vars. */
-  --text-2xs: var(--step--2);
   --text-xs: var(--step--2);
   --text-sm: var(--step--1);
-  --text-base: var(--step-0);
-  --text-md: var(--step-1);
-  --text-lg: var(--step-2);
-  --text-xl: var(--step-3);
-  --text-2xl: var(--step-4);
-  --text-3xl: var(--step-5);
+  --text-base: var(--step-1);
+  --text-md: var(--step-2);
+  --text-lg: var(--step-3);
+  --text-xl: var(--step-4);
+  --text-2xl: var(--step-5);
 
   /* Spacing scale → p-*, m-*, gap-*, space-y-*, etc. */
   --spacing-3xs: var(--space-3xs);
@@ -78,16 +76,6 @@
   --spacing-xl: var(--space-xl);
   --spacing-2xl: var(--space-2xl);
   --spacing-3xl: var(--space-3xl);
-
-  /* One-up pairs (fluid between two steps) */
-  --spacing-3xs-2xs: var(--space-3xs-2xs);
-  --spacing-2xs-xs: var(--space-2xs-xs);
-  --spacing-xs-sm: var(--space-xs-s);
-  --spacing-sm-md: var(--space-s-m);
-  --spacing-md-lg: var(--space-m-l);
-  --spacing-lg-xl: var(--space-l-xl);
-  --spacing-xl-2xl: var(--space-xl-2xl);
-  --spacing-2xl-3xl: var(--space-2xl-3xl);
 
   --radius-sm: var(--spacing-xs);
   --radius-md: var(--spacing-md);
@@ -129,15 +117,34 @@
 
   --section-padding-x: var(--spacing-2xs);
 
-  /* @link https://utopia.fyi/type/calculator?c=320,17,1.2,1536,20,1.25,5,2,&s=0.75|0.5|0.25,1.5|2|3|4|6,s-l&g=s,l,xl,12 */
-  --step--2: clamp(0.7378rem, 0.7215rem + 0.0818vw, 0.8rem);
-  --step--1: clamp(0.8854rem, 0.8553rem + 0.1508vw, 1rem);
-  --step-0: clamp(1.0625rem, 1.0132rem + 0.2467vw, 1.25rem);
-  --step-1: clamp(1.275rem, 1.1993rem + 0.3783vw, 1.5625rem);
-  --step-2: clamp(1.53rem, 1.4187rem + 0.5567vw, 1.9531rem);
-  --step-3: clamp(1.836rem, 1.6767rem + 0.7966vw, 2.4414rem);
-  --step-4: clamp(2.2032rem, 1.9799rem + 1.1165vw, 3.0518rem);
-  --step-5: clamp(2.6438rem, 2.3357rem + 1.5406vw, 3.8147rem);
+  /*TYPE*/
+  --fluid-vmin: 31.25rem; /*500px*/
+  --fluid-vmax: 87.5rem; /*1400px*/
+
+  --base-min: 1rem;
+  --base-max: 1.125rem;
+  /*1.125 1.333*/
+  /*1.2 1.414*/
+  --type-scale-small: 1.2;
+  --type-scale-large: 1.414;
+
+  /*calculations*/
+  --fluid: progress(100vw, var(--fluid-vmin), var(--fluid-vmax));
+  --base: calc(
+    var(--base-min) + var(--fluid) * (var(--base-max) - var(--base-min))
+  );
+  --type-scale: calc(
+    var(--type-scale-small) + var(--fluid) *
+      (var(--type-scale-large) - var(--type-scale-small))
+  );
+
+  --step--2: calc(var(--base) / pow(var(--type-scale), 2));
+  --step--1: calc(var(--base) / pow(var(--type-scale), 1));
+  --step-1: var(--base);
+  --step-2: calc(var(--base) * pow(var(--type-scale), 1));
+  --step-3: calc(var(--base) * pow(var(--type-scale), 2));
+  --step-4: calc(var(--base) * pow(var(--type-scale), 3));
+  --step-5: calc(var(--base) * pow(var(--type-scale), 4));
 
   --space-3xs: clamp(0.25rem, 0.2336rem + 0.0822vw, 0.3125rem);
   --space-2xs: clamp(0.5625rem, 0.5461rem + 0.0822vw, 0.625rem);
@@ -148,16 +155,6 @@
   --space-xl: clamp(3.1875rem, 3.0395rem + 0.7401vw, 3.75rem);
   --space-2xl: clamp(4.25rem, 4.0526rem + 0.9868vw, 5rem);
   --space-3xl: clamp(6.375rem, 6.0789rem + 1.4803vw, 7.5rem);
-
-  /* One-up pairs */
-  --space-3xs-2xs: clamp(0.25rem, 0.1513rem + 0.4934vw, 0.625rem);
-  --space-2xs-xs: clamp(0.5625rem, 0.4638rem + 0.4934vw, 0.9375rem);
-  --space-xs-s: clamp(0.8125rem, 0.6974rem + 0.5757vw, 1.25rem);
-  --space-s-m: clamp(1.0625rem, 0.8487rem + 1.0691vw, 1.875rem);
-  --space-m-l: clamp(1.625rem, 1.3947rem + 1.1513vw, 2.5rem);
-  --space-l-xl: clamp(2.125rem, 1.6974rem + 2.1382vw, 3.75rem);
-  --space-xl-2xl: clamp(3.1875rem, 2.7105rem + 2.3849vw, 5rem);
-  --space-2xl-3xl: clamp(4.25rem, 3.3947rem + 4.2763vw, 7.5rem);
 
   --border-width: clamp(0.09rem, 0.05rem + 0.03vw, 0.095rem);
   /*TODO: standardize border widths in calculations.*/
@@ -211,7 +208,6 @@
     border: var(--border-width) solid var(--border);
     border-radius: var(--radius-sm);
     background-color: transparent;
-    color: var(--foreground);
     font-size: inherit;
     font-family: inherit;
     outline: none;
@@ -268,7 +264,8 @@ input:-webkit-autofill:focus {
 }
 
 html {
-  font-size: var(--step-0);
+  color: var(--foreground);
+  font-size: var(--step-1);
   font-family: var(--font-sans);
   overflow-x: hidden;
   background-color: var(--background);
@@ -314,8 +311,6 @@ legend {
 @layer base {
   body {
     accent-color: var(--accent);
-    background-color: var(--background);
-    color: var(--foreground);
     min-height: 100dvh;
   }
 
@@ -333,108 +328,52 @@ legend {
   h1 {
     font-size: var(--step-5);
     font-weight: 500;
-    line-height: 1.3;
-    letter-spacing: 1.2%;
-    padding-bottom: var(--space-xs);
-    color: var(--foreground);
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+    line-height: 120%;
+    padding-bottom: var(--space-2xs);
   }
 
   h2 {
     font-size: var(--step-4);
-    font-weight: 400;
-    line-height: 0.95;
-    letter-spacing: 1.2%;
+    font-weight: 450;
+    line-height: 120%;
     padding-bottom: var(--space-2xs);
-    color: var(--foreground);
-    word-wrap: break-word;
-    overflow-wrap: break-word;
   }
 
   h3 {
     font-size: var(--step-3);
-    line-height: 1;
-    font-weight: 300;
-    letter-spacing: 1.2%;
-    color: var(--foreground);
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+    line-height: 120%;
+    font-weight: 400;
+    padding-bottom: var(--space-2xs);
   }
 
   h4 {
     font-size: var(--step-2);
-    line-height: 1;
-    font-weight: 400;
-    letter-spacing: 1.2%;
-    color: var(--foreground);
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    padding-bottom: 0.4rem;
-  }
-
-  h5 {
-    font-size: var(--step-1);
-    line-height: 1;
-    font-weight: 600;
-    letter-spacing: 1.2%;
-    color: var(--foreground);
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-  }
-
-  h6 {
-    font-size: var(--step-0);
-    line-height: 1;
-    font-weight: 700;
-    letter-spacing: 1.2%;
-    color: var(--foreground);
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+    line-height: 115%;
+    font-weight: 500;
+    padding-bottom: var(--space-3xs);
   }
 
   p {
-    font-size: var(--step-0);
+    font-size: var(--step-1);
     line-height: 1.4;
-    color: var(--foreground);
-    word-wrap: break-word;
-    overflow-wrap: break-word;
   }
 
-  span,
+  /*span,
   button,
   p,
-  a {
-    color: var(--foreground);
-    font-size: var(--text-base);
+  a,*/
+  h1,
+  h2,
+  h3,
+  h4 {
+    /*overflow-wrap: break-word;*/
+    text-wrap: balance;
+    letter-spacing: 1.2%;
   }
 }
 
 .skeleton {
   animation: skeleton-loading 1s linear infinite alternate;
-}
-
-/*.skeleton-icon {
-  display: none;
-}
-
-.skeleton > .skeleton-icon {
-  display: block;
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 3rem;
-  height: 3rem;
-  color: var(--muted);
-  pointer-events: none;
-  z-index: 0;
-}*/
-
-/* Keep the image above the placeholder icon so a loaded
-   bitmap covers it even before the skeleton class is cleared. */
-.skeleton > :not(.skeleton-icon) {
-  position: relative;
-  z-index: 1;
 }
 
 @keyframes skeleton-loading {
@@ -479,6 +418,7 @@ legend {
   }
 }
 
+/*TODO: separte into a different css file; to be imported only in dashboard*/
 /*dashboard entity lists*/
 .cutoffLines {
   --max-lines: 3;
