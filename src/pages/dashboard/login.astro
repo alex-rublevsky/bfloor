@@ -3,6 +3,8 @@ import AuthLayout from "@/layouts/AuthLayout.astro";
 import Button from "@/components/shared/Button.astro";
 import { auth } from "@/lib/auth";
 import { Icon } from "astro-icon/components";
+import { Image } from "astro:assets";
+import { BASE_IMAGE_URL } from "@/constants";
 
 const error = Astro.url.searchParams.get("error");
 
@@ -16,11 +18,21 @@ const displayPic = user?.image;
 ---
 
 <AuthLayout title="Вход в админку">
-  <main class="w-full max-w-120 space-y-6 text-center grid">
-    <>
+  <main class="grid place-items-center">
+    <div class="blockWrapper">
+      <Image
+        src={BASE_IMAGE_URL + "other/bubisha.jpeg"}
+        width={1000}
+        height={1000}
+        alt="Заяц Маскот"
+        loading="eager"
+        class="skeleton bubisha"
+        onload="this.closest('.skeleton')?.classList.remove('skeleton')"
+      />
+
       {
         displayName ? (
-          <h1 class="text-md! font-thin! text-foreground-muted leading-[1.7] mb-0">
+          <h1 class="text-md! font-thin! text-center text-foreground-muted leading-[1.7] mb-0">
             Вы уже авторизованы,
             <br />
             <span class="inline-flex items-center justify-center gap-2">
@@ -32,7 +44,7 @@ const displayPic = user?.image;
                   class="size-12 rounded-full object-cover"
                 />
               )}
-              <span class="text-2xl">{displayName}</span>
+              <span class="text-xl">{displayName}</span>
             </span>
           </h1>
         ) : (
@@ -41,32 +53,47 @@ const displayPic = user?.image;
           </h1>
         )
       }
-    </>
-    <div class="grid grid-cols-2 gap-2xs">
+
+      <div class="grid grid-cols-2 gap-2xs">
+        {
+          displayName ? (
+            <Button size="lg" href="/dashboard">
+              В админку
+            </Button>
+          ) : (
+            //TODO: fix icon not being in a row
+            <Button size="lg" id="google-signin">
+              <Icon name="google" title="Google" />
+              <span data-signin-label>Войти</span>
+            </Button>
+          )
+        }
+        <Button size="lg" variant="tertiary" href="/"> &larr; Назад </Button>
+      </div>
       {
-        displayName ? (
-          <Button size="lg" href="/dashboard">
-            В админку
-          </Button>
-        ) : (
-          //TODO: fix icon not being in a row
-          <Button id="google-signin" class="w-full">
-            <Icon name="google" title="Google" />
-            <span data-signin-label>Войти</span>
-          </Button>
+        error === "unauthorized" && (
+          <div class="bg-destructive border-destructive-foreground/50! text-destructive-foreground rounded-md border px-4 py-3">
+            У вас нет доступа
+          </div>
         )
       }
-      <Button size="lg" variant="tertiary" href="/"> &larr; В магазин </Button>
     </div>
-    {
-      error === "unauthorized" && (
-        <div class="bg-destructive border-destructive-foreground/50! text-destructive-foreground rounded-md border px-4 py-3">
-          У вас нет доступа
-        </div>
-      )
-    }
   </main>
 </AuthLayout>
+
+<style>
+  .blockWrapper {
+    display: grid;
+    justify-items: center;
+    @media (max-width: 768) {
+      translate: 0 -1.4rem;
+    }
+  }
+  .bubisha {
+    border-radius: var(--radius-md);
+    width: min(80vw, 23rem);
+  }
+</style>
 
 <script>
   document
