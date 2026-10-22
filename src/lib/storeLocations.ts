@@ -1,6 +1,13 @@
 export const STORE_LOCATIONS = [
   {
-    id: 0,
+    id: 2,
+    address: `ТЦ "Виктория", пав. №14`,
+    description: "ул. Бородинская 46/50",
+    phone: "8 914 321 37 65",
+    openingHours: "Пн — Пт: 9 — 18\nВс: 11 — 17",
+  },
+  {
+    id: 1,
     address: "ул. Русская, 78",
     description: "Вход со стороны дороги",
     phone: "8 908 448 6785",
@@ -12,11 +19,4 @@ export const STORE_LOCATIONS = [
   //   description: null,
   //   openingHours: "Пн — Пт: 10 — 18\nСб: 11 — 17\nВс: Выходной",
   // },
-  {
-    id: 2,
-    address: `ТЦ "Виктория", пав. №14`,
-    description: "ул. Бородинская 46/50",
-    phone: "8 914 321 37 65",
-    openingHours: "Пн — Пт: 9 — 18\nВс: 11 — 17",
-  },
 ] as const;
