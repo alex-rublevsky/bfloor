@@ -31,7 +31,7 @@ export const prerender = true;
               <div class="contact">
                 <a
                   class="text-link"
-                  href={`tel:${location.phone.replace(/\D/g, "")}`}>
+                  href={`tel:${location.phone.replace(/\D/g, "").replace(/^8/, "+7")}`}>
                   {location.phone}
                 </a>
                 <span class="name">{location.address}</span>
@@ -40,12 +40,12 @@ export const prerender = true;
           }
 
           <div class="contact">
-            <a class="text-link" href="tel:+89025559405">8 902 555 9405</a><span
+            <a class="text-link" href="tel:+79025559405">8 902 555 9405</a><span
               class="name">Роман</span
             >
           </div>
           <div class="contact">
-            <a class="text-link" href="tel:+89084466740">8 908 446 6740</a>
+            <a class="text-link" href="tel:+79084466740">8 908 446 6740</a>
             <span class="name">Елена</span>
           </div>
           <a class="text-link" href="mailto:romavg@mail.ru">romavg@mail.ru</a>
