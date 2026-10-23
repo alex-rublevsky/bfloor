@@ -30,6 +30,9 @@
     minmax(min(var(--min-col-size), 100%), 1fr)
   );
 }
+a:has(.entityImageWrapper) {
+  color: var(--foreground);
+}
 .entityImageWrapper {
   overflow: clip;
   aspect-ratio: 1/1;
