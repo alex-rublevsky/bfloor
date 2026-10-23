@@ -44,10 +44,11 @@ const { page, category } = Astro.props;
 ---
 
 <Layout title={category.name}>
-  <section class="no-padding">
+  <section class="no-padding" data-category={category.name}>
     <div class="titlePagination">
       <h1 class="text-xl pb-0">{category.name}</h1>
       <Pagination
+        data-pagination
         length={page.lastPage}
         currentPage={page.currentPage}
         firstUrl={page.url.first}
@@ -59,13 +60,21 @@ const { page, category } = Astro.props;
       <!-- {category.description ? <p>{category.description}</p> : null} -->
     </div>
 
-    <div>
-      <!-- <div class="bg-muted/30">
-        <h2>Фильтры</h2>
-        <pagefind-filter-dropdown filter="location" label="Доступен на"
-        ></pagefind-filter-dropdown>
-      </div> -->
-      <div class="autoGrid">
+    <div class="storeLayout">
+      <aside>
+        <h3>Фильтры</h3>
+        <div id="filtersBlock"></div>
+        <template id="filter-block-template">
+          <div class="filter">
+            <label></label>
+            <select multiple></select>
+            <!-- TODO: implement listbox component instead -->
+            <!-- <SelectListBox name="" label="" options={[]} /> -->
+          </div>
+        </template>
+      </aside>
+      <div id="filteredFeed" class="autoGrid" hidden></div>
+      <div id="staticFeed" class="autoGrid">
         <!-- {
           products ? (
             products.length > 0 ? (
@@ -85,6 +94,7 @@ const { page, category } = Astro.props;
       </div>
     </div>
     <Pagination
+      data-pagination
       class="pt-lg pb-xl justify-center w-full"
       length={page.lastPage}
       currentPage={page.currentPage}
@@ -100,8 +110,9 @@ const { page, category } = Astro.props;
 <style>
   .storeLayout {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: min-content 1fr;
   }
+
   .titlePagination {
     display: flex;
     flex-direction: row;
@@ -112,4 +123,196 @@ const { page, category } = Astro.props;
     padding-block: var(--spacing-xs) var(--spacing-md);
     padding-inline: var(--section-padding-x);
   }
+  aside {
+    background-color: color-mix(in oklch, var(--muted) 15%, transparent);
+    padding: var(--spacing-2xs);
+    min-width: 28ch;
+  }
+  .filter label {
+    font-weight: bold;
+  }
+  .filter select {
+    min-height: 8rem;
+  }
+  option {
+    /*TODO: option is not supposed to have spans within it. how to make count be set to be aligned by right then?*/
+    /*display: grid;
+    grid-template-columns: 1fr auto 1;
+    gap: 1rem;
+    align-items: center;*/
+  }
 </style>
+
+<!-- TODO: does this need to be inline and module? -->
+<script is:inline type="module">
+  const pagefind = await import("/pagefind/pagefind.js");
+  const section = document.querySelector("section");
+  const filtersBlock = document.querySelector("#filtersBlock");
+  const staticFeed = document.querySelector("#staticFeed");
+  const filteredFeed = document.querySelector("#filteredFeed");
+
+  const paginations = document.querySelectorAll("[data-pagination]");
+
+  await pagefind.filters();
+  const category = section.dataset.category ?? "";
+  const baseSearch = await pagefind.search(null, {
+    filters: { category: category },
+  });
+
+  function normalizeFacetCounts(raw) {
+    const facets = {};
+
+    for (const [facetName, rawValues] of Object.entries(raw)) {
+      const values = {};
+
+      for (const [value, rawCount] of Object.entries(rawValues)) {
+        if (rawCount !== 0) {
+          values[value] = rawCount;
+        }
+      }
+
+      if (!Object.keys(values).length) continue;
+      facets[facetName] = values;
+    }
+
+    return facets;
+  }
+
+  const normalizedFacets = normalizeFacetCounts(baseSearch.filters);
+
+  function createFilter(name, options) {
+    const filterTemplate = document.querySelector("#filter-block-template");
+
+    const clone = filterTemplate.content.cloneNode(true);
+    clone.querySelector("label").innerText = name;
+    clone.querySelector(".filter").id = name;
+    const select = clone.querySelector("select");
+
+    for (let option in options) {
+      const optionElement = document.createElement("option");
+      optionElement.value = option;
+
+      const optionName = document.createElement("span");
+      optionName.innerHTML = option;
+
+      const optionCount = document.createElement("span");
+      optionCount.innerHTML = options[option];
+      optionCount.style.color = "var(--foreground-muted)";
+
+      optionElement.appendChild(optionName);
+      optionElement.appendChild(optionCount);
+
+      select.appendChild(optionElement);
+    }
+    filtersBlock.append(clone);
+  }
+
+  for (let key in normalizedFacets) {
+    createFilter(key, normalizedFacets[key]);
+  }
+
+  let someFilterIsEnabled = false;
+
+  async function filterProducts() {
+    let appliedFilters = [];
+
+    const allFilters = document.querySelectorAll(".filter");
+
+    Array.from(allFilters).forEach((filter) => {
+      const select = filter.querySelector("select");
+
+      if (!select) return;
+      const selectedOptions = Array.from(select.selectedOptions).map(
+        ({ value }) => value,
+      );
+
+      if (selectedOptions.length > 0) {
+        someFilterIsEnabled = true;
+        let newFilter = {
+          filterName: filter.id,
+          selectedOptions: selectedOptions,
+        };
+        appliedFilters.push(newFilter);
+      }
+    });
+
+    if (someFilterIsEnabled) {
+      staticFeed.setAttribute("hidden", "");
+      filteredFeed.removeAttribute("hidden");
+      paginations.forEach((p) => {
+        p.setAttribute("hidden", "");
+      });
+
+      const filters = {
+        category: category,
+        ...Object.fromEntries(
+          appliedFilters.map(({ filterName, selectedOptions }) => [
+            filterName,
+            selectedOptions[0],
+          ]),
+        ),
+      };
+
+      const filteredSearch = await pagefind.search(null, {
+        filters,
+      });
+
+      filteredFeed.replaceChildren();
+
+      const results = await Promise.all(
+        filteredSearch.results.map((result) => result.data()),
+      );
+
+      for (const result of results) {
+        const card = document.createElement("div");
+
+        const title = document.createElement("h2");
+        title.textContent = result.meta?.title ?? "Без Названия";
+
+        const excerpt = document.createElement("p");
+        excerpt.innerHTML = result.excerpt ?? "";
+
+        const image = document.createElement("img");
+        image.src = result.meta.image;
+
+        const link = document.createElement("a");
+        // TODO: where does the "client" come from in the beginning of the link? how can i remove it in a more fundamental way?
+        link.href = result.url.replace(/^\/client(?=\/)/, "");
+        link.append(image, title, excerpt);
+
+        card.appendChild(link);
+        filteredFeed.appendChild(card);
+      }
+
+      //TODO: update filter's counts from filteredSearch.filters
+      // console.log(filteredSearch.filters);
+    } else {
+      filteredFeed.setAttribute("hidden", "");
+      staticFeed.removeAttribute("hidden");
+      paginations.forEach((p) => {
+        p.removeAttribute("hidden");
+      });
+      //TODO: update filter's counts from baseSearch.filters
+    }
+
+    someFilterIsEnabled = false;
+  }
+
+  filtersBlock.onclick = (event) => {
+    const target = event.target;
+    const filter = target.closest(".filter");
+
+    if (!filter) return;
+
+    const select = target.closest("select");
+
+    if (!select) return;
+
+    select.onchange = (e) => {
+      // console.log(e.target.value);
+      // console.log(filter.id);
+
+      filterProducts();
+    };
+  };
+</script>

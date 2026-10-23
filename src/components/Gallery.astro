@@ -36,6 +36,9 @@ const { images } = Astro.props;
         <Image
           width={2000}
           height={2000}
+          data-pagefind-meta={
+            index === 0 ? "image[src], image_alt[alt]" : undefined
+          }
           alt={`Фото товара`}
           data-index={index}
           id="mainImage"

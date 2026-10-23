@@ -69,19 +69,22 @@ const variations = product.variations;
         <div class="description-row">
           <dt>Категория:</dt>
           <dd>
-            <a href={`/store/${product.category.slug}`}>
+            <a
+              href={`/store/${product.category.slug}`}
+              data-pagefind-filter="Категория">
               {product.category.name}
             </a>
           </dd>
         </div>
       ) : null
     }
+    <!-- TODO: fix the link to brand when the respective page is implemented href={`/brand/${brand.slug}`} -->
+
     {
       brand ? (
         <div class="description-row items-center">
           <dt>Бренд:</dt>
-          <!-- TODO: fix the link to brand when the respective page is implemented href={`/brand/${brand.slug}`} -->
-          <a >
+          <a>
             <dd>
               {brand.image ? (
                 <Image
@@ -92,9 +95,13 @@ const variations = product.variations;
                   class="skeleton brand-image"
                   onload="this.closest('.skeleton')?.classList.remove('skeleton')"
                   alt={"Логотип бренда " + brand.name}
+                  data-pagefind-ignore
                 />
+                <span class="sr-only" data-pagefind-filter="brand">{brand.name}</span>
               ) : (
-                <span class="brand-name">{brand.name}</span>
+                <span class="brand-name" data-pagefind-filter="Производитель">
+                  {brand.name}
+                </span>
               )}
             </dd>
           </a>
@@ -107,7 +114,9 @@ const variations = product.variations;
         <div class="description-row">
           <dt>Коллекция:</dt>
           <a href={`/brand/${product.collection.slug}`}>
-            <dd> {product.collection.name}</dd>
+            <dd data-pagefind-filter="Коллекция">
+              {product.collection.name}
+            </dd>
           </a>
         </div>
       ) : null
@@ -128,7 +137,9 @@ const variations = product.variations;
           <div class="description-row">
             <dt class="self-center">Страна производства:</dt>
             <dd>
-              <span class="text-sm"> {country.name}</span>
+              <span class="text-sm" data-pagefind-filter="country">
+                {country.name}
+              </span>
               <Image
                 src={BASE_IMAGE_URL + country?.flagImage}
                 width={52.5}
@@ -154,7 +165,7 @@ const variations = product.variations;
               {product.storeLocations.map((storeLocation, index) => (
                 <>
                   {index > 0 ? ", " : null}
-                  <a href="/contact" data-pagefind-filter="location">
+                  <a href="/contact" data-pagefind-filter="В наличии">
                     {
                       STORE_LOCATIONS.find(
                         (location) => location.id === storeLocation,
@@ -197,7 +208,9 @@ const variations = product.variations;
                 {attribute.values.map((value, index) => (
                   <>
                     {index > 0 ? ", " : null}
-                    {value.name}
+                    <span data-pagefind-filter={attribute.name}>
+                      {value.name}
+                    </span>
                   </>
                 ))}
               </dd>

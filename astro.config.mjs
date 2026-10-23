@@ -2,7 +2,7 @@
 import node from "@astrojs/node";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
-import pagefind from "astro-pagefind";
+
 import { fileURLToPath } from "node:url";
 
 import {
@@ -113,7 +113,7 @@ export default defineConfig({
     mode: "standalone",
   }),
 
-  integrations: [sitemap(), icon(), pagefind()],
+  integrations: [sitemap(), icon()],
 
   experimental: {
     incrementalBuild: true,
