@@ -5,67 +5,63 @@ export const prerender = true;
 import { BASE_IMAGE_URL } from "@/constants";
 ---
 
-<Layout>
-  <section class="max-w-[65ch] mx-auto flex flex-col gap-sm pb-xl">
+<Layout showFooter>
+  <section class="no-padding">
     <Image
       src={BASE_IMAGE_URL + "about/elena.webp"}
       width={2120}
       height={1416}
       alt="Директор"
       loading="lazy"
-      class="skeleton rounded-lg w-full"
+      class="skeleton"
       onload="this.closest('.skeleton')?.classList.remove('skeleton')"
       style="view-transition-name: about-image;"
     />
     <h1 style="view-transition-name: about-title;">О компании</h1>
     <p style="view-transition-name: about-paragraph;">
-      У нас большой выбор напольных покрытий, для домов, офисов, спортивных
-      площадок и других мест отдыха. Мы предоставляем не только
-      высококачественную продукцию, но и необходимые инструменты для укладки и
-      ухода. Наши специалисты квалифицированно установят напольное покрытие и
-      дадут рекомендации.
+      Магазин BeautyFloor предлагает большой выбор напольных покрытий во
+      Владивостоке. В нашем ассортименте есть покрытия для квартир, домов,
+      офисов, больниц, детских садов, школ, серверных, бассейнов, спортивных
+      залов и площадок и любых других мест. Мы предоставляем не только
+      высококачественные полы, но и сопутствующие товары.
     </p>
-    <!-- TODO: <p>Цитата Елены</p> -->
-    <Image
-      src={BASE_IMAGE_URL + "about/signature.webp"}
-      width={500}
-      height={500}
-      alt="Подпись директора"
-      loading="lazy"
-      class="skeleton py-md w-40 mx-auto"
-      onload="this.closest('.skeleton')?.classList.remove('skeleton')"
-    />
 
     <p>
-      Компания ГРАФИК была основана в 2009 году, и с момента своего основания
-      основным видом деятельности является продажа качественных напольных
-      покрытий и комплектующих к ним.
+      Наша квалифицированная бригада укладчиков установит любые материалы из
+      нашего ассортимента.
     </p>
-    <p>
-      С самого начала основной установкой в работе было качественное выполнение
-      принятых на себя обязательств, использование таких принципов работы, как
-      профессионализм, индивидуальный подход и ответственность.
-    </p>
-    <p class="text-md">
+
+    <div class="quote">
+      <!-- <span> &#10077;</span> -->
+      <blockquote>
+        Я основала магазин в 2009 году, и с самого его открытия ключевой
+        философией нашего подхода в работе является качественное выполнение
+        своей работы, индивидуальный подход и ответственность.
+      </blockquote>
+      <Image
+        src={BASE_IMAGE_URL + "about/signature.webp"}
+        width={500}
+        height={500}
+        alt="Подпись директора"
+        loading="lazy"
+        class="skeleton"
+        onload="this.closest('.skeleton')?.classList.remove('skeleton')"
+      />
+      <span class="text-right mr-10">Рублевская Елена Валерьевна</span>
+    </div>
+    <!-- <p class="text-md">
       Вы всегда можете написать мне лично на <a href="mailto:romavg@mail.ru"
         >romavg@mail.ru</a
       >
-    </p>
-
+    </p> -->
     <p>
-      Основными клиентами нашей ком пании являются строительные компании,
+      Мы занимаемся розничными и оптовыми заказами с частными лицами и
+      организациями, а также архитектурными бюро и студиями дизайна.
+    </p>
+    <p>
+      Основными клиентами нашего магазина являются строительные компании,
       учебные и здравоохранительные учреждения, гостиничные комплексы, базы
       отдыха, офисы, муниципальные объекты различного направления.
-    </p>
-    <p>
-      Магазин BeautyFloor - это розничное подразделение, занимающееся работой с
-      частными клиентами и дизайнерскими студиями.
-    </p>
-    <p>
-      В начале 2020 года был запущен проект по созданию собственной бригады
-      укладчиков, которые могут не только смонтировать те материалы, которые мы
-      реализуем, но и подготовить основание и провести мойку и чистку уже
-      уложенных покрытий.
     </p>
     <Image
       src={BASE_IMAGE_URL + "other/bubisha.jpeg"}
@@ -73,8 +69,81 @@ import { BASE_IMAGE_URL } from "@/constants";
       height={1500}
       alt="Заяц Маскот"
       loading="lazy"
-      class="skeleton rounded-lg w-full"
+      class="skeleton rounded-lg"
       onload="this.closest('.skeleton')?.classList.remove('skeleton')"
     />
+    <label> Наш маскот — зайка</label>
   </section>
 </Layout>
+
+<style>
+  section {
+    max-width: 65ch;
+    margin-inline: auto;
+    padding-bottom: var(--spacing-2xl);
+
+    & p,
+    h1 {
+      padding-inline: var(--section-padding-x);
+    }
+
+    & p {
+      padding-bottom: var(--spacing-sm);
+    }
+
+    & img {
+      border-radius: var(--radius-lg);
+      padding: var(--section-padding-x);
+    }
+    label {
+      padding: var(--section-padding-x);
+      color: var(--foreground-muted);
+    }
+    .quote {
+      display: grid;
+      grid-template-columns: repeat(2, auto);
+      grid-template-rows: repeat(2, auto);
+      background-color: color-mix(in oklch, var(--muted) 40%, transparent);
+      padding-left: var(--spacing-md);
+      padding-right: var(--spacing-md);
+      padding-top: var(--spacing-xs);
+      padding-bottom: 0;
+      margin-top: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+      margin-inline: auto;
+      border-left: 0.4rem solid var(--accent);
+      max-width: min(55ch, 91%);
+
+      blockquote {
+        /*TODO: make the quote to be cursive*/
+        grid-column: 1/5;
+        grid-row: 1/1;
+      }
+
+      img {
+        grid-column: 4/5;
+        grid-row: 2/2;
+        width: 6.8rem;
+        translate: 2.95rem -0.8rem;
+        margin-bottom: -1.8rem;
+        padding: 0;
+        border-radius: 0;
+
+        @media (max-width: 678) {
+          width: 6.6rem;
+          translate: 2.85rem -0.8rem;
+        }
+      }
+
+      span {
+        grid-column: 3/5;
+        grid-row: 2/2;
+        width: 100%;
+        text-align: right;
+        margin-top: var(--spacing-sm);
+        white-space: nowrap;
+        font-size: var(--text-sm);
+      }
+    }
+  }
+</style>

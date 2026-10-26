@@ -353,7 +353,11 @@ legend {
     padding-bottom: var(--space-3xs);
   }
 
-  p {
+  p,
+  span,
+  a,
+  button,
+  blockquote {
     font-size: var(--step-1);
     line-height: 1.4;
   }
@@ -365,7 +369,8 @@ legend {
   h1,
   h2,
   h3,
-  h4 {
+  h4,
+  blockquote {
     /*overflow-wrap: break-word;*/
     text-wrap: balance;
     letter-spacing: 1.2%;
