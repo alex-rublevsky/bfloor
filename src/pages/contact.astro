@@ -3,14 +3,17 @@ import Layout from "@/layouts/Layout.astro";
 import Button from "@/components/shared/Button.astro";
 import { STORE_LOCATIONS } from "@/lib/storeLocations";
 import { Icon } from "astro-icon/components";
+import { SITE_TITLE } from "@/constants";
 
 export const prerender = true;
 ---
 
-<Layout>
-  <h1 class="sr-only">Contacts and Addresses</h1>
-
+<!-- TODO: нужна ли запятая? -->
+<Layout
+  title=`Контакты и адреса — ${SITE_TITLE}`
+  description=`Мы находимся на ул. Русская 78 и в ТЦ "Виктория" пав. №14. Вы можете связаться с нами по телефону, почте, или мессенджерам.`>
   <section>
+    <h1 class="sr-only">Контакты и адреса</h1>
     <div class="h-90 md:h-full">
       <iframe
         src="https://yandex.ru/map-widget/v1/?um=constructor%3A22b0e239472f3fada224e5a5d56d660e01904d9ce2b2758272c86ee79efaa7ca&source=constructor"

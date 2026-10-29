@@ -2,11 +2,13 @@
 import Layout from "../layouts/Layout.astro";
 import { Image } from "astro:assets";
 export const prerender = true;
-import { BASE_IMAGE_URL } from "@/constants";
+import { BASE_IMAGE_URL, SITE_TITLE } from "@/constants";
 import Button from "@/components/shared/Button.astro";
 ---
 
-<Layout title="Страница не найдена — BeautyFloor">
+<Layout
+  title=`Страница не найдена — ${SITE_TITLE}`
+  description="Возможно страница была удалена или переименована">
   <main class="grid place-items-center">
     <div class="blockWrapper">
       <Image

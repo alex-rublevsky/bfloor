@@ -2,10 +2,10 @@
 import Layout from "../layouts/Layout.astro";
 import { Image } from "astro:assets";
 export const prerender = true;
-import { BASE_IMAGE_URL } from "@/constants";
+import { BASE_IMAGE_URL, SITE_TITLE } from "@/constants";
 ---
 
-<Layout showFooter>
+<Layout title=`О компании — ${SITE_TITLE}` showFooter>
   <section class="no-padding">
     <Image
       src={BASE_IMAGE_URL + "about/elena.webp"}
@@ -35,8 +35,8 @@ import { BASE_IMAGE_URL } from "@/constants";
       <!-- <span> &#10077;</span> -->
       <blockquote>
         Я основала магазин в 2009 году, и с самого его открытия ключевой
-        философией нашего подхода в работе является качественное выполнение
-        своей работы, индивидуальный подход и ответственность.
+        философией нашей работы являются качественное выполнение своих
+        обязанностей, индивидуальный подход и ответственность.
       </blockquote>
       <Image
         src={BASE_IMAGE_URL + "about/signature.webp"}
