@@ -151,10 +151,15 @@ TODO: add filters to mobile
 </Layout>
 
 <style>
+  @media (width > 768px) {
+    section {
+      padding-right: var(--section-padding-x);
+    }
+  }
   .storeLayout {
     display: grid;
     grid-template-columns: min-content 1fr;
-    @media (max-width: 768) {
+    @media (width < 768px) {
       grid-template-columns: auto;
     }
   }
@@ -173,7 +178,7 @@ TODO: add filters to mobile
     background-color: color-mix(in oklch, var(--muted) 15%, transparent);
     padding: var(--spacing-2xs);
     min-width: 28ch;
-    @media (max-width: 768) {
+    @media (width < 768px) {
       display: none;
     }
   }

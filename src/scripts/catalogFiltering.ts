@@ -1,3 +1,5 @@
+// TODO: after filtration the scroll should be taken to the start of the page
+
 type FacetCounts = Record<string, number>;
 type FilterCounts = Record<string, FacetCounts>;
 type FilterSelections = Record<string, string[]>;

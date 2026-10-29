@@ -65,7 +65,7 @@ const bannerImages = [
   a {
     display: block;
   }
-  @media (min-width: 768px) {
+  @media (width > 768px) {
     a:active {
       transform: scale(0.99);
     }
@@ -95,7 +95,7 @@ const bannerImages = [
       height: 100%;
       width: 100%;
     }
-    @media (max-width: 799) {
+    @media (width < 799px) {
       aspect-ratio: 1100/550;
     }
   }

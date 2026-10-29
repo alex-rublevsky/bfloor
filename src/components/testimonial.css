@@ -7,7 +7,7 @@ section.embla {
   position: relative;
 }
 
-@media (max-width: 640px) {
+@media (width < 640px) {
   section.embla {
     --slide-size: 34ch;
   }
@@ -113,7 +113,7 @@ section.embla {
   color: var(--primary);
 }
 
-@media (max-width: 640px) {
+@media (width < 640px) {
   .testimonial-slider__controls .embla__buttons {
     display: none;
   }

@@ -17,7 +17,8 @@ const pageUrl = (pageNumber: number) =>
   pageNumber === 1 ? baseUrl : `${baseUrl}/${pageNumber}`;
 ---
 
-{
+<!-- TODO: show only a few number buttons when there are many to be displayed — e.g.
+on mobile there is horizontal scroll because of it. -->{
   paginationList.length > 1 ? (
     <nav
       aria-label="Страницы каталога"

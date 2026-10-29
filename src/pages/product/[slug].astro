@@ -26,6 +26,7 @@ interface Props {
 }
 const { product } = Astro.props;
 
+// TODO: fix this to be reliable, e.g. lack of brand should not result in double space
 const title =
   product.category.name +
   " " +
@@ -64,7 +65,7 @@ const description = product.description ?? SITE_DESCRIPTION;
     display: grid;
     container-type: inline-size;
     grid-template-rows: 1fr auto;
-    @media (min-width: 35rem) {
+    @media (width > 35rem) {
       grid-template-rows: auto;
       grid-template-columns: 6fr 4fr;
     }
