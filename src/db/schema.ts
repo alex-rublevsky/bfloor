@@ -130,7 +130,10 @@ export const products = sqliteTable(
       "unitOfMeasurementCheck",
       sql`${table.unitOfMeasurement} IN ('м2', 'lm', 'pi', 'pa', 'l')`,
     ),
-    unique("products_sku_brandId_unique").on(table.sku, table.brandId),
+    unique("products_sku_collectionId_unique").on(
+      table.sku,
+      table.collectionId,
+    ),
     unique("products_name_collection_unique").on(
       table.name,
       table.collectionId,

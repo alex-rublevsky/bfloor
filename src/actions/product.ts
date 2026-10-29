@@ -204,18 +204,18 @@ async function validateDiscount(
 }
 async function validateSKU(
   sku: string | null,
-  brandId: number | null,
+  collectionId: number | null,
   id: number = 0,
 ) {
   if (!sku) return;
 
-  if (brandId && sku) {
+  if (collectionId && sku) {
     const [existingSKU] = await db
       .select({ id: products.id })
       .from(products)
       .where(
         and(
-          eq(products.brandId, brandId),
+          eq(products.collectionId, collectionId),
           eq(products.sku, sku),
           ne(products.id, id),
         ),
@@ -224,10 +224,10 @@ async function validateSKU(
     if (existingSKU) {
       throw new ActionError({
         code: "CONFLICT",
-        message: "Такой артикул уже существует в выбранном бренде",
+        message: "Такой артикул уже существует в выбранной коллекции",
       });
     }
-  } else if (!brandId && sku) {
+  } else if (!collectionId && sku) {
     const [existingSKU] = await db
       .select({ id: products.id })
       .from(products)
@@ -349,7 +349,7 @@ export const product = {
 
       await validateDiscount(input.price, input.discountedPrice);
 
-      await validateSKU(input.sku, input.brandId);
+      await validateSKU(input.sku, input.collectionId);
 
       // const media = await prepareMedia({
       //   slug: input.slug,
@@ -461,7 +461,7 @@ export const product = {
 
       await validateDiscount(input.price, input.discountedPrice);
 
-      await validateSKU(input.sku, input.brandId, input.id);
+      await validateSKU(input.sku, input.collectionId, input.id);
 
       // const media = await prepareMedia({
       //   slug: input.slug,
