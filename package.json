@@ -8,7 +8,8 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "astro build && pagefind --site dist/client",
+    "build-local": "astro build && pagefind --site dist && cp -r dist/pagefind public/",
     "deploy": "./scripts/deploy-local.sh",
     "preview": "astro preview",
     "astro": "astro",
