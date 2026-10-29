@@ -84,6 +84,7 @@ section.embla {
   transition: all 170ms ease-out;
   transform: scale(1);
   position: relative;
+  line-height: 140%;
 }
 
 .testimonial-card:hover {
