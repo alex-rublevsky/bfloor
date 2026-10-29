@@ -41,10 +41,10 @@ const { images } = product;
   <div class="flex gap-2xs">
     {
       product.discountedPrice ? (
-        <p>
+        <span>
           {product.hasVariations ? "от " : ""}
           {product.discountedPrice}Р
-        </p>
+        </span>
       ) : null
     }
     <p

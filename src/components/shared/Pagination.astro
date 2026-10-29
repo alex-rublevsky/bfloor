@@ -10,15 +10,19 @@ const {
   nextUrl,
   lastUrl,
   baseUrl,
+  ...rest
 } = Astro.props;
 const paginationList = Array.from({ length }, (_, i) => i + 1);
 const pageUrl = (pageNumber: number) =>
   pageNumber === 1 ? baseUrl : `${baseUrl}/${pageNumber}`;
 ---
 
-<!-- TODO: why disabled arrow buttons are wider? -->{
+{
   paginationList.length > 1 ? (
-    <nav aria-label="Страницы каталога" class={`${className ?? undefined}`}>
+    <nav
+      aria-label="Страницы каталога"
+      class={`${className ?? undefined}`}
+      {...rest}>
       {firstUrl ? (
         <Button size="pagination" variant="secondary" href={`${firstUrl}`}>
           &#171;

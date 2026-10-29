@@ -8,7 +8,7 @@ const totalDiscountedCount = discountedProducts[0]?.totalDiscountedCount ?? 0;
 ---
 
 <section class="no-padding">
-  <!-- TODO: fix when the discount page is added href="store/discounted" -->
+  <!-- TODO: fix when the discount page is added href="catalog/discounted" -->
   <a class="text-link">
     <h2 class="px-(--section-padding-x) hover:text-accent">
       Скидки! <sup
@@ -21,7 +21,7 @@ const totalDiscountedCount = discountedProducts[0]?.totalDiscountedCount ?? 0;
     {discountedProducts.map((product) => <ProductCard {product} />)}
 
     <Button
-      href="store/discounted"
+      href="catalog/discounted"
       variant="secondary"
       class="aspect-square group font-medium"
       >Все скидки <sup

@@ -1,7 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { getAllCategories } from "@/db/storefront/allCategories";
-import { BASE_IMAGE_URL } from "@/constants";
+import { BASE_IMAGE_URL, SITE_TITLE } from "@/constants";
 import { Image } from "astro:assets";
 import ImagePlaceholder from "@/components/shared/ImagePlaceholder.astro";
 const categories = await getAllCategories();
@@ -9,7 +9,8 @@ const categories = await getAllCategories();
 export const prerender = true;
 ---
 
-<Layout>
+<!-- TODO: дописать описание -->
+<Layout title=`Каталог — ${SITE_TITLE}` description="">
   <main>
     <section class="relative no-padding">
       <h1
@@ -19,7 +20,7 @@ export const prerender = true;
       <div class="autoGrid pt-sm">
         {
           categories.map((category) => (
-            <a href={`/store/${category.slug}`}>
+            <a href={`/catalog/${category.slug}`}>
               <div class="entityImageWrapper">
                 <div class="entityImage">
                   {category.image ? (
