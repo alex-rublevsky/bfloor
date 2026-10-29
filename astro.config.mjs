@@ -113,6 +113,10 @@ export default defineConfig({
     mode: "standalone",
   }),
 
+  security: {
+    allowedDomains: [{ hostname: "bfloor.ru", protocol: "https" }],
+  },
+
   integrations: [sitemap(), icon()],
 
   experimental: {
