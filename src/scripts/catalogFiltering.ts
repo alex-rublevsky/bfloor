@@ -283,7 +283,7 @@ export async function initCatalogFiltering(): Promise<void> {
       price.classList.add("line-through", "text-foreground-muted");
     } else {
       discountPrice.remove();
-      price.textContent = metadata["Цена"] ? `${metadata["Цена"]}Р` : "";
+      price.textContent = metadata["price"] ? `${metadata["price"]}Р` : "";
     }
 
     name.textContent = productName;
