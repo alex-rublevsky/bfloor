@@ -1,0 +1,171 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Image } from "astro:assets";
+export const prerender = true;
+import { BASE_IMAGE_URL, SITE_TITLE } from "@/constants";
+import Button from "@/components/shared/Button.astro";
+import Checkbox from "@/components/shared/Checkbox.astro";
+import Input from "@/components/shared/Input.astro";
+---
+
+<!-- TODO: дописать описание -->
+<Layout title=`Укладка и иные услуги — ${SITE_TITLE}` description="">
+  <section>
+    <h1>Укладка</h1>
+    <p>Укладываем все покрытия из нашего ассортимента</p>
+    <p>Гарантия 1 год</p>
+    <h3>Что включает услуга укладки напольного покрытия?</h3>
+    <ul style="list-style-type:disc;">
+      <li>бесплатный выезд замерщика для определения точных объемов работ</li>
+      <li>
+        подготовка основания, а при необходимости — демонтаж существующего пола
+      </li>
+      <li>
+        комплектование объекта всеми необходимыми материалами, включая расходные
+      </li>
+      <li>непосредственная укладка напольного покрытия</li>
+      <li>
+        при необходимости — дополнительная обработка декоративной поверхности
+      </li>
+      <li>Мы не оставляем после себя никакого мусора</li>
+    </ul>
+    <p class="text-foreground-muted">
+      Описанная схема оказания услуги является типовой. При необходимости она
+      корректируется с учетом технологических особенностей и характеристики
+      конкретного напольного покрытия.
+    </p>
+    <!--
+    - наименование
+    - стоимость работ за единицу
+    - единица измерения
+    - вписывать сколько тебе надо
+    - всего
+   	стоимость работ	ед.изм
+
+https://petro-pol.ru/montazh/
+    -->
+    <table>
+      <tr>
+        <th>Укладка ламината</th>
+        <th>Стоимость</th>
+        <th>Ед. измерения</th>
+      </tr>
+      <tr>
+        <td>Укладка ламината ПО ПРЯМОЙ (палуба)</td>
+        <td>500</td>
+        <td>р/м²</td>
+      </tr>
+      <tr>
+        <td>Укладка ламината ПО ПРЯМОЙ (палуба)</td>
+        <td>500</td>
+        <td>р/м²</td>
+      </tr>
+      <tr>
+        <td>Укладка ламината ПО ПРЯМОЙ (палуба)</td>
+        <td>500</td>
+        <td>р/м²</td>
+      </tr>
+    </table>
+
+    <table>
+      <th>Укладка плитки пвх (кварц винил)</th>
+    </table>
+
+    <table>
+      <th>Укладка пробки</th>
+    </table>
+
+    <table>
+      <th>Укладка паркета / инженерной доски</th>
+    </table>
+
+    <table>
+      <th>Укладка линолеума</th>
+    </table>
+
+    <table>
+      <th>Укладка ковролина / ковровой плитки</th>
+    </table>
+
+    <table>
+      <th>Монтаж плинтуса</th>
+    </table>
+
+    <table>
+      <th>Подготовка основания</th>
+    </table>
+
+    <table>
+      <th>Дополнительные работы</th>
+    </table>
+    <!--
+    <table>
+      <tr>
+        <th>Прочность</th>
+        <td
+          >Прочность цементно-песчаной стяжки на сжатие не менее 150 кг/см² (15
+          МПа)</td
+        >
+        <td>СНиП 2.03.13-88, п. 5.3</td>
+      </tr>
+      <tr>
+        <th>Влажность</th>
+        <td>Железобетонные панели не более 4%</td>
+        <td>Полы. Технические требования…, п. 8.17.4</td>
+      </tr>
+      <tr>
+        <th>Стабильность</th>
+        <td
+          >Просадка основания не должна превышать 1,5 мм под нагрузкой 200 кг</td
+        >
+        <td>ВСН 9-94</td>
+      </tr>
+      <tr>
+        <th>Ровность</th>
+        <td>Отклонение от плоскости не более 2 мм на базе 2 м</td>
+        <td>СНиП 3.04.01-87, п. 4.24</td>
+      </tr>
+    </table> -->
+
+    <!--
+    -
+    - call to action — позвонить нам ИЛИ оставить заявку
+
+    -->
+    <!-- <h3>Позвоните нам или оставьте заявку</h3>
+    <a href="tel:+79025559405">8 902 555 9405</a><span class="name">Роман</span>
+    <div>
+      <Input name="name" label="Имя" />
+      <Input name="phone" label="Телефон" type="number" />
+      <Checkbox
+        >Я даю согласие на обработку своих персональных данных
+      </Checkbox>
+    </div> -->
+    <!-- <Image
+        src={BASE_IMAGE_URL + "banners/delivery.jpg"}
+        width={2402}
+        height={1600}
+        alt="Доставка"
+        loading="lazy"
+        class="skeleton object-cover rounded-lg w-full lg:sticky top-2xs"
+        onload="this.closest('.skeleton')?.classList.remove('skeleton')"
+      /> -->
+  </section>
+</Layout>
+
+<style>
+  table {
+    margin-top: var(--spacing-sm);
+  }
+
+  li {
+    margin-left: var(--spacing-lg);
+    padding-block: var(--spacing-2xs);
+  }
+
+  tr {
+    & > * {
+      padding: var(--spacing-2xs);
+    }
+  }
+</style>
