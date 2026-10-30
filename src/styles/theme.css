@@ -369,6 +369,8 @@ span,
 a,
 button,
 option,
+dt,
+dd,
 blockquote {
   font-size: var(--step-1);
   letter-spacing: 2.5%;

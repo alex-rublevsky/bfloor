@@ -62,12 +62,14 @@ const description = product.description ?? SITE_DESCRIPTION;
 
 <style>
   .mainSection {
+    position: relative;
     display: grid;
     container-type: inline-size;
     grid-template-rows: 1fr auto;
     @media (width > 35rem) {
       grid-template-rows: auto;
       grid-template-columns: 6fr 4fr;
+      align-items: start;
     }
   }
   /*TODO: proportionally decrease sizes of all headings...?*/

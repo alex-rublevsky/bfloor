@@ -7,6 +7,7 @@ import { Image } from "astro:assets";
 import type { StorefrontProductDetails } from "@/db/storefront/products/types";
 import { COUNTRIES } from "@/lib/countries";
 import Button from "./shared/Button.astro";
+import { marked } from "marked";
 
 interface Props {
   product: StorefrontProductDetails;
@@ -25,6 +26,12 @@ const country = brand
   : null;
 
 const variations = product.variations;
+const descriptionHTML = product.description
+  ? marked.parse(product.description, { async: false })
+  : null;
+const importantNoteHTML = product.importantNote
+  ? marked.parse(product.importantNote, { async: false })
+  : null;
 ---
 
 <div class="infoBlock">
@@ -227,20 +234,16 @@ const variations = product.variations;
     ) : null
   }
 
-  <!-- {
-    product.importantNote ? (
-      <LinkifiedText
-        content={product.importantNote}
-        class="product-note text-base"
-      />
-    ) : null
-  } -->
-  <!-- <div class="mt-6">
-    <LinkifiedText
-      content={product.description}
-      class="product-description text-base"
-    />
-  </div> -->
+  {
+    importantNoteHTML && (
+      <div class="importantNote" set:html={importantNoteHTML} />
+    )
+  }
+  {
+    descriptionHTML && (
+      <div class="product-description" set:html={descriptionHTML} />
+    )
+  }
 </div>
 
 <style>
@@ -280,7 +283,6 @@ const variations = product.variations;
     flex-direction: row;
     justify-content: space-between;
     gap: var(--spacing-2xs);
-    font-size: var(--text-sm);
 
     & .locationEntries {
       text-align: right;
@@ -330,5 +332,10 @@ const variations = product.variations;
       line-height: 130%;
       max-width: 22ch;
     }
+  }
+
+  .importantNote {
+    background-color: color-mix(in oklch, var(--muted) 35%, transparent);
+    padding: var(--spacing-2xs);
   }
 </style>
