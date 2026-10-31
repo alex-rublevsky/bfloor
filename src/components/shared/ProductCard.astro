@@ -38,10 +38,10 @@ const { images } = product;
       }
     </div>
   </div>
-  <div id="productPrices" class="flex gap-2xs">
+  <div id="productPrices">
     {
       product.discountedPrice ? (
-        <span>
+        <span class="price">
           {product.hasVariations ? "от " : ""}
           {product.discountedPrice}Р
         </span>
@@ -58,6 +58,14 @@ const { images } = product;
 <style>
   #productName,
   #productPrices {
+    display: flex;
+    gap: var(--spacing-3xs);
     padding-inline: var(--spacing-3xs);
+    align-items: last baseline;
+
+    .price {
+      font-size: var(--text-md);
+      font-weight: 350;
+    }
   }
 </style>
