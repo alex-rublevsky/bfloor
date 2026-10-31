@@ -27,7 +27,7 @@ const bannerImages = [
 
 <!-- TODO: add smooth transition between banners -->
 <section class="no-padding">
-  <div>
+  <div id="banners">
     <!-- TODO: is there "priority" or "loading="eager" tag for picture element? -->
     {
       bannerImages.map((image, index) => (
@@ -43,7 +43,7 @@ const bannerImages = [
       ))
     }
   </div>
-  <div id="previewRow" class="flex gap-2xs pt-2xs pl-2xs">
+  <div id="previewRow">
     {
       bannerImages.map((image, index) => (
         <button>
@@ -62,62 +62,85 @@ const bannerImages = [
 </section>
 
 <style>
-  a {
-    display: block;
-  }
-  @media (width > 768px) {
-    a:active {
-      transform: scale(0.99);
-    }
-  }
+  section {
+    display: grid;
+    align-items: start;
 
-  a:active::after,
-  button:active::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: color-mix(in oklch, var(--muted) 15%, transparent);
-    pointer-events: none;
-  }
-
-  picture#banner,
-  picture#preview {
-    user-select: none;
-  }
-
-  picture#banner {
-    aspect-ratio: 1920/600;
-    display: none;
-    &[data-index="0"] {
+    & a {
       display: block;
     }
-    & img {
-      height: 100%;
-      width: 100%;
-    }
-    @media (width < 799px) {
-      aspect-ratio: 1100/550;
-    }
-  }
+    & button {
+      position: relative;
+      border-radius: var(--radius-xs);
+      overflow: clip;
 
-  button {
-    position: relative;
-    border-radius: var(--radius-sm);
-    overflow: clip;
-  }
+      &:has(picture.is-active)::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: var(--border-width-thick) solid var(--accent);
+        pointer-events: none;
+        border-radius: var(--radius-xs);
+      }
+    }
 
-  button:has(picture.is-active)::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border: var(--border-width-thick) solid var(--accent);
-    pointer-events: none;
-    border-radius: var(--radius-sm);
-  }
-  picture#preview :global(img) {
-    height: clamp(3.5rem, 7vw, 5rem);
-    aspect-ratio: 5 / 3;
-    object-fit: cover;
+    picture {
+      user-select: none;
+      object-fit: cover;
+
+      &#banner {
+        display: none;
+
+        &[data-index="0"] {
+          display: block;
+        }
+
+        & :global(img) {
+          aspect-ratio: 1100/550;
+        }
+      }
+    }
+
+    a:active::after,
+    button:active::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: color-mix(in oklch, var(--muted) 15%, transparent);
+      pointer-events: none;
+    }
+
+    & #previewRow {
+      display: flex;
+      gap: var(--spacing-2xs);
+      padding: var(--spacing-2xs);
+      & picture#preview :global(img) {
+        height: clamp(3.5rem, 7vw, 5rem);
+        aspect-ratio: 5 / 3;
+        object-fit: cover;
+      }
+    }
+
+    @media (width >= 800px) {
+      grid-template-areas: "previews banners";
+      grid-template-columns: auto 1fr;
+      & #previewRow {
+        display: grid;
+        grid-area: previews;
+      }
+      & #banners {
+        overflow: clip;
+        grid-area: banners;
+        margin-right: var(--spacing-2xs);
+      }
+      a:active {
+        transform: scale(0.99);
+      }
+      & picture#banner :global(img) {
+        aspect-ratio: 1920/550;
+        border-radius: var(--radius-md);
+      }
+    }
   }
 </style>
 
