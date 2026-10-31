@@ -8,6 +8,7 @@ import type { StorefrontProductDetails } from "@/db/storefront/products/types";
 import { COUNTRIES } from "@/lib/countries";
 import Button from "./shared/Button.astro";
 import { marked } from "marked";
+import { Icon } from "astro-icon/components";
 
 interface Props {
   product: StorefrontProductDetails;
@@ -236,7 +237,10 @@ const importantNoteHTML = product.importantNote
 
   {
     importantNoteHTML && (
-      <div class="importantNote" set:html={importantNoteHTML} />
+      <div class="importantNote">
+        <Icon class="text-secondary" name="info" title="Важная информация" />
+        <div set:html={importantNoteHTML} />
+      </div>
     )
   }
   {
@@ -248,6 +252,8 @@ const importantNoteHTML = product.importantNote
 
 <style>
   .infoBlock {
+    container-type: inline-size;
+
     padding-inline: var(--section-padding-x);
     @media (width > 35rem) {
       max-width: 55ch;
@@ -335,7 +341,23 @@ const importantNoteHTML = product.importantNote
   }
 
   .importantNote {
-    background-color: color-mix(in oklch, var(--muted) 35%, transparent);
+    background-color: color-mix(in oklch, var(--border) 25%, transparent);
     padding: var(--spacing-2xs);
+    border: var(--border-width) solid var(--border);
+    margin-block: var(--spacing-sm);
+    & svg {
+      width: 2rem;
+      height: auto;
+    }
+
+    @container (width > 35ch) {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: var(--spacing-3xs);
+    }
+
+    & * {
+      font-size: var(--text-sm) !important;
+    }
   }
 </style>
