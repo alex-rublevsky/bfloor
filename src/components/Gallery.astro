@@ -61,6 +61,8 @@ const { images } = Astro.props;
     gap: var(--spacing-3xs);
 
     @container (max-width: 40rem) {
+      position: relative;
+      top: 0;
       margin-inline: auto;
       grid-template-columns: auto;
       grid-template-rows: 1fr auto;
