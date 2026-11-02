@@ -22,11 +22,12 @@ if (!slug) return Astro.redirect("/catalog");
 export async function getStaticPaths({ paginate }: any) {
   const categories = await getAllCategories();
 
-  const results = await Promise.all(
-    categories.map(async (category) => {
-      const products = (await getAllProductsByCategory(category.id)) ?? [];
+  const results = [];
+  for (const category of categories) {
+    const products = (await getAllProductsByCategory(category.id)) ?? [];
 
-      return paginate(products, {
+    results.push(
+      paginate(products, {
         params: {
           slug: category.slug,
         },
@@ -34,9 +35,9 @@ export async function getStaticPaths({ paginate }: any) {
           category,
         },
         pageSize: 50,
-      });
-    }),
-  );
+      }),
+    );
+  }
 
   return results.flat();
 }

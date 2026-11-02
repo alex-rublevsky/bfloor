@@ -37,24 +37,6 @@ RUN --mount=type=secret,id=SECRET_GOOGLE_CLIENT,env=SECRET_GOOGLE_CLIENT,require
     --mount=type=secret,id=S3_REGION,env=S3_REGION,required=true \
     --mount=type=secret,id=S3_ACCESS_KEY,env=S3_ACCESS_KEY,required=true \
     --mount=type=secret,id=S3_SECRET_ACCESS_KEY,env=S3_SECRET_ACCESS_KEY,required=true \
-    node --input-type=module -e ' \
-      const url = process.env.PUBLIC_TURSO_DATABASE_URL; \
-      const token = process.env.SECRET_TURSO_AUTH_TOKEN; \
-      console.log(`[turso-build-check] URL present: $${Boolean(url)}; token present: $${Boolean(token)}`); \
-      if (url) { try { console.log(`[turso-build-check] Host: $${new URL(url).hostname}`); } catch { console.log("[turso-build-check] URL is not parseable"); } } \
-      if (!url || !token) process.exit(2); \
-      const { createClient } = await import("@libsql/client"); \
-      const client = createClient({ url, authToken: token, intMode: "number" }); \
-      try { await client.execute("SELECT 1"); console.log("[turso-build-check] SELECT 1 succeeded"); } \
-      catch (error) { \
-        console.error(`[turso-build-check] Query failed: $${error?.name ?? "Error"}: $${error?.message ?? error}`); \
-        for (let cause = error?.cause, depth = 1; cause && depth <= 4; cause = cause.cause, depth++) { \
-          console.error(`[turso-build-check] Cause $${depth}: $${cause.name ?? "Error"}: $${cause.message ?? cause}`); \
-          if (cause.code) console.error(`[turso-build-check] Cause $${depth} code: $${cause.code}`); \
-        } \
-        process.exitCode = 1; \
-      } finally { client.close(); } \
-    ' && \
     pnpm build
 
 # remove devDeps
