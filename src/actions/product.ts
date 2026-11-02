@@ -320,6 +320,7 @@ const productFields = {
   discountedPrice: nullableNumber("Скидка"),
   description,
   importantNote: description,
+  dimensions: description,
   storeLocationIds,
   unitOfMeasurement,
   squareMetersPerPack: nullableNumber("Площадь упаковки"),
@@ -380,6 +381,7 @@ export const product = {
           discountedPrice: input.discountedPrice,
           description: input.description,
           importantNote: input.importantNote,
+          dimensions: input.dimensions,
           // images: media.finalImages,
           storeLocationIds: input.storeLocationIds,
           unitOfMeasurement: input.unitOfMeasurement,
@@ -495,6 +497,7 @@ export const product = {
         // images: media.finalImages,
         unitOfMeasurement: input.unitOfMeasurement,
         squareMetersPerPack: input.squareMetersPerPack,
+        dimensions: input.dimensions,
         productAttributeValues: productAttributeValues,
       });
       if (updateResult === null) {

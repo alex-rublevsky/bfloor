@@ -29,6 +29,7 @@ export async function updateProduct(
         importantNote: product.importantNote,
         unitOfMeasurement: product.unitOfMeasurement,
         squareMetersPerPack: product.squareMetersPerPack,
+        dimensions: product.dimensions,
       })
       .where(eq(products.id, product.id))
       .returning();
