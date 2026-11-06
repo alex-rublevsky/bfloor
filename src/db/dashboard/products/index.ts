@@ -6,7 +6,7 @@ export type {
   ProductFormData,
 } from "./types";
 
-export { getAllProducts } from "./allProducts";
+export { getAllProductsByCategory } from "./allProductsByCategory";
 export { getProductBySlug } from "./productBySlug";
 export { createProduct } from "./createProduct";
 export { updateProduct } from "./updateProduct";

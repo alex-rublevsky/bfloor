@@ -1,0 +1,53 @@
+---
+import { getAllCategories } from "@/db/dashboard/categories";
+import Select from "../shared/Select.astro";
+
+interface Props {
+  categoryId: number;
+}
+
+const { categoryId } = Astro.props;
+
+const categories = await getAllCategories();
+---
+
+<!--
+placeholder="Выбрать"
+error={inputErrors.categoryId}
+-->
+<div class="filtersBlock">
+  <Select
+    name="categoryId"
+    label="Категория"
+    value={String(categoryId)}
+    options={categories.map((category) => ({
+      value: String(category.id),
+      label: category.name,
+    }))}
+    required
+    aria-describedby="error-categoryId"
+  />
+</div>
+
+<style>
+  .filtersBlock {
+    padding: var(--section-padding-x);
+  }
+</style>
+
+<script>
+  const categorySelect = document.querySelector("select") as HTMLSelectElement;
+
+  categorySelect.onchange = (e) => {
+    setFilter("categoryId", (e.target as HTMLInputElement).value);
+  };
+
+  function setFilter(key: string, value: string) {
+    const url = new URL(location.href);
+
+    if (value) url.searchParams.set(key, value);
+    else url.searchParams.delete(key);
+
+    window.location.replace(url);
+  }
+</script>

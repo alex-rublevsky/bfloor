@@ -1,11 +1,15 @@
 ---
 import DashboardLayout from "@/layouts/DashboardLayout.astro";
-import DashboardProductFeed from "@/components/dashboard/DashboardProductFeed.astro";
+import ProductFeed from "@/components/dashboard/ProductFeed.astro";
+import ProductFiltering from "@/components/dashboard/ProductFiltering.astro";
+
+const categoryId = Number(Astro.url.searchParams.get("categoryId")) || 1;
 ---
 
 <DashboardLayout>
-  <main>
-    <DashboardProductFeed />
+  <main class="pt-xl">
+    <ProductFiltering categoryId={categoryId} />
+    <ProductFeed categoryId={categoryId} />
   </main>
 </DashboardLayout>
 

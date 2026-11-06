@@ -1,14 +1,20 @@
 ---
-import { getAllProducts } from "@/db/dashboard/products/allProducts";
+import { getAllProductsByCategory } from "@/db/dashboard/products/allProductsByCategory";
 import DashboardProductCard from "@/components/dashboard/DashboardProductCard.astro";
 
-const products = await getAllProducts(1);
+interface Props {
+  categoryId: number;
+}
+const { categoryId } = Astro.props;
+
+const page = 1;
+const products = await getAllProductsByCategory(categoryId, page);
 ---
 
 <>
   {
-    products.length > 0 ? (
-      <section class="autoGrid pt-xl">
+    products && products.length > 0 ? (
+      <section class="autoGrid">
         <h1 class="sr-only">Товары</h1>
         {products.map((product) => (
           <DashboardProductCard product={product} />
