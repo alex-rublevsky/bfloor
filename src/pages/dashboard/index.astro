@@ -3,13 +3,23 @@ import DashboardLayout from "@/layouts/DashboardLayout.astro";
 import ProductFeed from "@/components/dashboard/ProductFeed.astro";
 import ProductFiltering from "@/components/dashboard/ProductFiltering.astro";
 
-const categoryId = Number(Astro.url.searchParams.get("categoryId")) || 1;
+const categoryId = Number(Astro.url.searchParams.get("categoryId")) || null;
+const brandId = Number(Astro.url.searchParams.get("brandId")) || null;
+const collectionId = Number(Astro.url.searchParams.get("collectionId")) || null;
 ---
 
 <DashboardLayout>
   <main class="pt-xl">
-    <ProductFiltering categoryId={categoryId} />
-    <ProductFeed categoryId={categoryId} />
+    <ProductFiltering
+      categoryId={categoryId ? String(categoryId) : ""}
+      brandId={brandId ? String(brandId) : ""}
+      collectionId={collectionId ? String(collectionId) : ""}
+    />
+    <ProductFeed
+      categoryId={categoryId}
+      brandId={brandId}
+      collectionId={collectionId}
+    />
   </main>
 </DashboardLayout>
 

@@ -1,14 +1,26 @@
 ---
 import { getAllCategories } from "@/db/dashboard/categories";
+import { getBrandsWithCollections } from "@/db/dashboard/brands";
 import Select from "../shared/Select.astro";
 
 interface Props {
-  categoryId: number;
+  categoryId: string;
+  brandId: string;
+  collectionId: string;
 }
 
-const { categoryId } = Astro.props;
+const { categoryId, brandId, collectionId } = Astro.props;
 
 const categories = await getAllCategories();
+const brandsWithCollections = await getBrandsWithCollections();
+const selectedBrand = brandsWithCollections.find(
+  (brand) => String(brand.id) === brandId,
+);
+const selectedBrandId = selectedBrand ? brandId : "";
+const collectionBelongsToBrand = selectedBrand?.collections.some(
+  (collection) => String(collection.id) === collectionId,
+);
+const selectedCollectionId = collectionBelongsToBrand ? collectionId : "";
 ---
 
 <!--
@@ -19,34 +31,73 @@ error={inputErrors.categoryId}
   <Select
     name="categoryId"
     label="Категория"
-    value={String(categoryId)}
+    value={categoryId}
+    placeholder="Все"
     options={categories.map((category) => ({
       value: String(category.id),
       label: category.name,
     }))}
-    required
     aria-describedby="error-categoryId"
+  />
+  <Select
+    name="brandId"
+    label="Бренд"
+    value={selectedBrandId}
+    placeholder="Все"
+    options={brandsWithCollections.map((brand) => ({
+      value: String(brand.id),
+      label: brand.name,
+    }))}
+  />
+  <Select
+    name="collectionId"
+    label="Коллекция"
+    value={selectedCollectionId}
+    placeholder={selectedBrandId ? "Все" : "Сначала выберите бренд"}
+    options={selectedBrand?.collections.map((collection) => ({
+      value: String(collection.id),
+      label: collection.name,
+    })) ?? []}
+    disabled={!selectedBrandId}
   />
 </div>
 
 <style>
   .filtersBlock {
+    display: flex;
+    gap: var(--spacing-3xs);
     padding: var(--section-padding-x);
   }
 </style>
 
 <script>
-  const categorySelect = document.querySelector("select") as HTMLSelectElement;
+  const filters = document.querySelector<HTMLElement>(".filtersBlock")!;
+  const categorySelect =
+    filters.querySelector<HTMLSelectElement>("#select-categoryId")!;
+  const brandSelect =
+    filters.querySelector<HTMLSelectElement>("#select-brandId")!;
+  const collectionSelect = filters.querySelector<HTMLSelectElement>(
+    "#select-collectionId",
+  )!;
+  categorySelect.addEventListener("change", () =>
+    setFilter("categoryId", categorySelect.value),
+  );
+  brandSelect.addEventListener("change", () =>
+    setFilter("brandId", brandSelect.value, ["collectionId"]),
+  );
+  collectionSelect.addEventListener("change", () =>
+    setFilter("collectionId", collectionSelect.value),
+  );
 
-  categorySelect.onchange = (e) => {
-    setFilter("categoryId", (e.target as HTMLInputElement).value);
-  };
-
-  function setFilter(key: string, value: string) {
+  function setFilter(key: string, value: string, clearKeys: string[] = []) {
     const url = new URL(location.href);
 
     if (value) url.searchParams.set(key, value);
     else url.searchParams.delete(key);
+
+    for (const clearKey of clearKeys) {
+      url.searchParams.delete(clearKey);
+    }
 
     window.location.replace(url);
   }

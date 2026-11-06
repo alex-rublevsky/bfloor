@@ -3,12 +3,17 @@ import { getAllProductsByCategory } from "@/db/dashboard/products/allProductsByC
 import DashboardProductCard from "@/components/dashboard/DashboardProductCard.astro";
 
 interface Props {
-  categoryId: number;
+  categoryId: number | null;
+  brandId: number | null;
+  collectionId: number | null;
 }
-const { categoryId } = Astro.props;
+const { categoryId, brandId, collectionId } = Astro.props;
 
 const page = 1;
-const products = await getAllProductsByCategory(categoryId, page);
+const products = await getAllProductsByCategory(categoryId, page, {
+  brandId,
+  collectionId,
+});
 ---
 
 <>
