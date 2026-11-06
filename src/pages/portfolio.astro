@@ -3,9 +3,45 @@ import Layout from "../layouts/Layout.astro";
 import { Image } from "astro:assets";
 export const prerender = true;
 import { BASE_IMAGE_URL, SITE_TITLE } from "@/constants";
+import BeforeAfterImage from "@/components/BeforeAfterImage.astro";
 
 const data = [
-  { name: "", description: "", year: "", logo: "", photos: ["", ""] },
+  { name: "", description: "", year: "2026", logo: "", photos: ["3.jpg"] },
+  {
+    name: "Отделка ступеней",
+    description: "резиновое покрытие + уголок",
+    year: "2026",
+    logo: "",
+    photos: ["13.jpg"],
+  },
+  {
+    name: "Ламинат СВМ Ёлочка",
+    description: `"Коллекция "Ostrost"`,
+    year: "2026",
+    logo: "",
+    photos: ["14.jpg"],
+  },
+  {
+    name: "Спортивное покрытие",
+    description: "с нанесением разметки",
+    year: "2026",
+    logo: "",
+    photos: ["15.jpg"],
+  },
+  {
+    name: "Клеевая пробка",
+    description: "Мансарда, частный дом",
+    year: "2026",
+    logo: "",
+    photos: ["16.jpg"],
+  },
+  {
+    name: "Танцевальное",
+    description: "помещение",
+    year: "2026",
+    logo: "",
+    photos: ["11.jpeg", "12.jpeg"],
+  },
 ];
 ---
 
@@ -15,16 +51,39 @@ const data = [
     <h1>Наши работы</h1>
     <div class="autoGrid">
       {
-        data.forEach((entry) => (
-          <a href="">
-              <Image src={BASE_IMAGE_URL + entry.photos[0]} width={500} height={500} alt=`Изображение объекта ${entry.name}` />
+        data.map((entry) => (
+          <div>
+            {entry.photos.length > 1 ? (
+              <BeforeAfterImage
+                beforeSrc={BASE_IMAGE_URL + "portfolio/" + entry.photos[0]}
+                afterSrc={BASE_IMAGE_URL + "portfolio/" + entry.photos[1]}
+                alt={""}
+              />
+            ) : (
+              <Image
+                src={BASE_IMAGE_URL + "portfolio/" + entry.photos[0]}
+                width={1000}
+                height={1000}
+                fit="contain"
+                class="skeleton h-70 w-auto object-contain"
+                onload="this.closest('.skeleton')?.classList.remove('skeleton')"
+                alt={"Изображение объекта " + entry.name}
+              />
+            )}
             <h4>{entry.name}</h4>
             <span>{entry.year}</span>
             {entry.logo ?? (
-              <Image src={BASE_IMAGE_URL + entry.logo} width={100} height={100} alt="" />
+              <Image
+                src={BASE_IMAGE_URL + entry.logo}
+                width={100}
+                height={100}
+                class="skeleton"
+                onload="this.closest('.skeleton')?.classList.remove('skeleton')"
+                alt=""
+              />
             )}
             <p>{entry.description}</p>
-          </a>
+          </div>
         ))
       }
     </div>
