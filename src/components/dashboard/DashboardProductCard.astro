@@ -3,10 +3,11 @@ import { Image } from "astro:assets";
 import { BASE_IMAGE_URL } from "@/constants";
 import type { Product } from "@/db/schema";
 import ImagePlaceholder from "../shared/ImagePlaceholder.astro";
+import Checkbox from "../shared/Checkbox.astro";
 
-type Props = { product?: Product };
+// type Props = { product?: Product };
 
-const { product } = Astro.props as Props;
+const { product } = Astro.props;
 
 if (!product) {
   return null;
@@ -17,6 +18,7 @@ const { images } = product;
 
 <a href={`/dashboard/product/${product.slug}`}>
   <div class="entityImageWrapper">
+    <Checkbox />
     <div class="entityImage">
       {
         images ? (
@@ -51,3 +53,21 @@ const { images } = product;
   </div>
   <p class="text-sm">{product.name}</p>
 </a>
+
+<style>
+  .entityImageWrapper {
+    position: relative;
+  }
+
+  .entityImageWrapper > :global(.checkbox-wrapper) {
+    position: absolute;
+    inset: 1rem auto auto 1rem;
+    z-index: 10;
+    visibility: hidden;
+  }
+
+  a:hover .entityImageWrapper > :global(.checkbox-wrapper),
+  a:focus-within .entityImageWrapper > :global(.checkbox-wrapper) {
+    visibility: visible;
+  }
+</style>

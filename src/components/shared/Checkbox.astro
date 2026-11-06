@@ -24,6 +24,7 @@ const { name, value, disabled, checked, ...rest } = Astro.props;
 
 <style>
   .checkbox-wrapper {
+    align-self: center;
     display: inline-flex;
     flex-wrap: nowrap;
     gap: var(--spacing-3xs);
@@ -32,6 +33,7 @@ const { name, value, disabled, checked, ...rest } = Astro.props;
     white-space: nowrap;
     & input {
       align-self: center;
+      width: fit-content;
     }
   }
 </style>

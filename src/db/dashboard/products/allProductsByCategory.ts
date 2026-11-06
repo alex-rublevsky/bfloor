@@ -13,7 +13,7 @@ export async function getAllProductsByCategory(
   filters: ProductFilters = {},
 ): Promise<Product[] | null> {
   const safePage = Math.max(1, Math.floor(page));
-  const offset = (safePage - 1) * 50;
+  const offset = (safePage - 1) * 100;
   const conditions = [
     categoryId ? eq(products.categoryId, categoryId) : undefined,
     filters.brandId ? eq(products.brandId, filters.brandId) : undefined,
