@@ -31,7 +31,7 @@ async function validateBrandUniqueness(
   if (suchBrandAlreadyExists) {
     throw new ActionError({
       code: "CONFLICT",
-      message: "Бренд с таким названием или ярлыком уже существует",
+      message: "Производитель с таким названием или ярлыком уже существует",
     });
   }
 }
@@ -85,7 +85,7 @@ export const brand = {
       if (collectionExists) {
         throw new ActionError({
           code: "CONFLICT",
-          message: "Перед удалением бренда удалите его коллекции",
+          message: "Перед удалением производителя удалите его коллекции",
         });
       }
       const [productExists] = await db
@@ -97,7 +97,7 @@ export const brand = {
       if (productExists) {
         throw new ActionError({
           code: "CONFLICT",
-          message: "Перед удалением бренда удалите его товары",
+          message: "Перед удалением производителя удалите его товары",
         });
       }
 
@@ -107,7 +107,7 @@ export const brand = {
       if (deletionResult === null) {
         throw new ActionError({
           code: "NOT_FOUND",
-          message: "Бренд не найден",
+          message: "Производитель не найден",
         });
       } else {
         return deletionResult;
@@ -132,7 +132,7 @@ export const brand = {
       if (!thisBrandExists) {
         throw new ActionError({
           code: "NOT_FOUND",
-          message: "Бренд не найден",
+          message: "Производитель не найден",
         });
       }
 
@@ -149,7 +149,7 @@ export const brand = {
       if (updateResult === null) {
         throw new ActionError({
           code: "NOT_FOUND",
-          message: "Бренд не найден",
+          message: "Производитель не найден",
         });
       } else {
         return updateResult;

@@ -51,7 +51,7 @@ function syncCollectionOptions() {
   }
 
   collectionSelect.append(
-    new Option(brandId ? "Выбрать" : "Сначала выберите бренд", ""),
+    new Option(brandId ? "Выбрать" : "Выберите производителя", ""),
   );
 
   for (const collection of collections) {

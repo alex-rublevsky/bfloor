@@ -9,7 +9,7 @@ const collectionId = Number(Astro.url.searchParams.get("collectionId")) || null;
 ---
 
 <DashboardLayout>
-  <main class="pt-xl">
+  <main>
     <ProductFiltering
       categoryId={categoryId ? String(categoryId) : ""}
       brandId={brandId ? String(brandId) : ""}
@@ -28,3 +28,99 @@ const collectionId = Number(Astro.url.searchParams.get("collectionId")) || null;
 
   clearFormDrafts(PRODUCT_FORM_DRAFT_PREFIX);
 </script>
+
+<script>
+  const productCheckbox = '.checkbox-input[name="products"]';
+
+  document.addEventListener("change", (event) => {
+    if (
+      event.target instanceof HTMLInputElement &&
+      event.target.matches(productCheckbox)
+    ) {
+      updateSelectionUI();
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!(event.target instanceof Element)) return;
+
+    const cancelButton = event.target.closest("[data-selection-cancel]");
+    if (cancelButton) {
+      clearSelection();
+      return;
+    }
+
+    const link = event.target.closest<HTMLAnchorElement>(
+      ".autoGrid .product-card > a",
+    );
+    if (!link) return;
+
+    const grid = link.closest(".autoGrid");
+    if (!grid?.querySelector(`${productCheckbox}:checked`)) return;
+
+    event.preventDefault();
+
+    const checkbox = link
+      .closest(".product-card")
+      ?.querySelector<HTMLInputElement>(productCheckbox);
+
+    if (!checkbox || checkbox.disabled) return;
+
+    checkbox.checked = !checkbox.checked;
+    updateSelectionUI();
+  });
+
+  function updateSelectionUI() {
+    const selectedCount = document.querySelectorAll(
+      `${productCheckbox}:checked`,
+    ).length;
+    const isSelecting = selectedCount > 0;
+    const nav = document.querySelector<HTMLElement>("nav");
+
+    const defaultNav = document.querySelector<HTMLElement>(
+      "[data-selection-default]",
+    );
+    const selectionNav = document.querySelector<HTMLElement>(
+      "[data-selection-actions]",
+    );
+    const filtersBlock = document.querySelector<HTMLElement>(".filtersBlock");
+
+    if (nav) nav.dataset.selecting = String(isSelecting);
+
+    if (defaultNav) {
+      defaultNav.inert = isSelecting;
+      defaultNav.setAttribute("aria-hidden", String(isSelecting));
+    }
+
+    if (selectionNav) {
+      selectionNav.inert = !isSelecting;
+      selectionNav.setAttribute("aria-hidden", String(!isSelecting));
+    }
+
+    if (filtersBlock) {
+      filtersBlock.dataset.hidden = String(isSelecting);
+      filtersBlock.inert = isSelecting;
+      filtersBlock.setAttribute("aria-hidden", String(isSelecting));
+    }
+  }
+
+  function clearSelection() {
+    document
+      .querySelectorAll<HTMLInputElement>(`${productCheckbox}:checked`)
+      .forEach((checkbox) => {
+        checkbox.checked = false;
+      });
+
+    updateSelectionUI();
+  }
+
+  updateSelectionUI();
+</script>
+
+<style>
+  @media (width >= 768) {
+    main {
+      padding-top: var(--spacing-xl);
+    }
+  }
+</style>

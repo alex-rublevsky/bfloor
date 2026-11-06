@@ -16,58 +16,63 @@ if (!product) {
 const { images } = product;
 ---
 
-<a href={`/dashboard/product/${product.slug}`}>
-  <div class="entityImageWrapper">
-    <Checkbox />
-    <div class="entityImage">
-      {
-        images ? (
-          <Image
-            src={BASE_IMAGE_URL + images[0]}
-            width={500}
-            height={500}
-            alt={product.name}
-            loading="lazy"
-            class="skeleton object-cover mix-blend-darken"
-            onload="this.closest('.skeleton')?.classList.remove('skeleton')"
-          />
-        ) : (
-          <ImagePlaceholder />
-        )
-      }
+<article class="product-card">
+  <Checkbox name="products" value={product.id} />
+  <a href={`/dashboard/product/${product.slug}`}>
+    <div class="entityImageWrapper">
+      <div class="entityImage">
+        {
+          images ? (
+            <Image
+              src={BASE_IMAGE_URL + images[0]}
+              width={500}
+              height={500}
+              alt={product.name}
+              loading="lazy"
+              class="skeleton object-cover mix-blend-darken"
+              onload="this.closest('.skeleton')?.classList.remove('skeleton')"
+            />
+          ) : (
+            <ImagePlaceholder />
+          )
+        }
+      </div>
     </div>
-  </div>
-  <div class="flex gap-2xs">
-    {
-      product.discountedPrice ? (
-        <p>
-          {product.hasVariations ? "от " : ""}
-          {product.discountedPrice}Р
-        </p>
-      ) : null
-    }
-    <p
-      class={`${product.discountedPrice ? "line-through text-foreground-muted" : undefined}`}>
-      {product.hasVariations ? "от " : ""}{product.price}Р
-    </p>
-  </div>
-  <p class="text-sm">{product.name}</p>
-</a>
-
+    <div class="flex gap-2xs">
+      {
+        product.discountedPrice ? (
+          <p>
+            {product.hasVariations ? "от " : ""}
+            {product.discountedPrice}Р
+          </p>
+        ) : null
+      }
+      <p
+        class={`${product.discountedPrice ? "line-through text-foreground-muted" : undefined}`}>
+        {product.hasVariations ? "от " : ""}{product.price}Р
+      </p>
+    </div>
+    <p class="text-sm">{product.name}</p>
+  </a>
+</article>
 <style>
-  .entityImageWrapper {
+  .product-card {
     position: relative;
   }
 
-  .entityImageWrapper > :global(.checkbox-wrapper) {
+  .product-card > :global(.checkbox-wrapper) {
     position: absolute;
-    inset: 1rem auto auto 1rem;
+    inset: var(--spacing-2xs) auto auto var(--spacing-2xs);
     z-index: 10;
     visibility: hidden;
+    & input[type="checkbox"] {
+      width: var(--text-md);
+      height: var(--text-md);
+    }
   }
 
-  a:hover .entityImageWrapper > :global(.checkbox-wrapper),
-  a:focus-within .entityImageWrapper > :global(.checkbox-wrapper) {
+  .product-card:hover > :global(.checkbox-wrapper),
+  .product-card:focus-within > :global(.checkbox-wrapper) {
     visibility: visible;
   }
 </style>

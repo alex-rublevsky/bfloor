@@ -32,3 +32,9 @@ const products = await getAllProductsByCategory(categoryId, page, {
     )
   }
 </>
+
+<style>
+  .autoGrid:has(:global(.checkbox-input:checked)) :global(.checkbox-wrapper) {
+    visibility: visible;
+  }
+</style>

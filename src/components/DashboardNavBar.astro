@@ -11,7 +11,7 @@ const navItems = [
     match: "exact" as const,
   },
   {
-    label: "Бренды",
+    label: "Производители",
     href: "/dashboard/brands",
     match: "exact" as const,
   },
@@ -43,7 +43,7 @@ const createItems = [
     match: "exact" as const,
   },
   {
-    label: "Бренд",
+    label: "Производитель",
     href: "/dashboard/brands",
     dataEntity: "brand",
     commandFor: "brand-dialog",
@@ -66,47 +66,60 @@ const isActive = (href: string, match: "exact" | "prefix") =>
 const hasCreateButton = (href: string) => pathname === href;
 ---
 
-<nav>
-  <div class="leftBlock">
-    <div class="navItemsWrapper">
-      <!-- TODO: all button variants except for ghost have bg-transition class. why does it not work in these links? -->
+<nav data-selecting="false">
+  <div data-selection-default>
+    <div class="leftBlock">
+      <div class="navItemsWrapper">
+        <!-- TODO: all button variants except for ghost have bg-transition class. why does it not work in these links? -->
+        {
+          navItems.map((item) => (
+            <Button
+              size="sm"
+              href={item.href}
+              variant="tertiary"
+              data-active={isActive(item.href, item.match) ? "" : undefined}>
+              {item.label}
+            </Button>
+          ))
+        }
+
+        <Button
+          size="sm"
+          class="store-button mobile"
+          variant="tertiary"
+          href="/">Магазин</Button
+        >
+      </div>
+
       {
-        navItems.map((item) => (
+        createItems.map((item) => (
           <Button
-            size="sm"
-            href={item.href}
-            variant="tertiary"
-            data-active={isActive(item.href, item.match) ? "" : undefined}>
+            class="createButton"
+            href={item.hrefTo}
+            data-entity={item.dataEntity ?? undefined}
+            data-mode={item.commandFor ? "create" : undefined}
+            command={item.commandFor ? "show-modal" : undefined}
+            commandfor={item.commandFor ?? undefined}
+            style={hasCreateButton(item.href) ? null : "display: none"}>
+            <Icon name="plus" title={`Создать ${item.label}`} />
             {item.label}
           </Button>
         ))
       }
-
-      <Button size="sm" class="store-button mobile" variant="tertiary" href="/"
-        >Магазин</Button
-      >
     </div>
 
-    {
-      createItems.map((item) => (
-        <Button
-          class="createButton"
-          href={item.hrefTo}
-          data-entity={item.dataEntity ?? undefined}
-          data-mode={item.commandFor ? "create" : undefined}
-          command={item.commandFor ? "show-modal" : undefined}
-          commandfor={item.commandFor ?? undefined}
-          style={hasCreateButton(item.href) ? null : "display: none"}>
-          <Icon name="plus" title={`Создать ${item.label}`} />
-          {item.label}
-        </Button>
-      ))
-    }
+    <Button class="store-button desktop" variant="tertiary" href="/"
+      >Магазин</Button
+    >
   </div>
-
-  <Button class="store-button desktop" variant="tertiary" href="/"
-    >Магазин</Button
-  >
+  <div data-selection-actions inert aria-hidden="true">
+    <Button data-selection-edit variant="primary" size="lg">
+      Изменить выбранные
+    </Button>
+    <Button data-selection-cancel variant="tertiary" size="lg">
+      Отменить выделение
+    </Button>
+  </div>
 </nav>
 
 <style>
@@ -114,23 +127,33 @@ const hasCreateButton = (href: string) => pathname === href;
     display: block;
   }
   nav {
+    display: grid;
     position: fixed;
     left: var(--spacing-3xs);
     right: var(--spacing-3xs);
     top: var(--spacing-3xs);
-    display: flex;
-    flex-direction: row;
-    gap: var(--spacing-sm);
-    justify-content: space-between;
-    z-index: 2;
+    z-index: 20;
     pointer-events: none;
+
+    & div {
+      display: flex;
+      flex-direction: row;
+      gap: var(--spacing-sm);
+      justify-content: space-between;
+
+      & button {
+        pointer-events: auto;
+      }
+    }
 
     .createButton {
       align-self: center;
     }
+
     .store-button {
       align-self: center;
       pointer-events: auto;
+
       &.mobile {
         display: none;
       }
@@ -150,6 +173,39 @@ const hasCreateButton = (href: string) => pathname === href;
       padding: var(--spacing-3xs);
       backdrop-filter: blur(0.3rem);
       border-radius: var(--radius-sm);
+    }
+
+    & :is([data-selection-default], [data-selection-actions]) {
+      pointer-events: none;
+      grid-area: 1 / 1;
+      transition:
+        opacity 170ms ease,
+        translate 170ms ease,
+        visibility 170ms;
+    }
+
+    & [data-selection-default] {
+      opacity: 1;
+      translate: 0 0;
+      visibility: visible;
+    }
+
+    & [data-selection-actions] {
+      opacity: 0;
+      translate: 0 0.4rem;
+      visibility: hidden;
+    }
+
+    &[data-selecting="true"] > [data-selection-default] {
+      opacity: 0;
+      translate: 0 -0.4rem;
+      visibility: hidden;
+    }
+
+    &[data-selecting="true"] > [data-selection-actions] {
+      opacity: 1;
+      translate: 0 0;
+      visibility: visible;
     }
   }
 

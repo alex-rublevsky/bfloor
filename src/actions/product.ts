@@ -89,7 +89,7 @@ async function validateBrandAndCollection(
   if (!brandId && collectionId) {
     throw new ActionError({
       code: "BAD_REQUEST",
-      message: "Коллекция не может быть выбрана без бренда",
+      message: "Коллекция не может быть выбрана без производителя",
     });
   }
 
@@ -104,7 +104,7 @@ async function validateBrandAndCollection(
     if (!existingBrand) {
       throw new ActionError({
         code: "NOT_FOUND",
-        message: "Выбранного бренда не существует",
+        message: "Выбранного производителя не существует",
       });
     }
   }
@@ -128,7 +128,7 @@ async function validateBrandAndCollection(
     if (collection.brandId !== brandId) {
       throw new ActionError({
         code: "BAD_REQUEST",
-        message: "Выбранная коллекция не принадлежит выбранному бренду",
+        message: "Выбранная коллекция не принадлежит выбранному производителю",
       });
     }
   }
@@ -237,7 +237,7 @@ async function validateSKU(
       throw new ActionError({
         code: "CONFLICT",
         message:
-          "Такой артикул уже существует среди всех товаров. Если выбрать определённый бренд, то артикул должен будет быть уникальным лишь в контексте выбранного бренда",
+          "Такой артикул уже существует среди всех товаров. Если выбрать определённого производителя, то артикул должен будет быть уникальным лишь в контексте выбранного бренда",
       });
     }
   }
@@ -309,8 +309,8 @@ const productFields = {
     })
     .positive("ID категории должен быть больше нуля"),
   brandId: z
-    .int("ID бренда должно быть целым числом")
-    .positive("ID бренда должен быть больше нуля")
+    .int("ID производителя должно быть целым числом")
+    .positive("ID производителя должен быть больше нуля")
     .nullable(),
   collectionId: z
     .int("ID коллекции должно быть целым числом")

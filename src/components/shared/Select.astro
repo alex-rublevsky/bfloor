@@ -81,6 +81,14 @@ const hasError = !!error;
     &:open::picker-icon {
       rotate: 180deg;
     }
+    & button {
+      line-height: 1.07;
+    }
+    @media (width < 768px) {
+      & button {
+        font-size: var(--text-sm);
+      }
+    }
   }
 
   ::picker(select) {

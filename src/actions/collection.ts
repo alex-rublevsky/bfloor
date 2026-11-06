@@ -21,7 +21,7 @@ async function validateBrandExisting(brandId: number) {
   if (!existingBrand) {
     throw new ActionError({
       code: "NOT_FOUND",
-      message: "Выбранного бренда не существует",
+      message: "Выбранного производителя не существует",
     });
   }
 }
@@ -50,7 +50,7 @@ async function validateCollectionUniquenessWithinBrand(
     throw new ActionError({
       code: "CONFLICT",
       message:
-        "Коллекция с таким названием или ярлыком уже существует у этого бренда",
+        "Коллекция с таким названием или ярлыком уже существует у этого производителя",
     });
   }
 }
@@ -58,7 +58,7 @@ async function validateCollectionUniquenessWithinBrand(
 const collectionFields = {
   name,
   slug,
-  brandId: id("бренда"),
+  brandId: id("производителя"),
 };
 
 export const collection = {

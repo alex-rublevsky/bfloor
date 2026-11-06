@@ -93,7 +93,7 @@ const importantNoteHTML = product.importantNote
     {
       brand ? (
         <div class="description-row items-center">
-          <dt>Бренд:</dt>
+          <dt>Производитель:</dt>
           <a>
             <dd>
               {brand.image ? (
@@ -105,7 +105,7 @@ const importantNoteHTML = product.importantNote
                     fit="contain"
                     class="skeleton brand-image"
                     onload="this.closest('.skeleton')?.classList.remove('skeleton')"
-                    alt={"Логотип бренда " + brand.name}
+                    alt={"Логотип производителя " + brand.name}
                     data-pagefind-ignore
                   />
                   <span class="sr-only" data-pagefind-filter="Производитель">

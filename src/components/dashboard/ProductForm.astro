@@ -230,7 +230,7 @@ considering that this is a native form? -->
             <div class="inputRowWrapper">
               <Select
                 name="brandId"
-                label="Бренд"
+                label="Производитель"
                 placeholder="Выбрать"
                 value={selectedBrandId}
                 options={brandsWithCollections.map((brand) => ({
@@ -245,7 +245,7 @@ considering that this is a native form? -->
                 label="Коллекция"
                 placeholder={selectedBrandId
                   ? "Выбрать"
-                  : "Сначала выберите бренд"}
+                  : "Выберите производителя"}
                 value={selectedCollectionId}
                 options={initialCollectionOptions}
                 disabled={!selectedBrandId}

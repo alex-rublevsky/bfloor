@@ -37,7 +37,7 @@ const selectedCollectionId = collectionBelongsToBrand ? collectionId : "";
   />
   <Select
     name="brandId"
-    label="Бренд"
+    label="Производитель"
     value={selectedBrandId}
     placeholder="Все"
     options={brandsWithCollections.map((brand) => ({
@@ -49,7 +49,7 @@ const selectedCollectionId = collectionBelongsToBrand ? collectionId : "";
     name="collectionId"
     label="Коллекция"
     value={selectedCollectionId}
-    placeholder={selectedBrandId ? "Все" : "Сначала выберите бренд"}
+    placeholder={selectedBrandId ? "Все" : "Выберите производителя"}
     options={selectedBrand?.collections.map((collection) => ({
       value: String(collection.id),
       label: collection.name,
@@ -62,7 +62,27 @@ const selectedCollectionId = collectionBelongsToBrand ? collectionId : "";
   .filtersBlock {
     display: flex;
     gap: var(--spacing-3xs);
-    padding: var(--section-padding-x);
+    padding-inline: var(--section-padding-x);
+    padding-block: var(--spacing-sm);
+
+    opacity: 1;
+    translate: 0 0;
+    visibility: visible;
+    transition:
+      opacity 170ms ease,
+      translate 170ms ease,
+      visibility 170ms;
+
+    @media (width < 768px) {
+      padding-top: var(--spacing-md);
+    }
+  }
+
+  .filtersBlock[data-hidden="true"] {
+    opacity: 0;
+    translate: 0 -0.4rem;
+    visibility: hidden;
+    pointer-events: none;
   }
 </style>
 

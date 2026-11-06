@@ -17,7 +17,7 @@ const brandsWithCollections = await getBrandsWithCollections();
     {
       brandsWithCollections.length > 0 ? (
         <section class="pt-xl bg-muted/30 autoGrid">
-          <h1 class="sr-only">Бренды и коллекции</h1>
+          <h1 class="sr-only">Производители и коллекции</h1>
           {brandsWithCollections.map((brand) => (
             // TODO: somehow implement the name to be there for search, but not be visible for brand entries
             <div class="bg-background rounded-md p-2xs">
@@ -40,7 +40,7 @@ const brandsWithCollections = await getBrandsWithCollections();
                     fit="contain"
                     class="skeleton size-full object-contain mix-blend-darken"
                     onload="this.closest('.skeleton')?.classList.remove('skeleton')"
-                    alt={"Логотип бренда " + brand.name}
+                    alt={"Логотип производителя " + brand.name}
                   />
                 ) : (
                   <h3 class="size-full text-center place-content-center">
@@ -94,7 +94,7 @@ const brandsWithCollections = await getBrandsWithCollections();
         </section>
       ) : (
         <section class="h-screen grid place-items-center">
-          <h1 class="text-lg!">Брендов не найдено</h1>
+          <h1 class="text-lg!">Производителей не найдено</h1>
         </section>
       )
     }
@@ -151,7 +151,7 @@ const brandsWithCollections = await getBrandsWithCollections();
         <!-- TODO: is this brand options from brandsWithCollections appropriate? -->
         <Select
           name="brandId"
-          label="Бренд"
+          label="Производитель"
           placeholder="Выбрать"
           options={brandsWithCollections.map((brand) => ({
             value: String(brand.id),
@@ -390,10 +390,10 @@ const brandsWithCollections = await getBrandsWithCollections();
     title.textContent =
       mode === "create"
         ? entity === "brand"
-          ? "Создание бренда"
+          ? "Создание производителя"
           : "Создание коллекции"
         : entity === "brand"
-          ? "Редактирование бренда"
+          ? "Редактирование производителя"
           : "Редактирование коллекции";
 
     submitButton.querySelector(".submit-button-text")!.textContent =
@@ -491,7 +491,7 @@ const brandsWithCollections = await getBrandsWithCollections();
 
       if (
         !confirm(
-          `Удалить ${entity === "brand" ? "бренд" : "коллекцию"} ${name}?`,
+          `Удалить ${entity === "brand" ? "производителя" : "коллекцию"} ${name}?`,
         )
       ) {
         return;
