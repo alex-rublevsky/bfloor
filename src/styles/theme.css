@@ -293,6 +293,13 @@ dialog {
   }
 }
 
+.dialogInputsBlock {
+  display: grid;
+  gap: var(--spacing-2xs);
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+}
+
 fieldset {
   border: var(--border-width) solid var(--muted);
   border-radius: var(--radius-md);

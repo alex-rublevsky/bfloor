@@ -75,8 +75,8 @@ const attributes = await getAllAttributes();
           <Icon name="x" aria-hidden="true" />
         </Button>
       </div>
-      <div class="inputsBlock">
-        <div class="nameSlugBlock">
+      <div class="dialogInputsBlock">
+        <div>
           <Input
             name="name"
             aria-describedby="error-name"
@@ -168,16 +168,10 @@ const attributes = await getAllAttributes();
     grid-template-columns: 1fr auto;
     align-items: center;
   }
-  .inputsBlock {
+
+  .dialogInputsBlock div:first-child {
     display: grid;
     gap: var(--spacing-2xs);
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
-
-    & .nameSlugBlock {
-      display: grid;
-      gap: var(--spacing-2xs);
-    }
   }
 </style>
 
