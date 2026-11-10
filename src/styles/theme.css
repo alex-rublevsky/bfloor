@@ -195,17 +195,21 @@
     }
   }
 
-  /*textarea {
-    field-sizing: content;
-  }*/
-
   select,
   ::picker(select) {
     appearance: base-select;
   }
 
+  textarea {
+    field-sizing: content;
+    min-height: 3lh;
+    max-height: 50dvh;
+    resize: vertical;
+  }
+
   input,
-  select {
+  select,
+  textarea {
     border: var(--border-width) solid var(--border);
     border-radius: var(--radius-sm);
     background-color: transparent;

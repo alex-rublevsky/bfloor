@@ -61,15 +61,15 @@ TODO: when the input is readonly={true}, the text should be foreground-muted col
           id={inputId}
           name={name}
           placeholder={hasLabel ? " " : placeholder}
-          class="input-field textarea-field"
+          class="input-field"
           required={required || undefined}
           aria-invalid={hasError ? "true" : undefined}
           rows={rows}
           disabled={disabled}
           autocomplete={autocomplete}
-          {...rest}>
-          {fieldValue}
-        </textarea>
+          set:text={fieldValue}
+          {...rest}
+        />
       ) : (
         <input
           id={inputId}
@@ -105,20 +105,14 @@ TODO: when the input is readonly={true}, the text should be foreground-muted col
 
 <style>
   /*this padding is to be synced with select's*/
-  input {
+  input,
+  textarea {
     padding-inline: var(--spacing-xs);
     padding-block: 0.5em;
   }
 
   .input-control {
     position: relative;
-  }
-
-  .textarea-field {
-    height: auto;
-    min-height: 3lh;
-    /*padding-block: 1.125rem 0.625rem;*/
-    resize: vertical;
   }
 
   .input-label {
@@ -133,8 +127,8 @@ TODO: when the input is readonly={true}, the text should be foreground-muted col
     transition: 0.17s ease-out;
   }
 
-  .textarea-field + .input-label {
-    top: 1.375rem;
+  textarea + .input-label {
+    top: 1.275rem;
   }
 
   .input-field:focus + .input-label,
