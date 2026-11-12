@@ -112,6 +112,10 @@ export default defineConfig({
   adapter: node({
     mode: "standalone",
   }),
+  server: {
+    /** Слушать 0.0.0.0, а не localhost: иначе приложение недоступно снаружи контейнера */
+    host: true,
+  },
 
   security: {
     allowedDomains: [{ hostname: "bfloor.ru", protocol: "https" }],
