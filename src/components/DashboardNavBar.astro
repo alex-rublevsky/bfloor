@@ -138,7 +138,7 @@ const hasCreateButton = (href: string) => pathname === href;
     & div {
       display: flex;
       flex-direction: row;
-      gap: var(--spacing-sm);
+      gap: var(--spacing-3xs);
       justify-content: space-between;
 
       & button {
@@ -191,6 +191,7 @@ const hasCreateButton = (href: string) => pathname === href;
     }
 
     & [data-selection-actions] {
+      margin-left: auto;
       opacity: 0;
       translate: 0 0.4rem;
       visibility: hidden;
