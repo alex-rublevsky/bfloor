@@ -20,6 +20,7 @@ const { images } = product;
   <Checkbox name="products" value={product.id} />
   <a href={`/dashboard/product/${product.slug}`}>
     <div class="entityImageWrapper">
+      <div class="selectLabel"></div>
       <div class="entityImage">
         {
           images ? (
@@ -58,6 +59,30 @@ const { images } = product;
 <style>
   .product-card {
     position: relative;
+    transition: transform 70ms ease-out;
+  }
+
+  /*without this the checkbox would be left out*/
+  .product-card:has(> a:active) {
+    transform: scale(0.97);
+  }
+
+  .product-card > a:active {
+    transform: none;
+  }
+
+  a {
+    height: 100%;
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-color: var(--accent);
+      border: var(--border-width-thick) solid var(--accent);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 150ms ease;
+    }
   }
 
   .product-card > :global(.checkbox-wrapper) {
@@ -74,5 +99,37 @@ const { images } = product;
   .product-card:hover > :global(.checkbox-wrapper),
   .product-card:focus-within > :global(.checkbox-wrapper) {
     visibility: visible;
+  }
+
+  .entityImageWrapper {
+    display: grid;
+    place-items: center;
+  }
+
+  .entityImage,
+  .selectLabel {
+    grid-area: 1/1;
+  }
+
+  .selectLabel {
+    visibility: hidden;
+    z-index: 10;
+    pointer-events: none;
+    background-color: var(--accent);
+    backdrop-filter: blur(4px);
+    color: var(--background);
+    padding-block: var(--spacing-3xs);
+    padding-inline: var(--spacing-2xs);
+    border-radius: var(--radius-sm);
+    width: fit-content;
+    height: fit-content;
+  }
+
+  .showSelectLabelOnHover:hover .selectLabel {
+    visibility: visible;
+  }
+
+  .showSelectLabelOnHover:hover a::after {
+    opacity: 0.15;
   }
 </style>

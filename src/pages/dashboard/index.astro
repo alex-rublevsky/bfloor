@@ -202,6 +202,8 @@ TODO: add readonly input state styling — gray out
       filtersBlock.inert = isSelecting;
       filtersBlock.setAttribute("aria-hidden", String(isSelecting));
     }
+
+    updateCardLabels(isSelecting);
   }
 
   function clearSelection() {
@@ -212,6 +214,20 @@ TODO: add readonly input state styling — gray out
       });
 
     updateSelectionUI();
+  }
+
+  function updateCardLabels(isSelecting: boolean) {
+    document
+      .querySelectorAll<HTMLElement>(".autoGrid .product-card")
+      .forEach((card) => {
+        card.classList.toggle("showSelectLabelOnHover", isSelecting);
+
+        const label = card.querySelector<HTMLElement>(".selectLabel");
+        if (!label) return;
+
+        const checkbox = card.querySelector<HTMLInputElement>(productCheckbox);
+        label.textContent = checkbox?.checked ? "Убрать" : "Выбрать";
+      });
   }
 
   updateSelectionUI();
