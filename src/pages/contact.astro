@@ -56,7 +56,7 @@ export const prerender = true;
       </div>
       <div>
         <h2 class="text-lg leading-none">Адреса</h2>
-
+        <!-- TODO: Add another data entry to the store locations since having a shopping mall name for the Yandex route button does not work properly so the shopping mall name should be kept for all use cases except for the button -->
         {
           STORE_LOCATIONS.map((location) => (
             <div class="card" data-location-id={location.id}>

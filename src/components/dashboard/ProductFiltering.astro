@@ -23,6 +23,7 @@ const collectionBelongsToBrand = selectedBrand?.collections.some(
 const selectedCollectionId = collectionBelongsToBrand ? collectionId : "";
 ---
 
+<!-- TODO: when a category is selected, only the present within it brands should be shown. what would be the most effective way of doing it? -->
 <div class="filtersBlock">
   <Select
     name="categoryId"
