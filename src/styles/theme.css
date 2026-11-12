@@ -389,6 +389,11 @@ blockquote {
   line-height: 130%;
 }
 
+.small-paragraph {
+  font-size: var(--step--1);
+  line-height: 110%;
+}
+
 blockquote {
   line-height: 1.4;
 }

@@ -1,10 +1,45 @@
 import { db } from "@/db/index";
 import { products, storeLocations, productAttributeValues } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import type {
   ProductWithRelations,
   UpdateProductInput,
 } from "@/db/dashboard/products/types";
+
+export async function bulkUpdateProducts(input: {
+  ids: number[];
+  changes: {
+    price?: number | null;
+    discountedPrice?: number | null;
+  };
+}) {
+  return await db.transaction(async (tx) => {
+    if (Object.keys(input.changes).length > 0) {
+      await tx
+        .update(products)
+        .set(input.changes)
+        .where(inArray(products.id, input.ids));
+    }
+
+    // if (input.storeLocationIds !== undefined) {
+    //   await tx
+    //     .delete(storeLocations)
+    //     .where(inArray(storeLocations.productId, input.ids));
+    //   if (input.storeLocationIds.length > 0) {
+    //     await tx
+    //       .insert(storeLocations)
+    //       .values(
+    //         input.ids.flatMap((productId) =>
+    //           input.storeLocationIds!.map((storeLocationId) => ({
+    //             productId,
+    //             storeLocationId,
+    //           })),
+    //         ),
+    //       );
+    //   }
+    // }
+  });
+}
 
 //TODO: is it appropriate to have UpdateProductInput as a return type?
 // same for the createProduct function

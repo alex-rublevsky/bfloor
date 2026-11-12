@@ -1,6 +1,7 @@
 import {
   deleteProduct,
   updateProduct,
+  bulkUpdateProducts,
   createProduct,
 } from "@/db/dashboard/products/index";
 import { requireAdmin } from "@/lib/api/requireAdmin";
@@ -195,12 +196,18 @@ async function validateDiscount(
     if (price < discountedPrice) {
       throw new ActionError({
         code: "BAD_REQUEST",
-        message: "Скидочная цена не может быть выше основной",
+        message: "Скидочная цена должна быть меньше основной",
       });
     }
     return;
+  } else if (!price && discountedPrice) {
+    throw new ActionError({
+      code: "BAD_REQUEST",
+      message: "Скидочная цена не может быть установлена без основной",
+    });
+  } else {
+    return;
   }
-  return;
 }
 async function validateSKU(
   sku: string | null,
@@ -328,7 +335,94 @@ const productFields = {
   // images: z.array(z.string()).default([]),
 };
 
+const bulkUpdateInput = z
+  .object({
+    mode: z.enum(
+      ["preview", "apply"],
+      "Ошибка типа запроса для группового изменения товара",
+    ),
+    ids: z.array(id("товара")).min(1, "Выберите хотя бы один товар"),
+    price: z
+      .number(`Цена должна быть числом`)
+      .positive(
+        `Благотворительностью не занимаемся, нулевую цену не указываем!`,
+      )
+      .nullable(),
+    discountedPrice: z
+      .number(`Скидочная цена должна быть числом`)
+      .nonnegative(`Скидочная цена не может быть отрицательной`)
+      .nullable(),
+  })
+  .superRefine((input, ctx) => {
+    if (input.price === undefined && input.discountedPrice === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["price"],
+        message: "Укажите хотя бы одно значение для изменения",
+      });
+    }
+  });
+
 export const product = {
+  bulkUpdateProducts: defineAction({
+    accept: "form",
+    input: bulkUpdateInput,
+
+    handler: async (input, { locals }) => {
+      requireAdmin(locals);
+      const ids = [...new Set(input.ids)];
+      const changes: {
+        price?: number | null;
+        discountedPrice?: number | null;
+      } = {};
+
+      // if (input.price === 0) {
+      //   throw new ActionError({
+      //     code: "BAD_REQUEST",
+      //     message:
+      //       "Благотворительностью не занимаемся, нулевую цену не указываем!",
+      //   });
+      // }
+
+      if (input.price !== undefined) {
+        changes.price = input.price;
+      }
+
+      if (input.discountedPrice !== undefined) {
+        changes.discountedPrice = input.discountedPrice;
+
+        validateDiscount(changes.price ?? null, changes.discountedPrice);
+      }
+
+      //       if (Object.keys(changes).length === 0 && !input.applyStoreLocations) {
+      //         throw new ActionError({
+      //           code: "BAD_REQUEST",
+      //           message: "Выберите поля для изменения",
+      //         });
+      //       }
+
+      if (input.mode === "preview") {
+        return {
+          mode: "preview" as const,
+          ids,
+          count: ids.length,
+          changes,
+        };
+      }
+
+      // this is here to allow resetting the discount to 0
+      if (changes.discountedPrice === 0) {
+        changes.discountedPrice = null;
+      }
+
+      await bulkUpdateProducts({ ids, changes });
+
+      return {
+        mode: "applied" as const,
+        updatedCount: ids.length,
+      };
+    },
+  }),
   createProduct: defineAction({
     accept: "form",
     input: z.object(productFields),

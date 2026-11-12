@@ -2,12 +2,18 @@
 import DashboardLayout from "@/layouts/DashboardLayout.astro";
 import ProductFeed from "@/components/dashboard/ProductFeed.astro";
 import ProductFiltering from "@/components/dashboard/ProductFiltering.astro";
+import Button from "@/components/shared/Button.astro";
+import Input from "@/components/shared/Input.astro";
 
 const categoryId = Number(Astro.url.searchParams.get("categoryId")) || null;
 const brandId = Number(Astro.url.searchParams.get("brandId")) || null;
 const collectionId = Number(Astro.url.searchParams.get("collectionId")) || null;
 ---
 
+<!--
+TODO: add transition between the initial and confirmation states
+TODO: add readonly input state styling — gray out
+-->
 <DashboardLayout>
   <main>
     <ProductFiltering
@@ -21,7 +27,100 @@ const collectionId = Number(Astro.url.searchParams.get("collectionId")) || null;
       collectionId={collectionId}
     />
   </main>
+  <dialog
+    id="bulk-edit-dialog"
+    aria-labelledby="modal-title"
+    data-bulk-product-ids>
+    <form>
+      <!-- TODO: show how many products are about to be updated -->
+      <h2 id="modal-title">Групповое изменение товаров</h2>
+
+      <p id="form-error" role="alert" hidden></p>
+      <div id="bulk-product-ids"></div>
+
+      <div class="dialogInputsBlock">
+        <Input
+          name="price"
+          aria-describedby="error-price"
+          label="Цена"
+          type="number"
+          value={""}
+          autofocus
+        />
+        <Input
+          name="discountedPrice"
+          aria-describedby="error-discountedPrice"
+          label="Скидочная цена"
+          type="number"
+          value={""}
+        />
+        <!-- TODO: add description and important note via markdown component -->
+        <!-- TODO: add attribute changes -->
+        <!-- TODO: add store location changes -->
+        <!-- TODO: add isActive changes -->
+      </div>
+
+      <div id="confirmationInfo" hidden>
+        <!-- TODO: добавить логику формы слова товаров/товара  -->
+        <p>
+          У <span class="text-accent" id="countOfProductsToEdit"></span> товаров будут
+          изменены значения: <span class="text-accent" id="fieldsToBeEdited"
+          ></span>
+        </p>
+
+        <!-- TODO: make the note display only when some selected products have variations -->
+        <p class="text-foreground-muted small-paragraph">
+          Значения вариаций изменены не будут, только общие значения товара
+        </p>
+      </div>
+
+      <div class="buttonRow">
+        <Button id="submit-button" type="submit">
+          <span class="submit-button-text"></span>
+        </Button>
+        <Button
+          id="cancel-button"
+          variant="tertiary"
+          command="close"
+          aria-label="Закрыть"
+          commandfor="bulk-edit-dialog">
+          Отмена
+        </Button>
+      </div>
+    </form>
+  </dialog>
 </DashboardLayout>
+
+<style>
+  #modal-title {
+    font-size: var(--text-md);
+    padding-bottom: var(--spacing-xs);
+  }
+
+  #confirmationInfo {
+    display: grid;
+    gap: var(--spacing-3xs);
+    padding-block: var(--spacing-2xs);
+    max-width: 50ch;
+  }
+
+  #form-error {
+    padding-bottom: var(--spacing-sm);
+  }
+
+  .buttonRow {
+    display: flex;
+    gap: var(--spacing-3xs);
+    justify-content: end;
+    padding-top: var(--spacing-xs);
+  }
+
+  @media (width >= 768) {
+    main {
+      padding-top: var(--spacing-xl);
+    }
+  }
+</style>
 
 <script>
   import { clearFormDrafts, PRODUCT_FORM_DRAFT_PREFIX } from "@/lib/formDrafts";
@@ -30,6 +129,7 @@ const collectionId = Number(Astro.url.searchParams.get("collectionId")) || null;
 </script>
 
 <script>
+  //selection management
   const productCheckbox = '.checkbox-input[name="products"]';
 
   document.addEventListener("change", (event) => {
@@ -115,12 +215,336 @@ const collectionId = Number(Astro.url.searchParams.get("collectionId")) || null;
   }
 
   updateSelectionUI();
-</script>
 
-<style>
-  @media (width >= 768) {
-    main {
-      padding-top: var(--spacing-xl);
+  //bulk update dialog
+  import { actions, isInputError } from "astro:actions";
+  const modal = document.getElementById(
+    "bulk-edit-dialog",
+  ) as HTMLDialogElement;
+  const form = modal.querySelector<HTMLFormElement>("form");
+  if (!modal || !form) {
+    throw new Error("Bulk edit modal markup is missing");
+  }
+  const productIdsContainer = form.querySelector<HTMLElement>(
+    "#bulk-product-ids",
+  ) as HTMLElement;
+  const title = form.querySelector("#modal-title") as HTMLTitleElement;
+  const submitButton = form.querySelector(
+    "#submit-button",
+  ) as HTMLButtonElement;
+  const submitText = submitButton?.querySelector(".submit-button-text");
+  const cancelButton = document.querySelector(
+    "#cancel-button",
+  ) as HTMLButtonElement;
+
+  const confirmationInfo = form.querySelector(
+    "#confirmationInfo",
+  ) as HTMLElement;
+  const formError = form.querySelector<HTMLElement>("#form-error");
+  const fieldsToBeEdited =
+    form.querySelector<HTMLSpanElement>("#fieldsToBeEdited");
+  const countOfProductsToEdit = form.querySelector<HTMLSpanElement>(
+    "#countOfProductsToEdit",
+  );
+  const bulkModalFieldNames = ["price", "discountedPrice"];
+  let initialState = "";
+  let confirming = false;
+  let hasSelectedProductWithVariations = false;
+
+  const bulkEditButton = document.querySelector(
+    "[data-selection-edit]",
+  ) as HTMLButtonElement;
+
+  bulkEditButton.addEventListener("click", openBulkModal);
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (
+      !submitButton ||
+      !submitText ||
+      submitButton.disabled ||
+      form.hasAttribute("data-busy")
+    ) {
+      return;
+    }
+
+    clearErrors();
+
+    const mode = confirming ? "apply" : "preview";
+
+    if (!confirming) {
+      const allFieldsEmpty = [...new FormData(form).entries()]
+        .filter(([name]) => name !== "ids")
+        .every(([, value]) => value.toString().trim() === "");
+
+      if (allFieldsEmpty) {
+        showFormError("Укажите хотя бы одно значение для изменения");
+        return;
+      }
+    }
+
+    form.setAttribute("data-busy", "");
+    submitButton?.setAttribute("disabled", "");
+    submitButton?.setAttribute("aria-busy", "true");
+
+    try {
+      console.log("running server action");
+      const result = await actions.product.bulkUpdateProducts(
+        createRequestData(mode),
+      );
+
+      if (result.error) {
+        if (isInputError(result.error)) {
+          showFieldErrors(result.error.fields);
+        } else {
+          showFormError(String(result.error.message));
+        }
+
+        return;
+      }
+
+      if (mode === "preview") {
+        if (
+          Object.entries(result.data.changes!).filter(
+            ([, value]) => value !== null,
+          ).length > 0
+        ) {
+          showConfirmation(result.data.changes, result.data.count!);
+          confirming = true;
+        } else {
+          showFormError("Укажите хотя бы одно значение для изменения");
+        }
+
+        return;
+      }
+
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+      showFormError("Произошла ошибка. Попробуйте ещё раз.");
+    } finally {
+      form.removeAttribute("data-busy");
+      submitButton?.removeAttribute("disabled");
+      submitButton?.setAttribute("aria-busy", "false");
+    }
+  });
+
+  function createRequestData(mode: "preview" | "apply") {
+    if (!form) {
+      throw new Error("Форма не найдена");
+    }
+
+    const data = new FormData(form);
+    data.set("mode", mode);
+    return data;
+  }
+
+  function showConfirmation(changes: any, count: number) {
+    if (!form || !submitText || !fieldsToBeEdited || !countOfProductsToEdit) {
+      throw new Error("Текст кнопки принятия не найдена");
+    }
+
+    console.log(changes);
+
+    const fieldLabels = Object.entries(changes)
+      .filter(([, value]) => value !== null)
+      .map(([name]) => {
+        const label = form.querySelector<HTMLLabelElement>(
+          `label[for="input-${CSS.escape(name)}"]`,
+        );
+
+        return label?.textContent?.trim();
+      })
+      .filter((label): label is string => Boolean(label));
+
+    fieldsToBeEdited.textContent = fieldLabels.join(", ");
+
+    countOfProductsToEdit.innerText = String(count);
+
+    confirming = true;
+    confirmationInfo.hidden = false;
+
+    for (const name of bulkModalFieldNames) {
+      const field = form.elements.namedItem(name);
+      if (field instanceof HTMLInputElement) field.readOnly = true;
+    }
+
+    // TODO: if (hasSelectedProductWithVariations) show the info block about variations
+    submitText.textContent = "Обновить товары";
+  }
+
+  form.addEventListener("input", syncSubmitState);
+  form.addEventListener("change", syncSubmitState);
+
+  function openBulkModal() {
+    if (!form) {
+      throw new Error("Форма не найдена");
+    }
+
+    // TODO: add all relevant fields
+    if (!submitButton || !cancelButton || !title) {
+      throw new Error("Элементы формы не найдены");
+    }
+
+    resetForm();
+
+    const selectedProducts = [
+      ...document.querySelectorAll<HTMLInputElement>(
+        `${productCheckbox}:checked`,
+      ),
+    ];
+    productIdsContainer.replaceChildren(
+      ...selectedProducts.map((product) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "ids";
+        input.value = product.value;
+        return input;
+      }),
+    );
+
+    hasSelectedProductWithVariations = selectedProducts.some((checkbox) =>
+      checkbox.closest('[data-has-variations="true"]'),
+    );
+
+    // TODO: hide variationNote
+    // if (submitText) {
+    //   submitText.textContent = "Применить";
+    // }
+
+    initialState = getState();
+    syncSubmitState();
+    modal.showModal();
+  }
+
+  function getState() {
+    if (!form) {
+      throw new Error("Форма не найдена");
+    }
+    return JSON.stringify([...new FormData(form).entries()]);
+  }
+
+  function syncSubmitState() {
+    if (!form) {
+      throw new Error("Форма не найдена");
+    }
+
+    if (!submitButton || form.hasAttribute("data-busy")) return;
+
+    const unchanged = getState() === initialState;
+    submitButton.disabled = unchanged;
+
+    if (submitText) {
+      submitText.textContent = unchanged ? "Нет изменений" : "Применить";
     }
   }
-</style>
+
+  function resetForm() {
+    if (!form) {
+      throw new Error("Форма не найдена");
+    }
+    clearErrors();
+    form.reset();
+    productIdsContainer.replaceChildren();
+    confirmationInfo.hidden = true;
+    confirming = false;
+
+    for (const element of form.elements) {
+      if (
+        element instanceof HTMLInputElement ||
+        element instanceof HTMLSelectElement
+      ) {
+        element.disabled = false;
+      }
+    }
+
+    for (const name of bulkModalFieldNames) {
+      const field = form.elements.namedItem(name);
+      if (field instanceof HTMLInputElement) field.readOnly = false;
+    }
+
+    // const idInput = form.elements.namedItem("id") as HTMLInputElement;
+    // idInput.value = "";
+    // countrySelect.value = "";
+    // brandSelect.value = "";
+    // slugInput.value = "";
+
+    form.removeAttribute("data-busy");
+    submitButton?.removeAttribute("disabled");
+    submitButton?.setAttribute("aria-busy", "false");
+
+    // deleteButton?.removeAttribute("disabled");
+    // deleteButton?.setAttribute("aria-busy", "false");
+  }
+
+  function getFieldErrorElement(fieldName: string) {
+    if (!form) return null;
+    return form.querySelector<HTMLElement>(`#error-${fieldName}`);
+  }
+  function getFieldElement(fieldName: string) {
+    if (!form) return null;
+    return form.elements.namedItem(fieldName);
+  }
+
+  function clearErrors() {
+    if (formError) {
+      formError.textContent = "";
+      formError.hidden = true;
+    }
+
+    for (const fieldName of bulkModalFieldNames) {
+      const field = getFieldElement(fieldName);
+      const errorElement = getFieldErrorElement(fieldName);
+
+      if (
+        field instanceof HTMLInputElement ||
+        field instanceof HTMLSelectElement
+      ) {
+        field.removeAttribute("aria-invalid");
+
+        //TODO: should this be removed? gotta universalize Input and Select
+        // in terms of the .has-error class, etc.
+        const wrapper = field.closest(".input-wrapper, .select-wrapper");
+        wrapper?.classList.remove("has-error");
+      }
+
+      if (errorElement) {
+        errorElement.textContent = "";
+        errorElement.hidden = true;
+      }
+    }
+  }
+
+  function showFieldErrors(fields: Record<string, string[]>) {
+    for (const [fieldName, messages] of Object.entries(fields)) {
+      const field = getFieldElement(fieldName);
+      const errorElement = getFieldErrorElement(fieldName);
+
+      if (
+        field instanceof HTMLInputElement ||
+        field instanceof HTMLSelectElement
+      ) {
+        field.setAttribute("aria-invalid", "true");
+
+        //TODO: should this be removed? gotta universalize Input and Select
+        // in terms of the .has-error class, etc.
+        const wrapper = field.closest(".input-wrapper, .select-wrapper");
+        wrapper?.classList.add("has-error");
+      }
+
+      if (errorElement) {
+        //TODO: how should the messages be joined not to have excess comma?
+        //TODO: when more than one message could be shown?
+        errorElement.textContent = messages.join(", ");
+        errorElement.hidden = false;
+      }
+    }
+  }
+
+  function showFormError(message: string) {
+    if (!formError) return;
+    formError.textContent = message;
+    formError.hidden = false;
+  }
+</script>
