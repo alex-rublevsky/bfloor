@@ -37,3 +37,7 @@ export const UNITS_OF_MEASUREMENT = [
     many: "литров",
   },
 ] as const;
+
+export function getUnitOfMeasurement(id: string) {
+  return UNITS_OF_MEASUREMENT.find((unit) => unit.id === id);
+}

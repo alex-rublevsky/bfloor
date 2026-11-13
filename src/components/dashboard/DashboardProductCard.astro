@@ -4,6 +4,7 @@ import { BASE_IMAGE_URL } from "@/constants";
 import type { Product } from "@/db/schema";
 import ImagePlaceholder from "../shared/ImagePlaceholder.astro";
 import Checkbox from "../shared/Checkbox.astro";
+import { getUnitOfMeasurement } from "@/lib/units";
 
 // type Props = { product?: Product };
 
@@ -14,6 +15,9 @@ if (!product) {
 }
 
 const { images } = product;
+const unitOfMeasurement =
+  getUnitOfMeasurement(product.unitOfMeasurement)?.value ??
+  product.unitOfMeasurement;
 ---
 
 <article class="product-card">
@@ -39,19 +43,28 @@ const { images } = product;
         }
       </div>
     </div>
-    <div class="flex gap-2xs">
+    <div id="productPrices">
       {
         product.discountedPrice ? (
-          <p>
-            {product.hasVariations ? "от " : ""}
-            {product.discountedPrice}Р
-          </p>
+          <>
+            {product.hasVariations ? <span>от </span> : undefined}
+            <span class="price">{product.discountedPrice}</span>
+            {unitOfMeasurement ? (
+              <span class="currencyAndUnit">р/{unitOfMeasurement}</span>
+            ) : null}
+          </>
         ) : null
       }
-      <p
-        class={`${product.discountedPrice ? "line-through text-foreground-muted" : undefined}`}>
-        {product.hasVariations ? "от " : ""}{product.price}Р
-      </p>
+      {product.hasVariations ? <span>от </span> : undefined}
+      <span class={product.discountedPrice ? "discountedPrice" : "price"}
+        >{product.price}</span
+      >
+
+      {
+        !product.discountedPrice && unitOfMeasurement ? (
+          <span class="currencyAndUnit">р/{unitOfMeasurement}</span>
+        ) : null
+      }
     </div>
     <p class="text-sm">{product.name}</p>
   </a>

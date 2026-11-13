@@ -46,6 +46,7 @@ export async function getAllProductsByCategory(
       id: product.id,
       slug: product.slug,
       name: product.name,
+      unitOfMeasurement: product.unitOfMeasurement,
       categoryId: product.categoryId,
       brandId: product.brandId,
       collectionId: product.collectionId,

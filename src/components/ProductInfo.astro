@@ -9,12 +9,16 @@ import { COUNTRIES } from "@/lib/countries";
 import Button from "./shared/Button.astro";
 import { marked } from "marked";
 import { Icon } from "astro-icon/components";
+import { getUnitOfMeasurement } from "@/lib/units";
 
 interface Props {
   product: StorefrontProductDetails;
 }
 
 const { product } = Astro.props;
+const unitOfMeasurement =
+  getUnitOfMeasurement(product.unitOfMeasurement)?.value ??
+  product.unitOfMeasurement;
 
 const transferLocation = STORE_LOCATIONS.find(
   (location) => !product.storeLocations.includes(location.id),
@@ -40,26 +44,53 @@ const importantNoteHTML = product.importantNote
     {product.name ? product.name : null}
   </h1>
   <!-- TODO: use <output> for showing the total price with quantity: https://youtu.be/HgNDii20FG4?si=XU0n5vSZ9-pEnSjs -->
-  <div class="flex gap-2xs">
+  <div id="productPrices">
     {
       product.discountedPrice ? (
         <>
-          <p class="line-through" data-pagefind-meta="price">
+          <span class="price" data-pagefind-meta="discounted_price">
+            {product.discountedPrice}
+          </span>
+
+          {unitOfMeasurement ? (
+            <span class="currencyAndUnit">р/{unitOfMeasurement}</span>
+          ) : null}
+          <span class="discountedPrice" data-pagefind-meta="price">
             {product.price}
-          </p>{" "}
-          <p data-pagefind-meta="discounted_price">{product.discountedPrice}</p>
+          </span>
         </>
       ) : (
-        <h3 data-pagefind-meta="price">{product.price}</h3>
+        <>
+          <span class="price" data-pagefind-meta="price">
+            {product.price}
+          </span>
+          {unitOfMeasurement ? (
+            <span class="currencyAndUnit">р/{unitOfMeasurement}</span>
+          ) : null}
+        </>
       )
     }
-    <span>/{product.unitOfMeasurement}</span>
     <!-- TODO: make this visible only when ADMIN_STOREFRONT_FLAG_KEY is present in local storage -->
     <!-- <Button variant="primary" size="sm" href={editHref}>
       <Icon name="edit" title="Изменить" />
       Изменить
     </Button> -->
   </div>
+
+  <style>
+    #productPrices {
+      .price {
+        font-size: var(--text-lg);
+      }
+      .discountedPrice {
+        font-size: var(--text-md);
+        font-weight: 300;
+      }
+      .currencyAndUnit {
+        font-size: var(--text-base);
+      }
+    }
+  </style>
 
   {
     variations ? (

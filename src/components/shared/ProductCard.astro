@@ -2,6 +2,12 @@
 import { Image } from "astro:assets";
 import { BASE_IMAGE_URL } from "@/constants";
 import ImagePlaceholder from "./ImagePlaceholder.astro";
+import { getUnitOfMeasurement } from "@/lib/units";
+import type { StorefrontProductCard } from "@/db/storefront/products/types";
+
+interface Props {
+  product: StorefrontProductCard;
+}
 //import type { Product } from "@/db/storefront/allProductsForFeed";
 
 //type Props = { product?: Product };
@@ -14,6 +20,9 @@ if (!product) {
 }
 
 const { images } = product;
+const unitOfMeasurement =
+  getUnitOfMeasurement(product.unitOfMeasurement)?.value ??
+  product.unitOfMeasurement;
 ---
 
 <a href={`/product/${product.slug}`}>
@@ -41,30 +50,27 @@ const { images } = product;
   <div id="productPrices">
     {
       product.discountedPrice ? (
-        <span class="price">
-          {product.hasVariations ? "от " : ""}
-          {product.discountedPrice}Р
-        </span>
+        <>
+          {product.hasVariations ? (
+            <span class="fromLabel">от</span>
+          ) : undefined}
+          <span class="price">{product.discountedPrice}</span>
+          {unitOfMeasurement ? (
+            <span class="currencyAndUnit">р/{unitOfMeasurement}</span>
+          ) : undefined}
+        </>
       ) : null
     }
-    <p
-      class={`${product.discountedPrice ? "line-through text-foreground-muted" : undefined}`}>
-      {product.hasVariations ? "от " : ""}{product.price}Р
-    </p>
+    {product.hasVariations ? <span class="fromLabel">от</span> : undefined}
+    <span class={`${product.discountedPrice ? "discountedPrice" : "price"}`}>
+      {product.price}
+    </span>
+
+    {
+      !product.discountedPrice && unitOfMeasurement ? (
+        <span class="currencyAndUnit">р/{unitOfMeasurement}</span>
+      ) : null
+    }
   </div>
   <p id="productName" class="text-sm">{product.name}</p>
 </a>
-
-<style>
-  #productPrices {
-    display: flex;
-    gap: var(--spacing-3xs);
-    padding-inline: var(--spacing-3xs);
-    align-items: last baseline;
-
-    .price {
-      font-size: var(--text-md);
-      font-weight: 350;
-    }
-  }
-</style>

@@ -556,6 +556,37 @@ blockquote {
   --menu-margin-before: 0;
 }
 
-& hr {
+hr {
   border-top: var(--border-width) solid var(--border);
+}
+
+#productPrices {
+  display: flex;
+  padding-inline: var(--spacing-3xs);
+  align-items: last baseline;
+
+  .price {
+    font-size: var(--text-md);
+    font-weight: 350;
+    @media (width < 768px) {
+      font-size: var(--text-base);
+      font-weight: normal;
+    }
+  }
+  .discountedPrice {
+    padding-left: var(--spacing-3xs);
+    color: var(--foreground-muted);
+    font-weight: 350;
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+  }
+  .fromLabel {
+    padding-right: 0.1em;
+    color: var(--foreground-muted);
+  }
+  @media (width < 768px) {
+    .currencyAndUnit {
+      font-size: var(--text-sm);
+    }
+  }
 }
