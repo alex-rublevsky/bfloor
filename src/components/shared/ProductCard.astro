@@ -23,6 +23,15 @@ const { images } = product;
 const unitOfMeasurement =
   getUnitOfMeasurement(product.unitOfMeasurement)?.value ??
   product.unitOfMeasurement;
+
+const price = Intl.NumberFormat()
+  .format(Number(product.price))
+  .replaceAll(",", " ");
+const discountedPrice = product.discountedPrice
+  ? Intl.NumberFormat()
+      .format(Number(product.discountedPrice))
+      .replaceAll(",", " ")
+  : undefined;
 ---
 
 <a href={`/product/${product.slug}`}>
@@ -49,12 +58,12 @@ const unitOfMeasurement =
   </div>
   <div id="productPrices">
     {
-      product.discountedPrice ? (
+      discountedPrice ? (
         <>
           {product.hasVariations ? (
             <span class="fromLabel">от</span>
           ) : undefined}
-          <span class="price">{product.discountedPrice}</span>
+          <span class="price">{discountedPrice}</span>
           {unitOfMeasurement ? (
             <span class="currencyAndUnit">р/{unitOfMeasurement}</span>
           ) : undefined}
@@ -62,12 +71,12 @@ const unitOfMeasurement =
       ) : null
     }
     {product.hasVariations ? <span class="fromLabel">от</span> : undefined}
-    <span class={`${product.discountedPrice ? "discountedPrice" : "price"}`}>
-      {product.price}
+    <span class={`${discountedPrice ? "discountedPrice" : "price"}`}>
+      {price}
     </span>
 
     {
-      !product.discountedPrice && unitOfMeasurement ? (
+      !discountedPrice && unitOfMeasurement ? (
         <span class="currencyAndUnit">р/{unitOfMeasurement}</span>
       ) : null
     }
