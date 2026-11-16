@@ -560,9 +560,14 @@ hr {
   border-top: var(--border-width) solid var(--border);
 }
 
+#productPrices,
+#productName {
+  padding-inline: var(--spacing-3xs);
+}
+
 #productPrices {
   display: flex;
-  padding-inline: var(--spacing-3xs);
+
   align-items: last baseline;
 
   .price {
