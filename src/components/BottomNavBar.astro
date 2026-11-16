@@ -27,8 +27,14 @@ import Button from "@/components/shared/Button.astro";
     position: fixed;
     inset: auto var(--spacing-3xs) var(--spacing-3xs) var(--spacing-3xs);
     z-index: 10;
+    pointer-events: none;
     @media (width > 768px) {
       display: none;
+    }
+    & button,
+    a,
+    .menu {
+      pointer-events: auto;
     }
   }
 </style>
