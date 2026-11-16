@@ -120,6 +120,8 @@ export async function initCatalogFiltering(): Promise<void> {
     mobileFiltersButton.innerText = isOpen ? "Применить" : "Фильтры";
     mobileFiltersButton.classList.toggle("primary", isOpen);
     mobileFiltersButton.classList.toggle("tertiary", !isOpen);
+
+    document.documentElement.style.overflow = isOpen ? "hidden" : "auto";
   });
 
   function createFilter(name: string, counts: FacetCounts): void {
@@ -168,8 +170,10 @@ export async function initCatalogFiltering(): Promise<void> {
   }
 
   function syncCollectionFilterVisibility(): void {
-    const brandFilter = filtersBlock.querySelector<HTMLElement>("#Производитель");
-    const collectionFilter = filtersBlock.querySelector<HTMLElement>("#Коллекция");
+    const brandFilter =
+      filtersBlock.querySelector<HTMLElement>("#Производитель");
+    const collectionFilter =
+      filtersBlock.querySelector<HTMLElement>("#Коллекция");
     if (!brandFilter || !collectionFilter) return;
 
     const hasSelectedBrand =
@@ -295,8 +299,7 @@ export async function initCatalogFiltering(): Promise<void> {
         return wrapper && !wrapper.hidden;
       });
       filter.hidden =
-        !hasVisibleOptions ||
-        (filter.id === "Коллекция" && !hasSelectedBrand);
+        !hasVisibleOptions || (filter.id === "Коллекция" && !hasSelectedBrand);
     }
   }
 

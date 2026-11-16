@@ -70,52 +70,53 @@ TODO: disable scroll while viewing filters on mobile
 TODO: add bottom padding to the mobile filters screen, make sure it is scrollable
  -->
 <Layout title={category.name}>
-  <section
-    class="no-padding"
-    data-category={category.name}
-    data-location-labels={JSON.stringify(locationLabels)}>
-    <div class="titlePagination">
-      <h1 class="text-xl pb-0">{category.name}</h1>
-      <Pagination
-        data-pagination
-        length={page.lastPage}
-        currentPage={page.currentPage}
-        firstUrl={page.url.first}
-        prevUrl={page.url.prev}
-        nextUrl={page.url.next}
-        lastUrl={page.url.last}
-        baseUrl={categoryBaseUrl}
-      />
-      <!-- {category.description ? <p>{category.description}</p> : null} -->
-    </div>
+  <main>
+    <section
+      class="no-padding"
+      data-category={category.name}
+      data-location-labels={JSON.stringify(locationLabels)}>
+      <div class="titlePagination">
+        <h1 class="text-xl pb-0">{category.name}</h1>
+        <Pagination
+          data-pagination
+          length={page.lastPage}
+          currentPage={page.currentPage}
+          firstUrl={page.url.first}
+          prevUrl={page.url.prev}
+          nextUrl={page.url.next}
+          lastUrl={page.url.last}
+          baseUrl={categoryBaseUrl}
+        />
+        <!-- {category.description ? <p>{category.description}</p> : null} -->
+      </div>
 
-    <div class="storeLayout">
-      <Button
-        variant="tertiary"
-        id="mobileFiltersButton"
-        aria-controls="catalogFilters"
-        aria-expanded="false">Фильтры</Button
-      >
+      <div class="storeLayout">
+        <Button
+          variant="tertiary"
+          id="mobileFiltersButton"
+          aria-controls="catalogFilters"
+          aria-expanded="false">Фильтры</Button
+        >
 
-      <aside id="catalogFilters">
-        <h3>Фильтры</h3>
-        <div id="filtersBlock"></div>
-        <template id="filter-block-template">
-          <fieldset class="filter">
-            <legend></legend>
-            <div class="filter-options"></div>
-          </fieldset>
-        </template>
-        <!-- checkboxes are used instead of multiple select listbox for user experince:
+        <aside id="catalogFilters">
+          <h3>Фильтры</h3>
+          <div id="filtersBlock"></div>
+          <template id="filter-block-template">
+            <fieldset class="filter">
+              <legend></legend>
+              <div class="filter-options"></div>
+            </fieldset>
+          </template>
+          <!-- checkboxes are used instead of multiple select listbox for user experince:
         for a listbox to select multiple options command needs to be pressed which
         is not obvious -->
-        <template id="filter-option-template">
-          <Checkbox><span class="filter-option-label"></span></Checkbox>
-        </template>
-      </aside>
-      <!-- TODO: when there is only one row of products on desktop, their heights are full screen. fix -->
-      <div id="staticFeed" class="autoGrid">
-        <!-- {
+          <template id="filter-option-template">
+            <Checkbox><span class="filter-option-label"></span></Checkbox>
+          </template>
+        </aside>
+        <!-- TODO: when there is only one row of products on desktop, their heights are full screen. fix -->
+        <div id="staticFeed" class="autoGrid">
+          <!-- {
           products ? (
             products.length > 0 ? (
               products.map((product: any) => <ProductCard product={product} />)
@@ -126,49 +127,50 @@ TODO: add bottom padding to the mobile filters screen, make sure it is scrollabl
             <p>Товаров не найдено</p>
           )
         } -->
-        {
-          ((page as any).data || []).map((product: any) => (
-            <ProductCard product={product} />
-          ))
-        }
-      </div>
-      <div id="filteredFeed" class="autoGrid" hidden></div>
-      <template id="product-card-template">
-        <a>
-          <div class="entityImageWrapper">
-            <div class="entityImage"></div>
-          </div>
-
-          <div class="flex gap-2xs">
-            <span data-card-sale-price></span>
-            <p data-card-price></p>
-          </div>
-
-          <p class="text-sm" data-card-name></p>
-        </a>
-      </template>
-      <template id="image-placeholder">
-        <div class="w-full aspect-square grid place-items-center skeleton">
-          <Icon
-            name="image"
-            title="Сломанная картинка"
-            class="size-14 text-muted-foreground"
-          />
+          {
+            ((page as any).data || []).map((product: any) => (
+              <ProductCard product={product} />
+            ))
+          }
         </div>
-      </template>
-    </div>
-    <Pagination
-      data-pagination
-      class="pt-lg pb-xl justify-center w-full"
-      length={page.lastPage}
-      currentPage={page.currentPage}
-      firstUrl={page.url.first}
-      prevUrl={page.url.prev}
-      nextUrl={page.url.next}
-      lastUrl={page.url.last}
-      baseUrl={categoryBaseUrl}
-    />
-  </section>
+        <div id="filteredFeed" class="autoGrid" hidden></div>
+        <template id="product-card-template">
+          <a>
+            <div class="entityImageWrapper">
+              <div class="entityImage"></div>
+            </div>
+
+            <div class="flex gap-2xs">
+              <span data-card-sale-price></span>
+              <p data-card-price></p>
+            </div>
+
+            <p class="text-sm" data-card-name></p>
+          </a>
+        </template>
+        <template id="image-placeholder">
+          <div class="w-full aspect-square grid place-items-center skeleton">
+            <Icon
+              name="image"
+              title="Сломанная картинка"
+              class="size-14 text-muted-foreground"
+            />
+          </div>
+        </template>
+      </div>
+      <Pagination
+        data-pagination
+        class="pt-lg pb-xl justify-center w-full"
+        length={page.lastPage}
+        currentPage={page.currentPage}
+        firstUrl={page.url.first}
+        prevUrl={page.url.prev}
+        nextUrl={page.url.next}
+        lastUrl={page.url.last}
+        baseUrl={categoryBaseUrl}
+      />
+    </section>
+  </main>
 </Layout>
 
 <style>
@@ -279,6 +281,8 @@ TODO: add bottom padding to the mobile filters screen, make sure it is scrollabl
   }
 
   /*TODO: add pseudo element gradients just like in product form's listboxes*/
+  /*TODO: add those same gradients horizontally on mobile*/
+  /*TODO: make the scrollbar always visible on mobile*/
   .filter {
     padding-top: 0;
     padding-bottom: var(--spacing-3xs);
