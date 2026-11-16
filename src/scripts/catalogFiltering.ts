@@ -111,22 +111,15 @@ export async function initCatalogFiltering(): Promise<void> {
       return a.localeCompare(b, "ru");
     });
 
-  // TODO: update the approach to use is-showing class, since this does work, but only from the second click
-  const desktop = window.matchMedia("(min-width: 769px)");
+  const mobile = window.matchMedia("(width < 768px)");
   mobileFiltersButton.addEventListener("click", () => {
-    if (!desktop.matches) {
-      if (filtersParent.style.display === "none") {
-        filtersParent.style.display = "block";
-        mobileFiltersButton.innerText = "Применить";
-        mobileFiltersButton.classList.remove("tertiary");
-        mobileFiltersButton.classList.add("primary");
-      } else {
-        filtersParent.style.display = "none";
-        mobileFiltersButton.innerText = "Фильтры";
-        mobileFiltersButton.classList.remove("primary");
-        mobileFiltersButton.classList.add("tertiary");
-      }
-    }
+    if (!mobile.matches) return;
+
+    const isOpen = filtersParent.classList.toggle("mobileFiltersOpen");
+    mobileFiltersButton.setAttribute("aria-expanded", String(isOpen));
+    mobileFiltersButton.innerText = isOpen ? "Применить" : "Фильтры";
+    mobileFiltersButton.classList.toggle("primary", isOpen);
+    mobileFiltersButton.classList.toggle("tertiary", !isOpen);
   });
 
   function createFilter(name: string, counts: FacetCounts): void {
@@ -172,6 +165,24 @@ export async function initCatalogFiltering(): Promise<void> {
 
   for (const facetName of facets) {
     createFilter(facetName, initialFacetCounts[facetName]);
+  }
+
+  function syncCollectionFilterVisibility(): void {
+    const brandFilter = filtersBlock.querySelector<HTMLElement>("#Производитель");
+    const collectionFilter = filtersBlock.querySelector<HTMLElement>("#Коллекция");
+    if (!brandFilter || !collectionFilter) return;
+
+    const hasSelectedBrand =
+      brandFilter.querySelector('input[type="checkbox"]:checked') !== null;
+    collectionFilter.hidden = !hasSelectedBrand;
+
+    if (!hasSelectedBrand) {
+      collectionFilter
+        .querySelectorAll<HTMLInputElement>('input[type="checkbox"]:checked')
+        .forEach((input) => {
+          input.checked = false;
+        });
+    }
   }
 
   updateFacetOptions(initialFacetCounts);
@@ -243,6 +254,11 @@ export async function initCatalogFiltering(): Promise<void> {
   }
 
   function updateFacetOptions(countsByFacet: FilterCounts): void {
+    const hasSelectedBrand =
+      filtersBlock.querySelector(
+        '#Производитель input[type="checkbox"]:checked',
+      ) !== null;
+
     for (const filter of filtersBlock.querySelectorAll<HTMLElement>(
       ".filter",
     )) {
@@ -263,7 +279,7 @@ export async function initCatalogFiltering(): Promise<void> {
       inputs.forEach((input) => {
         const isVisible =
           (counts[input.value] ?? 0) > 0 || selectedValues.has(input.value);
-        const wrapper = input.closest(".checkbox-wrapper");
+        const wrapper = input.closest<HTMLLabelElement>(".checkbox-wrapper");
         if (!wrapper) return;
         wrapper.hidden = !isVisible;
         const label = input.dataset.label ?? input.value;
@@ -274,10 +290,13 @@ export async function initCatalogFiltering(): Promise<void> {
         if (labelText) labelText.textContent = `${label} (${count})`;
       });
 
-      filter.hidden = Array.from(inputs).every((input) => {
-        const wrapper = input.closest<HTMLElement>(".checkbox-wrapper");
-        return !wrapper || wrapper.hidden;
+      const hasVisibleOptions = Array.from(inputs).some((input) => {
+        const wrapper = input.closest<HTMLLabelElement>(".checkbox-wrapper");
+        return wrapper && !wrapper.hidden;
       });
+      filter.hidden =
+        !hasVisibleOptions ||
+        (filter.id === "Коллекция" && !hasSelectedBrand);
     }
   }
 
@@ -370,6 +389,7 @@ export async function initCatalogFiltering(): Promise<void> {
 
   async function filterProducts(): Promise<void> {
     const version = ++latestSearchVersion;
+    syncCollectionFilterVisibility();
     const selections = getSelections();
     const hasSelections = Object.keys(selections).length > 0;
 

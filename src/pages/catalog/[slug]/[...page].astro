@@ -86,9 +86,14 @@ TODO: add counts to filter blocks, e.g. 12 brands
     </div>
 
     <div class="storeLayout">
-      <Button variant="tertiary" id="mobileFiltersButton">Фильтры</Button>
+      <Button
+        variant="tertiary"
+        id="mobileFiltersButton"
+        aria-controls="catalogFilters"
+        aria-expanded="false">Фильтры</Button
+      >
 
-      <aside>
+      <aside id="catalogFilters">
         <h3>Фильтры</h3>
         <div id="filtersBlock"></div>
         <template id="filter-block-template">
@@ -216,6 +221,10 @@ TODO: add counts to filter blocks, e.g. 12 brands
       height: 100dvh;
       z-index: 20;
       overflow-y: auto;
+    }
+
+    aside.mobileFiltersOpen {
+      display: block;
     }
   }
   aside {
