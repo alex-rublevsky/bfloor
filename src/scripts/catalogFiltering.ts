@@ -47,12 +47,16 @@ const FIXED_FACET_ORDER = [
 
 export async function initCatalogFiltering(): Promise<void> {
   const section = document.querySelector<HTMLElement>("section");
+  const filtersParent = document.querySelector("aside") as HTMLElement;
   const filtersBlock = document.querySelector<HTMLElement>("#filtersBlock")!;
   const staticFeed = document.querySelector<HTMLElement>("#staticFeed")!;
   const filteredFeed = document.querySelector<HTMLElement>("#filteredFeed")!;
   const cardTemplate = document.querySelector<HTMLTemplateElement>(
     "#product-card-template",
   )!;
+  const mobileFiltersButton = document.getElementById(
+    "mobileFiltersButton",
+  ) as HTMLButtonElement;
   const imagePlaceholderTemplate =
     document.querySelector<HTMLTemplateElement>("#image-placeholder")!;
 
@@ -107,29 +111,62 @@ export async function initCatalogFiltering(): Promise<void> {
       return a.localeCompare(b, "ru");
     });
 
+  // TODO: update the approach to use is-showing class, since this does work, but only from the second click
+  const desktop = window.matchMedia("(min-width: 769px)");
+  mobileFiltersButton.addEventListener("click", () => {
+    if (!desktop.matches) {
+      if (filtersParent.style.display === "none") {
+        filtersParent.style.display = "block";
+        mobileFiltersButton.innerText = "Применить";
+        mobileFiltersButton.classList.remove("tertiary");
+        mobileFiltersButton.classList.add("primary");
+      } else {
+        filtersParent.style.display = "none";
+        mobileFiltersButton.innerText = "Фильтры";
+        mobileFiltersButton.classList.remove("primary");
+        mobileFiltersButton.classList.add("tertiary");
+      }
+    }
+  });
+
   function createFilter(name: string, counts: FacetCounts): void {
     const filterTemplate = document.querySelector<HTMLTemplateElement>(
       "#filter-block-template",
     );
     if (!filterTemplate) return;
     const clone = filterTemplate.content.cloneNode(true) as DocumentFragment;
-    const select = clone.querySelector<HTMLSelectElement>("select");
-    const label = clone.querySelector<HTMLLabelElement>("label");
-    const filter = clone.querySelector<HTMLElement>(".filter");
-    if (!select || !label || !filter) return;
+    const legend = clone.querySelector<HTMLLegendElement>("legend");
+    const options = clone.querySelector<HTMLElement>(".filter-options");
+    const filter = clone.querySelector<HTMLFieldSetElement>(".filter");
+    const optionTemplate = document.querySelector<HTMLTemplateElement>(
+      "#filter-option-template",
+    );
+    if (!legend || !options || !filter || !optionTemplate) return;
 
-    label.textContent = name;
+    legend.textContent = name;
     filter.id = name;
 
-    for (const [value, count] of Object.entries(counts)) {
-      const option = document.createElement("option");
+    Object.entries(counts).forEach(([value, count], index) => {
+      const option = optionTemplate.content.cloneNode(true) as DocumentFragment;
+      const input = option.querySelector<HTMLInputElement>(
+        'input[type="checkbox"]',
+      );
+      const optionLabel = option.querySelector<HTMLLabelElement>("label");
+      const labelText = option.querySelector<HTMLElement>(
+        ".filter-option-label",
+      );
+      if (!input || !optionLabel || !labelText) return;
 
-      option.value = value;
-      option.dataset.label = getOptionLabel(name, value);
-      option.textContent = `${option.dataset.label ?? value} (${count})`;
-
-      select.append(option);
-    }
+      const id = `filter-${facets.indexOf(name)}-${index}`;
+      const label = getOptionLabel(name, value);
+      input.id = id;
+      input.name = name;
+      input.value = value;
+      input.dataset.label = label;
+      optionLabel.htmlFor = id;
+      labelText.textContent = `${label} (${count})`;
+      options.append(option);
+    });
     filtersBlock.append(clone);
   }
 
@@ -145,11 +182,11 @@ export async function initCatalogFiltering(): Promise<void> {
     for (const filter of filtersBlock.querySelectorAll<HTMLElement>(
       ".filter",
     )) {
-      const select = filter.querySelector<HTMLSelectElement>("select");
-      if (!select) continue;
       const values = Array.from(
-        select.selectedOptions,
-        (option) => option.value,
+        filter.querySelectorAll<HTMLInputElement>(
+          'input[type="checkbox"]:checked',
+        ),
+        (input) => input.value,
       );
 
       if (values.length > 0) {
@@ -209,22 +246,38 @@ export async function initCatalogFiltering(): Promise<void> {
     for (const filter of filtersBlock.querySelectorAll<HTMLElement>(
       ".filter",
     )) {
-      const select = filter.querySelector<HTMLSelectElement>("select");
-      if (!select) continue;
+      const options = filter.querySelector<HTMLElement>(".filter-options");
+      if (!options) continue;
       const counts = countsByFacet[filter.id] ?? {};
-
-      for (const option of select.options) {
-        const count = counts[option.value] ?? 0;
-
-        option.textContent = `${option.dataset.label ?? option.value} (${count})`;
-        option.hidden = count === 0 && !option.selected;
-      }
-
-      const hasVisibleOptions = Array.from(select.options).some(
-        (option) => !option.hidden,
+      const selectedValues = new Set(
+        Array.from(
+          options.querySelectorAll<HTMLInputElement>(
+            'input[type="checkbox"]:checked',
+          ),
+          (input) => input.value,
+        ),
       );
+      const inputs = options.querySelectorAll<HTMLInputElement>(
+        'input[type="checkbox"]',
+      );
+      inputs.forEach((input) => {
+        const isVisible =
+          (counts[input.value] ?? 0) > 0 || selectedValues.has(input.value);
+        const wrapper = input.closest(".checkbox-wrapper");
+        if (!wrapper) return;
+        wrapper.hidden = !isVisible;
+        const label = input.dataset.label ?? input.value;
+        const count = counts[input.value] ?? 0;
+        const labelText = wrapper.querySelector<HTMLElement>(
+          ".filter-option-label",
+        );
+        if (labelText) labelText.textContent = `${label} (${count})`;
+      });
 
-      filter.hidden = !hasVisibleOptions;
+      filter.hidden = Array.from(inputs).every((input) => {
+        const wrapper = input.closest<HTMLElement>(".checkbox-wrapper");
+        return !wrapper || wrapper.hidden;
+      });
     }
   }
 
@@ -350,7 +403,10 @@ export async function initCatalogFiltering(): Promise<void> {
   }
 
   filtersBlock.addEventListener("change", (event) => {
-    if (event.target instanceof HTMLSelectElement) {
+    if (
+      event.target instanceof HTMLInputElement &&
+      event.target.type === "checkbox"
+    ) {
       void filterProducts();
     }
   });

@@ -8,6 +8,8 @@ import Pagination from "@/components/shared/Pagination.astro";
 import { getAllCategories } from "@/db/storefront/allCategories";
 import { STORE_LOCATIONS } from "@/lib/storeLocations";
 import { Icon } from "astro-icon/components";
+import Button from "@/components/shared/Button.astro";
+import Checkbox from "@/components/shared/Checkbox.astro";
 
 export const prerender = true;
 
@@ -60,6 +62,8 @@ TODO: add results and filtered results counts
 TODO: add loading state to the filters before they show up
 
 TODO: add filters to mobile
+
+TODO: add counts to filter blocks, e.g. 12 brands
  -->
 <Layout title={category.name}>
   <section
@@ -82,18 +86,25 @@ TODO: add filters to mobile
     </div>
 
     <div class="storeLayout">
+      <Button variant="tertiary" id="mobileFiltersButton">Фильтры</Button>
+
       <aside>
         <h3>Фильтры</h3>
         <div id="filtersBlock"></div>
         <template id="filter-block-template">
-          <div class="filter">
-            <label></label>
-            <select multiple></select>
-            <!-- TODO: implement listbox component instead -->
-            <!-- <SelectListBox name="" label="" options={[]} /> -->
-          </div>
+          <fieldset class="filter">
+            <legend></legend>
+            <div class="filter-options"></div>
+          </fieldset>
+        </template>
+        <!-- checkboxes are used instead of multiple select listbox for user experince:
+        for a listbox to select multiple options command needs to be pressed which
+        is not obvious -->
+        <template id="filter-option-template">
+          <Checkbox><span class="filter-option-label"></span></Checkbox>
         </template>
       </aside>
+      <!-- TODO: when there is only one row of products on desktop, their heights are full screen. fix -->
       <div id="staticFeed" class="autoGrid">
         <!-- {
           products ? (
@@ -175,37 +186,86 @@ TODO: add filters to mobile
     padding-block: var(--spacing-xs) var(--spacing-md);
     padding-inline: var(--section-padding-x);
   }
+
+  #mobileFiltersButton {
+    position: fixed;
+    inset: auto var(--spacing-3xs) 3.5rem auto;
+    z-index: 100;
+    @media (width >= 768px) {
+      display: none;
+    }
+    @media (width >= 500px) {
+      inset: auto var(--spacing-3xs) var(--spacing-3xs) auto;
+    }
+  }
+
+  #filtersBlock {
+    display: grid;
+    gap: var(--spacing-sm);
+    @media (width < 768px) {
+      gap: var(--spacing-lg);
+    }
+  }
+
+  @media (width < 768px) {
+    aside {
+      background-color: var(--background) !important;
+      position: fixed;
+      inset: 0;
+      display: none;
+      height: 100dvh;
+      z-index: 20;
+      overflow-y: auto;
+    }
+  }
   aside {
     background-color: color-mix(in oklch, var(--muted) 15%, transparent);
     padding: var(--spacing-2xs);
     min-width: 28ch;
-    @media (width < 768px) {
-      display: none;
-    }
   }
-  .filter label {
+  .filter legend {
     font-weight: bold;
+    font-size: var(--text-base);
+    line-height: 1.1;
+    margin-left: 1em;
+    padding-inline: 0.2em;
   }
-  .filter select {
-    min-height: 8rem;
+
+  /*TODO: add pseudo element gradients just like in product form's listboxes*/
+  .filter {
+    padding-top: 0;
+    padding-bottom: var(--spacing-3xs);
+    padding-inline: 0;
+    /*overflow: visible;*/
   }
-  option {
-    /*TODO: option is not supposed to have spans within it. how to make count be set to be aligned by right then?*/
-    /*display: grid;
-    grid-template-columns: 1fr auto 1;
-    gap: 1rem;
-    align-items: center;*/
+  .filter-options {
+    max-height: 20rem;
+    overflow-y: auto;
+    border-radius: 0;
+    display: grid;
+    padding-top: var(--spacing-2xs);
+  }
+
+  :global(.checkbox-wrapper) {
+    padding: var(--spacing-3xs);
+    &:hover {
+      background-color: var(--muted);
+    }
   }
 </style>
 
 <!-- TODO: add "load more" feature or make the filtration work with pagination -->
 
 <script>
-  const desktop = window.matchMedia("(min-width: 769px)");
-
-  if (desktop.matches) {
-    void import("@/scripts/catalogFiltering").then(({ initCatalogFiltering }) =>
-      initCatalogFiltering(),
-    );
-  }
+  //   const desktop = window.matchMedia("(min-width: 769px)");
+  //
+  //   if (desktop.matches) {
+  //     void import("@/scripts/catalogFiltering").then(({ initCatalogFiltering }) =>
+  //       initCatalogFiltering(),
+  //     );
+  //   }
+  //
+  void import("@/scripts/catalogFiltering").then(({ initCatalogFiltering }) =>
+    initCatalogFiltering(),
+  );
 </script>
