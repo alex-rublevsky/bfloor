@@ -64,6 +64,10 @@ TODO: add loading state to the filters before they show up
 TODO: add filters to mobile
 
 TODO: add counts to filter blocks, e.g. 12 brands
+
+TODO: disable scroll while viewing filters on mobile
+
+TODO: add bottom padding to the mobile filters screen, make sure it is scrollable
  -->
 <Layout title={category.name}>
   <section
@@ -206,13 +210,17 @@ TODO: add counts to filter blocks, e.g. 12 brands
 
   #filtersBlock {
     display: grid;
-    gap: var(--spacing-sm);
-    @media (width < 768px) {
-      gap: var(--spacing-lg);
+    gap: var(--spacing-md);
+    @media (width >= 768px) {
+      gap: var(--spacing-sm);
     }
   }
 
   @media (width < 768px) {
+    #catalogFilters h3 {
+      padding-inline: var(--section-padding-x);
+      padding-top: var(--section-padding-x);
+    }
     aside {
       background-color: var(--background) !important;
       position: fixed;
@@ -221,10 +229,36 @@ TODO: add counts to filter blocks, e.g. 12 brands
       height: 100dvh;
       z-index: 20;
       overflow-y: auto;
+      padding: 0 !important;
     }
 
     aside.mobileFiltersOpen {
       display: block;
+    }
+
+    .filter-options {
+      display: flex !important;
+      gap: var(--spacing-3xs);
+      padding-bottom: var(--spacing-3xs);
+      padding-inline: var(--spacing-3xs);
+    }
+
+    #filtersBlock,
+    .filter {
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .filter {
+      border: none;
+    }
+
+    :global(.checkbox-wrapper) {
+      border: var(--border-width) solid var(--border);
+      padding-inline: var(--spacing-xs) !important;
+      padding-block: var(--spacing-2xs) !important;
+      border-radius: var(--radius-sm);
+      background-color: color-mix(in oklch, var(--muted) 15%, transparent);
     }
   }
   aside {
@@ -236,8 +270,12 @@ TODO: add counts to filter blocks, e.g. 12 brands
     font-weight: bold;
     font-size: var(--text-base);
     line-height: 1.1;
-    margin-left: 1em;
+
     padding-inline: 0.2em;
+    margin-left: var(--section-padding-x);
+    @media (width >= 768px) {
+      margin-left: 1em;
+    }
   }
 
   /*TODO: add pseudo element gradients just like in product form's listboxes*/
@@ -245,8 +283,8 @@ TODO: add counts to filter blocks, e.g. 12 brands
     padding-top: 0;
     padding-bottom: var(--spacing-3xs);
     padding-inline: 0;
-    /*overflow: visible;*/
   }
+
   .filter-options {
     max-height: 20rem;
     overflow-y: auto;
