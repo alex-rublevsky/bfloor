@@ -188,7 +188,7 @@ const discountedPrice = product.discountedPrice
         <div>
           <div class="description-row">
             <dt class="self-center">Страна производства:</dt>
-            <dd>
+            <dd class="text-right">
               <span class="text-sm" data-pagefind-filter="Страна производства">
                 {country.name}
               </span>
@@ -197,7 +197,7 @@ const discountedPrice = product.discountedPrice
                 width={52.5}
                 height={35}
                 fit="contain"
-                class="skeleton inline ml-2xs pointer-events-none"
+                class="skeleton inline ml-2xs pointer-events-none w-8 md:w-10"
                 onload="this.closest('.skeleton')?.classList.remove('skeleton')"
                 alt={"Флаг " + country.name}
               />
