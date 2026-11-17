@@ -44,9 +44,63 @@ import Input from "@/components/shared/Input.astro";
 
 https://petro-pol.ru/montazh/
     -->
+
     <table>
+      <caption>Демонтаж</caption>
       <tr>
-        <th>Укладка ламината</th>
+        <th>Услуга</th>
+        <th>Стоимость</th>
+        <th>Ед. измерения</th>
+      </tr>
+      <tr>
+        <td>Демонтаж приклеенных покрытий</td>
+        <td><span class="text-foreground-muted">от </span>200</td>
+        <td>р/м²</td>
+      </tr>
+      <tr>
+        <td>Демонтаж свободно лежащих покрытий <u>без сохранения</u></td>
+        <td><span class="text-foreground-muted">от </span>150</td>
+        <td>р/м²</td>
+      </tr>
+      <tr>
+        <td>Демонтаж свободно лежащих покрытий <u>с сохранением</u></td>
+        <td><span class="text-foreground-muted">от </span>300</td>
+        <td>р/м²</td>
+      </tr>
+      <tr>
+        <td>Демонтаж плинтуса <u>без сохранения</u></td>
+        <td><span class="text-foreground-muted">от </span>75</td>
+        <td>р/м²</td>
+      </tr>
+      <tr>
+        <td>Демонтаж плинтуса <u>с сохранением</u></td>
+        <td><span class="text-foreground-muted">от </span>150</td>
+        <td>р/м²</td>
+      </tr>
+      <tr>
+        <td>Разбор/демонтаж основания</td>
+        <td colspan="2">по договорённости</td>
+      </tr>
+    </table>
+    <table>
+      <caption>Подготовка основания</caption>
+
+      <tr>
+        <th>Услуга</th>
+        <th>Стоимость</th>
+        <th>Ед. измерения</th>
+      </tr>
+      <tr>
+        <td>Самовыравнивающийся</td>
+        <td></td>
+        <td>р/м²</td>
+      </tr>
+    </table>
+
+    <table>
+      <caption>Укладка ламината</caption>
+      <tr>
+        <th>Услуга</th>
         <th>Стоимость</th>
         <th>Ед. измерения</th>
       </tr>
@@ -154,18 +208,52 @@ https://petro-pol.ru/montazh/
 </Layout>
 
 <style>
-  table {
-    margin-top: var(--spacing-sm);
-  }
-
   li {
     margin-left: var(--spacing-lg);
     padding-block: var(--spacing-2xs);
   }
 
-  tr {
-    & > * {
-      padding: var(--spacing-2xs);
+  table {
+    margin-top: var(--spacing-sm);
+    border-collapse: collapse;
+    width: min(fit-content, 100%);
+  }
+
+  caption {
+    font-size: var(--text-lg);
+    font-weight: 500;
+  }
+
+  caption,
+  th {
+    text-align: left;
+  }
+
+  td,
+  th,
+  caption {
+    padding: var(--spacing-2xs);
+  }
+
+  th {
+    background-color: color-mix(in oklch, var(--primary) 18%, transparent);
+  }
+
+  td {
+    line-height: 1.4;
+    text-underline-offset: 2px;
+  }
+
+  tr:nth-of-type(2n) {
+    background-color: color-mix(in oklch, var(--secondary) 12%, transparent);
+  }
+
+  @media (width < 768px) {
+    th,
+    td,
+    span {
+      line-height: 1.25;
+      font-size: var(--text-sm);
     }
   }
 </style>
