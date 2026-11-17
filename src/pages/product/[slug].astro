@@ -66,13 +66,17 @@ const description = product.description ?? SITE_DESCRIPTION;
     display: grid;
     container-type: inline-size;
     grid-template-rows: 1fr auto;
-    @media (width > 35rem) {
+
+    @media (width > 40rem) {
       grid-template-rows: auto;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       align-items: start;
     }
     @media (width > 75rem) {
-      grid-template-columns: 6fr 4fr;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    }
+    @media (width > 95rem) {
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
     }
   }
   /*TODO: proportionally decrease sizes of all headings...?*/

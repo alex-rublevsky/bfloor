@@ -60,7 +60,7 @@ const { images } = Astro.props;
     align-items: start;
     gap: var(--spacing-3xs);
 
-    @container (max-width: 40rem) {
+    @media (width < 1024px) {
       position: relative;
       top: 0;
       margin-inline: auto;
@@ -80,11 +80,15 @@ const { images } = Astro.props;
     display: none;
     /*TODO: make this responsive through cqh*/
     object-fit: contain;
-    max-height: calc(90dvh - 8rem);
+    /*height: 100%;
+    width: 100%;*/
+    object-position: top left;
+    max-height: calc(100dvh - 10rem);
+
     &[data-index="0"] {
       display: block;
     }
-    @container (max-width: 50rem) {
+    @media (width < 768px) {
       max-height: calc(60dvh);
     }
   }
@@ -107,7 +111,7 @@ const { images } = Astro.props;
     display: grid;
     gap: var(--spacing-3xs);
 
-    @container (max-width: 40rem) {
+    @media (width < 1024px) {
       display: flex;
       flex-direction: row;
       order: 1;
@@ -118,6 +122,7 @@ const { images } = Astro.props;
     aspect-ratio: 1/1;
     height: clamp(4rem, 7vw, 5rem);
   }
+
   img#preview {
     object-fit: cover;
     height: 100%;
