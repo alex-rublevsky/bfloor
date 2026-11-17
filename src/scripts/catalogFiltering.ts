@@ -47,8 +47,9 @@ const FIXED_FACET_ORDER = [
 
 export async function initCatalogFiltering(): Promise<void> {
   const section = document.querySelector<HTMLElement>("section");
-  const filtersParent = document.querySelector("aside") as HTMLElement;
-  const filtersBlock = document.querySelector<HTMLElement>("#filtersBlock")!;
+  const filtersParent = document.querySelector<HTMLElement>("#catalogFilters");
+  const filtersBlock = document.querySelector<HTMLElement>("#filtersBlock");
+  const filtersLoading = document.querySelector<HTMLElement>("#filtersLoading");
   const staticFeed = document.querySelector<HTMLElement>("#staticFeed")!;
   const filteredFeed = document.querySelector<HTMLElement>("#filteredFeed")!;
   const cardTemplate = document.querySelector<HTMLTemplateElement>(
@@ -62,7 +63,9 @@ export async function initCatalogFiltering(): Promise<void> {
 
   if (
     !section ||
+    !filtersParent ||
     !filtersBlock ||
+    !filtersLoading ||
     !staticFeed ||
     !filteredFeed ||
     !cardTemplate ||
@@ -71,20 +74,53 @@ export async function initCatalogFiltering(): Promise<void> {
     return;
   }
 
-  const pagefindUrl = new URL("/pagefind/pagefind.js", window.location.origin)
-    .href;
-  const pagefind = (await import(
-    /* @vite-ignore */ pagefindUrl
-  )) as PagefindApi;
-  await pagefind.filters();
+  const mobile = window.matchMedia("(width < 768px)");
+  mobileFiltersButton.addEventListener("click", () => {
+    if (!mobile.matches) return;
+
+    const isOpen = filtersParent.classList.toggle("mobileFiltersOpen");
+    mobileFiltersButton.setAttribute("aria-expanded", String(isOpen));
+    mobileFiltersButton.innerText = isOpen ? "Применить" : "Фильтры";
+    mobileFiltersButton.classList.toggle("primary", isOpen);
+    mobileFiltersButton.classList.toggle("tertiary", !isOpen);
+
+    document.documentElement.style.overflow = isOpen ? "hidden" : "";
+  });
 
   const category = section.dataset.category ?? "";
   const locationLabels = JSON.parse(
     section.dataset.locationLabels ?? "{}",
   ) as Record<string, string>;
-  const baseSearch = await pagefind.search(null, {
-    filters: { Категория: category },
-  });
+
+  const pagefindUrl = new URL("/pagefind/pagefind.js", window.location.origin)
+    .href;
+  let pagefind: PagefindApi;
+  let baseSearch: PagefindSearch;
+  try {
+    // const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+    // await delay(5000);
+
+    pagefind = (await import(/* @vite-ignore */ pagefindUrl)) as PagefindApi;
+    // Pagefind only returns facet counts with searches after filter indexes load.
+    await pagefind.filters();
+    baseSearch = await pagefind.search(null, {
+      filters: { Категория: category },
+    });
+  } catch (error) {
+    console.error("Не удалось загрузить фильтры каталога", error);
+
+    filtersLoading.replaceChildren();
+
+    const errorMessage = filtersParent
+      .querySelector<HTMLTemplateElement>("#filtersErrorTemplate")!
+      .content.cloneNode(true) as DocumentFragment;
+
+    filtersLoading.append(errorMessage);
+    return;
+  }
+
+  filtersLoading.hidden = true;
+  filtersBlock.hidden = false;
   const initialFacetCounts = baseSearch.filters;
   const paginations =
     document.querySelectorAll<HTMLElement>("[data-pagination]");
@@ -110,19 +146,6 @@ export async function initCatalogFiltering(): Promise<void> {
 
       return a.localeCompare(b, "ru");
     });
-
-  const mobile = window.matchMedia("(width < 768px)");
-  mobileFiltersButton.addEventListener("click", () => {
-    if (!mobile.matches) return;
-
-    const isOpen = filtersParent.classList.toggle("mobileFiltersOpen");
-    mobileFiltersButton.setAttribute("aria-expanded", String(isOpen));
-    mobileFiltersButton.innerText = isOpen ? "Применить" : "Фильтры";
-    mobileFiltersButton.classList.toggle("primary", isOpen);
-    mobileFiltersButton.classList.toggle("tertiary", !isOpen);
-
-    document.documentElement.style.overflow = isOpen ? "hidden" : "auto";
-  });
 
   function createFilter(name: string, counts: FacetCounts): void {
     const filterTemplate = document.querySelector<HTMLTemplateElement>(

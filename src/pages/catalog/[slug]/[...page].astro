@@ -100,7 +100,33 @@ TODO: add bottom padding to the mobile filters screen, make sure it is scrollabl
 
         <aside id="catalogFilters">
           <h3>Фильтры</h3>
-          <div id="filtersBlock"></div>
+
+          <template id="filtersErrorTemplate">
+            <div id="filtersError" role="alert">
+              <Icon name="warning" title="Ошибка" />
+              <p>Не удалось загрузить фильтры. Обновите страницу.</p>
+            </div></template
+          >
+
+          <div id="filtersLoading" role="status" aria-live="polite">
+            <span class="sr-only">Загружаем фильтры</span>
+
+            {
+              Array.from({ length: 5 }, () => (
+                <div class="filterSkeletonWrapper">
+                  <div class="skeleton filterSkeletonTitle" />
+                  <div class="filterSkeleton skeleton" aria-hidden="true">
+                    {Array.from({ length: 5 }, () => (
+                      <div class="skeleton filterSkeletonOption" />
+                    ))}
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+
+          <div id="filtersBlock" hidden></div>
+
           <template id="filter-block-template">
             <fieldset class="filter">
               <legend></legend>
@@ -179,6 +205,15 @@ TODO: add bottom padding to the mobile filters screen, make sure it is scrollabl
       padding-right: var(--section-padding-x);
     }
   }
+
+  @media (width < 768px) {
+    #catalogFilters h3 {
+      padding-inline: var(--section-padding-x);
+      padding-top: var(--section-padding-x);
+      padding-bottom: var(--spacing-sm);
+    }
+  }
+
   .storeLayout {
     display: grid;
     grid-template-columns: min-content 1fr;
@@ -213,60 +248,97 @@ TODO: add bottom padding to the mobile filters screen, make sure it is scrollabl
   #filtersBlock {
     display: grid;
     gap: var(--spacing-md);
+
     @media (width >= 768px) {
       gap: var(--spacing-sm);
     }
   }
 
-  @media (width < 768px) {
-    #catalogFilters h3 {
-      padding-inline: var(--section-padding-x);
-      padding-top: var(--section-padding-x);
+  #filtersLoading {
+    display: grid;
+    gap: var(--spacing-2xs);
+
+    @media (width < 768px) {
+      gap: var(--spacing-md);
     }
-    aside {
-      background-color: var(--background) !important;
+  }
+
+  .filterSkeletonWrapper {
+    display: grid;
+    gap: var(--spacing-3xs);
+  }
+
+  .filterSkeleton {
+    display: grid;
+    gap: var(--spacing-3xs);
+    padding: var(--spacing-2xs);
+    width: 100%;
+    border-radius: var(--radius-md);
+
+    @media (width < 768px) {
+      display: flex;
+    }
+  }
+
+  .filterSkeletonTitle {
+    width: 55%;
+    height: 1.25rem;
+    border-radius: var(--radius-sm);
+    margin-inline: var(--spacing-2xs);
+
+    @media (width < 768px) {
+      width: 35%;
+      width: 35%;
+    }
+  }
+
+  .filterSkeletonOption {
+    width: 100%;
+    height: 1.75rem;
+    border-radius: var(--radius-sm);
+  }
+
+  #filtersError {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: var(--spacing-lg);
+
+    & :nth-child(1) {
+      width: var(--spacing-xl);
+      height: auto;
+      color: var(--secondary);
+    }
+
+    & :nth-child(2) {
+      text-align: center;
+    }
+
+    @media (width < 768px) {
+      padding-top: var(--spacing-2xl);
+    }
+  }
+
+  aside {
+    background-color: color-mix(in oklch, var(--muted) 15%, transparent);
+    padding: var(--spacing-2xs);
+    min-width: 28ch;
+
+    @media (width < 768px) {
+      background-color: var(--background);
       position: fixed;
       inset: 0;
       display: none;
       height: 100dvh;
       z-index: 20;
       overflow-y: auto;
-      padding: 0 !important;
-    }
+      padding: 0 0 var(--spacing-2xl) 0;
 
-    aside.mobileFiltersOpen {
-      display: block;
+      &.mobileFiltersOpen {
+        display: block;
+      }
     }
-
-    .filter-options {
-      display: flex !important;
-      gap: var(--spacing-3xs);
-      padding-bottom: var(--spacing-3xs);
-      padding-inline: var(--spacing-3xs);
-    }
-
-    #filtersBlock,
-    .filter {
-      min-width: 0;
-      max-width: 100%;
-    }
-
-    .filter {
-      border: none;
-    }
-
-    :global(.checkbox-wrapper) {
-      border: var(--border-width) solid var(--border);
-      padding-inline: var(--spacing-xs) !important;
-      padding-block: var(--spacing-2xs) !important;
-      border-radius: var(--radius-sm);
-      background-color: color-mix(in oklch, var(--muted) 15%, transparent);
-    }
-  }
-  aside {
-    background-color: color-mix(in oklch, var(--muted) 15%, transparent);
-    padding: var(--spacing-2xs);
-    min-width: 28ch;
   }
   .filter legend {
     font-weight: bold;
@@ -287,6 +359,11 @@ TODO: add bottom padding to the mobile filters screen, make sure it is scrollabl
     padding-top: 0;
     padding-bottom: var(--spacing-3xs);
     padding-inline: 0;
+
+    @media (width < 768px) {
+      border: none;
+      min-width: 0;
+    }
   }
 
   .filter-options {
@@ -295,12 +372,28 @@ TODO: add bottom padding to the mobile filters screen, make sure it is scrollabl
     border-radius: 0;
     display: grid;
     padding-top: var(--spacing-2xs);
+
+    @media (width < 768px) {
+      display: flex;
+      gap: var(--spacing-3xs);
+      padding-bottom: var(--spacing-3xs);
+      padding-inline: var(--spacing-3xs);
+    }
   }
 
   :global(.checkbox-wrapper) {
     padding: var(--spacing-3xs);
+
     &:hover {
       background-color: var(--muted);
+    }
+
+    @media (width < 768px) {
+      border: var(--border-width) solid var(--border);
+      padding-inline: var(--spacing-xs) !important;
+      padding-block: var(--spacing-2xs) !important;
+      border-radius: var(--radius-sm);
+      background-color: color-mix(in oklch, var(--muted) 15%, transparent);
     }
   }
 </style>
@@ -308,15 +401,7 @@ TODO: add bottom padding to the mobile filters screen, make sure it is scrollabl
 <!-- TODO: add "load more" feature or make the filtration work with pagination -->
 
 <script>
-  //   const desktop = window.matchMedia("(min-width: 769px)");
-  //
-  //   if (desktop.matches) {
-  //     void import("@/scripts/catalogFiltering").then(({ initCatalogFiltering }) =>
-  //       initCatalogFiltering(),
-  //     );
-  //   }
-  //
-  void import("@/scripts/catalogFiltering").then(({ initCatalogFiltering }) =>
-    initCatalogFiltering(),
-  );
+  import { initCatalogFiltering } from "@/scripts/catalogFiltering";
+
+  void initCatalogFiltering();
 </script>
