@@ -126,8 +126,8 @@
   --base-max: 1.125rem;
   /*1.125 1.333*/
   /*1.2 1.414*/
-  --type-scale-small: 1.2;
-  --type-scale-large: 1.414;
+  --type-scale-small: 1.15;
+  --type-scale-large: 1.333;
 
   /*calculations*/
   --fluid: progress(100vw, var(--fluid-vmin), var(--fluid-vmax));
