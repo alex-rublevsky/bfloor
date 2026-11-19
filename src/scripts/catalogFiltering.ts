@@ -613,15 +613,15 @@ export async function initCatalogFiltering(): Promise<void> {
     }
 
     if (metadata.discounted_price) {
-      discountPrice.textContent = `${metadata.discounted_price}Р`;
-      price.className = "discountedPrice";
-      price.textContent = metadata["price"] ? `${metadata["price"]}Р` : "";
+      discountPrice.textContent = metadata.discounted_price ?? "";
       if (metadata.unit) discountUnit.textContent = metadata.unit;
       else discountUnit.remove();
+      price.className = "discountedPrice";
+      price.textContent = metadata["price"] ?? "";
       unit.remove();
     } else {
       discountPrice.remove();
-      price.textContent = metadata["price"] ? `${metadata["price"]}Р` : "";
+      price.textContent = metadata["price"] ?? "";
       price.className = "price";
       discountUnit.remove();
       if (metadata.unit) unit.textContent = metadata.unit;

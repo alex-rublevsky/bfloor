@@ -54,7 +54,7 @@ const discountedPrice = product.discountedPrice
     {product.name ? product.name : null}
   </h1>
   <!-- TODO: use <output> for showing the total price with quantity: https://youtu.be/HgNDii20FG4?si=XU0n5vSZ9-pEnSjs -->
-  <div id="productPrices">
+  <div class="productPrices">
     {
       discountedPrice ? (
         <>
@@ -92,7 +92,7 @@ const discountedPrice = product.discountedPrice
   </div>
 
   <style>
-    #productPrices {
+    .productPrices {
       .price {
         font-size: var(--text-lg);
       }
