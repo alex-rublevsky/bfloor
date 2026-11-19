@@ -82,15 +82,17 @@ export const relations = defineRelations(schema, (r) => ({
     variation: r.one.variations({
       from: r.variationAttributeValues.variationId,
       to: r.variations.id,
+      optional: false,
     }),
     attribute: r.one.attributes({
       from: r.variationAttributeValues.attributeId,
       to: r.attributes.id,
+      optional: false,
     }),
-    //is this below needed? should it be optional? how to make it such?
     attributeValue: r.one.attributeValues({
       from: r.variationAttributeValues.attributeValueId,
       to: r.attributeValues.id,
+      optional: false,
     }),
   },
 }));
