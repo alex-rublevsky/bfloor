@@ -42,22 +42,24 @@ const description = product.description ?? SITE_DESCRIPTION;
 ---
 
 <Layout title={title} description={description}>
-  <section data-pagefind-body class="no-padding mainSection">
-    <Gallery images={product.images} />
-    <ProductInfo product={product} />
-  </section>
-  <section class="pb-3xl">
-    <h2>Поможем с укладкой</h2>
-    <p class="max-w-[60ch]">
-      Наши специалисты проконсультирует вас, осуществят доставку по Приморскому
-      краю и уложат любое покрытие из нашего ассортимента
-    </p>
-    <p class="text-md pt-sm">
-      Позвонить Роману: <a class="text-md" href="tel:+79025559405"
-        >8 902 555 9405</a
-      >
-    </p>
-  </section>
+  <main>
+    <section data-pagefind-body class="no-padding mainSection">
+      <Gallery images={product.images} />
+      <ProductInfo product={product} />
+    </section>
+    <section class="pb-3xl">
+      <h2>Поможем с укладкой</h2>
+      <p class="max-w-[60ch]">
+        Наши специалисты проконсультирует вас, осуществят доставку по
+        Приморскому краю и уложат любое покрытие из нашего ассортимента
+      </p>
+      <p class="text-md pt-sm">
+        Позвонить Роману: <a class="text-md" href="tel:+79025559405"
+          >8 902 555 9405</a
+        >
+      </p>
+    </section>
+  </main>
 </Layout>
 
 <style>

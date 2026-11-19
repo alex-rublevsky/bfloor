@@ -6,74 +6,76 @@ import { BASE_IMAGE_URL, SITE_TITLE } from "@/constants";
 ---
 
 <Layout title=`О компании — ${SITE_TITLE}` showFooter>
-  <section class="no-padding">
-    <Image
-      src={BASE_IMAGE_URL + "about/elena.webp"}
-      width={2120}
-      height={1416}
-      alt="Директор"
-      loading="lazy"
-      class="skeleton"
-      onload="this.closest('.skeleton')?.classList.remove('skeleton')"
-      style="view-transition-name: about-image;"
-    />
-    <h1 style="view-transition-name: about-title;">О компании</h1>
-    <p style="view-transition-name: about-paragraph;">
-      Магазин BeautyFloor предлагает большой выбор напольных покрытий во
-      Владивостоке. В нашем ассортименте есть покрытия для квартир, домов,
-      офисов, больниц, детских садов, школ, серверных, бассейнов, спортивных
-      залов и площадок и любых других мест. Мы предоставляем не только
-      высококачественные полы, но и сопутствующие товары.
-    </p>
-
-    <p>
-      Наша квалифицированная бригада укладчиков установит любые материалы из
-      нашего ассортимента.
-    </p>
-
-    <div class="quote">
-      <!-- <span> &#10077;</span> -->
-      <blockquote>
-        Я основала магазин в 2009 году, и с самого его открытия ключевой
-        философией нашей работы являются качественное выполнение своих
-        обязанностей, индивидуальный подход и ответственность.
-      </blockquote>
+  <main>
+    <section class="no-padding">
       <Image
-        src={BASE_IMAGE_URL + "about/signature.webp"}
-        width={500}
-        height={500}
-        alt="Подпись директора"
+        src={BASE_IMAGE_URL + "about/elena.webp"}
+        width={2120}
+        height={1416}
+        alt="Директор"
         loading="lazy"
         class="skeleton"
         onload="this.closest('.skeleton')?.classList.remove('skeleton')"
+        style="view-transition-name: about-image;"
       />
-      <span class="text-right mr-10">Рублевская Елена Валерьевна</span>
-    </div>
-    <!-- <p class="text-md">
+      <h1 style="view-transition-name: about-title;">О компании</h1>
+      <p style="view-transition-name: about-paragraph;">
+        Магазин BeautyFloor предлагает большой выбор напольных покрытий во
+        Владивостоке. В нашем ассортименте есть покрытия для квартир, домов,
+        офисов, больниц, детских садов, школ, серверных, бассейнов, спортивных
+        залов и площадок и любых других мест. Мы предоставляем не только
+        высококачественные полы, но и сопутствующие товары.
+      </p>
+
+      <p>
+        Наша квалифицированная бригада укладчиков установит любые материалы из
+        нашего ассортимента.
+      </p>
+
+      <div class="quote">
+        <!-- <span> &#10077;</span> -->
+        <blockquote>
+          Я основала магазин в 2009 году, и с самого его открытия ключевой
+          философией нашей работы являются качественное выполнение своих
+          обязанностей, индивидуальный подход и ответственность.
+        </blockquote>
+        <Image
+          src={BASE_IMAGE_URL + "about/signature.webp"}
+          width={500}
+          height={500}
+          alt="Подпись директора"
+          loading="lazy"
+          class="skeleton"
+          onload="this.closest('.skeleton')?.classList.remove('skeleton')"
+        />
+        <span class="text-right mr-10">Рублевская Елена Валерьевна</span>
+      </div>
+      <!-- <p class="text-md">
       Вы всегда можете написать мне лично на <a href="mailto:romavg@mail.ru"
         >romavg@mail.ru</a
       >
     </p> -->
-    <p>
-      Мы занимаемся розничными и оптовыми заказами с частными лицами и
-      организациями, а также архитектурными бюро и студиями дизайна.
-    </p>
-    <p>
-      Основными клиентами нашего магазина являются строительные компании,
-      учебные и здравоохранительные учреждения, гостиничные комплексы, базы
-      отдыха, офисы, муниципальные объекты различного направления.
-    </p>
-    <Image
-      src={BASE_IMAGE_URL + "other/bubisha.jpeg"}
-      width={1500}
-      height={1500}
-      alt="Заяц Маскот"
-      loading="lazy"
-      class="skeleton rounded-lg"
-      onload="this.closest('.skeleton')?.classList.remove('skeleton')"
-    />
-    <label> Наш маскот — зайка</label>
-  </section>
+      <p>
+        Мы занимаемся розничными и оптовыми заказами с частными лицами и
+        организациями, а также архитектурными бюро и студиями дизайна.
+      </p>
+      <p>
+        Основными клиентами нашего магазина являются строительные компании,
+        учебные и здравоохранительные учреждения, гостиничные комплексы, базы
+        отдыха, офисы, муниципальные объекты различного направления.
+      </p>
+      <Image
+        src={BASE_IMAGE_URL + "other/bubisha.jpeg"}
+        width={1500}
+        height={1500}
+        alt="Заяц Маскот"
+        loading="lazy"
+        class="skeleton rounded-lg"
+        onload="this.closest('.skeleton')?.classList.remove('skeleton')"
+      />
+      <label> Наш маскот — зайка</label>
+    </section>
+  </main>
 </Layout>
 
 <style>

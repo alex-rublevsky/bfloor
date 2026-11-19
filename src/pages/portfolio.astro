@@ -47,47 +47,49 @@ const data = [
 
 <!-- TODO: дописать описание -->
 <Layout title=`Наши работы — ${SITE_TITLE}` description="мы работаем с...">
-  <section>
-    <h1>Наши работы</h1>
-    <div class="autoGrid">
-      {
-        data.map((entry) => (
-          <div>
-            {entry.photos.length > 1 ? (
-              <BeforeAfterImage
-                beforeSrc={BASE_IMAGE_URL + "portfolio/" + entry.photos[0]}
-                afterSrc={BASE_IMAGE_URL + "portfolio/" + entry.photos[1]}
-                alt={""}
-              />
-            ) : (
-              <Image
-                src={BASE_IMAGE_URL + "portfolio/" + entry.photos[0]}
-                width={1000}
-                height={1000}
-                fit="contain"
-                class="skeleton h-70 w-auto object-contain"
-                onload="this.closest('.skeleton')?.classList.remove('skeleton')"
-                alt={"Изображение объекта " + entry.name}
-              />
-            )}
-            <h4>{entry.name}</h4>
-            <span>{entry.year}</span>
-            {entry.logo ?? (
-              <Image
-                src={BASE_IMAGE_URL + entry.logo}
-                width={100}
-                height={100}
-                class="skeleton"
-                onload="this.closest('.skeleton')?.classList.remove('skeleton')"
-                alt=""
-              />
-            )}
-            <p>{entry.description}</p>
-          </div>
-        ))
-      }
-    </div>
-  </section>
+  <main>
+    <section>
+      <h1>Наши работы</h1>
+      <div class="autoGrid">
+        {
+          data.map((entry) => (
+            <div>
+              {entry.photos.length > 1 ? (
+                <BeforeAfterImage
+                  beforeSrc={BASE_IMAGE_URL + "portfolio/" + entry.photos[0]}
+                  afterSrc={BASE_IMAGE_URL + "portfolio/" + entry.photos[1]}
+                  alt={""}
+                />
+              ) : (
+                <Image
+                  src={BASE_IMAGE_URL + "portfolio/" + entry.photos[0]}
+                  width={1000}
+                  height={1000}
+                  fit="contain"
+                  class="skeleton h-70 w-auto object-contain"
+                  onload="this.closest('.skeleton')?.classList.remove('skeleton')"
+                  alt={"Изображение объекта " + entry.name}
+                />
+              )}
+              <h4>{entry.name}</h4>
+              <span>{entry.year}</span>
+              {entry.logo ?? (
+                <Image
+                  src={BASE_IMAGE_URL + entry.logo}
+                  width={100}
+                  height={100}
+                  class="skeleton"
+                  onload="this.closest('.skeleton')?.classList.remove('skeleton')"
+                  alt=""
+                />
+              )}
+              <p>{entry.description}</p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+  </main>
 </Layout>
 
 <style></style>
