@@ -63,7 +63,9 @@ const discountedPrice = product.discountedPrice
           </span>
 
           {unitOfMeasurement ? (
-            <span class="currencyAndUnit">р/{unitOfMeasurement}</span>
+            <span class="currencyAndUnit" data-pagefind-meta="unit">
+              р/{unitOfMeasurement}
+            </span>
           ) : null}
           <span class="discountedPrice" data-pagefind-meta="price">
             {price}
@@ -75,7 +77,9 @@ const discountedPrice = product.discountedPrice
             {price}
           </span>
           {unitOfMeasurement ? (
-            <span class="currencyAndUnit">р/{unitOfMeasurement}</span>
+            <span class="currencyAndUnit" data-pagefind-meta="unit">
+              р/{unitOfMeasurement}
+            </span>
           ) : null}
         </>
       )
