@@ -1,8 +1,8 @@
 ---
-import { Image } from "astro:assets";
 import { BASE_IMAGE_URL } from "@/constants";
 import ImagePlaceholder from "./ImagePlaceholder.astro";
 import { getUnitOfMeasurement } from "@/lib/units";
+import { getProductCardImage } from "@/lib/productCardImage";
 import type { StorefrontProductCard } from "@/db/storefront/products/types";
 
 interface Props {
@@ -20,6 +20,9 @@ if (!product) {
 }
 
 const { images } = product;
+const cardImage = images?.[0]
+  ? await getProductCardImage(BASE_IMAGE_URL + images[0])
+  : null;
 const unitOfMeasurement =
   getUnitOfMeasurement(product.unitOfMeasurement)?.value ??
   product.unitOfMeasurement;
@@ -36,19 +39,18 @@ const discountedPrice = product.discountedPrice
 
 <a href={`/product/${product.slug}`}>
   <div class="entityImageWrapper">
-    <div class="entityImage">
-      <!-- TODO: fix some horizontal images not taking up full height, e.g. rulonnoe-rezinovoe-pokrytie-yolochka -->
-      <!-- TODO: perhaps integrate getImage for aproppriate image sizes, just like BannerImage.astro -->
+    <div class:list={["entityImage", cardImage && "skeleton"]}>
       {
-        images ? (
-          <Image
-            src={BASE_IMAGE_URL + images[0]}
+        cardImage ? (
+          <img
+            src={cardImage.src}
             width={500}
             height={500}
             alt={product.name}
             loading="lazy"
-            class="skeleton"
-            onload="this.closest('.skeleton')?.classList.remove('skeleton')"
+            decoding="async"
+            onload="this.closest('.entityImage')?.classList.remove('skeleton')"
+            onerror="this.closest('.entityImage')?.classList.remove('skeleton')"
           />
         ) : (
           <ImagePlaceholder />

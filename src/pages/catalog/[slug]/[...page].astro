@@ -10,6 +10,7 @@ import { STORE_LOCATIONS } from "@/lib/storeLocations";
 import { Icon } from "astro-icon/components";
 import Button from "@/components/shared/Button.astro";
 import Checkbox from "@/components/shared/Checkbox.astro";
+import ErrorNotice from "@/components/shared/ErrorNotice.astro";
 
 export const prerender = true;
 
@@ -101,13 +102,6 @@ TODO: add bottom padding to the mobile filters screen, make sure it is scrollabl
         <aside id="catalogFilters">
           <h3>Фильтры</h3>
 
-          <template id="filtersErrorTemplate">
-            <div id="filtersError" role="alert">
-              <Icon name="warning" title="Ошибка" />
-              <p>Не удалось загрузить фильтры. Обновите страницу.</p>
-            </div></template
-          >
-
           <div id="filtersLoading" role="status" aria-live="polite">
             <span class="sr-only">Загружаем фильтры</span>
 
@@ -124,6 +118,12 @@ TODO: add bottom padding to the mobile filters screen, make sure it is scrollabl
               ))
             }
           </div>
+
+          <ErrorNotice
+            id="catalogFilteringError"
+            message="Не удалось загрузить фильтры. Показаны все товары категории."
+            hidden
+          />
 
           <div id="filtersBlock" hidden></div>
 
@@ -160,15 +160,31 @@ TODO: add bottom padding to the mobile filters screen, make sure it is scrollabl
           }
         </div>
         <div id="filteredFeed" class="autoGrid" hidden></div>
+        <template id="catalog-loading-skeleton">
+          <div class="catalogProductSkeleton" aria-hidden="true">
+            <div class="entityImageWrapper">
+              <div class="entityImage skeleton"></div>
+            </div>
+            <div class="catalogSkeletonText">
+              <div class="skeleton catalogSkeletonLine"></div>
+              <div class="skeleton catalogSkeletonLine catalogSkeletonLineShort"></div>
+            </div>
+          </div>
+        </template>
+        <template id="catalogProductErrorTemplate">
+          <ErrorNotice message="Не удалось загрузить товары по выбранным фильтрам. Попробуйте ещё раз." />
+        </template>
         <template id="product-card-template">
           <a>
             <div class="entityImageWrapper">
               <div class="entityImage"></div>
             </div>
 
-            <div class="flex gap-2xs">
-              <span data-card-sale-price></span>
-              <p data-card-price></p>
+            <div class="productPrices">
+              <span data-card-sale-price class="price"></span>
+              <span data-card-sale-unit class="currencyAndUnit"></span>
+              <span data-card-price></span>
+              <span data-card-unit class="currencyAndUnit"></span>
             </div>
 
             <p class="text-sm" data-card-name></p>
@@ -298,26 +314,19 @@ TODO: add bottom padding to the mobile filters screen, make sure it is scrollabl
     border-radius: var(--radius-sm);
   }
 
-  #filtersError {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: var(--spacing-lg);
+  .catalogSkeletonText {
+    display: grid;
+    gap: var(--spacing-3xs);
+    padding-top: var(--spacing-2xs);
+  }
 
-    & :nth-child(1) {
-      width: var(--spacing-xl);
-      height: auto;
-      color: var(--secondary);
-    }
+  .catalogSkeletonLine {
+    height: 0.8rem;
+    border-radius: var(--radius-sm);
+  }
 
-    & :nth-child(2) {
-      text-align: center;
-    }
-
-    @media (width < 768px) {
-      padding-top: var(--spacing-2xl);
-    }
+  .catalogSkeletonLineShort {
+    width: 65%;
   }
 
   aside {

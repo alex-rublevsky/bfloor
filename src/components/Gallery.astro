@@ -1,15 +1,24 @@
 ---
 import { BASE_IMAGE_URL } from "@/constants";
 import { Image } from "astro:assets";
+import { getProductCardImage } from "@/lib/productCardImage";
 interface Props {
   images: string[];
 }
 
 const { images } = Astro.props;
+const cardImage = images[0]
+  ? await getProductCardImage(BASE_IMAGE_URL + images[0])
+  : null;
 ---
 
 <!-- TODO: add skeletons -->
 <div class="gallery">
+  {
+    cardImage && (
+      <meta data-pagefind-meta="card_image[content]" content={cardImage.src} />
+    )
+  }
   <div id="previewRow">
     {
       images.map((img, index) => (

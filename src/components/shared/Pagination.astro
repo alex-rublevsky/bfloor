@@ -1,5 +1,6 @@
 ---
 import Button from "./Button.astro";
+import { getPaginationItems } from "@/lib/paginationWindow";
 
 const {
   class: className,
@@ -12,17 +13,22 @@ const {
   baseUrl,
   ...rest
 } = Astro.props;
-const paginationList = Array.from({ length }, (_, i) => i + 1);
+const paginationItems = getPaginationItems(currentPage, length);
 const pageUrl = (pageNumber: number) =>
   pageNumber === 1 ? baseUrl : `${baseUrl}/${pageNumber}`;
 ---
 
 <!-- TODO: show only a few number buttons when there are many to be displayed — e.g.
-on mobile there is horizontal scroll because of it. -->{
-  paginationList.length > 1 ? (
+on mobile there is horizontal scroll because of it. -->
+<template data-filtered-pagination-link>
+  <Button size="pagination" variant="secondary" href="#" data-filtered-page>
+    <span data-pagination-label></span>
+  </Button>
+</template>
     <nav
       aria-label="Страницы каталога"
       class={`${className ?? undefined}`}
+      hidden={length <= 1}
       {...rest}>
       {firstUrl ? (
         <Button size="pagination" variant="secondary" href={`${firstUrl}`}>
@@ -44,16 +50,20 @@ on mobile there is horizontal scroll because of it. -->{
         </Button>
       )}
 
-      {paginationList.map((num) => (
-        <Button
-          size="pagination"
-          variant={currentPage === num ? "primary" : "tertiary"}
-          href={pageUrl(num)}
-          aria-current={currentPage === num ? "page" : undefined}
-          class={` ${currentPage == num ? "disabled active" : ""}`}>
-          {num}
-        </Button>
-      ))}
+      {paginationItems.map((item) =>
+        item === "ellipsis" ? (
+          <span class="paginationEllipsis" aria-hidden="true">…</span>
+        ) : (
+          <Button
+            size="pagination"
+            variant={currentPage === item ? "primary" : "tertiary"}
+            href={pageUrl(item)}
+            aria-current={currentPage === item ? "page" : undefined}
+            class={` ${currentPage == item ? "disabled active" : ""}`}>
+            {item}
+          </Button>
+        ),
+      )}
 
       {!nextUrl ? (
         <Button size="pagination" variant="secondary" disabled>
@@ -75,13 +85,19 @@ on mobile there is horizontal scroll because of it. -->{
         </Button>
       )}
     </nav>
-  ) : undefined
-}
-
 <style>
   nav {
     display: flex;
     flex-direction: row;
     gap: var(--spacing-3xs);
+  }
+
+  nav[hidden] {
+    display: none;
+  }
+
+  :global(.paginationEllipsis) {
+    align-self: center;
+    padding-inline: var(--spacing-3xs);
   }
 </style>

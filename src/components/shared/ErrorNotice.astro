@@ -1,0 +1,41 @@
+---
+import { Icon } from "astro-icon/components";
+
+interface Props {
+  message: string;
+  id?: string;
+  hidden?: boolean;
+}
+
+const { message, id, hidden = false } = Astro.props;
+---
+
+<div id={id} class="errorNotice" role="alert" hidden={hidden}>
+  <Icon name="warning" title="Ошибка" />
+  <p>{message}</p>
+</div>
+
+<style>
+  .errorNotice {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-2xs);
+    color: var(--secondary);
+
+    svg {
+      flex: none;
+      width: var(--spacing-xl);
+      height: auto;
+      color: var(--secondary);
+    }
+
+    p {
+      text-align: center;
+    }
+  }
+
+  .errorNotice[hidden] {
+    display: none;
+  }
+</style>
