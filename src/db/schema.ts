@@ -168,13 +168,16 @@ export const variations = sqliteTable(
       .notNull()
       .references(() => products.id, { onDelete: "cascade" }),
     // TODO: add image id's to switch the gallery to the relevant image
-    price: real("price").notNull().default(0),
+    price: real("price").notNull(),
     discountedPrice: real("discounted_price"),
     squareMetersPerPack: real("square_meters_per_pack"),
     createdAt: integer("created_at", { mode: "timestamp" }),
     updatedAt: integer("updated_at", { mode: "timestamp" }),
   },
-  (table) => [index("variations_productId_idx").on(table.productId)],
+  (table) => [
+    check("variations_price_positive_check", sql`${table.price} > 0`),
+    index("variations_productId_idx").on(table.productId),
+  ],
 );
 
 export const storeLocations = sqliteTable(
