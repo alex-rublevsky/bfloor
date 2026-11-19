@@ -167,12 +167,16 @@ TODO: add bottom padding to the mobile filters screen, make sure it is scrollabl
             </div>
             <div class="catalogSkeletonText">
               <div class="skeleton catalogSkeletonLine"></div>
-              <div class="skeleton catalogSkeletonLine catalogSkeletonLineShort"></div>
+              <div
+                class="skeleton catalogSkeletonLine catalogSkeletonLineShort">
+              </div>
             </div>
           </div>
         </template>
         <template id="catalogProductErrorTemplate">
-          <ErrorNotice message="Не удалось загрузить товары по выбранным фильтрам. Попробуйте ещё раз." />
+          <ErrorNotice
+            message="Не удалось загрузить товары по выбранным фильтрам. Попробуйте ещё раз."
+          />
         </template>
         <template id="product-card-template">
           <a>
@@ -181,6 +185,7 @@ TODO: add bottom padding to the mobile filters screen, make sure it is scrollabl
             </div>
 
             <div class="productPrices">
+              <span data-card-from class="fromLabel" hidden>от</span>
               <span data-card-sale-price class="price"></span>
               <span data-card-sale-unit class="currencyAndUnit"></span>
               <span data-card-price></span>
