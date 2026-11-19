@@ -1,4 +1,5 @@
 import { db } from "@/db/index";
+import { sql } from "drizzle-orm";
 import type { StorefrontProduct } from "./types";
 
 export async function getAllProductsByCategory(
@@ -17,11 +18,8 @@ export async function getAllProductsByCategory(
           price: true,
           discountedPrice: true,
         },
-        where: {
-          price: { gt: 0 },
-        },
         orderBy: (variation, { asc }) => [
-          asc(variation.price),
+          asc(sql`coalesce(${variation.discountedPrice}, ${variation.price})`),
           asc(variation.id),
         ],
         limit: 1,
@@ -51,8 +49,9 @@ export async function getAllProductsByCategory(
       brandId: product.brandId,
       collectionId: product.collectionId,
       price: cheapestVariation?.price ?? product.price,
-      discountedPrice:
-        cheapestVariation?.discountedPrice ?? product.discountedPrice,
+      discountedPrice: cheapestVariation
+        ? cheapestVariation.discountedPrice
+        : product.discountedPrice,
       hasVariations,
       description: product.description,
       importantNote: product.importantNote,

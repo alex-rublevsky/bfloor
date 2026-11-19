@@ -5,8 +5,8 @@ import { BASE_IMAGE_URL } from "@/constants";
 import { STORE_LOCATIONS } from "@/lib/storeLocations";
 import { Image } from "astro:assets";
 import type { StorefrontProductDetails } from "@/db/storefront/products/types";
+import type { CompactProductVariationForPicker } from "@/db/storefront/products/types";
 import { COUNTRIES } from "@/lib/countries";
-import Button from "./shared/Button.astro";
 import { marked } from "marked";
 import { Icon } from "astro-icon/components";
 import { getUnitOfMeasurement } from "@/lib/units";
@@ -31,6 +31,8 @@ const country = brand
   : null;
 
 const variations = product.variations;
+const defaultVariation = variations[0];
+const variationPayload: CompactProductVariationForPicker[] = variations;
 const descriptionHTML = product.description
   ? marked.parse(product.description, { async: false })
   : null;
@@ -39,12 +41,13 @@ const importantNoteHTML = product.importantNote
   : null;
 
 const price = Intl.NumberFormat()
-  .format(Number(product.price))
+  .format(Number(defaultVariation?.price ?? product.price))
   .replaceAll(",", " ");
-const discountedPrice = product.discountedPrice
-  ? Intl.NumberFormat()
-      .format(Number(product.discountedPrice))
-      .replaceAll(",", " ")
+const discountedValue = defaultVariation
+  ? defaultVariation.discountedPrice
+  : product.discountedPrice;
+const discountedPrice = discountedValue
+  ? Intl.NumberFormat().format(Number(discountedValue)).replaceAll(",", " ")
   : undefined;
 ---
 
@@ -54,11 +57,19 @@ const discountedPrice = product.discountedPrice
     {product.name ? product.name : null}
   </h1>
   <!-- TODO: use <output> for showing the total price with quantity: https://youtu.be/HgNDii20FG4?si=XU0n5vSZ9-pEnSjs -->
-  <div class="productPrices">
+  <div
+    class="productPrices"
+    aria-live="polite"
+    aria-atomic="true"
+    data-variation-prices
+    data-variations={JSON.stringify(variationPayload)}>
     {
       discountedPrice ? (
         <>
-          <span class="price" data-pagefind-meta="discounted_price">
+          <span
+            class="price"
+            data-current-price
+            data-pagefind-meta="discounted_price">
             {discountedPrice}
           </span>
 
@@ -67,13 +78,16 @@ const discountedPrice = product.discountedPrice
               р/{unitOfMeasurement}
             </span>
           ) : null}
-          <span class="discountedPrice" data-pagefind-meta="price">
+          <span
+            class="discountedPrice"
+            data-regular-price
+            data-pagefind-meta="price">
             {price}
           </span>
         </>
       ) : (
         <>
-          <span class="price" data-pagefind-meta="price">
+          <span class="price" data-current-price data-pagefind-meta="price">
             {price}
           </span>
           {unitOfMeasurement ? (
@@ -81,9 +95,13 @@ const discountedPrice = product.discountedPrice
               р/{unitOfMeasurement}
             </span>
           ) : null}
+          <span class="discountedPrice" data-regular-price hidden />
         </>
       )
     }
+    <span class="sr-only" data-pagefind-meta="has_variations">
+      {variations.length > 0 ? "true" : "false"}
+    </span>
     <!-- TODO: make this visible only when ADMIN_STOREFRONT_FLAG_KEY is present in local storage -->
     <!-- <Button variant="primary" size="sm" href={editHref}>
       <Icon name="edit" title="Изменить" />
@@ -106,13 +124,39 @@ const discountedPrice = product.discountedPrice
     }
   </style>
 
+  <p
+    class="variationPackArea"
+    data-variation-pack-area
+    hidden={defaultVariation?.squareMetersPerPack == null}>
+    Площадь упаковки: {defaultVariation?.squareMetersPerPack ?? ""} м²
+  </p>
+
   {
-    variations ? (
-      <div class="flex flex-row flex-wrap">
-        {variations.map((variation) => (
-          <Button size="sm" variant="tertiary">
-            {variation.price}
-          </Button>
+    product.variationLayers.length > 0 && variations.length > 0 ? (
+      <div class="variationPicker" role="group" aria-label="Выбор варианта">
+        {product.variationLayers.map((layer, layerIndex) => (
+          <fieldset
+            class="variationFacet"
+            data-variation-facet
+            data-attribute-id={layer.attributeId}>
+            <legend>{layer.attributeName}</legend>
+            <div class="variationOptions">
+              {layer.values.map((value) => {
+                const selected =
+                  defaultVariation?.values[layerIndex] === value.valueId;
+                return (
+                  <button
+                    type="button"
+                    class="variationOption"
+                    data-variation-option
+                    data-value-id={value.valueId}
+                    aria-pressed={selected ? "true" : "false"}>
+                    {value.valueName}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
         ))}
       </div>
     ) : null
@@ -310,6 +354,61 @@ const discountedPrice = product.discountedPrice
     }
   }
 
+  .variationPicker {
+    display: grid;
+    gap: var(--spacing-2xs);
+    padding-block: var(--spacing-xs);
+  }
+
+  .variationFacet {
+    border: 0;
+    padding: 0;
+    min-width: 0;
+
+    legend {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      padding-bottom: var(--spacing-3xs);
+    }
+  }
+
+  .variationOptions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-3xs);
+  }
+
+  .variationOption {
+    border: var(--border-width) solid var(--muted);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-3xs) var(--spacing-2xs);
+    cursor: pointer;
+    transition:
+      opacity 150ms ease,
+      border-color 150ms ease,
+      background-color 150ms ease;
+
+    &[aria-pressed="true"] {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+    }
+
+    &[data-available="false"] {
+      opacity: 0.42;
+      border-style: dashed;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+  }
+
+  .variationPackArea {
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
   dl {
     padding-block: var(--spacing-xs);
     display: grid;
@@ -409,3 +508,5 @@ const discountedPrice = product.discountedPrice
     }
   }
 </style>
+
+<script src="@/scripts/productVariations.ts"></script>

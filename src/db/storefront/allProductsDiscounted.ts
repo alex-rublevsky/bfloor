@@ -1,43 +1,61 @@
 import { db } from "@/db/index";
-import { categories, products } from "@/db/schema";
+import { categories, products, variations } from "@/db/schema";
+import { and, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
 import type { StorefrontProductCard } from "@/db/storefront/products/types";
-import { eq, isNotNull, or, sql, count } from "drizzle-orm";
 
 export type DiscountedProduct = StorefrontProductCard & {
+  categorySlug: string;
   totalDiscountedCount: number;
 };
 
 export async function getDiscountedProducts(): Promise<DiscountedProduct[]> {
+  const rankedVariations = db
+    .select({
+      productId: variations.productId,
+      price: variations.price,
+      discountedPrice: variations.discountedPrice,
+      rank: sql<number>`row_number() over (
+        partition by ${variations.productId}
+        order by ${variations.discountedPrice}, ${variations.id}
+      )`.as("rank"),
+    })
+    .from(variations)
+    .where(isNotNull(variations.discountedPrice))
+    .as("ranked_variations");
+
   return db
     .select({
       slug: products.slug,
       name: products.name,
       categorySlug: categories.slug,
       images: products.images,
-      price: products.price,
-      discountedPrice: products.discountedPrice,
+      price: sql<
+        number | null
+      >`coalesce(${rankedVariations.price}, ${products.price})`,
+      discountedPrice: sql<number | null>`case
+        when ${rankedVariations.productId} is null then ${products.discountedPrice}
+        else ${rankedVariations.discountedPrice}
+      end`,
       unitOfMeasurement: products.unitOfMeasurement,
-      totalDiscountedCount: sql<number>`count(*) over ()`, //   sql<number | null>`COALESCE(
-      //   ${products.discountedPrice},
-      //   (SELECT MIN(${productVariations.discountedPrice})
-      //    FROM ${productVariations}
-      //    WHERE ${productVariations.productId} = ${products.id}
-      //      AND ${productVariations.isActive} = 1
-      //      AND ${productVariations.discountedPrice} IS NOT NULL)
-      // )`,
+      hasVariations: sql<boolean>`${rankedVariations.productId} is not null`,
+      totalDiscountedCount: sql<number>`count(*) over ()`,
     })
     .from(products)
     .innerJoin(categories, eq(products.categoryId, categories.id))
+    .leftJoin(
+      rankedVariations,
+      and(
+        eq(products.id, rankedVariations.productId),
+        eq(rankedVariations.rank, 1),
+      ),
+    )
     .where(
       or(
-        isNotNull(products.discountedPrice),
-        // sql`EXISTS (
-        //   SELECT 1
-        //   FROM ${productVariations}
-        //   WHERE ${productVariations.productId} = ${products.id}
-        //     AND ${productVariations.isActive} = 1
-        //     AND ${productVariations.discountedPrice} IS NOT NULL
-        // )`,
+        isNotNull(rankedVariations.productId),
+        and(
+          isNull(rankedVariations.productId),
+          isNotNull(products.discountedPrice),
+        ),
       ),
     )
     .limit(30);

@@ -9,6 +9,37 @@ import type {
   Variation,
 } from "@/db/schema";
 
+export type ProductVariationForPicker = {
+  id: number;
+  price: number;
+  discountedPrice: number | null;
+  squareMetersPerPack: number | null;
+  attributes: { attributeId: number; valueId: number }[];
+};
+
+export type VariationPickerLayer = {
+  attributeId: number;
+  attributeName: string;
+  values: { valueId: number; valueName: string }[];
+};
+
+export type VariationPickerData = {
+  variations: CompactProductVariationForPicker[];
+  layers: VariationPickerLayer[];
+};
+
+export type CompactProductVariationForPicker = Omit<
+  ProductVariationForPicker,
+  "attributes"
+> & { values: number[] };
+
+export type StorefrontProductCard = Pick<
+  Product,
+  "slug" | "name" | "price" | "discountedPrice" | "unitOfMeasurement" | "images"
+> & {
+  hasVariations?: boolean;
+};
+
 type StorefrontProductBase = Pick<
   Product,
   | "id"
@@ -19,6 +50,7 @@ type StorefrontProductBase = Pick<
   | "collectionId"
   | "price"
   | "discountedPrice"
+  | "unitOfMeasurement"
   | "description"
   | "importantNote"
   | "images"
@@ -43,11 +75,13 @@ export type StorefrontProduct = StorefrontProductBase & {
   collection?: CollectionSummary | null;
   storeLocations: StoreLocationId[];
   hasVariations: boolean;
+  thicknessMm?: string;
 };
 
 export type StorefrontProductDetails = StorefrontProduct & {
   unitOfMeasurement: Product["unitOfMeasurement"];
   sku: Product["sku"];
   attributes: StorefrontAttribute[];
-  variations: Variation[];
+  variations: CompactProductVariationForPicker[];
+  variationLayers: VariationPickerLayer[];
 };
