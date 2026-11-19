@@ -59,12 +59,10 @@ const discountedPrice = product.discountedPrice
     </div>
   </div>
   <div class="productPrices">
+    {product.hasVariations ? <span class="fromLabel">от</span> : undefined}
     {
       discountedPrice ? (
         <>
-          {product.hasVariations ? (
-            <span class="fromLabel">от</span>
-          ) : undefined}
           <span class="price">{discountedPrice}</span>
           {unitOfMeasurement ? (
             <span class="currencyAndUnit">р/{unitOfMeasurement}</span>
@@ -72,7 +70,6 @@ const discountedPrice = product.discountedPrice
         </>
       ) : null
     }
-    {product.hasVariations ? <span class="fromLabel">от</span> : undefined}
     <span class={`${discountedPrice ? "discountedPrice" : "price"}`}>
       {price}
     </span>
