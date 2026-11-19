@@ -569,6 +569,7 @@ export async function initCatalogFiltering(): Promise<void> {
     const discountUnit = card.querySelector<HTMLElement>(
       "[data-card-sale-unit]",
     );
+    const fromLabel = card.querySelector<HTMLElement>("[data-card-from]");
     const price = card.querySelector<HTMLElement>("[data-card-price]");
     const unit = card.querySelector<HTMLElement>("[data-card-unit]");
     const name = card.querySelector<HTMLElement>("[data-card-name]");
@@ -577,6 +578,7 @@ export async function initCatalogFiltering(): Promise<void> {
       !imageContainer ||
       !discountPrice ||
       !discountUnit ||
+      !fromLabel ||
       !price ||
       !unit ||
       !name
@@ -584,6 +586,8 @@ export async function initCatalogFiltering(): Promise<void> {
       return card;
 
     link.href = result.url.replace(/^\/client(?=\/)/, "");
+
+    fromLabel.hidden = metadata.has_variations !== "true";
 
     if (metadata.card_image) {
       const image = document.createElement("img");
