@@ -14,12 +14,20 @@ import type { ProductFormData } from "@/db/dashboard/products/index";
 import { UNITS_OF_MEASUREMENT } from "@/lib/units";
 import SelectListBox from "@/components/shared/SelectListBox.astro";
 import MarkdownEditor from "./MarkdownEditor.astro";
+import { getDashboardReturnTo } from "@/lib/dashboardReturnTo";
 
 interface Props {
   product?: ProductFormData;
 }
 const { product = {} } = Astro.props as Props;
 const creating = !product.slug;
+const returnTo = getDashboardReturnTo(Astro.url);
+
+function actionUrl(action: { toString(): string }) {
+  const params = new URLSearchParams(action.toString());
+  params.set("returnTo", returnTo);
+  return `?${params.toString()}`;
+}
 
 // TODO: load all in parallel with Promise.all()
 // // const [categories, brandsWithCollections, attributesWithValues] =
@@ -127,11 +135,12 @@ considering that this is a native form? -->
     id="product-form"
     method="POST"
     data-mode={creating ? "create" : "edit"}
+    data-return-to={returnTo}
     data-category-policies={JSON.stringify(categoryPolicies)}
     data-collections-by-brand={JSON.stringify(collectionsByBrand)}
-    action={creating
-      ? actions.product.createProduct
-      : actions.product.updateProduct}>
+    action={actionUrl(
+      creating ? actions.product.createProduct : actions.product.updateProduct,
+    )}>
     {!creating && <input type="hidden" name="id" value={product.id} />}
     <div class="flex flex-row flex-wrap gap-xs items-center">
       <h1 class="text-lg pb-3xs">

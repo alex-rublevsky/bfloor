@@ -346,7 +346,7 @@ if (deleteButton) {
         confirm(`Не удалось удалить товар: ${error.message}`);
         throw new Error(`Не удалось удалить товар: ${error.message}`);
       } else {
-        navigate("/dashboard");
+        navigate(productForm.dataset.returnTo ?? "/dashboard");
       }
     } catch (error) {
       console.log(error);

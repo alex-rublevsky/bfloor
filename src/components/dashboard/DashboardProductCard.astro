@@ -1,14 +1,17 @@
 ---
 import { Image } from "astro:assets";
 import { BASE_IMAGE_URL } from "@/constants";
-import type { Product } from "@/db/schema";
+import type { DashboardProductCardData } from "@/db/dashboard/products/allProductsByCategory";
 import ImagePlaceholder from "../shared/ImagePlaceholder.astro";
 import Checkbox from "../shared/Checkbox.astro";
 import { getUnitOfMeasurement } from "@/lib/units";
 
-// type Props = { product?: Product };
+interface Props {
+  product?: DashboardProductCardData;
+  returnTo?: string;
+}
 
-const { product } = Astro.props;
+const { product, returnTo = "/dashboard" } = Astro.props as Props;
 
 if (!product) {
   return null;
@@ -30,13 +33,14 @@ const discountedPrice = product.discountedPrice
 ---
 
 <article class="product-card">
-  <Checkbox name="products" value={product.id} />
-  <a href={`/dashboard/product/${product.slug}`}>
+  <Checkbox name="products" value={String(product.id)} />
+  <a
+    href={`/dashboard/product/${product.slug}?${new URLSearchParams({ returnTo }).toString()}`}>
     <div class="entityImageWrapper">
       <div class="selectLabel"></div>
       <div class="entityImage">
         {
-          images ? (
+          images[0] ? (
             <Image
               src={BASE_IMAGE_URL + images[0]}
               width={500}
@@ -53,10 +57,10 @@ const discountedPrice = product.discountedPrice
       </div>
     </div>
     <div class="productPrices">
+      {product.hasVariations ? <span class="fromLabel">от</span> : undefined}
       {
         discountedPrice ? (
           <>
-            {product.hasVariations ? <span>от </span> : undefined}
             <span class="price">{discountedPrice}</span>
             {unitOfMeasurement ? (
               <span class="currencyAndUnit">р/{unitOfMeasurement}</span>
@@ -64,7 +68,6 @@ const discountedPrice = product.discountedPrice
           </>
         ) : null
       }
-      {product.hasVariations ? <span>от </span> : undefined}
       <span class={discountedPrice ? "discountedPrice" : "price"}>{price}</span>
 
       {

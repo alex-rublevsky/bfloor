@@ -22,7 +22,10 @@ const products = await getAllProductsByCategory(categoryId, page, {
       <section class="autoGrid">
         <h1 class="sr-only">Товары</h1>
         {products.map((product) => (
-          <DashboardProductCard product={product} />
+          <DashboardProductCard
+            product={product}
+            returnTo={Astro.url.pathname + Astro.url.search}
+          />
         ))}
       </section>
     ) : (

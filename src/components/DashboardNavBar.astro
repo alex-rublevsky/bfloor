@@ -2,6 +2,7 @@
 import Button from "./shared/Button.astro";
 import { Icon } from "astro-icon/components";
 const pathname = Astro.url.pathname;
+const returnTo = pathname + Astro.url.search;
 
 const navItems = [
   { label: "Товары", href: "/dashboard", match: "exact" as const },
@@ -33,7 +34,7 @@ const createItems = [
   {
     label: "Товар",
     href: "/dashboard",
-    hrefTo: "/dashboard/product/new",
+    hrefTo: `/dashboard/product/new?${new URLSearchParams({ returnTo }).toString()}`,
     match: "exact" as const,
   },
   {
