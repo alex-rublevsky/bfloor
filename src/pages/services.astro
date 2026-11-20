@@ -9,7 +9,7 @@ import Input from "@/components/shared/Input.astro";
 ---
 
 <!-- TODO: дописать описание -->
-<Layout title=`Укладка и иные услуги — ${SITE_TITLE}` description="">
+<Layout title=`Укладка напольных покрытий — ${SITE_TITLE}` description="">
   <main>
     <section>
       <h1>Укладка</h1>
@@ -22,8 +22,7 @@ import Input from "@/components/shared/Input.astro";
         </li>
 
         <li>
-          Комплектовация объекта всеми необходимыми материалами, включая
-          расходные
+          Подберём и доставим все необходимые материалы, включая расходные
         </li>
 
         <li>Мы не оставляем после себя никакого мусора</li>
@@ -82,7 +81,7 @@ https://petro-pol.ru/montazh/
           <td>200 / м²</td>
         </tr>
         <tr>
-          <td>Отчистка основания от клея</td>
+          <td>Очистка основания от клея</td>
           <td>500 / м²</td>
         </tr>
       </table>
@@ -172,7 +171,7 @@ https://petro-pol.ru/montazh/
         </tr>
         <tr>
           <td>Укладка <b>паркета</b> / <b>инженерной доски</b></td>
-          <td>2 300 / м²</td>
+          <td><span class="text-foreground-muted">от </span>2 300 / м²</td>
         </tr>
         <tr>
           <td>Покрытие <b>пробки</b> лаком</td>
@@ -203,7 +202,7 @@ https://petro-pol.ru/montazh/
           <td>550 / погонный метр</td>
         </tr>
         <tr>
-          <td>Установка порога 0.9м</td>
+          <td>Установка порога 0.9 м</td>
           <td>600 / штука</td>
         </tr>
       </table>
@@ -229,22 +228,22 @@ https://petro-pol.ru/montazh/
       </table>
       <p class="text-foreground-muted py-xl">
         Описанная схема оказания услуг является типовой. При необходимости она
-        корректируется с учетом технологических особенностей и характеристики
+        корректируется с учетом технологических особенностей и характеристик
         конкретного напольного покрытия.
       </p>
       <section id="cta">
-        <Image
+        <!-- <Image
           src={BASE_IMAGE_URL + "other/ukladka.jpg"}
           height={1000}
           width={1333}
           alt="Фото процесса укладки"
           class="skeleton"
           onload="this.closest('.skeleton')?.classList.remove('skeleton')"
-        />
+        /> -->
         <div>
           <h2>Позвоните нам или оставьте заявку</h2>
           <p class="max-w-[60ch]">
-            Наши специалисты проконсультирует вас, осуществят <a
+            Наши специалисты проконсультируют вас, осуществят <a
               href="/delivery">доставку</a
             > по Приморскому краю и уложат любое покрытие из нашего ассортимента
           </p>
@@ -339,11 +338,34 @@ https://petro-pol.ru/montazh/
   }
 
   @media (width < 768px) {
+    section {
+      padding-top: var(--spacing-sm);
+    }
     th,
     td,
     span {
       line-height: 1.25;
       font-size: var(--text-sm);
+    }
+  }
+
+  @media (width < 560px) {
+    table {
+      width: 100%;
+    }
+    th {
+      display: none;
+    }
+    td {
+      display: block;
+    }
+    td:nth-of-type(1) {
+      padding-top: var(--spacing-xs);
+      padding-bottom: 0;
+    }
+    td:nth-of-type(2) {
+      padding-top: var(--spacing-2xs);
+      padding-bottom: var(--spacing-xs);
     }
   }
 
