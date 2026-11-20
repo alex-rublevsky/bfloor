@@ -52,6 +52,7 @@ const cardImage = images[0]
           data-index={index}
           id="mainImage"
           src={BASE_IMAGE_URL + img}
+          loading="eager"
           class="skeleton"
           onload="this.closest('.skeleton')?.classList.remove('skeleton')"
         />
@@ -125,12 +126,17 @@ const cardImage = images[0]
       display: flex;
       flex-direction: row;
       order: 1;
+      width: 100%;
+      overflow-x: scroll;
+      scroll-behavior: smooth;
+      scroll-snap-type: x proximity;
     }
   }
 
   .previewButton {
     aspect-ratio: 1/1;
     height: clamp(4rem, 7vw, 5rem);
+    scroll-snap-align: center;
   }
 
   img#preview {
@@ -160,6 +166,13 @@ const cardImage = images[0]
     });
 
     preview.classList.add("is-active");
+    if (window.matchMedia("(width < 1024px)").matches) {
+      preview.closest(".previewButton")?.scrollIntoView({
+        behavior: "auto",
+        block: "nearest",
+        inline: "center",
+      });
+    }
     mainImage.forEach((mainImage) => {
       mainImage.style.display = "none";
     });
