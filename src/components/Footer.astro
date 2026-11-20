@@ -1,18 +1,93 @@
-<footer>
-  <p>
-    Понравился сайт? <a href="https://t.me/alexrublevsky"
-      >Написать разработчику</a
-    >
-  </p>
-</footer>
+<section>
+  <dl>
+    <div>
+      <dt>ИП</dt>
+      <dd>Рублевская Елена Валерьевна</dd>
+    </div>
+    <div>
+      <dt>ИНН</dt>
+      <dd>253811825816</dd>
+    </div>
+    <div>
+      <dt>ОГРНИП</dt>
+      <dd>319253600035793</dd>
+    </div>
+  </dl>
+  <div>
+    <p>
+      Данный интернет-сайт носит исключительно информационный характер, вся
+      информация носит ознакомительный характер и ни при каких условиях не
+      является публичной офертой.
+    </p>
+    <p>
+      Понравился сайт? <a href="https://t.me/alexrublevsky"
+        >Написать разработчику</a
+      >
+    </p>
+  </div>
+</section>
 
 <style>
-  p {
-    text-align: center;
-    padding-block: var(--spacing-xl);
+  section {
+    /*padding-bottom: 0;*/
+    padding-top: var(--spacing-sm);
+    padding-bottom: var(--spacing-2xl);
+    /*width: 100%;*/
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
 
-    @media (width < 768px) {
-      padding-bottom: var(--spacing-3xl);
+    gap: var(--spacing-lg);
+
+    & a {
+      font-size: inherit;
+    }
+    & p {
+      font-size: var(--text-xs);
+      width: 45ch;
+      /*margin-inline: auto;*/
+    }
+    & p:first-child {
+      color: var(--foreground-muted);
+      padding-bottom: var(--spacing-3xs);
+
+      /*@media (width < 768px) {
+        text-align: center;
+      }*/
+    }
+    & dl {
+      display: grid;
+      gap: var(--spacing-3xs);
+      width: fit-content;
+      align-self: flex-end;
+      /*margin-inline: auto;*/
+
+      & div {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        gap: var(--spacing-md);
+
+        & dd,
+        dt {
+          font-size: var(--text-sm);
+          white-space: nowrap;
+        }
+
+        & dt {
+          color: var(--foreground-muted);
+        }
+      }
+    }
+
+    /*TODO: make this truly responsive*/
+    @media (width >=768px) {
+      grid-template-columns: 1fr 1fr;
+      padding-block: var(--spacing-sm);
+      /*TODO: this results in inconsistent order on tablet sizes. switches back and forth*/
+      & dl {
+        order: 1;
+      }
     }
   }
 </style>
