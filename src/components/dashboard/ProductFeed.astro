@@ -1,33 +1,64 @@
 ---
-import { getAllProductsByCategory } from "@/db/dashboard/products/allProductsByCategory";
+import {
+  getAllProductsByCategory,
+  getDashboardProductCount,
+} from "@/db/dashboard/products/allProductsByCategory";
 import DashboardProductCard from "@/components/dashboard/DashboardProductCard.astro";
+import Pagination from "@/components/shared/Pagination.astro";
 
 interface Props {
   categoryId: number | null;
   brandId: number | null;
   collectionId: number | null;
+  page: number;
 }
-const { categoryId, brandId, collectionId } = Astro.props;
+const { categoryId, brandId, collectionId, page } = Astro.props;
 
-const page = 1;
-const products = await getAllProductsByCategory(categoryId, page, {
-  brandId,
-  collectionId,
-});
+const filters = { brandId, collectionId };
+const totalCount = await getDashboardProductCount(categoryId, filters);
+const pageSize = 50;
+const totalPages = Math.ceil(totalCount / pageSize);
+const currentPage = Math.min(page, Math.max(1, totalPages));
+const products = await getAllProductsByCategory(
+  categoryId,
+  currentPage,
+  filters,
+);
+const pageUrl = (pageNumber: number) => {
+  const url = new URL(Astro.url);
+  if (pageNumber === 1) url.searchParams.delete("page");
+  else url.searchParams.set("page", String(pageNumber));
+  return `${url.pathname}${url.search}`;
+};
 ---
 
 <>
   {
     products && products.length > 0 ? (
-      <section class="autoGrid">
-        <h1 class="sr-only">Товары</h1>
-        {products.map((product) => (
-          <DashboardProductCard
-            product={product}
-            returnTo={Astro.url.pathname + Astro.url.search}
-          />
-        ))}
-      </section>
+      <>
+        <section class="autoGrid">
+          <h1 class="sr-only">Товары</h1>
+          {products.map((product) => (
+            <DashboardProductCard
+              product={product}
+              returnTo={Astro.url.pathname + Astro.url.search}
+            />
+          ))}
+        </section>
+        <Pagination
+          class="pt-lg pb-xl justify-center w-full"
+          length={totalPages}
+          currentPage={currentPage}
+          baseUrl={Astro.url.pathname}
+          firstUrl={currentPage > 1 ? pageUrl(1) : undefined}
+          prevUrl={currentPage > 1 ? pageUrl(currentPage - 1) : undefined}
+          nextUrl={
+            currentPage < totalPages ? pageUrl(currentPage + 1) : undefined
+          }
+          lastUrl={currentPage < totalPages ? pageUrl(totalPages) : undefined}
+          queryParam
+        />
+      </>
     ) : (
       <section class="h-screen grid place-items-center">
         <h1 class="text-lg!">Товаров не найдено</h1>

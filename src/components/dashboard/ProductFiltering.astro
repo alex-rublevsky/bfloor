@@ -116,6 +116,8 @@ const selectedCollectionId = collectionBelongsToBrand ? collectionId : "";
       url.searchParams.delete(clearKey);
     }
 
+    url.searchParams.delete("page");
+
     window.location.replace(url);
   }
 </script>

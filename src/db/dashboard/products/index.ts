@@ -7,6 +7,7 @@ export type {
 } from "./types";
 
 export { getAllProductsByCategory } from "./allProductsByCategory";
+export { getDashboardProductCount } from "./allProductsByCategory";
 export { getProductBySlug } from "./productBySlug";
 export { createProduct } from "./createProduct";
 export { updateProduct } from "./updateProduct";

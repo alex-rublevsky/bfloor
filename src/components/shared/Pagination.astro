@@ -11,11 +11,19 @@ const {
   nextUrl,
   lastUrl,
   baseUrl,
+  queryParam = false,
   ...rest
 } = Astro.props;
 const paginationItems = getPaginationItems(currentPage, length);
-const pageUrl = (pageNumber: number) =>
-  pageNumber === 1 ? baseUrl : `${baseUrl}/${pageNumber}`;
+const pageUrl = (pageNumber: number) => {
+  if (!queryParam)
+    return pageNumber === 1 ? baseUrl : `${baseUrl}/${pageNumber}`;
+
+  const url = new URL(Astro.url);
+  if (pageNumber === 1) url.searchParams.delete("page");
+  else url.searchParams.set("page", String(pageNumber));
+  return `${url.pathname}${url.search}${url.hash}`;
+};
 ---
 
 <!-- TODO: show only a few number buttons when there are many to be displayed — e.g.
@@ -25,66 +33,78 @@ on mobile there is horizontal scroll because of it. -->
     <span data-pagination-label></span>
   </Button>
 </template>
-    <nav
-      aria-label="Страницы каталога"
-      class={`${className ?? undefined}`}
-      hidden={length <= 1}
-      {...rest}>
-      {firstUrl ? (
-        <Button size="pagination" variant="secondary" href={`${firstUrl}`}>
-          &#171;
-        </Button>
-      ) : (
-        <Button size="pagination" variant="secondary" disabled href={""}>
-          &#171;
-        </Button>
-      )}
+<nav
+  aria-label="Страницы каталога"
+  class={`${className ?? undefined}`}
+  hidden={length <= 1}
+  {...rest}>
+  {
+    firstUrl ? (
+      <Button size="pagination" variant="secondary" href={`${firstUrl}`}>
+        &#171;
+      </Button>
+    ) : (
+      <Button size="pagination" variant="secondary" disabled href={""}>
+        &#171;
+      </Button>
+    )
+  }
 
-      {prevUrl ? (
-        <Button size="pagination" variant="secondary" href={`${prevUrl}`}>
-          &#8249;
-        </Button>
-      ) : (
-        <Button size="pagination" variant="secondary" disabled href={""}>
-          &#8249;
-        </Button>
-      )}
+  {
+    prevUrl ? (
+      <Button size="pagination" variant="secondary" href={`${prevUrl}`}>
+        &#8249;
+      </Button>
+    ) : (
+      <Button size="pagination" variant="secondary" disabled href={""}>
+        &#8249;
+      </Button>
+    )
+  }
 
-      {paginationItems.map((item) =>
-        item === "ellipsis" ? (
-          <span class="paginationEllipsis" aria-hidden="true">…</span>
-        ) : (
-          <Button
-            size="pagination"
-            variant={currentPage === item ? "primary" : "tertiary"}
-            href={pageUrl(item)}
-            aria-current={currentPage === item ? "page" : undefined}
-            class={` ${currentPage == item ? "disabled active" : ""}`}>
-            {item}
-          </Button>
-        ),
-      )}
-
-      {!nextUrl ? (
-        <Button size="pagination" variant="secondary" disabled>
-          &#8250;
-        </Button>
+  {
+    paginationItems.map((item) =>
+      item === "ellipsis" ? (
+        <span class="paginationEllipsis" aria-hidden="true">
+          …
+        </span>
       ) : (
-        <Button size="pagination" variant="secondary" href={`${nextUrl}`}>
-          &#8250;
+        <Button
+          size="pagination"
+          variant={currentPage === item ? "primary" : "tertiary"}
+          href={pageUrl(item)}
+          aria-current={currentPage === item ? "page" : undefined}
+          class={` ${currentPage == item ? "disabled active" : ""}`}>
+          {item}
         </Button>
-      )}
+      ),
+    )
+  }
 
-      {lastUrl ? (
-        <Button size="pagination" variant="secondary" href={`${lastUrl}`}>
-          &#187;
-        </Button>
-      ) : (
-        <Button size="pagination" variant="secondary" disabled>
-          &#187;
-        </Button>
-      )}
-    </nav>
+  {
+    !nextUrl ? (
+      <Button size="pagination" variant="secondary" disabled>
+        &#8250;
+      </Button>
+    ) : (
+      <Button size="pagination" variant="secondary" href={`${nextUrl}`}>
+        &#8250;
+      </Button>
+    )
+  }
+
+  {
+    lastUrl ? (
+      <Button size="pagination" variant="secondary" href={`${lastUrl}`}>
+        &#187;
+      </Button>
+    ) : (
+      <Button size="pagination" variant="secondary" disabled>
+        &#187;
+      </Button>
+    )
+  }
+</nav>
 <style>
   nav {
     display: flex;

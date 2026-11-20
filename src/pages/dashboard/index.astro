@@ -8,6 +8,7 @@ import Input from "@/components/shared/Input.astro";
 const categoryId = Number(Astro.url.searchParams.get("categoryId")) || null;
 const brandId = Number(Astro.url.searchParams.get("brandId")) || null;
 const collectionId = Number(Astro.url.searchParams.get("collectionId")) || null;
+const page = Math.max(1, Number(Astro.url.searchParams.get("page")) || 1);
 ---
 
 <!--
@@ -25,6 +26,7 @@ TODO: add readonly input state styling — gray out
       categoryId={categoryId}
       brandId={brandId}
       collectionId={collectionId}
+      page={page}
     />
   </main>
   <dialog

@@ -1,6 +1,6 @@
 import { db } from "@/db/index";
-import { asc, sql } from "drizzle-orm";
-import type { Product } from "@/db/schema";
+import { and, asc, count, eq, sql } from "drizzle-orm";
+import { products, type Product } from "@/db/schema";
 
 export type DashboardProductCardData = Omit<
   Product,
@@ -16,13 +16,36 @@ interface ProductFilters {
   collectionId?: number | null;
 }
 
+const PAGE_SIZE = 50;
+
+export async function getDashboardProductCount(
+  categoryId: number | null,
+  filters: ProductFilters = {},
+): Promise<number> {
+  const [result] = await db
+    .select({ count: count() })
+    .from(products)
+    .where(andFilters(categoryId, filters));
+  return result.count;
+}
+
+function andFilters(categoryId: number | null, filters: ProductFilters) {
+  const conditions = [];
+  if (categoryId) conditions.push(eq(products.categoryId, categoryId));
+  if (filters.brandId) conditions.push(eq(products.brandId, filters.brandId));
+  if (filters.collectionId) {
+    conditions.push(eq(products.collectionId, filters.collectionId));
+  }
+  return conditions.length ? and(...conditions) : undefined;
+}
+
 export async function getAllProductsByCategory(
   categoryId: number | null,
   page: number,
   filters: ProductFilters = {},
 ): Promise<DashboardProductCardData[]> {
   const safePage = Math.max(1, Math.floor(page));
-  const offset = (safePage - 1) * 100;
+  const offset = (safePage - 1) * PAGE_SIZE;
   const rows = await db.query.products.findMany({
     where: {
       categoryId: categoryId || undefined,
@@ -43,7 +66,8 @@ export async function getAllProductsByCategory(
         limit: 1,
       },
     },
-    limit: 50,
+    orderBy: (product) => [asc(product.id)],
+    limit: PAGE_SIZE,
     offset,
   });
 
