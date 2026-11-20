@@ -1,8 +1,5 @@
 ---
-import {
-  getAllProductsByCategory,
-  getDashboardProductCount,
-} from "@/db/dashboard/products/allProductsByCategory";
+import { getAllProductsByCategory } from "@/db/dashboard/products/allProductsByCategory";
 import DashboardProductCard from "@/components/dashboard/DashboardProductCard.astro";
 import Pagination from "@/components/shared/Pagination.astro";
 
@@ -11,19 +8,19 @@ interface Props {
   brandId: number | null;
   collectionId: number | null;
   page: number;
+  totalCount: number;
 }
-const { categoryId, brandId, collectionId, page } = Astro.props;
+const { categoryId, brandId, collectionId, page, totalCount } = Astro.props;
 
 const filters = { brandId, collectionId };
-const totalCount = await getDashboardProductCount(categoryId, filters);
+const products = await getAllProductsByCategory(categoryId, page, filters);
 const pageSize = 50;
 const totalPages = Math.ceil(totalCount / pageSize);
 const currentPage = Math.min(page, Math.max(1, totalPages));
-const products = await getAllProductsByCategory(
-  categoryId,
-  currentPage,
-  filters,
-);
+const pageProducts =
+  currentPage === page
+    ? products
+    : await getAllProductsByCategory(categoryId, currentPage, filters);
 const pageUrl = (pageNumber: number) => {
   const url = new URL(Astro.url);
   if (pageNumber === 1) url.searchParams.delete("page");
@@ -34,11 +31,11 @@ const pageUrl = (pageNumber: number) => {
 
 <>
   {
-    products && products.length > 0 ? (
+    pageProducts && pageProducts.length > 0 ? (
       <>
         <section class="autoGrid">
           <h1 class="sr-only">Товары</h1>
-          {products.map((product) => (
+          {pageProducts.map((product) => (
             <DashboardProductCard
               product={product}
               returnTo={Astro.url.pathname + Astro.url.search}

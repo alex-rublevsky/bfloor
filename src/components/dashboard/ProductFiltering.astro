@@ -7,9 +7,10 @@ interface Props {
   categoryId: string;
   brandId: string;
   collectionId: string;
+  count: number;
 }
 
-const { categoryId, brandId, collectionId } = Astro.props;
+const { categoryId, brandId, collectionId, count } = Astro.props;
 
 const categories = await getAllCategories();
 const brandsWithCollections = await getBrandsWithCollections();
@@ -57,12 +58,24 @@ const selectedCollectionId = collectionBelongsToBrand ? collectionId : "";
     })) ?? []}
     disabled={!selectedBrandId}
   />
+  <p class="productCount" aria-live="polite">
+    {count}
+    {
+      new Intl.PluralRules("ru").select(count) === "one"
+        ? " товар"
+        : new Intl.PluralRules("ru").select(count) === "few"
+          ? " товара"
+          : " товаров"
+    }
+  </p>
 </div>
 
 <style>
   .filtersBlock {
     display: flex;
-    gap: var(--spacing-3xs);
+    flex-wrap: wrap;
+    gap: var(--spacing-xs) var(--spacing-3xs);
+    align-items: baseline;
     padding-inline: var(--section-padding-x);
     padding-block: var(--spacing-sm);
 
@@ -77,6 +90,12 @@ const selectedCollectionId = collectionBelongsToBrand ? collectionId : "";
     @media (width < 768px) {
       padding-top: var(--spacing-md);
     }
+  }
+
+  .productCount {
+    padding-inline: var(--spacing-2xs);
+    color: var(--foreground-muted);
+    white-space: nowrap;
   }
 
   .filtersBlock[data-hidden="true"] {

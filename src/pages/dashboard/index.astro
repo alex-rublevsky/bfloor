@@ -4,11 +4,16 @@ import ProductFeed from "@/components/dashboard/ProductFeed.astro";
 import ProductFiltering from "@/components/dashboard/ProductFiltering.astro";
 import Button from "@/components/shared/Button.astro";
 import Input from "@/components/shared/Input.astro";
+import { getDashboardProductCount } from "@/db/dashboard/products/allProductsByCategory";
 
 const categoryId = Number(Astro.url.searchParams.get("categoryId")) || null;
 const brandId = Number(Astro.url.searchParams.get("brandId")) || null;
 const collectionId = Number(Astro.url.searchParams.get("collectionId")) || null;
 const page = Math.max(1, Number(Astro.url.searchParams.get("page")) || 1);
+const productCount = await getDashboardProductCount(categoryId, {
+  brandId,
+  collectionId,
+});
 ---
 
 <!--
@@ -21,12 +26,14 @@ TODO: add readonly input state styling — gray out
       categoryId={categoryId ? String(categoryId) : ""}
       brandId={brandId ? String(brandId) : ""}
       collectionId={collectionId ? String(collectionId) : ""}
+      count={productCount}
     />
     <ProductFeed
       categoryId={categoryId}
       brandId={brandId}
       collectionId={collectionId}
       page={page}
+      totalCount={productCount}
     />
   </main>
   <dialog
