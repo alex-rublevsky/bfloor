@@ -1,6 +1,6 @@
 ---
 import { getAllCategories } from "@/db/dashboard/categories";
-import { getBrandsWithCollections } from "@/db/dashboard/brands";
+import type { BrandWithCollections } from "@/db/dashboard/brands";
 import Select from "../shared/Select.astro";
 
 interface Props {
@@ -8,12 +8,13 @@ interface Props {
   brandId: string;
   collectionId: string;
   count: number;
+  brandsWithCollections: BrandWithCollections[];
 }
 
-const { categoryId, brandId, collectionId, count } = Astro.props;
+const { categoryId, brandId, collectionId, count, brandsWithCollections } =
+  Astro.props;
 
 const categories = await getAllCategories();
-const brandsWithCollections = await getBrandsWithCollections();
 const selectedBrand = brandsWithCollections.find(
   (brand) => String(brand.id) === brandId,
 );
@@ -24,7 +25,6 @@ const collectionBelongsToBrand = selectedBrand?.collections.some(
 const selectedCollectionId = collectionBelongsToBrand ? collectionId : "";
 ---
 
-<!-- TODO: when a category is selected, only the present within it brands should be shown. what would be the most effective way of doing it? -->
 <div class="filtersBlock">
   <Select
     name="categoryId"

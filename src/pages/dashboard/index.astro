@@ -5,14 +5,28 @@ import ProductFiltering from "@/components/dashboard/ProductFiltering.astro";
 import Button from "@/components/shared/Button.astro";
 import Input from "@/components/shared/Input.astro";
 import { getDashboardProductCount } from "@/db/dashboard/products/allProductsByCategory";
+import {
+  getBrandsWithCollections,
+  getBrandsWithCollectionsByCategory,
+} from "@/db/dashboard/brands";
 
 const categoryId = Number(Astro.url.searchParams.get("categoryId")) || null;
 const brandId = Number(Astro.url.searchParams.get("brandId")) || null;
 const collectionId = Number(Astro.url.searchParams.get("collectionId")) || null;
+const brandsWithCollections = categoryId
+  ? await getBrandsWithCollectionsByCategory(categoryId)
+  : await getBrandsWithCollections();
+const selectedBrand = brandsWithCollections.find((brand) => brand.id === brandId);
+const selectedBrandId = selectedBrand?.id ?? null;
+const selectedCollectionId = selectedBrand?.collections.some(
+  (collection) => collection.id === collectionId,
+)
+  ? collectionId
+  : null;
 const page = Math.max(1, Number(Astro.url.searchParams.get("page")) || 1);
 const productCount = await getDashboardProductCount(categoryId, {
-  brandId,
-  collectionId,
+  brandId: selectedBrandId,
+  collectionId: selectedCollectionId,
 });
 ---
 
@@ -24,14 +38,15 @@ TODO: add readonly input state styling — gray out
   <main>
     <ProductFiltering
       categoryId={categoryId ? String(categoryId) : ""}
-      brandId={brandId ? String(brandId) : ""}
-      collectionId={collectionId ? String(collectionId) : ""}
+      brandId={selectedBrandId ? String(selectedBrandId) : ""}
+      collectionId={selectedCollectionId ? String(selectedCollectionId) : ""}
       count={productCount}
+      brandsWithCollections={brandsWithCollections}
     />
     <ProductFeed
       categoryId={categoryId}
-      brandId={brandId}
-      collectionId={collectionId}
+      brandId={selectedBrandId}
+      collectionId={selectedCollectionId}
       page={page}
       totalCount={productCount}
     />

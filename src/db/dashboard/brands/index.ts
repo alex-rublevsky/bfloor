@@ -7,6 +7,8 @@ export type {
 } from "./types";
 
 export { getBrandsWithCollections } from "./brandsWithCollections";
+export { getBrandsWithCollectionsByCategory } from "./brandsWithCollectionsByCategory";
+export type { BrandWithCollections } from "./types";
 export { getBrandBySlug } from "./brandBySlug";
 export { createBrand } from "./createBrand";
 export { updateBrand } from "./updateBrand";
