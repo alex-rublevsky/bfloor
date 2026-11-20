@@ -18,6 +18,7 @@ interface ProductFilters {
 
 const PAGE_SIZE = 50;
 
+// TODO: would it be more efficient to get the count in the getAllProductsByCategory function to reduce db calls from 2 to 1?
 export async function getDashboardProductCount(
   categoryId: number | null,
   filters: ProductFilters = {},
